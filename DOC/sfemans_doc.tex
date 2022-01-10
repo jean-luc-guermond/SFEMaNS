@@ -1,0 +1,863 @@
+\documentclass{book}
+\usepackage[top=2in, bottom=1.5in, left=1in, right=1in]{geometry}
+%\usepackage{A4wide}
+\usepackage{mydef,boldfonts}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{amsmath,color}
+\usepackage{graphics,comment,fancybox}
+\usepackage{verbatim}
+%\usepackage{hyperref}
+\usepackage{multirow,multicol}
+\usepackage{xspace}
+%Macros
+\newcounter{number_tests_sfemans}
+\setcounter{number_tests_sfemans}{20}
+\newcounter{testssfemans}
+\setcounter{testssfemans}{0}
+\newcommand{\testchapter}[1]{
+\stepcounter{testssfemans}
+\chapter{Test \arabic{testssfemans}: #1}
+}
+\newcommand{\vertical}[1]{\rotatebox{90}{\makebox{#1}}}
+\newcommand{\sfemans}{SFEMaNS\@\xspace}\newcommand{\petsc}{PETSc\@\xspace}
+%End Macros
+
+\setcounter{tocdepth}{2}
+\def\data_dir{../MHD_DATA_TEST_CONV_PETSC}
+
+\title{\sfemans user guide}
+
+\author{Jean-Luc Guermond, Francky Luddens}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\chapter{General presentation}
+
+\section{Introduction}
+\sfemans is a code to solve the MHD equations in axi-symmetric domains.
+
+\subsection{\sfemans credit}
+The current maintainers of \sfemans are Jean-Luc Guermond, Francky
+Luddens, and Caroline Nore.
+
+This project has evolved through the PhD or Master theses of the
+following people:
+\begin{itemize}
+\item Lo{\"\i}c Cappanera (PhD, 2015)
+\item Daniel Castanon (PhD, 2015)
+\item Rapha\"el Laguerre (PhD, Dec 2006)
+\item Francky Luddens (PhD, Dec 2012)
+\item Remi M\'enard (Master, Nov 2013)
+\item Adolfo Ribeiro (PhD, Dec 2010)
+\end{itemize}
+
+\section{System of equations}
+\subsection{Time-dependent problems}
+\sfemans solves the time-dependent MHD equations assuming that the flow
+is incompressible.
+ 
+\begin{align*}
+\partial_t\bu+\left(\ROT\bu\right)\CROSS\bu - \frac{1}{\Re}\LAP \bu +\GRAD p +
+2\bOmega\CROSS\bu &= (\ROT\bH)\CROSS \bH + \bef(T),
+\\ \DIV \bu &= 0, \\
+\partial_t T + \bu\ADV t -\kappa\LAP T &= g(T),\\
+\bu_{|\Gamma} &= \bv , \\
+\bu_{|t=0} &= \bu_0.
+\end{align*}
+
+\begin{align*}
+\partial_t\left(\mu\bH\right)+\frac{1}{\Rm}\ROT\left(\frac{1}{\sigma}\ROT\bH\right)
+- \ROT\left(\bu\CROSS\mu\bH\right) &=
+\frac{1}{\Rm}\ROT\left(\frac{1}{\sigma}\bj\right), \\ \DIV(\mu\bH) &=
+0, \\ +BC+IC. & +\phi
+\end{align*}
+
+
+\section{General features of \sfemans}
+
+\chapter{Installing \sfemans}
+\section{How to obtain \sfemans?}
+\section{External tools}
+\sfemans uses \petsc. The graph partitioning is done with parmetis. 
+The linear algebra is handled with hypre and MUMPS. We recommend to
+download these softwares with \petsc. 
+\section{Installing \petsc, MUMPS, HYPRE, \etc}
+Install \petsc from \verb?http://www.mcs.anl.gov/petsc/?
+\begin{enumerate}
+\item Be sure to download the latest version of  \petsc.
+For instance use the following command:\\
+\verb?wget http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-3.4.2.tar.gz?  
+\item Untar the archive and move it
+in the directory that best suits your needs.
+\item Go to the \petsc directory and set the environment variables. For 
+csh/tcsh use\\
+\verb?setenv PETSC_DIR $PWD?\\
+\verb?setenv PETSC_ARCH linux-whatever-you-like?\\
+for bash use \\
+\verb?export PETSC_DIR=$PWD?\\
+\verb?export PETSC_ARCH=linux-whatever-you-like?
+\item Specify variable on command line to configure\\
+\verb?./configure --download-f-blas-lapack=1 --with-shared-libraries=1 --download-hypre=1?\\
+\verb?--download-mumps=1 --download-spooles=1 --download-scalapack=1?\\
+\verb?--download-metis=1 --download-parmetis=1 --download-blacs=1?\\
+\verb?--with-dynamic-loading=1 --with-debugging=0 --with-x=0?
+\item Start the make. Do as recommended by \petsc or type\\
+\verb?make all?
+\item Finish installation with\\
+\verb?make test?
+\end{enumerate}
+
+\subsection{ARPACK library}
+The installation of the libraries ARPACK and PARPACK is done following these steps:
+\begin{itemize}
+\item Download \verb?arpack96.tar.gz parpack96.tar.gz patch.tar.gz ppatch.tar.gz?\\
+\verb?wget http://www.caam.rice.edu/software/ARPACK/SRC/arpack96.tar.gz?\\
+\verb?wget http://www.caam.rice.edu/software/ARPACK/SRC/parpack96.tar.gz?\\
+\verb?wget http://www.caam.rice.edu/software/ARPACK/SRC/patch.tar.gz?\\
+\verb?wget http://www.caam.rice.edu/software/ARPACK/SRC/ppatch.tar.gz?
+
+\item Uncompress the archive \verb?arpack96.tar.gz? first, then
+  uncompress the others.
+\item Be sure to read the README before anything.
+\item If you are using a VENDOR SUPPLIED VERSION of MPI, you must
+  replace the mpif.h in the following directories
+  \verb?ARPACK/PARPACK/SRC/MPI/mpif.h?
+  \verb?ARPACK/PARPACK/UTIL/MPI/mpif.h?
+  \verb?ARPACK/PARPACK/EXAMPLES/MPI/mpif.h? with the one for the native implementation.
+\item To avoid possible problems with the function \verb?etime?, edit 
+\verb?UTIL/second.f? and replace the lines
+\begin{itemize} 
+\item[23] \verb?      REAL               ETIME?
+\item[24] \verb?      EXTERNAL           ETIME?
+\end{itemize}
+by
+\begin{itemize} 
+\item[23] \verb?*     REAL                ETIME?
+\item[24] \verb?      EXTERNAL REAL       ETIME?
+\end{itemize}
+\item In the directory \verb?ARPACK?, replace the file \verb?ARmake.inc?
+ by one of the templates in the subdirectory \verb?ARMAKES?, according to your environment,
+\item Edit the file \verb?ARmake.inc? to make it compatible with your
+  environment: in particular, the path for the top-level directory of
+  ARPACK, make sure the Fortran compilers (\verb?FC? and \verb?PFC?)
+  are the right ones, and check the path for the command \verb?make?
+  (use \verb?which make? to determine the path \verb?make?).
+\item Build the libraries, using \verb?make lib? and \verb?make plib?.
+\end{itemize}
+\section{Mesh generator}
+\section{Adaptation to user's environment}
+
+x\chapter{Getting started}
+\section{First run}
+Begin with \sfemans by creating a directory
+(\eg \verb?MY_APPLICATION?) in which you want to create the
+executable file. Then you need to :
+\begin{itemize}
+\item Copy the content of \verb?$(HOME_\sfemans)/TEMPLATE? into
+  \verb?MY_APPLICATION?,
+\item Edit the file \verb?my_make? to make it compatible with your
+  environment, by specifying the right path to the top level directory
+  of \sfemans,
+\item Edit the file \verb?make.inc? to make it compatible with your
+  environment: in particular, if you have installed ARPACK and PARPACK
+  on your own, you need to use
+\begin{verbatim}
+PA_LIB = $(HOME_ARPACK)/name_of_your_P_arpack_lib
+ $(HOME_ARPACK)/name_of_your_arpack_lib
+\end{verbatim}
+in this specific order,
+\item Create the file \verb?makefile? using the command:
+  \verb?./my_make?,
+\item Create the executable file \verb?a.exe? using the command: \verb?make a.exe?.
+\end{itemize}
+\section{Type of problem}
+\sfemans can solve three different types of problems, listed below.
+\subsection{Type \texttt{nst}}
+\subsection{Type \texttt{mxw}}
+\subsection{Type \texttt{mhd}}
+\section{Numerical domain}
+\section{\texttt{data} file}
+The file \texttt{data} contains all the data needed for the
+computation. The user has to specify the geometry of the domain, the
+list of conductive and insulating parts, as well as general
+information for the parallel runs. The \texttt{data} file is divided
+in blocks : one block is mandatory, some others are needed depending
+on the type of the problem you want to solve, and a couple of blocks
+are optional. Table~\ref{tab:data_blocks} summarizes the blocks needed
+for a \sfemans run.
+\subsection{Required informations}
+\subsection{Type related blocks}
+\subsection{Optional blocks}
+\begin{table}[h]
+\begin{tabular}{|l|cccccccc|}
+\hline
+ &\multicolumn{3}{c|}{Basic use}&\multicolumn{5}{c|}{Advanced computations} \\ \hline
+Blocks & \vertical{nst} & \vertical{mxw} &\multicolumn{1}{c|}{\vertical{mhd}} & \vertical{nst with temperature} & \vertical{mxw without $\phi$} & \vertical{mhd with temperature} & \vertical{mhd without $\phi$} & \vertical{Arpack on $\bH$} \\ \hline
+\texttt{GENERAL DATA}                  & R & R & R & R & R & R & R & R\\ \hline
+\texttt{Mesh-NAVIER-STOKES}            & R & O & R & R & O & R & R & X\\ \hline
+\texttt{BCs-NAVIER-STOKES}             & R & X & R & R & X & R & R & X\\ \hline
+\texttt{Dynamics-NAVIER-STOKES}        & R & X & R & R & X & R & R & X\\ \hline
+\texttt{LES-NAVIER-STOKES}             & R & X & R & R & X & R & R & X\\ \hline
+\texttt{Solver-velocity-NAVIER-STOKES} & O & X & O & O & X & O & O & X\\ \hline
+\texttt{Solver-pressure-NAVIER-STOKES} & O & X & O & O & X & O & O & X\\ \hline
+\texttt{Solver-mass-NAVIER-STOKES}     & O & X & O & O & X & O & O & X\\ \hline
+\texttt{Verbose (diagnostics)}         & O & O & O & O & O & O & O & O\\ \hline
+\texttt{Solver-MAXWELL}                & X & O & O & O & O & O & O & O\\ \hline
+\texttt{H-MAXWELL}                     & X & R & R & X & R & R & R & R\\ \hline
+\texttt{Phi-MAXWELL}                   & X & R & R & X & X & O & X & O\\ \hline
+\texttt{Verbose-MAXWELL}               & X & O & O & X & O & O & O & C\\ \hline
+\texttt{Phase}                         & O & X & X & R & X & R & O & X\\ \hline
+\texttt{Solver-Phase}                  & O & X & O & O & X & O & O & X\\ \hline
+\texttt{Post-processing}               & O & O & O & O & O & O & O & X\\ \hline
+\texttt{Periodicity}                   & O & O & O & O & O & O & O & O\\ \hline
+\texttt{ARPACK}                        & X & X & X & X & X & X & X & R\\ \hline
+\texttt{Visualization}                 & X & X & X & X & X & X & X & O\\ \hline
+\texttt{BLOCK}                         & C & C & C & C & C & C & C & C\\ \hline
+\end{tabular}
+\caption{Summary of the blocks in the \texttt{data} file (R=Required, O=Optional, X=Useless)}
+\label{tab:data_blocks}
+\end{table}
+
+\section{Boundary conditions (\texttt{condlim.f90} file)}
+
+\section{The main program (\texttt{main.f90} file)}
+
+\chapter{Tools}
+\section{Backup tools}
+\section{Visualization tools}
+\section{Variables in \sfemans}
+\section{Custom variables}
+Using \texttt{read\_user\_data.f90}, \sfemans allows the use of custom
+variables. All the custom variables have to be declared in the type
+\texttt{user\_data\_type} and can be used in the \texttt{main.f90}
+file. If needed, the user can read personal data from a file, either
+by appending the \texttt{data} file, or by creating another
+one. User's data file (\eg \texttt{my\_own\_data}) has to be read in
+the \texttt{main.f90} with the following
+\begin{verbatim}
+CALL read_user_data('my_own_data')
+\end{verbatim}
+After this call, all the variables declared in the type \texttt{user\_data\_type} can be used with the prefix \verb?my_data%?.
+
+Use the template in \texttt{read\_user\_data.f90} to add any number of variables.
+\chapter{Tests in \sfemans}
+The command
+\begin{verbatim}
+./debug_\sfemans
+\end{verbatim}
+is used to run \arabic{number_tests_sfemans} different
+tests. Informations about these cases are listed below.
+
+\testchapter{nst}
+\section{Numerical domain and equations to solve}
+\begin{align*}
+\partial_t\bu+\left(\ROT\bu\right)\CROSS\bu - \frac{1}{\Re}\LAP \bu +\GRAD p &=\bef,
+\\ \DIV \bu &= 0, \\
+\bu_{|\Gamma} &= \bv , \\
+\bu_{|t=0} &= \bu_0.
+\end{align*}
+The data are $\bef$, $\bv$ and $\bu_0$. We use $\Re=1$.
+\section{Analytical solution}
+\begin{align*}
+u_r(r,\theta,z,t) &= \left(\left(r^2z^3-3r^3z^2\right)\cos(\theta) -
+\left(r^2z^3+3r^3z^2\right)\sin(\theta)\right)\cos(t),
+\\ u_{\theta}(r,\theta,z,t) &=
+3\left(r^3z^2-r^2z^3\right)\left(\cos(\theta)+\sin(\theta)\right)\cos(t),
+\\ u_z(r,\theta,z,t) &=
+\left(3r^2z^3\cos(\theta)+5r^2z^3\sin(\theta)\right),
+\\ p(r,\theta,z,t) &= rz\left(\cos(\theta)+\sin(\theta)\right)\sin(t).
+\end{align*}
+\section{Data file}
+\verbatiminput{./\data_dir/debug_data_1}
+%%%%END OF TEST 1
+%
+%
+%
+\testchapter{nst + perio}
+%\chapter{Test \testNumber: nst + perio.}
+\section{Numerical domain and equations to solve}
+\begin{align*}
+\partial_t\bu + \left(\ROT\bu\right)\CROSS\bu - \frac{1}{\Re}\LAP \bu +\GRAD p &=\bef,
+\\ \DIV \bu &= 0, \\
+\bu_{|\Gamma} &= \bv , \\
+\bu_{|t=0} &= \bu_0, \\
+\bu\textnormal{ periodic in the }z\textnormal{-direction}.&
+\end{align*}
+\section{Analytical solution}
+\begin{align*}
+u_r(r,\theta,z,t) &= -r^2\left(1-2\pi r\sin(2\pi z)\right)\sin(\theta)\cos(t), \\
+u_{\theta}(r,\theta,z,t) &= -3r^2\cos(\theta)\cos(t), \\
+u_z(r,\theta,z,t) &= r^2\left(4\cos(2\pi z)+1\right)\sin(\theta)\cos(t), \\
+p(r,\theta,z,t) &= r^2\cos(2\pi z)\cos(\theta)\cos(t).
+\end{align*}
+
+\section{Data file}
+\verbatiminput{\data_dir/debug_data_2}
+%%%%END OF TEST 2
+%
+%
+%
+\testchapter{mxw (with vacuum).}
+%\chapter{Test \testNumber: mxw (with vacuum).}
+\section{Numerical domain and equations to solve}
+\begin{align*}
+\partial_t\left(\mu\bH\right)+\frac{1}{\Rm}\ROT\left(\frac{1}{\sigma}\ROT\bH\right)
+- \ROT\left(\bu\CROSS\mu\bH\right) &=
+\frac{1}{\Rm}\ROT\left(\frac{1}{\sigma}\bj\right), \\ \DIV(\mu\bH) &=
+0, \\ +BC+IC. & +\phi
+\end{align*}
+\section{Analytical solution}
+\begin{align*}
+H_r(r,\theta,z,t) &= \sum_{m=1}^{3} \frac{1}{m^3}\left(\alpha_m
+zr^{m-1} m\cos(m\theta) + \beta_m zr^{m-1}
+m\sin(m\theta)\right)\cos(t), \\ H_{\theta}(r,\theta,z,t) &=
+\sum_{m=1}^{3} \frac{1}{m^3}\left(\beta_m zr^{m-1} m\cos(m\theta) -
+\alpha_m zr^{m-1} m\sin(m\theta)\right)\cos(t),\\ H_z(r,\theta,z,t) &=
+\sum_{m=1}^{3} \frac{1}{m^3}\left(\alpha_m r^m \cos(m\theta) + \beta_m
+r^m \sin(m\theta) \right)\cos(t),\\ \phi(r,\theta,z,t) &=
+\sum_{m=1}^{3} \frac{1}{m^3}\left(\alpha_m zr^{m}\cos(m\theta) +
+\beta_m zr^m\sin(m\theta)\right)\cos(t).
+\end{align*}
+\section{Data file}
+\verbatiminput{\data_dir/debug_data_3}
+%%%%END OF TEST 3
+%
+%
+%
+\testchapter{mxw + perio (with vacuum).}
+%\chapter{Test \testNumber: mxw + perio (with vacuum).}
+\section{Numerical domain and equations to solve}
+\begin{align*}
+\partial_t\left(\mu\bH\right)+\frac{1}{\Rm}\ROT\left(\frac{1}{\sigma}\ROT\bH\right) -
+\ROT\left(\bu\CROSS\mu\bH\right) &=
+\frac{1}{\Rm}\ROT\left(\frac{1}{\sigma}\bj\right), 
+\\ \DIV(\mu\bH) &= 0, \\
++BC+IC+perio & +\phi
+\end{align*}
+\section{Analytical solution}
+\begin{align*}
+H_r(r,\theta,z,t) &= \cos(t)\cos(\theta)\cos(2\pi z)\left(\frac{r}{r_0^2}-2\pi\left(\frac{r}{r_0}\right)^2\left(A + B\frac{r}{r_0}\right)\right), \\
+H_{\theta}(r,\theta,z,t) &= \cos(t)\sin(\theta)\cos(2\pi z)\left(2\pi\left(\frac{r}{r_0}\right)^2 C - 2\frac{r}{r_0^2}\right) ,\\
+H_z(r,\theta,z,t) &= \cos(t)\cos(\theta)\sin(2\pi z)\frac{r}{r_0^2}\left(3A+4B\frac{r}{r_0}-C\right),\\
+\phi(r,\theta,z,t) &= \cos(t)\cos(\theta)\cos(2\pi z) K_1(2\pi r),
+\end{align*}
+$K_1$: Bessel function.  $A,B,C$ constants.
+\section{Data file}
+\verbatiminput{\data_dir/debug_data_4}
+%%%%END OF TEST 4
+%
+%
+%
+\testchapter{mxw (with vacuum).}
+%\chapter{Test \testNumber: mxw (with vacuum).}
+\section{Numerical domain and equations to solve}
+\begin{align*}
+\partial_t\left(\mu\bH\right)+\frac{1}{\Rm}\ROT\left(\frac{1}{\sigma}\ROT\bH\right) -
+\ROT\left(\bu\CROSS\mu\bH\right) &=
+\frac{1}{\Rm}\ROT\left(\frac{1}{\sigma}\bj\right), 
+\\ \DIV(\mu\bH) &= 0, \\
++BC+IC. & +\phi
+\end{align*}
+\section{Analytical solution}
+\begin{align*}
+H_r(r,\theta,z,t) &= \sum_{m=1}^{3} \frac{1}{m^3}\left(\alpha_m zr^{m-1} m\cos(m\theta) + \beta_m zr^{m-1} m\sin(m\theta)\right)\cos(t), \\
+H_{\theta}(r,\theta,z,t) &=  \sum_{m=1}^{3} \frac{1}{m^3}\left(\beta_m zr^{m-1} m\cos(m\theta) - \alpha_m zr^{m-1} m\sin(m\theta)\right)\cos(t),\\
+H_z(r,\theta,z,t) &=  \sum_{m=1}^{3} \frac{1}{m^3}\left(\alpha_m r^m \cos(m\theta) + \beta_m r^m \sin(m\theta) \right)\cos(t),\\
+\phi(r,\theta,z,t) &= \sum_{m=1}^{3} \frac{1}{m^3}\left(\alpha_m zr^{m}\cos(m\theta) + \beta_m zr^m\sin(m\theta)\right)\cos(t).
+\end{align*}
+\section{Data file}
+\verbatiminput{\data_dir/debug_data_5}
+%%%%END OF TEST 5
+%
+%
+%
+\testchapter{mxw (with vacuum).}
+%\chapter{Test \testNumber: mxw (with vacuum).}
+\section{Numerical domain and equations to solve}
+\begin{align*}
+\partial_t\left(\mu\bH\right)+\frac{1}{\Rm}\ROT\left(\frac{1}{\sigma}\ROT\bH\right) -
+\ROT\left(\bu\CROSS\mu\bH\right) &=
+\frac{1}{\Rm}\ROT\left(\frac{1}{\sigma}\bj\right), 
+\\ \DIV(\mu\bH) &= 0, \\
++BC+IC. & +\phi
+\end{align*}
+\section{Analytical solution}
+\section{Data file}
+\verbatiminput{\data_dir/debug_data_6}
+%%%%END OF TEST 6
+%
+%
+%
+\testchapter{mxw (with vacuum).}
+%\chapter{Test \testNumber: mxw (with vacuum).}
+\section{Numerical domain and equations to solve}
+\begin{align*}
+\partial_t\left(\mu\bH\right)+\frac{1}{\Rm}\ROT\left(\frac{1}{\sigma}\ROT\bH\right) -
+\ROT\left(\bu\CROSS\mu\bH\right) &=
+\frac{1}{\Rm}\ROT\left(\frac{1}{\sigma}\bj\right), 
+\\ \DIV(\mu\bH) &= 0, \\
++BC+IC. & +\phi
+\end{align*}
+\section{Analytical solution}
+\section{Data file}
+\verbatiminput{\data_dir/debug_data_7}
+%%%%END OF TEST 7
+%
+%
+%
+\testchapter{nst + phase.}
+%\chapter{Test \testNumber: nst + phase.}
+\section{Numerical domain and equations to solve}
+\begin{align*}
+\partial_t\bu + \left(\ROT\bu\right)\CROSS\bu 
+- \frac{1}{\Re}\LAP \bu +\GRAD p &=\bef + g T \be_z,
+\\ \DIV \bu &= 0, \\
+\partial_t T + \DIV(\bu T) - \kappa \LAP T & = f_T \\
+\bu_{|\Gamma} &= \bv , \quad T_{|\Gamma} = T_a , \\
+\bu_{|t=0} &= \bu_0, \quad T_{|t=0}= T_0.
+\end{align*}
+
+\section{Analytical solution}
+\begin{align}
+u_r     & = r^3 \cos(2\pi z) \sin(t) \\
+u_\theta & = r^2 z       \sin(t) \\
+u_z     & = -\frac{4 r^2}{2\pi} \sin(2\pi z) \sin(t)\\
+p       & = 0  \\
+T       & = (r^2 z + r^2 z^2 (\cos(\theta) + 2 \sin(2\theta)) \cos(t) 
+\end{align}
+
+\section{Data file}
+\verbatiminput{\data_dir/debug_data_8}
+%%%%END OF TEST 8
+%
+%
+%
+\testchapter{nst + phase + perio.}
+%\chapter{Test \testNumber: nst + phase + perio.}
+\section{Numerical domain and equations to solve}
+\section{Analytical solution}
+\section{Data file}
+\verbatiminput{\data_dir/debug_data_9}
+%%%%END OF TEST 9
+%
+%
+%
+\testchapter{mxw (without vacuum).}
+%\chapter{Test \testNumber: mxw (without vacuum).}
+\section{Numerical domain and equations to solve}
+\begin{align*}
+\partial_t\left(\mu\bH\right)+\frac{1}{\Rm}\ROT\left(\frac{1}{\sigma}\ROT\bH\right) -
+\ROT\left(\bu\CROSS\mu\bH\right) &=
+\frac{1}{\Rm}\ROT\left(\frac{1}{\sigma}\bj\right), 
+\\ \DIV(\mu\bH) &= 0, \\
++BC+IC. &
+\end{align*}
+\section{Analytical solution}
+\begin{align*}
+H_r(r,\theta,z,t) &= \sum_{m=1}^{3} \frac{1}{m^3}\left(\alpha_m zr^{m-1} m\cos(m\theta) + \beta_m zr^{m-1} m\sin(m\theta)\right)\cos(t), \\
+H_{\theta}(r,\theta,z,t) &=  \sum_{m=1}^{3} \frac{1}{m^3}\left(\beta_m zr^{m-1} m\cos(m\theta) - \alpha_m zr^{m-1} m\sin(m\theta)\right)\cos(t),\\
+H_z(r,\theta,z,t) &=  \sum_{m=1}^{3} \frac{1}{m^3}\left(\alpha_m r^m \cos(m\theta) + \beta_m r^m \sin(m\theta) \right)\cos(t),\\
+\end{align*}
+\section{Data file}
+\verbatiminput{\data_dir/debug_data_10}
+%%%%END OF TEST 10
+%
+%
+%
+\testchapter{mhd + temperature (without vacuum).}
+%\chapter{Test \testNumber: mhd + temperature (without vacuum).}
+\section{Numerical domain and equations to solve}
+\section{Analytical solution}
+\section{Data file}
+\verbatiminput{\data_dir/debug_data_11}
+%%%%END OF TEST 11
+%
+%
+%
+\testchapter{mxw Dirichlet/Neumann (without vacuum).}
+%\chapter{Test \testNumber: mxw Dirichlet/Neumann (without vacuum).}
+\section{Numerical domain and equations to solve}
+\begin{align*}
+\partial_t\left(\mu\bH\right)+\frac{1}{\Rm}\ROT\left(\frac{1}{\sigma}\ROT\bH\right) -
+\ROT\left(\bu\CROSS\mu\bH\right) &=
+\frac{1}{\Rm}\ROT\left(\frac{1}{\sigma}\bj\right), 
+\\ \DIV(\mu\bH) &= 0, \\
++BC+IC. &
+\end{align*}
+\section{Analytical solution}
+\section{Data file}
+\verbatiminput{\data_dir/debug_data_12}
+%%%%END OF TEST 12
+%
+%
+%
+\testchapter{mxw Dirichlet/Neumann + perio (without vacuum).}
+%\chapter{Test \testNumber: mxw Dirichlet/Neumann + perio (without vacuum).}
+\section{Numerical domain and equations to solve}
+\begin{align*}
+\partial_t\left(\mu\bH\right)+\frac{1}{\Rm}\ROT\left(\frac{1}{\sigma}\ROT\bH\right) -
+\ROT\left(\bu\CROSS\mu\bH\right) &=
+\frac{1}{\Rm}\ROT\left(\frac{1}{\sigma}\bj\right), 
+\\ \DIV(\mu\bH) &= 0, \\
++BC+IC. &
+\end{align*}
+\section{Analytical solution}
+\section{Data file}
+\verbatiminput{\data_dir/debug_data_13}
+%%%%END OF TEST 13
+%
+%
+%
+\testchapter{mxw + arpack (without vacuum).}
+%\chapter{Test \testNumber: mxw + arpack (without vacuum).}
+\section{Numerical domain and equations to solve}
+\section{Reference results}
+\section{Data file}
+\verbatiminput{\data_dir/debug_data_14}
+%%%%END OF TEST 14
+%
+%
+%
+\testchapter{nst (with LES).}
+%\chapter{Test \testNumber: nst (with LES).}
+\section{Numerical domain and equations to solve}
+\section{Reference results}
+\section{Data file}
+\verbatiminput{\data_dir/debug_data_15}
+%%%%END OF TEST 15
+%
+%
+%
+\testchapter{??.}
+%\chapter{Test \testNumber: ??.}
+\section{Numerical domain and equations to solve}
+\section{Reference results}
+\section{Data file}
+\verbatiminput{\data_dir/debug_data_16}
+%%%%END OF TEST 16
+%
+%
+%
+%%%%TEST 17
+\testchapter{mxw with vacuum + variable mu}
+The purpouse of this case is to test variable permeability
+with dependence in $r$ and $z$. There is one conducting region 
+embedded in vaccum.
+\section{Numerical domain and equations to solve}
+The domain is a cylinder $r\in [0,1]$, $z\in [-1,1]$.  The exterior
+boundary of the vaccum is a sphere of radius 10 centered at $0$. Let
+us recall the kynematic dynamo equations,
+\begin{align}
+\begin{cases}
+\label{eq:maxwell-pde}
+\partial_t\left(\mu\bH\right)+\frac{1}{\Rm}\ROT\left(\frac{1}{\sigma}\ROT\bH\right)
+- \ROT\left(\bu\CROSS\mu\bH\right) =
+\frac{1}{\Rm}\ROT\left(\frac{1}{\sigma}\bj\right), \\ \DIV(\mu\bH) =
+0, \\ +BC+IC.  +\phi
+\end{cases}
+\end{align}
+
+\section{Analytical solution}
+
+Let
+\begin{equation}
+ \label{Hsol-1}
+\mathbf{H}=\frac{1}{{\mu}^c} \nabla \psi,
+\end{equation}
+
+\noindent where $\psi=\psi(r,z)$ and satisfies the Laplace equation in cylindrical coordinates,
+\begin{equation}
+\label{eq:laplace_cyl}
+\partial _{rr}\psi + \frac{1}{r} \partial _r \psi + \partial_{zz} \psi = 0.
+\end{equation}
+
+\noindent If we also set  $\mathbf{j}= \nabla \times \mathbf{H}$, $\mathbf{u}=0$, $\mathbf{E}=\mathbf{0}$ and $\phi(r,\theta,z,t)=\psi(r,z)$, then $\mathbf H$, defined as in (\ref{Hsol-1}),
+satisfies Maxwell equations (\ref{eq:maxwell-pde}).\\
+
+
+
+\noindent Now, let
+\begin{equation}
+{\mu^c}={\mu^c(r,z)}=\frac{1}{f(r,z)+1 },
+\end{equation}
+
+\noindent where $$f(r,z)= b \cdot r^3 \cdot (1-r)^3 \cdot (z^2-1)^3,$$
+ 
+\noindent and  $b\geq 0 $ is a  parameter which determines the variation of ${\mu}^c$.
+\noindent Observe that 
+$$
+\partial _r f(r,z) = 3b\big ( r(1-r)\big )^2(1-2r)(z^2-1)^3,
+\quad
+\partial _z f(r,z) = 6bz\big  (r(1-r))^3 (z^2-1)^2.
+$$
+
+
+
+Moreover,  $f (r,z) \leq 0$ for $(r,\theta,z) \in \Omega^c$ and,
+$$
+\sup _{\Omega^c} f(r,z)=f_{\text{max}}=0 , 
+\quad 
+\inf _{\Omega^c} f(r,z)=f_{\text{min}}= -\frac{b}{2^6}, 
+$$
+
+\noindent then,
+$$
+\mu_{\text{min}} ^c = \frac{1}{1 + f_{\text{max}}},\quad   \mu_{\text{max}} ^c =\frac{1}{1 + f_{\text{min}}},
+ \quad  \quad r_{\mu}=\frac{\mu _{\text{max}}}{\mu _{\text{min}}}=\frac{\frac{1}{1-\frac{b}{2^6}}}{1}, \quad \text{and} \quad b= 2^6\left (1- \frac{1}{r_{\mu}}\right).
+$$
+
+
+
+\noindent To get an explicit solution in (\ref{Hsol-1}),  equation (\ref{eq:laplace_cyl}) is solved using separation of variables, this is, letting
+$\psi(r,z)=R(r)Z(z)$ we solve the following system of ODEs,
+\begin{eqnarray*}
+Z''-\lambda Z & = & 0 \\
+R''+\frac{R'}{r}+\lambda  R & = & 0,
+\end{eqnarray*}
+where $\lambda$ is any real number. Here we choose $\lambda=1$, so
+\begin{equation}
+\label{psi-sol1}
+\psi(r,z)=J_0(r)\text{cosh}(z).
+\end{equation}
+
+\noindent Now, using $J_0'(r)=-J_1(r)$ and $\text{cosh}'(z)=\text{sinh}(z)$  we get,
+\begin{equation}
+\nabla \psi = \left[ \begin{array}{c} -J_1 (r)  \text{cosh}(z) \\ 0 \\J_0 (r)  \text{sinh}(z) \end{array} \right]
+\end{equation}
+
+\noindent then by (\ref{Hsol-1}), 
+
+\begin{equation}
+\mathbf{H}^c=(f(r,z)+1)
+\left[ \begin{array}{c} -J_1 (r)  \text{cosh}(z) \\ 0 \\J_0 (r)  \text{sinh}(z) \end{array} \right],
+\end{equation}
+
+\noindent To get $\nabla \times \mathbf{H}$, we use the identity 
+$$
+\nabla \times \left (\frac{1}{{\mu}^c} \nabla \psi \right )= \nabla \left ( \frac{1}{{\mu}^c} \right ) \times  \nabla
+\psi + \frac{1}{{\mu}^c} \nabla \times  \nabla \psi,
+$$
+but $\nabla \times  \nabla \psi = 0$. Then  using  equation (\ref{Hsol-1}), 
+
+\begin{equation*}
+\nabla \times \mathbf{H}^c=\nabla \left ( \frac{1}{{\mu}^c} \right ) \times  \nabla \psi, 
+\end{equation*}
+
+\noindent and 
+\begin{equation}
+ \nabla  \frac{1}{{\mu}^c}  =\left[ \begin{array}{c} \partial _r f(r,z) \\ 0  \\ \partial _z f(r,z) \end{array} \right];
+\end{equation}
+
+\noindent we obtain,
+
+\begin{equation}
+\mathbf{j} = \nabla \times \mathbf{H}^c=
+\left[ \begin{array}{c}
+0 \\ 
+-\partial _r f(r,z) J_0(r)   \text{sinh}(z)  
+-\partial _z f(r,z) J_1(r)    \text{cosh}(z) \\
+ 0
+\end{array} \right].
+\end{equation}
+
+\noindent In summary,
+
+
+\begin{equation}
+\label{psi-sol1}
+\phi(r,\theta,z,t)=J_0(r)\text{cosh}(z).
+\end{equation}
+
+\begin{equation}
+\mathbf{H}^c= 
+\left ( 2^6\left (1- \frac{1}{r_{\mu}}\right)\cdot r^3 \cdot (1-r)^3 \cdot (z^2-1)^3 +1\right)
+\left[ \begin{array}{c}
+ -J_1 (r)  \text{cosh}(z) \\ 0 \\J_0 (r)  \text{sinh}(z) 
+\end{array} \right],
+\end{equation}
+
+
+\section{Reference results}
+\section{Data file}
+\verbatiminput{\data_dir/debug_data_17}
+%%%%END OF TEST 17
+%
+%
+%
+%%%%TEST 18
+\testchapter{mxw with variable mu and no vaccum}
+The purpouse of this case is to test variable permeability
+with dependence in $r$ and $z$. There are two conducting regions
+with discontinuous magentic permeability.
+
+\section{Numerical domain and equations to solve}
+The domain is a cylinder $r\in [0,2]$, $z\in [\frac14,1]$. Let
+us recall the kynematic dynamo equations,
+\begin{align}
+\begin{cases}
+\label{eq:maxwell-pde}
+\partial_t\left(\mu\bH\right)+\frac{1}{\Rm}\ROT\left(\frac{1}{\sigma}\ROT\bH\right)
+- \ROT\left(\bu\CROSS\mu\bH\right) =
+\frac{1}{\Rm}\ROT\left(\frac{1}{\sigma}\bj\right), \\ \DIV(\mu\bH) =
+0, \\ +BC+IC.
+\end{cases}
+\end{align}
+
+\section{Analytical solution}
+We first set $\bu = 0$, $\bE = 0$, and $\Omega _v = \emptyset$. In
+order to define $\Omega^c$, let $z_0 > 0$ be a positive
+parameter (\sfemans sets $z_0=\frac14$ in this test), then we set
+$\Omega ^ c= \Omega_1 ^ c \cup \Omega_2 ^ c $, where
+$$
+\Omega   _1 ^ c  =\{ (r,\theta,z) \in \mathbb{R}^3 : (r,\theta,z) \in [0,1] \times [0,2\pi) \times [z_0,1]\},
+$$
+and
+$$
+\Omega _2 ^ c  =\{ (r,\theta,z) \in \mathbb{R}^3 : (r,\theta,z) \in [1,2] \times [0,2\pi) \times [z_0,1]\}.
+$$
+In order to construct a magnetic field with a jump in $\mu$ on $\Sigma _\mu$, let us define first,
+$$
+\bH ^c = \left[ \begin{array}{c}  H_r  \\ 0  \\ H_z  \end{array} \right],
+$$
+where,
+\begin{equation}
+H_r =
+\begin{cases}
+H_{1,r} = f(r) g(z) & \text{in} \quad \Omega _1 ^c, \\
+H_{2,r}  & \text{in} \quad \Omega _2 ^c \\
+\end {cases}.
+\end{equation}
+
+It is assumed  that $f(r)$ and $g(z)$ are given functions. Moreover, we also assume $\mu_1$ is given and $\mu_1= \mu_1 (r) > 0$.
+Thus, the unknowns to solve are $\mu_2, H_{2,r}$, and $H_z$. Observe that $H_z$ must be continuous, since  $\bH^c$ must be
+continuous along the tangential direction over $\Sigma _\mu$. We also need  $\mu_2 > 0$.
+Now, the divergence constraint establishes,
+$$
+\DIV (\mu \bH)= 0 \quad \text{in}  \quad  \Omega  ^c,
+$$
+which gives,
+\begin{equation}
+\label{eq1:m_jump:div_const}
+0 =
+\begin{cases}
+ \partial _r (\mu_1 H_{1,r}) + \frac{\mu _1  H_{1,r}}{r} + \partial _z (\mu_1 H_z )  & \text{in}  \quad  \Omega _1 ^c, \\
+ \partial _r (\mu_2 H_{1,r}) + \frac{\mu _2  H_{2,r}}{r} + \partial _z (\mu_2 H_z ) & \text{in}  \quad  \Omega _2 ^c \\
+\end{cases}.
+\end{equation}
+
+
+Using  $\mu_1=\mu_1(r)$ and  $H_{1,r}= f(r)g(z)$, we can solve for $\partial _z H_z$ using
+the first equation of (\ref{eq1:m_jump:div_const}),
+
+\begin{equation*}
+\partial _z H_z  = - \frac{1}{\mu_1(r) }\left (\partial _r (\mu_1(r) f(r)g(z) ) + \frac{\mu _1(r) f(r)g(z)}{r} \right)
+\end{equation*}
+
+thus,
+
+\begin{equation}
+\label{eq:mu_jump_Hz}
+  H_z  = -  \frac{1}{\mu_1(r) }\left (\partial _r (\mu_1(r) f(r)) + \frac{\mu _1(r) f(r)}{r} \right) \int g(z)dz + \psi_1(r),
+\end{equation}
+
+
+where $\psi_1(r)$ is a parameter function. Now, since each right side  of (\ref{eq1:m_jump:div_const}) must be equal to zero, we get,
+\begin{equation}
+\label{eq2:mu_jump}
+ \partial _r (\mu_1 H_{1,r}) + \frac{\mu _1  H_{1,r}}{r} + \partial _z (\mu_1 H_z)  =
+ \partial _r (\mu_2 H_{1,r}) + \frac{\mu _2  H_{2,r}}{r} + \partial _z (\mu_2 H_z), 
+\end{equation}
+
+
+but the continuity condition along the normal on ${\Sigma _{\mu} }$ establishes,
+\begin{equation}
+\label{eq:mu_jump:normal_const}
+\mu_2 H_{2,r} =\mu_1 H_{1,r}= \mu_1(r)f(r)g(r),
+\end{equation}
+
+so  plug-in this  equality into (\ref{eq2:mu_jump}) gives,
+$$
+ \partial _r (\mu_1 H_{1,r}) + \frac{\mu _1  H_{1,r}}{r} +  \partial _z (\mu_1 H_z)  =
+ \partial _r (\mu_1 H_{1,r}) + \frac{\mu _1  H_{1,r}}{r} + \partial _z (\mu_2 H_z) ,
+$$
+therefore,
+$$
+  \partial _z (\mu_1 H_z ) =  \partial _z (\mu_2 H_z). 
+$$
+Integrating this last equation with respect to $z$ and solving for $\mu_2$, we obtain,
+\begin{equation}
+\label{eq:mu_jump_mu2}
+\mu_2 = \mu_1 + \frac{\psi_2(r)}{H_z},
+\end{equation}
+
+where $\psi_2(r)$ is a  parameter function and sets the amount of the jump in $\mu$ on $\Sigma_{\mu}$. In particular, if $\psi_2(r)$=0 then ${\mu}_1={\mu}_2$. Finally, from (\ref{eq:mu_jump:normal_const}) we compute,
+\begin{equation}
+\label{eq:mu_jump:Hr2}
+  H_{2,r}= \frac{\mu_1(r)f(r)g(z)}{\mu _2}.
+\end{equation}
+
+\textbf{Remark.} Care must be taken about how to choose $f(r)$, $g(z)$, $\mu(r)$, $\psi_1(r)$ and $\psi_2(r)$ such that $H_z \neq 0$ and $\mu_2 > 0$.
+
+
+Here we choose,
+
+\begin{align*}
+ f(r)= r, \quad g(z)=z  , \quad \mu_1(r)= 1+r, \quad \psi_2(r)=0, \quad \text{and} \quad \quad \psi_2(r)=-\lambda_{\mu},
+\end{align*}
+where $\lambda_{\mu} \in\mathbb{R}$ and $\lambda_{\mu} \geq 0$. Now, using (\ref{eq:mu_jump:Hr2}), (\ref{eq:mu_jump_Hz}) and (\ref{eq2:mu_jump}) we compute,
+\begin{align*}
+ H_{1,r}&=rz, \\
+ H_{2,r}&=\frac{rz^3(3 r + 2)}{3z^2r+2z^2+2\lambda_{\mu}},\\
+ H_z &= -\frac{1}{2}\frac{z^2(3r+2)}{1+r}.\\
+\mu_2 &=  1 +r + \frac{2\lambda_{\mu}(1+r)}{z^2(3r + 2)}
+\end{align*}
+
+Finally, using $\bj = \ROT \bH^c$ we get,
+
+\begin{equation}
+\bj=
+\left[ \begin{array}{c}
+0 \\
+j_{\theta}\\
+ 0
+\end{array} \right],
+\end{equation}
+where,
+\begin{align*}
+j_{\theta} &=
+\begin{cases}
+j_{1,\theta}
+& \text{in}
+\quad \Omega_1^c \\
+j_{2,\theta}
+& \text{in} \quad \Omega_2^c\\
+\end{cases},
+\end{align*}
+$$
+j_{1,\theta}= r+\frac{3}{2}\frac{z^2}{1+r}- \frac{1}{2}\frac{z^2(3r+2)}{(1+r)^2},
+$$
+ and,
+$$
+j_{2,\theta}= \frac{rz^2(3r+2)(3z^2r+2z^2+6\lambda_{\mu})}{(3z^2r+2z^2+2\lambda_{\mu})^2}
++\frac{3}{2}\frac{z^2}{1+r}- \frac{1}{2}\frac{z^2(3r+2)}{(1+r)^2}
+.
+$$
+
+\section{Reference results}
+\section{Data file}
+\verbatiminput{\data_dir/debug_data_18}
+%%%END of TEST 18
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% mode: flyspell
+%%% TeX-master: t
+%%% End: 
+     

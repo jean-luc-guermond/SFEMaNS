@@ -1,0 +1,81 @@
+============================================
+              Input information
+============================================
+===Number of processors in meridian section (Input)
+1
+===Problem type (Input): (nst, mxw, mhd, fhd)
+'nst'
+===Directory and name of input mesh file
+'.' 'Mesh_10_form.FEM'
+===Is input mesh file formatted (true/false)?
+.t.
+
+============================================
+              Output information
+============================================
+===Number of processors in meridian section (Output)
+2
+===Problem type (Output): (nst, mxw, mhd, fhd)
+'mhd'
+===Directory and name of output mesh file
+'.' 'Mesh_10_form.FEM'
+===Is output mesh file formatted (true/false)?
+.t.
+
+============================================
+              What should be done?
+============================================
+===Should data be interpolated on new mesh? (True/False)
+.t.
+===How many files (times steps) should be converted?
+1
+===What is the starting index? (suite*_I*index.mesh*), index is an integer in [1,999]
+2
+===Number of Fourier modes
+4
+
+============================================
+              Mesh-NAVIER-STOKES
+============================================
+===Number of subdomains in Navier-Stokes mesh
+1
+===List of subdomains for Navier-Stokes mesh
+1
+===Is there a level set?
+.t.
+===How many fluids?
+2
+===Do we use P2 finite element for level_set? (true/false)
+.f.
+
+============================================
+              H-MAXWELL
+============================================
+===Type of finite element for magnetic field
+2
+===Number of subdomains in magnetic field (H) mesh
+1
+===List of subdomains for magnetic field (H) mesh
+1
+===Number of interfaces in H mesh
+0
+============================================
+              Phi-MAXWELL
+============================================
+===Number of subdomains in magnetic potential (phi) mesh
+1
+===List of subdomains for magnetic potential (phi) mesh
+2
+===Number of interfaces between H and phi
+1
+===List of interfaces between H and phi
+5
+===Type of finite element for scalar potential
+2
+
+
+============================================
+              Control and verbose
+============================================
+===Check construction with plotmtv? (True/False)
+.f.

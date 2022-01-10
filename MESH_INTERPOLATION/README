@@ -1,0 +1,31 @@
+#Copy  ~/SFEMaNS_vxx.xx/MESH_INTERPOLATION in your application directory
+
+cp -rf ~/SFEMaNS_vxx.xx/MESH_INTERPOLATION/ .
+cd MESH_INTERPOLATION/
+
+# If computations have been done in big endian you need to do the following
+#export F_UFMTENDIAN="big:10" (command may depend on machine and shell)
+
+#Give the correct execution command for mpi in mesh_interpolation
+vi mesh_interpolation
+export MY_MPIRUN=mpirun
+
+#copy a correct make.inc, generate the makefile, and make i.exe
+cp ../make.inc .
+./my_make_mesh_interpol
+make i.exe
+
+#copy your restart files plus the associated mesh_part_S* files 
+#from your application directory
+cp ../suite_ns_S00* .
+cp ../mesh_part_S* .
+
+#copy data_interpol_template into data_interpol
+#and change the data you need in data_interpol
+cp data_interpol_template data_interpol
+vi  data_interpol (and do it yourself)
+
+#run the interpolation application with mesh_interpolation
+./mesh_interpolation
+check file lis to make sure everything is done correctly
+

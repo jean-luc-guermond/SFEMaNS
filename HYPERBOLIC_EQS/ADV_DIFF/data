@@ -1,0 +1,25 @@
+===Name of directory for mesh file===
+'../../CONSERVATION_EQUATIONS/SCALAR_CONSERVATION/SEQUENTIAL/MESHES/CAV'
+===Name of mesh file===
+cav_0.005.FEM
+cav_0.0125.FEM
+===Is the mesh formatted? (True/False)===
+.F.
+===Number of subdomains in the mesh===
+1
+===List of subdomain in the mesh===
+1
+===Type of finite element===
+1
+===How many Dirichlet boundaries?===
+2
+===List of Dirichlet boundaries?===
+1 3
+
+
+	
+===Create vtu files? (true/false)===
+.F.
+===Vtu files in xml format? (true=xml/false=ascii)===
+.T.
+

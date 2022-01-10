@@ -1,0 +1,9 @@
+##highlight for page included in Documentation
+sed -i -- 's/ class="current"//' /u/guermond/public_html/SFEMaNS/html/about.html
+sed -i -- 's/<li><a href="about.html">/<li class="current"><a href="about.html">/' /u/guermond/public_html/SFEMaNS/html/about.html
+sed -i -- 's/ class="current"//' /u/guermond/public_html/SFEMaNS/html/doc_*.html
+sed -i -- 's/<li><a href="index.html">/<li class="current"><a href="index.html">/' /u/guermond/public_html/SFEMaNS/html/doc_*.html
+##Correction for html in Files:
+sed -i -- 's/ class="current"//' /u/guermond/public_html/SFEMaNS/html/doc__*.html
+sed -i -- 's/<li><a href="files.html">/<li class="current"><a href="files.html">/' /u/guermond/public_html/SFEMaNS/html/doc__*.html
+

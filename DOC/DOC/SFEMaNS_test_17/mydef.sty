@@ -1,0 +1,160 @@
+
+\def\beq{\begin{equation}}
+\def\eeq{\end{equation}}
+\newcommand{\eq}[1]{\begin{equation} #1 \end{equation}}
+
+% Theorems, etc.
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{definition}{Definition}[section]
+\newtheorem{lem}{Lemma}[section]
+\newtheorem{col}{Corollary}[section]
+\newtheorem{prop}{Proposition}[section]
+\newtheorem{claim}{Claim}[section]
+\theoremstyle{remark}
+\newtheorem{rem}{Remark}[section]
+
+\def\berom{\begin{enumerate}[{\rm(i)}]}
+\def\eerom{\end{enumerate}}
+\def\bRem{\begin{Rem} \setcounter{itemrem}{0}}
+         \newcounter{itemrem}
+         \def\itemrem{\addtocounter{itemrem}{1} \ \\ \indent (\roman{itemrem}) }
+\def\eRem{\end{Rem}}
+
+%To avoid putting () around references
+\newcommand{\refp}[1]{(\ref{#1})}
+
+%For questions/notes in the margin
+\newcommand{\Question}[1]{%
+            \marginpar{\flushleft\scriptsize\bfseries\upshape#1}}
+\newcommand{\balise}[1]{\Question{#1}}
+
+% Makes \section reset 'equation' counter.
+\catcode`\@=11
+\@addtoreset{equation}{section}
+\renewcommand\theequation{\thesection.\arabic{equation}}
+
+%Operators
+\def\KER{\mathop{\text{\rm Ker}}\nolimits}
+\def\IM{\mathop{\text{\rm Im}}\nolimits}
+\newcommand{\nl}{\text{\sl nl}}
+\newcommand{\SCAL}{{\cdot}}
+\newcommand{\CROSS}{{\times}}
+\newcommand{\DIV}{\nabla\!{\cdot}}   %Divergence
+\newcommand{\ROT}{\nabla{\times}}  %Divergence
+\newcommand{\GRAD}{\nabla}           %Gradient
+\newcommand{\LAP}{{\Delta}}          %Laplacian
+\newcommand{\LAPh}{{\Delta_h}}          %Laplacian
+\newcommand{\LAPINV}{{\Delta^{-1}}}          %Laplacian
+\newcommand{\ADV}{{\cdot}\nabla} %Advection
+\newcommand{\FILTER}[1]{\overline{#1}} %Filter
+\newcommand{\FILTERG}[1]{\overline{#1}} %{\calF(#1)} %Filter
+\newcommand{\FILTERF}[1]{\widetilde{#1}} % {\calG(#1)} %Filter
+\newcommand{\CONV}{\!*\!}            %Convolution
+\newcommand{\AV}[1]{\langle #1 \rangle} %Average
+\newcommand{\UNDER}[1]{\underline{#1}} %Underline
+\newcommand{\LIM}{\mathop{\textsc{Lim}}} %Underline
+\newcommand{\aatop}[2]{\genfrac{}{}{0pt}{}{#1}{#2}}
+\newcommand{\CIRC}[1]{\overset{\circ}{#1}}
+\newcommand{\CIRCD}{\text{\r{\bfseries D}}}
+
+%Spaces
+\def\dotLdeuxd{{\dot{\bf L}^2   (\Omega)}}
+\def\Ldeuxd{{{ \bf L}^2   (\Omega)}}
+\def\Ldeuxt{{{ \bf L}^2   (\Omega)}}
+\def\dotLdeux{{\dot{L}^2   (\Omega)}}
+\def\Ldeux{{{  L}^2   (\Omega)}}
+\def\Hunzd{{{  \bf H}^1_0 (\Omega)}}
+\def\Hunzt{{{  \bf H}^1_0 (\Omega)}}
+\def\Hunz{{{   H}^1_0 (\Omega)}}
+\def\Hmun{{{   H}^{-1}(\Omega)}}
+\def\Hmund{{{  \bf H}^{-1}(\Omega)}}
+\def\Hmunt{{{  \bf H}^{-1}(\Omega)}}
+\def\Hund{{{   \bf H}^1   (\Omega)}}
+\def\Hs{{{   H}^s   (\Omega)}}
+\def\Hsz{{{  H}^s_0   (\Omega)}}
+\def\Hsd{{{   \bf H}^s   (\Omega)}}
+\def\Hszd{{{   \bf H}^s_0   (\Omega)}}
+\def\Hsp1d{{{   \bf H}^{s+1}   (\Omega)}}
+\def\dotHund{{\dot{\bf H}^1   (\Omega)}}
+\def\Hund{{{\bf H}^1   (\Omega)}}
+\def\Hun{{{    H}^{1}(\Omega)}}
+\def\Hdeuxd{{{   \bf H}^2   (\Omega)}}
+\def\tildeLdeux{{L^2_{\scriptscriptstyle\!\int\!=0} (\Omega)}}
+\def\tildeHun{{H^1_{\scriptscriptstyle\!\int\!=0} (\Omega)}}
+\def\tildeHunv{{H^1_{\scriptscriptstyle\!\int\!=0} (\Omegav)}}
+\def\Hdeux{{{   H}^2   (\Omega)}}
+\def\Hszdinter{[\Hunzd,\Ldeuxd]_s}
+\def\Hszinter{[\Hunz,\Ldeux]_s}
+\def\Hminussd{{{\bf H}^{-s}(\Omega)}}
+\def\Hminuss{{{H}^{-s}(\Omega)}}
+\def\Hrot{\bH_{\text{\rm curl}}(\Omega)}
+\def\Hcurl{\bH_{\text{\rm curl}}}
+\def\Hzrot{\bH_{0,\text{\rm curl}}(\Omega)}
+\def\Hrotc{\bH_{\text{\rm curl}}(\Omega_c)}
+\def\Hrotv{\bH_{\text{\rm curl}}(\Omega_v)}
+\def\Hdiv{\bH_{\text{\rm div}}(\Omega)}
+\def\Ldeuxdc{\bL^2(\Omega_c)}
+\def\Ldeuxdv{\bL^2(\Omega_v)}
+\def\Hunv{H^1(\Omegav)}
+%New characters
+\newcommand{\ts}[1]{{\textstyle #1}}
+\newcommand{\Real}{\mathbb R}
+\newcommand{\diff}{\, \mbox{\rm d}}
+\newcommand{\bue}{\bu_\varepsilon}
+\newcommand{\pe}{p_\varepsilon}
+\newcommand{\oH}{\dot{H}}
+\def\hpvc{\alpha}
+\def\LESpar{\gamma}
+\renewcommand{\b}[1]{\text{\boldmath $#1$}}
+\newcommand{\Pvare}{{P_{\!\varepsilon}}}
+\newcommand{\Qvare}{{Q_{\varepsilon}}}
+\newcommand{\Ne}{{N_\varepsilon}}
+\newcommand{\vare}{{\varepsilon}}
+\newcommand{\varel}{{\varepsilon_l}}
+\newcommand{\hash}{{h}}
+\newcommand{\hashl}{{h_l}}
+\newcommand{\bHc}{\bH^c}
+\newcommand{\bHv}{\bH^v}
+\newcommand{\tbH}{\widetilde{\bH}}
+\newcommand{\bEc}{\bE^c}
+\newcommand{\bEv}{\bE^v}
+\newcommand{\tbE}{\widetilde{\bE}}
+\newcommand{\muc}{\mu^c}
+\newcommand{\muv}{\mu^v}
+\newcommand{\bnc}{\bn^c}
+\newcommand{\bnv}{\bn^v}
+\newcommand{\front}{\Gamma}
+\newcommand{\frontc}{{\Gamma_c}}
+\newcommand{\frontf}{{\Gamma_f}}
+\newcommand{\frontv}{{\Gamma_v}}
+\newcommand{\Omegac}{{\Omega_c}}
+\newcommand{\Omegacf}{{\Omega_{cf}}}
+\newcommand{\Omegacs}{{\Omega_{cs}}}
+\newcommand{\Omegav}{{\Omega_v}}
+\newcommand{\Omegacfmed}{{\Omega_{cf}^{2D}}}
+\newcommand{\Omegacsmed}{{\Omega_{cs}^{2D}}}
+\newcommand{\Omegacmed}{{\Omega_{c}^{2D}}}
+\newcommand{\Omegavmed}{{\Omega_v^{2D}}}
+\def\Re{R_{\text{\rm e}}}
+\def\Rec{R_{\text{\rm ec}}}
+\def\Rm{R_{\text{\rm m}}}
+\def\Rmc{R_{\text{\rm mc}}}
+% ie, eg, etal, etc, ae 
+\newcommand{\ie}{i.e.,\@\xspace}
+\newcommand{\eg}{e.g.\@\xspace}
+\newcommand{\cf}{cf.\@\xspace}
+\newcommand{\etal}{et al.\@\xspace}
+\newcommand{\etc}{etc.\@\xspace}
+\renewcommand{\ae}{a.e.\@\xspace}
+
+%Sets
+\newcommand{\tq}{{;\;}}
+\newcommand{\st}{\tq}
+\newcommand{\bset}{\{}
+\newcommand{\eset}{\}}
+\def\tr{^T}
+\def\lb{[\![}
+\def\rb{]\!]}
+\def\jump#1{\lb{#1}\rb}
+\def\mean#1{\left\{{#1}\right\}}
+\newcommand{\dif}{\text{d}}

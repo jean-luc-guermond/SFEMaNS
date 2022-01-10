@@ -1,0 +1,387 @@
+\documentclass[11pt]{amsart}
+\usepackage{epsfig}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{array}
+\usepackage{xspace}
+\usepackage{enumerate,comment,psfrag,subfigure}
+\usepackage{color,url,hyperref}
+%====================To be commented============================
+%\usepackage[notref,notcite]{showkeys} % To see crossreferences.
+%====================To be commented============================
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{boldfonts}
+\usepackage{mydef}
+% CN
+\def\lin{{\text{\rm lin}}}
+\def\kin{{\text{\rm kin}}}
+\def\pol{{\text{\rm pol}}}
+\def\linpol{{\text{\rm linpol}}}
+
+\def\rootfig{./FIGS}
+%%\newcommand{\balise}[1]{\textsc{[#1]}}
+\newcommand{\bal}[1]{\textcolor{red}{[#1]}}
+\newcommand{\balc}[1]{\textcolor{green}{[#1]}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{geometry}
+\geometry{verbose,letterpaper,tmargin=2cm,bmargin=2cm,lmargin=2.6cm,rmargin=2.6cm}
+\usepackage{multirow,hhline}
+
+\begin{document}
+
+\title[Schemes for the MHD Equations with Variable Magnetic Permeability...]{
+ Schemes for the MHD Equations with Variable Magnetic Permeability...
+}
+
+\author[D. Castanon-Quiroz]{%
+D. Castanon-Quiroz,
+}
+
+
+
+\date{Draft version: \today}
+  
+\begin{abstract}
+....
+\end{abstract}
+
+\maketitle 
+ 
+%========================================================================
+%========================================================================
+\section{Constructing an Analytical Solution for Maxwell Equations for Variable Permeability}
+\begin{equation}
+\begin{cases}
+\label{eq:maxwell-pde}
+
+\partial _t (\mu \mathbf{H})  =   -\nabla \times \mathbf E \qquad \text{in } \Omega ,\\
+\nabla \times \mathbf{H}  =   \sigma (\mathbf{E} + \mathbf{u} \times \mu \mathbf{H}) + \mathbf{j} \qquad \text{in } \Omega_c ,\\
+\nabla \times \mathbf{H}  =   0 \qquad \text{in } \Omega_v ,\\
+\text{div} (\mu \mathbf {H}) = 0  \qquad \text{in } \Omega ,\\
+\nabla \cdot \mathbf{E} = 0 \qquad \text{in } \Omega_v .\\
+\end{cases}
+\end{equation}
+
+
+\noindent We assume that $\Omega_v$ is connected, so as explained in  \cite{Guermond1}, exists
+a scalar potential $\phi$, up to a constant,  such that $\mathbf{H}|_{\Omega _v}=\nabla \phi$. So we can define
+$$ 
+\mathbf{H}=\begin{cases} \mathbf{H} ^c \quad \text{in} \quad \Omega_c \\ \nabla \phi \quad \text{in} \quad  \Omega_v\end{cases}
+\quad \text{and} \quad
+\mu =\begin{cases} \mu ^c \quad \text{in} \quad \Omega_c \\ \ 1 \quad \text{in} \quad  \Omega_v\end{cases}
+$$
+
+\subsection{ Variable  Permeability ${\mu}^c$ only in (r,z)}
+
+In the following we set $\Omega^c$ as a cylinder located at the origin with radius 1 and height 2.
+
+\noindent Now, let
+\begin{equation}
+ \label{Hsol-1}
+\mathbf{H}=\frac{1}{{\mu}^c} \nabla \psi,
+\end{equation}
+
+\noindent where $\psi=\psi(r,z)$ and satisfies the Laplace equation in cylindrical coordinates,
+\begin{equation}
+\label{eq:laplace_cyl}
+\partial _{rr}\psi + \frac{1}{r} \partial _r \psi + \partial_{zz} \psi = 0.
+\end{equation}
+
+\noindent If we also set  $\mathbf{j}= \nabla \times \mathbf{H}$, $\mathbf{u}=0$, and $\mathbf{E}=\mathbf{0}$. Then $\mathbf H$, defined as in (\ref{Hsol-1}),
+satisfies Maxwell equations (\ref{eq:maxwell-pde}).\\
+
+\noindent Now, let
+\begin{equation}
+{\mu^c}={\mu^c(r,z)}=\frac{1}{f(r,z)+1 },
+\end{equation}
+
+\noindent where $$f(r,z)= b \cdot r^3 \cdot (1-r)^3 \cdot (z^2-1)^3,$$
+ 
+\noindent and  $b\geq 0 $ is a  parameter which determines the variation of ${\mu}^c$.
+\noindent Observe that 
+$$
+\partial _r f(r,z) = 3b\big ( r(1-r)\big )^2(1-2r)(z^2-1)^3,
+\quad
+\partial _z f(r,z) = 6bz\big  (r(1-r))^3 (z^2-1)^2.
+$$
+
+
+
+Moreover,  $f (r,z) \leq 0$ for $(r,\theta,z) \in \Omega^c$ and,
+$$
+\sup _{\Omega^c} f(r,z)=f_{\text{max}}=0 , 
+\quad 
+\inf _{\Omega^c} f(r,z)=f_{\text{min}}= -\frac{b}{2^6}, 
+$$
+
+\noindent then,
+$$
+\mu_{\text{min}} ^c = \frac{1}{1 + f_{\text{max}}},\quad   \mu_{\text{max}} ^c =\frac{1}{1 + f_{\text{min}}},
+ \quad  \quad r_{\mu}=\frac{\mu _{\text{max}}}{\mu _{\text{min}}}=\frac{\frac{1}{1-\frac{b}{2^6}}}{1}, \quad \text{and} \quad b= 2^6\left (1- \frac{1}{r_{\mu}}\right).
+$$
+
+
+
+\noindent To get an explicit solution in (\ref{Hsol-1}),  equation (\ref{eq:laplace_cyl}) is solved using separation of variables, this is, letting
+$\psi(r,z)=R(r)Z(z)$ we solve the following system of ODEs,
+\begin{eqnarray*}
+Z''-\lambda Z & = & 0 \\
+R''+\frac{R'}{r}+\lambda  R & = & 0,
+\end{eqnarray*}
+where $\lambda$ is any real number. Here we choose $\lambda=1$, so
+\begin{equation}
+\label{psi-sol1}
+\psi(r,z)=J_0(r)\text{cosh}(z).
+\end{equation}
+
+\noindent Now, using $J_0'(r)=-J_1(r)$ and $\text{cosh}'(z)=\text{sinh}(z)$  we get,
+\begin{equation}
+\nabla \psi = \left[ \begin{array}{c} -J_1 (r)  \text{cosh}(z) \\ 0 \\J_0 (r)  \text{sinh}(z) \end{array} \right]
+\end{equation}
+
+\noindent then by (\ref{Hsol-1}), 
+
+\begin{equation}
+\mathbf{H}^c=(f(r,z)+1)
+\left[ \begin{array}{c} -J_1 (r)  \text{cosh}(z) \\ 0 \\J_0 (r)  \text{sinh}(z) \end{array} \right],
+\end{equation}
+
+\noindent To get $\nabla \times \mathbf{H}$, we use the identity 
+$$
+\nabla \times \left (\frac{1}{{\mu}^c} \nabla \psi \right )= \nabla \left ( \frac{1}{{\mu}^c} \right ) \times  \nabla
+\psi + \frac{1}{{\mu}^c} \nabla \times  \nabla \psi,
+$$
+but $\nabla \times  \nabla \psi = 0$. Then  using  equation (\ref{Hsol-1}), 
+
+\begin{equation*}
+\nabla \times \mathbf{H}^c=\nabla \left ( \frac{1}{{\mu}^c} \right ) \times  \nabla \psi, 
+\end{equation*}
+
+\noindent and 
+\begin{equation}
+ \nabla  \frac{1}{{\mu}^c}  =\left[ \begin{array}{c} \partial _r f(r,z) \\ 0  \\ \partial _z f(r,z) \end{array} \right];
+\end{equation}
+
+\noindent we obtain,
+
+\begin{equation}
+\nabla \times \mathbf{H}^c=
+\left[ \begin{array}{c}
+0 \\ 
+-\partial _r f(r,z) J_0(r)   \text{sinh}(z)  
+-\partial _z f(r,z) J_1(r)    \text{cosh}(z) \\
+ 0
+\end{array} \right],
+\end{equation}
+
+
+
+% \noindent We finally compute $\nabla \mu ^c$ with, 
+% $$
+% \nabla \mu ^c =\left[ \begin{array}{c} \partial _r \mu^c   \\ \frac{1}{r} \partial _{\theta} \mu^c  \\ \partial _z \mu^c \end{array} \right].
+% $$
+% \noindent where
+% $$
+% \partial _r \mu^c = -\frac{(\partial _r f(r,z)) \text{cos}(m \theta)}{[f(r,z)\text{cos}(m \theta)+1]^2},
+% $$
+
+
+% $$
+% \partial _{\theta} \mu^c = \frac{m f(r,z) \text{sin}(m \theta)}{[f(r,z)\text{cos}(m \theta)+1]^2},
+% $$
+% \noindent and
+% $$
+% \partial _z \mu^c = -\frac{(\partial _r f(r,z)) \text{cos}(m \theta)}{[f(r,z)\text{cos}(m \theta)+1]^2}.
+% $$
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\newpage
+Complete Scheme:\\
+\begin{align*}
+&\bB^c |_{t=0}  = \bB_0 ^c, \quad \phi |_{t=0}= \phi _0,\\
+& \int_{\Omegac}\frac{D\bB^{c,n+1}}{\Delta t}\SCAL \bb
++ \int_{\Omegav} \muv\frac{\GRAD D\phi^{n+1}}{\Delta t}\SCAL \GRAD\varphi 
++\int _{\Omega_c} \left ( \frac{R_m}{\sigma}  \left (\ROT \frac{\b B ^{c,n+1}}{\mu^c} - \bj^s \right)
+ - \tilde {\b u} \times  \bB^* \right )\cdot \ROT \bb 
+\\
+& +\int _{\Sigma_{\mu}} \left \{  \frac{R_m}{\sigma} \left (\ROT \frac{\b B ^{c,n+1}}{\mu^c} - \bj^s \right) - \tilde {\b u} \times \bB^*  \right \} \cdot  \left ( { \bb_1}\times \bn_1^c + { \bb_2}\times \bn_2^c\right )\\
+& +\beta_3 \sum_{F\in
+    \Sigma_{\mu }} h_F^{-1}\int_{F}   \left ( \frac{ \bB_1}{\mu^c_1}\times \bn_1^c + \frac{\bB_2}{\mu^c_2}\times \bn_2^c\right ) \SCAL   \left ( { \bb_1}\times \bn_1^c + { \bb_2}\times \bn_2^c\right )\\
+& +\beta_1 \sum_{F\in
+    \Sigma_{\mu }} h_F^{-1}\int_{F}   \left ( { \bB_1}\cdot \bn_1^c + {\bB_2}\cdot \bn_2^c\right ) \SCAL   \left ( {\mu^c_1}{ \bb_1}\cdot \bn_1^c + {\mu^c_2}{ \bb_2}\cdot \bn_2^c\right )\\
+&+\int _{\Sigma}\left (  \frac{R_m}{\sigma}\left (\ROT \frac{\b B ^c}{\mu^c} - \bj^s \right) - \tilde {\b u} \times \bB^*  \right )\cdot \left ( { \bb }\times  \bn^c +  \nabla \varphi \times \bn^v\right)\\
+&+ \beta_2 \sum_{F\in \Sigma} h_F^{-1}\int_{F}  \left ( \frac{\bB}{\mu^c}\CROSS \bn_1^c + {\GRAD \phi}\CROSS \bn_2^c\right )  \SCAL (\bb\CROSS \bnc +
+  \GRAD\varphi\CROSS \bnv)\\
+&+ \beta_1 \sum_{F\in \Sigma} h_F^{-1}\int_{F}  \left ( { \bB}\cdot \bn_1^c + {\GRAD \phi}\cdot \bn_2^c\right )  \SCAL ({\mu^c}\bb\cdot \bnc +
+  \GRAD\varphi \cdot \bnv)\\
+& + \beta_1\left(\int_\Omegac \mu^c\GRAD p\SCAL\bb
+- \int_\Omegac \bB\SCAL\GRAD q + \sum_{K\in\calF_h^c}
+\int_{K^{3D}} h_K^{2(1-\alpha)}\GRAD p\SCAL \GRAD q  
++ \sum_{K\in\calF_h^c} \int_{K^{3D}}
+h_K^{2\alpha}\DIV \bB \DIV ({\mu^c}  \bb)\right)\\
+&+\int_{\Omega_v} \muv\GRAD\phi^{n+1}\SCAL \GRAD\varphi -
+\int_{\partial\Omega_v} \muv\varphi \bn\SCAL \GRAD \phi^{n+1}\\
+&+  
+\int _{\Gamma^c _1} \left ( \frac{R_m}{\sigma}  \left (\ROT \frac{\b B ^{c,n+1}}{\mu^c} - \bj^s \right)
+ - \tilde {\b u} \times  \bB^* \right )\cdot ( \bb  \CROSS \bnc)
++ \beta _3\left (
+\sum_{F\in \Gamma ^c _1} h_F^{-1}\int_{F}  \left ( \frac{ \bB}{\mu^c}\CROSS \bn^c \right )  \SCAL (\bb\CROSS \bnc)
+\right )\\
+&=\int _{\Gamma ^c _2}(\ba \times \bn) \cdot \left ({\bb} \times \bn \right) + \int_{\Gamma _v}(\ba \times \bn) \cdot (\nabla \varphi \times \bn)
++
+\beta _3 \left ( \sum_{F\in \Gamma ^c _1} h_F^{-1}\int_{F}  \left ( {\bH}^{\text{given}}\CROSS \bn^c \right )  \SCAL (\bb\CROSS \bnc) \right).
+\end{align*}
+
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+\section{ Variable  Permeability ${\mu}^c$ only in Space}
+
+As before, we set $\Omega^c$ as a cylinder located at the origin with radius 1 and height 2. We also let,
+\begin{equation}
+ \label{Hsol-2}
+\mathbf{H}=\frac{1}{{\mu}^c} \nabla \psi,
+\end{equation}
+
+\noindent where $\psi=\psi(r,z)$ and satisfies the Laplace equation in cylindrical coordinates,
+\begin{equation}
+\label{eq:laplace_cyl2}
+\partial _{rr}\psi + \frac{1}{r} \partial _r \psi + \partial_{zz} \psi = 0.
+\end{equation}
+
+\noindent Again, we also set  $\mathbf{j}= \nabla \times \mathbf{H}$, $\mathbf{u}=0$, and $\mathbf{E}=\mathbf{0}$. Then $\mathbf H$, defined as in (\ref{Hsol-2}),
+satisfies Maxwell equations (\ref{eq:maxwell-pde}).\\
+
+\noindent Now, let
+\begin{equation}
+{\mu^c}={\mu^c(r,\theta, z)}=\frac{1}{f(r,\theta,z)\text{cos}(m \theta )+1 },
+\end{equation}
+
+\noindent where $$f(r,z)= b \cdot r^3 \cdot (1-r)^3 \cdot (z^2-1)^3,$$
+ 
+\noindent and  $b\geq 0 $ is a  parameter which determines the variation of ${\mu}^c$.
+\noindent Observe that 
+$$
+\partial _r f(r,z) = 3b\big ( r(1-r)\big )^2(1-2r)(z^2-1)^3,
+\quad
+\partial _z f(r,z) = 6bz\big  (r(1-r))^3 (z^2-1)^2.
+$$
+
+
+
+Moreover,  $f (r,z) \leq 0$ for $(r,\theta,z) \in \Omega^c$ and,
+$$
+\sup _{\Omega^c} |f(r,z)|= |f|_{\text{max}}=\frac{b}{2^6}, \quad
+\inf _{\Omega^c} |f(r,z)|= |f|_{\text{min}}=0.
+$$
+
+\noindent Then if $ m \neq 1$,
+$$
+\mu_{\text{min}} ^c = \frac{1}{1 + |f|_{\text{max}}},\quad   \mu_{\text{max}} ^c =\frac{1}{1 - |f|_{\text{max}}},
+ \quad  \quad r_{\mu}=\frac{\mu _{\text{max}}}{\mu _{\text{min}}}=\frac{1 + |f|_{\text{max}}}{1 -  |f|_{\text{max}}}, \quad \text{then} \quad b= 2^6\left ( \frac{r_{\mu}-1}{r_{\mu}+1 }\right).
+$$
+
+
+
+\noindent To get an explicit solution in (\ref{Hsol-2}),  equation (\ref{eq:laplace_cyl2}) is solved using separation of variables, this is, letting
+$\psi(r,z)=R(r)Z(z)$ we solve the following system of ODEs,
+\begin{eqnarray*}
+Z''-\lambda Z & = & 0 \\
+R''+\frac{R'}{r}+\lambda  R & = & 0,
+\end{eqnarray*}
+where $\lambda$ is any real number. Here we choose $\lambda=1$, so
+\begin{equation}
+\label{psi-sol2}
+\psi(r,z)=J_0(r)\text{cosh}(z).
+\end{equation}
+
+\noindent Now, using $J_0'(r)=-J_1(r)$ and $\text{cosh}'(z)=\text{sinh}(z)$  we get,
+\begin{equation}
+\nabla \psi = \left[ \begin{array}{c} -J_1 (r)  \text{cosh}(z) \\ 0 \\J_0 (r)  \text{sinh}(z) \end{array} \right]
+\end{equation}
+
+\noindent then by (\ref{Hsol-2}), 
+
+\begin{equation}
+\mathbf{H}^c=(f(r,z)+1)
+\left[ \begin{array}{c} -J_1 (r)  \text{cosh}(z) \\ 0 \\J_0 (r)  \text{sinh}(z) \end{array} \right],
+\end{equation}
+
+\noindent To get $\nabla \times \mathbf{H}$, we use the identity 
+$$
+\nabla \times \left (\frac{1}{{\mu}^c} \nabla \psi \right )= \nabla \left ( \frac{1}{{\mu}^c} \right ) \times  \nabla
+\psi + \frac{1}{{\mu}^c} \nabla \times  \nabla \psi,
+$$
+but $\nabla \times  \nabla \psi = 0$. Then  using  equation (\ref{Hsol-2}), 
+
+\begin{equation*}
+\nabla \times \mathbf{H}^c=\nabla \left ( \frac{1}{{\mu}^c} \right ) \times  \nabla \psi, 
+\end{equation*}
+
+\noindent and 
+\begin{equation}
+ \nabla  \frac{1}{{\mu}^c}  =\left[ \begin{array}{c} (\partial _r f(r,z)) \text{cos} (m \theta)\\ - \frac{m}{r} f(r,z) \text{sin} (m \theta)  \\ (\partial _z f(r,z)) \text{cos} (m \theta) \end{array} \right];
+\end{equation}
+
+\noindent we obtain,
+
+\begin{equation}
+\nabla \times \mathbf{H}^c=
+\left[ \begin{array}{c}
+-\frac{m}{r}f(r,z)J_0(r)\text{sin}(m \theta)\text{sinh}(z) \\ 
+-\partial _r f(r,z) J_0(r)   \text{sinh}(z)  
+-\partial _z f(r,z) J_1(r)    \text{cosh}(z) \\
+ -\frac{m}{r}f(r,z)J_1(r)\text{sin}(m \theta)\text{cosh}(z) \\ 
+
+\end{array} \right],
+\end{equation}
+
+
+
+ \noindent We finally compute $\nabla \mu ^c$ with, 
+ $$
+\nabla \mu ^c =\left[ \begin{array}{c} \partial _r \mu^c   \\ \frac{1}{r} \partial _{\theta} \mu^c  \\ \partial _z \mu^c \end{array} \right],
+$$
+\noindent where
+$$
+\partial _r \mu^c = -\frac{(\partial _r f(r,z)) \text{cos}(m \theta)}{[f(r,z)\text{cos}(m \theta)+1]^2},
+$$
+
+
+$$
+\partial _{\theta} \mu^c = \frac{m f(r,z) \text{sin}(m \theta)}{[f(r,z)\text{cos}(m \theta)+1]^2},
+$$
+\noindent and
+$$
+\partial _z \mu^c = -\frac{(\partial _z f(r,z)) \text{cos}(m \theta)}{[f(r,z)\text{cos}(m \theta)+1]^2}.
+$$
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+\newpage
+\begin{thebibliography}{9}
+\bibitem{Guermond1} J.-L. Guermond, J. L\' eorat, F. Luddens, C. Nore and A. Ribeiro,
+{\it Effects of Discontinuous Magnetic Permeability on Magnetohydronamic Problems }, 
+Journal of Computational Physics, {\bf 230} (2011), 6299-6319.
+\end{thebibliography}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% mode: flyspell
+%%% TeX-master: t
+%%% End:

@@ -1,0 +1,78 @@
+==================================================================
+!       Install Petsc
+==================================================================
+Intall or have somebody else install Petsc for you
+
+1) Have look at
+http://www.mcs.anl.gov/petsc/download/index.html
+
+2) Then do
+wget http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-3.7.2.tar.gz
+gunzip and untar the file
+
+3) Export the environment variables
+cd petsc-3.7.2
+export PETSC_DIR=$PWD
+export PETSC_ARCH=linux-gnu-c
+
+4) Go to petsc-3.7.2 and configure Petsc
+./configure --configModules=PETSc.Configure --optionsModule=PETSc.compilerOptions --download-f-blaslapack=1 --with-shared-libraries=1 --download-hypre=1 --download-mumps=1 --download-spooles=1 --download-scalapack=1 --download-metis=1 --download-parmetis=1 --download-blacs=1 --with-debugging=0 --with-x=0
+
+5) make all
+
+6) make test
+
+7) Done
+
+
+==================================================================
+!       Make SFEMaNS
+==================================================================
+1) Define the environement variable SFEMaNS_DIR in your ~/.bashrc file
+Example: edit ~/.bashrc and add one line 
+export SFEMaNS_DIR= the_path_to_SFEMaNS
+
+2) Create you own application (Not in SFEMaNS) 
+	mkdir MY_APPLICATION
+	cd MY_APPLICATION
+
+3) Create an application from the template
+	cp $SFEMaNS_DIR/TEMPLATE/* .
+
+4) Create your own make.in
+	mv make.inc_template make.inc
+
+5) Edit make.inc to correct the path to Petsc, Arpack, FFTW 
+If you do not need arpack (computation of eigenvalues) and do not want to
+go through the installation of ARPACK, disable the line 
+    USE arpack_mhd
+in main.f90, and the lines
+    CALL solver_arpack_mhd(comm_one_d, .FALSE. ,H_mesh,phi_mesh,&
+          m_max_c,inputs%dt,list_mode,mu_H_field,interface_H_mu, &
+          inputs%mu_phi, interface_H_phi)
+again in main.f90
+
+6) Create your own my_make
+	mv my_make_template  my_make
+
+7) Create your makefile
+	./my_make
+
+8) Create the excecutable
+	make a.exe -j 10
+
+9) Done	
+
+==================================================================
+!       Check installation
+==================================================================
+
+1) Create the executable a.exe as described above
+
+2) Then type the command
+   	cp $SFEMaNS_DIR/TEMPLATE/debug_SFEMaNS_template .
+
+3) Run the shell debug_SFEMaNS_template (it checks the installation of the code over more than 30 tests)
+       ./debug_SFEMaNS_test
+
+4) If all the test are "OK", SFEMaNS is correctly installed.

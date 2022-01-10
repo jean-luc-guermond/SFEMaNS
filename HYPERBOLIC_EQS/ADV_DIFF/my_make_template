@@ -1,0 +1,58 @@
+#!/bin/bash
+
+
+#Declare files
+file_in=dummy_file
+file_out=makefile
+if [ -f $file_out ]; then
+   rm $file_out
+fi
+
+#Create dummy_file
+$SFEMaNS_DIR/TEMPLATE/fmkmf.pl -p .:$SFEMaNS_DIR/FEMSUB:$SFEMaNS_DIR/FEMSUB_OBJET:$SFEMaNS_DIR/GAUSS_POINTS_OBJET:$SFEMaNS_DIR/FEMSUB_PARALLEL:$SFEMaNS_DIR/FEMSUB_PARALLEL/OLD:$SFEMaNS_DIR/FEMSUB_OBJET/OLD:$SFEMaNS_DIR/FEMSUB_SFEMaNS:$SFEMaNS_DIR/WRITE_BLOCK_MM:$SFEMaNS_DIR/HYPERBOLIC_EQS/TOOLS main.f90 > $file_in
+
+echo $file_in 'done'
+
+#Create makefile
+ok=0
+while read line 
+do
+   if [ "$line" == "F90=f90" ]; then
+      ok=1
+   fi
+   if ((ok==1)); then
+      echo "$line" >> $file_out
+   fi
+done < $file_in
+
+rm -rf $file_in
+echo $file_in 'removed'
+
+#Edit file
+sed -i 's/main:/a.exe:/g' $file_out
+sed -i 's/main /a.exe /g' $file_out
+sed -i 's/clean/cl/g' $file_out
+sed -i '1s/F90=f90/include make.inc/' $file_out
+sed -i '7s/$/ $(PETSC_LIB) $(LIB_FFTW) $(PA_LIB) -lz/' $file_out
+sed -i 's/rm -f -r/\t rm -f -r/' $file_out
+sed -i 's/$(F90)/\t$(F90)/g' $file_out
+sed -i '7s/F90/LNK/' $file_out
+sed -i '7s/main.o/write_block_c.o main.o/' $file_out
+sed -i 's/write_block_f.o:/write_block_f.o:write_block_c.o /g' $file_out
+sed -i '$ a \ ' $file_out
+sed -i '$ a write_block_c.o:$(ROOT)/WRITE_BLOCK_MM/write_block_c.c' $file_out
+sed -i '$ a gcc -c $(ROOT)/WRITE_BLOCK_MM/write_block_c.c' $file_out
+sed -i '$s/gcc/\t gcc/' $file_out
+
+#Take care of $SFEMaNS_DIR and /////
+replacement=$SFEMaNS_DIR
+echo $replacement > tt
+sed -i 's/\//@@/g' tt
+read replacement  < tt
+rm -rf tt
+
+sed -i 's/\//@@/g' $file_out
+sed -i "s/${replacement}/\$(ROOT)/g" $file_out
+sed -i 's/@@/\//g' $file_out
+
+echo $file_out 'done'

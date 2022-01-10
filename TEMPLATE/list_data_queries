@@ -1,0 +1,350 @@
+!===================================================================================
+!          Data for the mesh
+!===================================================================================
+===Is mesh file formatted (true/false)?
+===Directory and name of mesh file
+===Do we read metis partition? (true/false)
+
+!===================================================================================
+!          Processor distribution
+!===================================================================================
+===Number of processors in meridian section
+===Number of processors in Fourier space
+
+!===================================================================================
+!          Fourier modes
+!===================================================================================
+===Number of Fourier modes
+===Select Fourier modes? (true/false)
+===List of Fourier modes (if select_mode=.TRUE.)
+
+!===================================================================================
+!          Type of problem to be solved
+!===================================================================================
+===Problem type: (nst, mxw, mhd, fhd)
+
+!===================================================================================
+!          Restarts
+!===================================================================================
+===Restart on velocity (true/false)
+===Restart on magnetic field (true/false)
+===Restart on temperature (true/false)
+
+!===================================================================================
+!          Time integration
+!===================================================================================
+===Time step and number of time iterations
+
+!===================================================================================
+!          Check numerical stability
+!===================================================================================
+===Check numerical stability (true/false)
+
+!===================================================================================
+!          Spacial Periodicity
+!===================================================================================
+===How many pieces of periodic boundary?
+===Indices of periodic boundaries and corresponding vectors
+
+!===================================================================================
+!          Mesh symmetry
+!===================================================================================
+===Is the mesh symmetric (true/false)?
+
+!===================================================================================
+!          Navier Stokes data
+!===================================================================================
+===Solve Navier-Stokes with u (true) or m (false)?
+===Type of finite element for velocity field
+===Do we solve momentum with bdf2 (true/false)?
+===Do we use Taylor method to solve momentum (true/false)?
+===Time accuracy of Taylor method (3 or 4)?
+===Lambda parameter for Taylor method?
+===Number of subdomains in Navier-Stokes mesh
+===List of subdomains for Navier-Stokes mesh
+
+!===================================================================================
+!          Dirichlet BCs for velocity
+!===================================================================================
+===How many boundary pieces for Dirichlet BCs on uradial?
+===List of boundary pieces for Dirichlet BCs on uradial
+===How many boundary pieces for Dirichlet BCs on utheta?
+===List of boundary pieces for Dirichlet BCs on utheta
+===How many boundary pieces for Dirichlet BCs on uzaxis?
+===List of boundary pieces for Dirichlet BCs on uzaxis
+===How many boundary pieces for full Dirichlet BCs on velocity?
+===List of boundary pieces for full Dirichlet BCs on velocity
+
+!===================================================================================
+!          Reynolds number
+!===================================================================================
+===Reynolds number
+===Kinematic viscosity
+===Variable viscosity (true/false)?
+
+!===================================================================================
+!          Divergence penalty
+!===================================================================================
+===Coefficient for penalty of divergence in NS?
+
+!===================================================================================
+!          Precession
+!===================================================================================
+===Is there a precession term (true/false)?
+===Precession rate
+===Precession angle over pi
+
+!===================================================================================
+!          Penalty to enforce solids domains
+!===================================================================================
+===Use penalty in NS domain (true/false)?
+===Use nonzero velocity in solids (true/false)?
+===Compute z momentum (true/false)?
+
+!===================================================================================
+!          Solver parameters for velocity
+!===================================================================================
+===Maximum number of iterations for velocity solver
+===Relative tolerance for velocity solver
+===Absolute tolerance for velocity solver
+===Velocity solver verbose? (true/false)
+===Solver type for velocity (FGMRES, CG, ...)
+===Preconditionner type for velocity solver (HYPRE, JACOBI, MUMPS...)
+
+!===================================================================================
+!          Solver parameters for pressure
+!===================================================================================
+===Maximum number of iterations for pressure solver
+===Relative tolerance for pressure solver
+===Absolute tolerance for pressure solver
+===Pressure solver verbose? (true/false)
+===Solver type for pressure (FGMRES, CG, ...)
+===Preconditionner type for pressure solver (HYPRE, JACOBI, MUMPS...)
+
+!===================================================================================
+!          Solver parameters for mass matrix
+!===================================================================================
+===Maximum number of iterations for mass matrix solver
+===Relative tolerance for mass matrix solver
+===Absolute tolerance for mass matrix solver
+===Mass matrix solver verbose? (true/false)
+===Solver type for mass matrix (FGMRES, CG, ...)
+===Preconditionner type for mass matrix solver (HYPRE, JACOBI, MUMPS...)
+
+!===================================================================================
+!          LES coefficients
+!===================================================================================
+===Use LES? (true/false)
+===Coefficients for LES
+===Coefficient multiplying residual
+===Coefficient for explicit LES
+===Use LES in momentum? (true/false)
+
+!===================================================================================
+!          Maxwell data. Definition of the domain
+!===================================================================================
+===Solve Maxwell with H (true) or B (false)?
+===Quasi-static approximation (true) or (false)?
+===Steady current for fhd (true or false)?
+===Number of subdomains in magnetic field (H) mesh
+===List of subdomains for magnetic field (H) mesh
+
+!===================================================================================
+!          Interfaces H/H
+!===================================================================================
+===Number of interfaces in H mesh
+===List of interfaces in H mesh
+
+!===================================================================================
+!          Dirichlet BCs for H (Hxn = )
+!===================================================================================
+===Number of Dirichlet sides for Hxn
+===List of Dirichlet sides for Hxn
+
+!===================================================================================
+!          Permeability and conductivity for H
+!===================================================================================
+===Is permeability defined analytically (true/false)?
+===Permeability in the conductive part (1:nb_dom_H)
+===Is permeability variable in theta (true/false)?
+===Use FEM Interpolation for magnetic permeability (true/false)?
+===Conductivity in the conductive part (1:nb_dom_H)
+===Minimum of conductivity in the whole domain
+===Minimum of permeability in the whole domain
+
+!===================================================================================
+!          Finite element type for H (P1 or P2)
+!===================================================================================
+===Type of finite element for magnetic field
+
+!===================================================================================
+!          Magnetic Reynolds number
+!===================================================================================
+===Magnetic Reynolds number
+
+!===================================================================================
+!          Stabilization parameters
+!===================================================================================
+===Stabilization coefficient (divergence)
+===Stabilization coefficient for Dirichlet H and/or interface H/H
+
+!===================================================================================
+!          Subdomains for phi (if any)
+!===================================================================================
+===Number of subdomains in magnetic potential (phi) mesh
+===List of subdomains for magnetic potential (phi) mesh
+
+!===================================================================================
+!          Dirichlet BCs on phi
+!===================================================================================
+===How many boundary pieces for Dirichlet BCs on phi?
+===List of boundary pieces for Dirichlet BCs on phi
+
+!===================================================================================
+!          H/phi interface
+!===================================================================================
+===Number of interfaces between H and phi
+===List of interfaces between H and phi
+
+!===================================================================================
+!          Permeability in vacuum
+!===================================================================================
+===Permeability in vacuum
+
+!===================================================================================
+!          Finite element type for phi (scalar potential, use P2)
+!===================================================================================
+===Type of finite element for scalar potential
+
+!===================================================================================
+!          Stabilization parameters for interface H/phi
+!===================================================================================
+===Stabilization coefficient (interface H/phi)
+
+!===================================================================================
+!          Solver parameters for phi
+!===================================================================================
+===Maximum number of iterations for Maxwell solver
+===Relative tolerance for Maxwell solver
+===Absolute tolerance for Maxwell solver
+===Maxwell solver verbose? (true/false)
+===Solver type for Maxwell (FGMRES, CG, ...)
+===Preconditionner type for Maxwell solver (HYPRE, JACOBI, MUMPS...)
+
+!===================================================================================
+!          Data phase and temperature
+!===================================================================================
+===Is there a temperature field?
+
+!===================================================================================
+!          Gravity coefficient for temperature
+!===================================================================================
+===Non-dimensional gravity coefficient
+
+!===================================================================================
+!          Temperature 
+!===================================================================================
+===Helmholtz force for ferrohydrodynamics? (true/false)
+===Non-dimensional magnetic force coefficient for ferrohydrodynamics
+===Number of subdomains in temperature mesh
+===List of subdomains for temperature mesh
+===Density (1:nb_dom_temp)
+===Heat capacity (1:nb_dom_temp)
+===Thermal conductivity (1:nb_dom_temp)
+===Volumetric heat capacity (1:nb_dom_temp)
+===Thermal conductivity (1:nb_dom_temp)
+===Diffusivity coefficient for temperature (1:nb_dom_temp)
+
+!===================================================================================
+!          Dirichlet BCs on temperature
+!===================================================================================
+===How many boundary pieces for Dirichlet BCs on temperature?
+===List of boundary pieces for Dirichlet BCs on temperature
+===How many boundary pieces for Robin BCs on temperature?
+===List of boundary pieces for Robin BCs on temperature
+===Convection heat transfert coefficient (1:temperature_nb_robin_sides)
+===Exterior temperature (1:temperature_nb_robin_sides)
+
+!===================================================================================
+!          Interfaces NSt and Temerature
+!===================================================================================
+===Number of interfaces between velocity and temperature only domains (for nst applications)
+===List of interfaces between velocity and temperature only domains (for nst applications)
+
+!===================================================================================
+!          Solver parameters for Temperature
+!===================================================================================
+===Maximum number of iterations for temperature solver
+===Relative tolerance for temperature solver
+===Absolute tolerance for temperature solver
+===Temperature solver verbose? (true/false)
+===Solver type for temperature (FGMRES, CG, ...)
+===Preconditionner type for temperature solver (HYPRE, JACOBI, MUMPS...)
+
+!===================================================================================
+!          Level set
+!===================================================================================
+===Is there a level set
+===Do we fix level set? (true/false)
+===How many fluids?
+===multiplier for h_min for level set
+===Compression factor for level set
+===Density of fluid 0, fluid 1, ...
+===Dynamic viscosity of fluid 0, fluid 1, ...
+===Conductivity of fluid 0, fluid 1, ...
+===Is there a surface tension?
+===Coefficients of surface tension for level set 0, level set 1, ...
+===Do we apply mass correction? (true/false)
+===How many boundary pieces for Dirichlet BCs on level set?
+===List of boundary pieces for Dirichlet BCs on level set
+===How are the variables reconstructed from the level set function? (lin, reg)
+===Value of the regularization coefficient in (0,0.5]
+===Do we kill level set overshoot? (true/false)
+===Do we use P2 finite element for level_set? (true/false)
+===Do we use JLG compression method for level_set? (true/false)
+
+!===================================================================================
+!          Solver parameters for level_set
+!===================================================================================
+===Maximum number of iterations for level set solver
+===Relative tolerance for level set solver
+===Absolute tolerance for level set solver
+===Level set solver verbose? (true/false)
+===Solver type for level set (FGMRES, CG, ...)
+===Preconditionner type for level set solver (HYPRE, JACOBI, MUMPS...)
+
+!===================================================================================
+!          Data for arpack (eigenvalue problems)
+!===================================================================================
+===Do we use Arpack?
+===Number of eigenvalues to compute
+===Maximum number of Arpack iterations
+===Tolerance for Arpack
+===Which eigenvalues (''LM'', ''SM'', ''SR'', ''LR'' ''LI'', ''SI'')
+===Create 2D vtu files for Arpack? (true/false)
+
+!===================================================================================
+!          Data for post processing
+!===================================================================================
+===Vtu files in xml format? (true=xml/false=ascii)
+===Number of planes in real space for Visualization
+===Frequency to write restart file
+===Frequency to write energies
+===Frequency to create plots
+===Just postprocessing without computing? (true/false)
+
+!===================================================================================
+!          Modes to be zeroed out
+!===================================================================================
+===Should some modes be zeroed out?
+===How many Navier-Stokes modes to zero out?
+===List of Navier-Stokes modes to zero out?
+===How Maxwell modes to zero out?
+===List of Maxwell modes to zero out?
+
+!===================================================================================
+!          Verbose
+!===================================================================================
+===Verbose timing? (true/false)
+===Verbose divergence? (true/false)
+===Verbose CFL? (true/false)

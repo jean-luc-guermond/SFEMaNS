@@ -1,0 +1,37 @@
+===================================================
+======Information to UPDATE the documentation======
+===================================================
+
+1)If you add new test in the documentation, here is the code color of the background for paraview:
+0     128
+0     128
+128   128
+Use white color for the text
+
+2)When saving images (png) with paraview, use the following resolution parameters:
+570 x 428
+Then crop the png files with gthumb or equivalent.
+
+3)To update the documentation for a new version of SFEMaNS, type the command:
+sed -i -- 's/v5.3/vx.y/' *
+sed -i -- 's/version 5.3/version x.y/' Doxyfile 
+where vx.y is the number of the new version (like v4.2 or v5.1).
+
+
+===================================================
+======Information to COMPILE the documentation=====
+===================================================
+
+1)Go in the directory DOXYGEN_DOCUMENTATION of SFEMaNS.
+
+2)Set the path where the html are written in the file Doxyfile.
+The following line needs to be changed.
+OUTPUT_DIRECTORY       = /u/guermond/public_html/SFEMaNS
+
+3)Type the following lines to compile the documentation.
+doxygen Doxyfile
+
+4)Edit the file highlight_user_tab_script (change the path with guermond to correct path) and type the command
+./highlight_user_tab_script 
+
+

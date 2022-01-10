@@ -1,0 +1,114 @@
+ROOT           = ${SFEMaNS_DIR}
+
+####Link with write_block.f90 and write_block.c
+####gcc and gfortran
+#gcc -c write_block.c
+#gfortran -cpp write_block.f90 example.f90 write_block.o -lz
+####icc and ifort
+#icc -c write_block.c
+#ifort -fpp write_block.f90 example.f90 write_block.o -lz
+#######################################################
+########Debian install
+#######################################################
+#RACINE_FFTW    = /usr
+#LIB_FFTW       = /usr/lib/x86_64-linux-gnu/libfftw3.so
+#PETSC_DIR      = /etc/alternatives/petsc
+#PETSC_ARCH     = 
+#I_PETSC        = -I${PETSC_DIR}/include
+#INC_FFTW       =-I$(RACINE_FFTW)/include
+#PREPROC        = -x f95-cpp-input
+##OPT            =  $(FFLAGS) -O3
+#OPT            =  $(FFLAGS) -Wall -fimplicit-none -fbounds-check #-O3
+#PA_LIB         = -lmetis
+#include ${PETSC_DIR}/lib/petsc/conf/variables
+#include ${PETSC_DIR}/lib/petsc/conf/rules
+#F90	       = $(FC) $(PREPROC) $(OPT) $(I_PETSC) $(INC_FFTW)
+#LNK	       = $(FLINKER)
+
+
+#######################################################
+########Quarck family
+#######################################################
+RACINE_FFTW    = /usr
+LIB_FFTW       = /usr/lib/x86_64-linux-gnu/libfftw3.so
+PETSC_DIR      = $(ROOT)/../petsc-3.12.1
+PETSC_ARCH     = linux-gnu-c
+I_PETSC        = -I${PETSC_DIR}/include -I${PETSC_DIR}/$(PETSC_ARCH)/include 
+INC_FFTW       =-I$(RACINE_FFTW)/include
+PREPROC        = -x f95-cpp-input
+#OPT            =  $(FFLAGS) -O3
+OPT            =  $(FFLAGS) -Wall -fimplicit-none -fbounds-check #-O3
+#OPT            = $(FFLAGS) -march=native -mtune=native -Ofast
+PA_LIB         = $(ROOT)/../ARPACK/parpack_MPI-SUN4.a $(ROOT)/../ARPACK/libarpack_SUN4.a
+include ${PETSC_DIR}/lib/petsc/conf/variables
+include ${PETSC_DIR}/lib/petsc/conf/rules
+F90	       = $(FC) $(PREPROC) $(OPT) $(I_PETSC) $(INC_FFTW)
+LNK	       = $(FLINKER)
+#######################################################
+
+#######################################################
+########Faraday
+#######################################################
+#PREPROC        = -Mpreprocess
+#OPT            = $(FFLAGS) -O3
+#PETSC_DIR      = $(ROOT)/../petsc-3.7.2
+#PETSC_ARCH     = linux-pgi
+#LIB_FFTW       = /share/apps/fftw3-pgi/lib/libfftw3.a
+#include ${PETSC_DIR}/lib/petsc/conf/variables
+#F90            = $(FC) $(PREPROC) $(OPT) $(I_PETSC) #$PARPACK_PGI_64
+#LNK            = $(FLINKER)
+#I_PETSC        = -I${PETSC_DIR}/include -I${PETSC_DIR}/$(PETSC_ARCH)/include
+#PA_LIB         = $(ROOT)/../ARPACK/parpack_MPI-SUN4.a $(ROOT)/../ARPACK/libarpack_SUN4.a
+#######################################################
+
+#######################################################
+########Stampede
+#######################################################
+#RACINE_FFTW    = /opt/apps/intel13/mvapich2_1_9/fftw3/3.3.2
+#LIB_FFTW       = 
+#PETSC_DIR      = /opt/apps/intel13/mvapich2_1_9/petsc/3.7
+#PETSC_ARCH     = 
+#PREPROC        = -cpp 
+#OPT            = -O3 
+#include ${PETSC_DIR}/lib/petsc/conf/variables
+#include ${PETSC_DIR}/lib/petsc/conf/rules
+#F90            = $(FC) $(PREPROC) $(OPT) $(I_PETSC) $(INC_FFTW)
+#LNK            = $(FLINKER)
+#I_PETSC        = -I${PETSC_DIR}/include -I${PETSC_DIR}/$(PETSC_ARCH)/include
+#INC_FFTW       =-I$(RACINE_FFTW)/include
+#######################################################
+
+#######################################################
+########Ada
+#######################################################
+#RACINE_FFTW    =
+#PREPROC        = -fpp
+#LIB_FFTW       =
+#PA_LIB         =
+#OPT            = $(FFLAGS) -O2 -g -traceback -heap-arrays # -O3
+#include ${PETSC_DIR}/ada-real-mumps/lib/petsc/conf/variables
+#include ${PETSC_DIR}/ada-real-mumps/lib/petsc/conf/rules
+#F90            = $(FC) $(PREPROC) $(OPT) $(I_PETSC) $(INC_FFTW)
+#LNK            = $(FLINKER)
+#I_PETSC        = -I${PETSC_DIR}/include -I${PETSC_DIR}/ada-real-mumps/include
+#INC_FFTW       = -I$(RACINE_FFTW)/include
+#######################################################
+
+#######################################################
+########Brazos
+#######################################################
+###MODULES TO LOAD: gcc/7.3.0 binutils openmpi/2.1.6 fftw/3.3.8
+#RACINE_FFTW    = ${BRAZOS_FFTW3_ROOT}
+#PETSC_DIR      = /apps/gcc-7.3.0/openmpi-2.1.6/petsc/3.10.3/
+#PREPROC        = -x f95-cpp-input
+#LIB_FFTW       = -L${BRAZOS_FFTW3_LIB} -lfftw3
+#PA_LIB         =
+#OPT            =  $(FFLAGS) -Wall -fimplicit-none -fbounds-check #-O3
+##OPT            =  $(FFLAGS) -O3
+#include ${PETSC_DIR}/lib/petsc/conf/variables
+#include ${PETSC_DIR}/lib/petsc/conf/rules
+#F90            = $(FC) $(PREPROC) $(OPT) $(I_PETSC) $(INC_FFTW)
+#LNK            = $(FLINKER)
+#I_PETSC        = -I${PETSC_DIR}/include
+#INC_FFTW       = -I${BRAZOS_FFTW3_INC}
+#######################################################

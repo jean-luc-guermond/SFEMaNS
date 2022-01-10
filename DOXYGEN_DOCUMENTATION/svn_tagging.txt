@@ -1,0 +1,3 @@
+Svn can replace $id$ by something else by using
+
+svn propset svn:keywords "Author Date Id Revision" *h (or *f90, etc) 
