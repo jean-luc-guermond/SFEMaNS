@@ -9,7 +9,7 @@ PROGRAM mhd_prog
   USE post_processing_debug
   USE verbose
 #include "petsc/finclude/petsc.h"
-    USE petsc
+  USE petsc
   IMPLICIT NONE
   !===Navier-Stokes fields========================================================
   TYPE(mesh_type), POINTER                        :: pp_mesh, vv_mesh    

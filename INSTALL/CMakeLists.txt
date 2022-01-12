@@ -25,14 +25,14 @@ add_library(sfemans_lib_C SHARED ${sfemans_sources_C})
 
 # Enable Fortran
 enable_language(Fortran)
-add_compile_options(${COMPILE_OPTIONS})
+# add_compile_options(${COMPILE_OPTIONS})
 
 
 # Getting useful libraries
 find_package(MPI)
 find_package(ZLIB)
 find_package(PkgConfig)
-
+find_package(HDF5)
 pkg_check_modules(PETSC PETSc)
 pkg_check_modules(FFTW fftw3)
 
@@ -72,19 +72,19 @@ ADD_CUSTOM_TARGET(native
 
 
 file(GLOB_RECURSE sfemans_sources_F
-  ${SFEMaNS_DIR}/FEMSUB/*.f90
-  ${SFEMaNS_DIR}/FEMSUB_OBJET/*.f90
-  ${SFEMaNS_DIR}/GAUSS_POINTS_OBJET/*.f90
-  ${SFEMaNS_DIR}/FEMSUB_PARALLEL/*.f90
-  ${SFEMaNS_DIR}/FEMSUB_SFEMaNS/*.f90
-  ${SFEMaNS_DIR}/MHD_DATA_TEST_CONV_PETSC/*.f90
-  ${SFEMaNS_DIR}/WRITE_BLOCK_MM/*.f90
+	${SFEMaNS_DIR}/FEMSUB/*.F90
+	${SFEMaNS_DIR}/FEMSUB_OBJET/*.F90
+	${SFEMaNS_DIR}/GAUSS_POINTS_OBJET/*.F90
+	${SFEMaNS_DIR}/FEMSUB_PARALLEL/*.F90
+	${SFEMaNS_DIR}/FEMSUB_SFEMaNS/*.F90
+	${SFEMaNS_DIR}/MHD_DATA_TEST_CONV_PETSC/*.F90
+	${SFEMaNS_DIR}/WRITE_BLOCK_MM/*.F90
   )
 add_library(sfemans_lib_F SHARED ${sfemans_sources_F})
 target_link_libraries(sfemans_lib_F sfemans_lib_C) 
 
 # Create local sources from TEMPLATE
-file(GLOB_RECURSE template_sources ${SFEMaNS_DIR}/TEMPLATE/*.f90)
+file(GLOB_RECURSE template_sources ${SFEMaNS_DIR}/TEMPLATE/*.F90)
 
 # Define runtime output directory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../EXECUTABLE)
@@ -94,4 +94,5 @@ add_executable(a.exe ${template_sources})
 
 # Include and link library
 target_include_directories(a.exe PUBLIC ${FFTW_INCLUDEDIR} ${PETSC_INCLUDEDIR})
+
 target_link_libraries(a.exe PUBLIC sfemans_lib_F ${PETSC_LINK_LIBRARIES} ${PETSC_PRIVATE_LIBRARIES} ${FFTW_LINK_LIBRARIES} ${ZLIB_LIBRARIES} ${MPI_Fortran_LIBRARIES})
