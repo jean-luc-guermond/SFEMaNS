@@ -33,10 +33,11 @@ find_package(MPI)
 find_package(ZLIB)
 find_package(PkgConfig)
 find_package(HDF5)
+
 pkg_check_modules(PETSC PETSc)
 pkg_check_modules(FFTW fftw3)
 
-# Searching all petsc linked librariesi
+# Searching all petsc linked libraries
 execute_process (COMMAND pkg-config PETSc --libs --static OUTPUT_VARIABLE PETSC_PRIVATE_LIBRARIES)
 string(STRIP "${PETSC_PRIVATE_LIBRARIES}" PETSC_PRIVATE_LIBRARIES)
 
@@ -65,12 +66,7 @@ ADD_CUSTOM_TARGET(native
   COMMENT "Switch CMAKE_BUILD_TYPE to Native"
   )
 
-
-# Since the SFEMaNS directory *should* not change structure, i.e.
-# files are not added/removed, we can use the file()
-# command to populate a variable with the list of needed files
-
-
+# Build library sfemans_lib_F
 file(GLOB_RECURSE sfemans_sources_F
 	${SFEMaNS_DIR}/FEMSUB/*.F90
 	${SFEMaNS_DIR}/FEMSUB_OBJET/*.F90
@@ -81,6 +77,10 @@ file(GLOB_RECURSE sfemans_sources_F
 	${SFEMaNS_DIR}/WRITE_BLOCK_MM/*.F90
   )
 add_library(sfemans_lib_F SHARED ${sfemans_sources_F})
+target_include_directories(sfemans_lib_F PUBLIC ${FFTW_INCLUDEDIR}
+  ${FFTW_INCLUDE_DIRS}
+  ${PETSC_INCLUDEDIR}
+  ${PETSC_INCLUDE_DIRS})
 target_link_libraries(sfemans_lib_F sfemans_lib_C) 
 
 # Create local sources from TEMPLATE
@@ -93,6 +93,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../EXECUTABLE)
 add_executable(a.exe ${template_sources})
 
 # Include and link library
-target_include_directories(a.exe PUBLIC ${FFTW_INCLUDEDIR} ${PETSC_INCLUDEDIR})
+target_link_libraries(a.exe PUBLIC sfemans_lib_F
+  ${PETSC_LINK_LIBRARIES}
+  ${PETSC_PRIVATE_LIBRARIES}
+  ${FFTW_LINK_LIBRARIES}
+  ${ZLIB_LIBRARIES}
+  ${MPI_Fortran_LIBRARIES}
+  ${HDF5_LIBRARIES}
+  ${ADDITIONAL_LINKS})
 
-target_link_libraries(a.exe PUBLIC sfemans_lib_F ${PETSC_LINK_LIBRARIES} ${PETSC_PRIVATE_LIBRARIES} ${FFTW_LINK_LIBRARIES} ${ZLIB_LIBRARIES} ${MPI_Fortran_LIBRARIES})
