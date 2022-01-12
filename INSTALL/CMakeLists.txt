@@ -1,7 +1,6 @@
 MESSAGE(STATUS "This is CMake ${CMAKE_VERSION}")
 MESSAGE(STATUS "")
 
-
 # Includes various variables depending on native
 include(variables.cmake)
 
@@ -16,12 +15,9 @@ message(${SFEMaNS_DIR} "  SFEMaNS_DIR")
 enable_language(C)
 
 file(GLOB_RECURSE sfemans_sources_C 
-  ${SFEMaNS_DIR}/WRITE_BLOCK_MM/write_block_c.c
-  )
+  ${SFEMaNS_DIR}/WRITE_BLOCK_MM/write_block_c.c)
 
 add_library(sfemans_lib_C SHARED ${sfemans_sources_C})
-
-
 
 # Enable Fortran
 enable_language(Fortran)
@@ -32,7 +28,6 @@ enable_language(Fortran)
 find_package(MPI)
 find_package(ZLIB)
 find_package(PkgConfig)
-find_package(HDF5)
 
 pkg_check_modules(PETSC PETSc)
 pkg_check_modules(FFTW fftw3)
