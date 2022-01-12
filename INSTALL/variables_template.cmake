@@ -8,6 +8,7 @@
 
 # Variables to set for Whistler
 set(SFEMaNS_DIR "/home/guermond/SFEMaNS/GIT_SFEMaNS/SFEMaNS")
-#set(COMPILE_OPTIONS "-x f95-cpp-input")
-set(ADDITIONAL_LINKS "-lmetis -lz")
-   -L /usr/lib/x86_64-linux-gnu/hdf5/serial")
+set(ADDITIONAL_LINKS "-lmetis -lz -L /usr/lib/x86_64-linux-gnu/hdf5/serial")
+set(debug_bounds "-Wall -fimplicit-none -fbounds-check")
+set(release_bounds "-O3")
+set(native_bounds "-march=native -mtune=native -Ofast")

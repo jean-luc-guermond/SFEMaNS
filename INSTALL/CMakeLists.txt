@@ -37,11 +37,13 @@ execute_process (COMMAND pkg-config PETSc --libs --static OUTPUT_VARIABLE PETSC_
 string(STRIP "${PETSC_PRIVATE_LIBRARIES}" PETSC_PRIVATE_LIBRARIES)
 
 # Setting for different builds
-set(CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS_DEBUG} ${bounds}")
-set(CMAKE_Fortran_FLAGS_RELEASE " -O3 " CACHE STRING
+set(CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS_DEBUG} ${debug_bounds}")
+set(CMAKE_Fortran_FLAGS_RELEASE ${release_bounds} CACHE STRING
   " Flags used by the compiler during release builds. ")
-set(CMAKE_Fortran_FLAGS_NATIVE " -O4 -march=native -mtune=native -Ofast " CACHE STRING
+set(CMAKE_Fortran_FLAGS_NATIVE ${native_bounds} CACHE STRING
   " Flags used by the compiler during release builds. ")
+
+message(${CMAKE_Fortran_FLAGS_DEBUG} " debug flag")
 
 ADD_CUSTOM_TARGET(debug
   COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug ${CMAKE_SOURCE_DIR}
@@ -94,6 +96,5 @@ target_link_libraries(a.exe PUBLIC sfemans_lib_F
   ${FFTW_LINK_LIBRARIES}
   ${ZLIB_LIBRARIES}
   ${MPI_Fortran_LIBRARIES}
-  ${HDF5_LIBRARIES}
   ${ADDITIONAL_LINKS})
 
