@@ -3655,9 +3655,7 @@ CONTAINS
   SUBROUTINE FFT_COMPRESSION_LEVEL_SET_DCL(communicator_F,communicator_S, V1_in, V2_in, c_in, c_out, &
        hloc_gauss, l_G, nb_procs, bloc_size, m_max_pad, temps)
     USE input_data
-!JLG 09/ 2016
-USE user_data
-!JLG 09/ 2016
+
     !FFT (FFT(-1) V1 . FFT(-1) V2) = c_out
     !This a de-aliased version of the code, FEB 4, 2011, JLG
     IMPLICIT NONE
@@ -3832,10 +3830,6 @@ USE user_data
     !===Compute compression term
 !JLG Sept 30 2016
     hh = inputs%h_min_distance
-!JLG 09/2016
-!    hh = user%ep 
-!JLG 09/2016
-    !hh = 2.d0*h_min !does not work well with small reg.
     max_norm_vel_tot=min(1.d0,max_norm_vel_tot)
     DO n = 1, bloc_size
 !TEST JLG LC 2016

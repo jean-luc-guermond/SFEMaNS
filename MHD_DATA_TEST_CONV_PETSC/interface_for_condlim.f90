@@ -30,7 +30,7 @@ module interface_boundary
 END module interface_boundary
 
 module point_to_boundary_generic
-  USE boundary_generic, ONLY : init_velocity_pressure_generic => init_velocity_pressure, &
+  USE boundary_generic_module, ONLY : init_velocity_pressure_generic => init_velocity_pressure, &
        init_temperature_generic => init_temperature, &
        init_level_set_generic =>  init_level_set, &
        source_in_NS_momentum_generic =>  source_in_NS_momentum, &

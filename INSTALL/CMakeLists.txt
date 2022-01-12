@@ -1,6 +1,7 @@
 MESSAGE(STATUS "This is CMake ${CMAKE_VERSION}")
 MESSAGE(STATUS "")
 
+
 # Includes various variables depending on native
 include(variables.cmake)
 
@@ -11,6 +12,7 @@ cmake_minimum_required(VERSION 3.5)
 project(debug_sfemans)
 
 # Compile C routines and create library
+message(${SFEMaNS_DIR} "  SFEMaNS_DIR")
 enable_language(C)
 
 file(GLOB_RECURSE sfemans_sources_C 
@@ -18,6 +20,7 @@ file(GLOB_RECURSE sfemans_sources_C
   )
 
 add_library(sfemans_lib_C SHARED ${sfemans_sources_C})
+
 
 
 # Enable Fortran
@@ -63,12 +66,12 @@ ADD_CUSTOM_TARGET(native
   )
 
 
-
 # Since the SFEMaNS directory *should* not change structure, i.e.
 # files are not added/removed, we can use the file()
 # command to populate a variable with the list of needed files
 
-file(GLOB_RECURSE sfemans_sources 
+
+file(GLOB_RECURSE sfemans_sources_F
   ${SFEMaNS_DIR}/FEMSUB/*.f90
   ${SFEMaNS_DIR}/FEMSUB_OBJET/*.f90
   ${SFEMaNS_DIR}/GAUSS_POINTS_OBJET/*.f90
@@ -77,15 +80,18 @@ file(GLOB_RECURSE sfemans_sources
   ${SFEMaNS_DIR}/MHD_DATA_TEST_CONV_PETSC/*.f90
   ${SFEMaNS_DIR}/WRITE_BLOCK_MM/*.f90
   )
+add_library(sfemans_lib_F SHARED ${sfemans_sources_F})
+target_link_libraries(sfemans_lib_F sfemans_lib_C) 
 
-file(GLOB_RECURSE local_sources ${SFEMaNS_DIR}/TEMPLATE/*.f90)
+# Create local sources from TEMPLATE
+file(GLOB_RECURSE template_sources ${SFEMaNS_DIR}/TEMPLATE/*.f90)
 
 # Define runtime output directory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../EXECUTABLE)
 
 # Add executable
-add_executable(a.exe ${sfemans_sources} ${local_sources})
+add_executable(a.exe ${template_sources})
 
 # Include and link library
 target_include_directories(a.exe PUBLIC ${FFTW_INCLUDEDIR} ${PETSC_INCLUDEDIR})
-target_link_libraries(a.exe PUBLIC sfemans_lib_C ${PETSC_LINK_LIBRARIES} ${PETSC_PRIVATE_LIBRARIES} ${FFTW_LINK_LIBRARIES} ${ZLIB_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+target_link_libraries(a.exe PUBLIC sfemans_lib_F ${PETSC_LINK_LIBRARIES} ${PETSC_PRIVATE_LIBRARIES} ${FFTW_LINK_LIBRARIES} ${ZLIB_LIBRARIES} ${MPI_Fortran_LIBRARIES})

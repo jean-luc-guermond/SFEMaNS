@@ -5417,7 +5417,6 @@ CONTAINS
     USE chaine_caractere
     USE input_data
     USE def_type_mesh
-    USE user_data
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
@@ -5521,7 +5520,6 @@ CONTAINS
     USE chaine_caractere
     USE input_data
     USE def_type_mesh
-    USE user_data
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
@@ -5638,7 +5636,6 @@ CONTAINS
     USE chaine_caractere
     USE input_data
     USE def_type_mesh
-    USE user_data
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE

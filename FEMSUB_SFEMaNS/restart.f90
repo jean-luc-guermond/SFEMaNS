@@ -111,9 +111,6 @@ CONTAINS
     USE def_type_mesh
     USE chaine_caractere
     USE my_util
-!===HF may 2020
-    USE user_data
-!===HF may 2020
     IMPLICIT NONE
     REAL(KIND=8),                                   INTENT(OUT):: time
     INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator
@@ -445,9 +442,6 @@ CONTAINS
     USE def_type_mesh
     USE chaine_caractere
     USE my_util
-!===HF may 2020
-    USE user_data
-!===HF may 2020
     IMPLICIT NONE
     REAL(KIND=8),                                   INTENT(OUT):: time
     INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator
@@ -778,9 +772,6 @@ CONTAINS
     USE def_type_mesh
     USE chaine_caractere
     USE my_util
-!===HF may 2020
-    USE user_data
-!===HF may 2020
     IMPLICIT NONE
     TYPE(mesh_type), TARGET                                    :: H_mesh,phi_mesh     
     INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator

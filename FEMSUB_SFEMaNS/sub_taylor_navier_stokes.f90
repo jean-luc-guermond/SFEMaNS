@@ -45,7 +45,10 @@ CONTAINS
 
   SUBROUTINE init_velocity_pressure_taylor(vv_mesh, pp_mesh, list_mode, time, pn, der_pn, un, der_un)
     USE def_type_mesh
-    USE boundary_generic
+    !USE boundary_generic
+    !JLG+MC 2022
+    USE boundary
+    !JLG+MC 2022
     IMPLICIT NONE
     INTEGER,      DIMENSION(:),                            INTENT(IN)    :: list_mode   
     TYPE(mesh_type),                                       INTENT(IN)    :: vv_mesh, pp_mesh

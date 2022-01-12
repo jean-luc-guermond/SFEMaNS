@@ -15,9 +15,6 @@ CONTAINS
     USE my_util
 #include "petsc/finclude/petsc.h"
     USE petsc
-    !===TEST LC 2017/06/08
-    USE user_data
-    !===End TEST LC 2017/06/08
     IMPLICIT NONE
     REAL(KIND=8)                                            :: time
     INTEGER,      DIMENSION(:),       INTENT(IN)            :: list_mode 

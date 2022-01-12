@@ -1,36 +1,36 @@
-MODULE boundary_generic
+SUBMODULE (boundary_generic_module) boundary_generic
   USE def_type_mesh
   USE input_data
   USE my_util
   USE user_data
-  PUBLIC :: init_velocity_pressure
-  PUBLIC :: init_temperature
-  PUBLIC :: init_level_set
-  PUBLIC :: source_in_NS_momentum
-  PUBLIC :: source_in_temperature
-  PUBLIC :: source_in_level_set
-  PUBLIC :: vv_exact
-  PUBLIC :: imposed_velocity_by_penalty
-  PUBLIC :: pp_exact
-  PUBLIC :: temperature_exact
-  PUBLIC :: level_set_exact
-  PUBLIC :: penal_in_real_space
-  PUBLIC :: extension_velocity
-  PUBLIC :: Vexact
-  PUBLIC :: H_B_quasi_static
-  PUBLIC :: Hexact
-  PUBLIC :: Phiexact
-  PUBLIC :: Jexact_gauss
-  PUBLIC :: Eexact_gauss
-  PUBLIC :: init_maxwell
-  PUBLIC :: mu_bar_in_fourier_space
-  PUBLIC :: grad_mu_bar_in_fourier_space
-  PUBLIC :: mu_in_real_space
-  PUBLIC :: sigma_bar_in_fourier_space
-  PUBLIC :: chi_coeff_law
-  PUBLIC :: T_dchi_dT_coeff_law
-  PUBLIC :: nu_tilde_law
-  PRIVATE
+!!$  PUBLIC :: init_velocity_pressure
+!!$  PUBLIC :: init_temperature
+!!$  PUBLIC :: init_level_set
+!!$  PUBLIC :: source_in_NS_momentum
+!!$  PUBLIC :: source_in_temperature
+!!$  PUBLIC :: source_in_level_set
+!!$  PUBLIC :: vv_exact
+!!$  PUBLIC :: imposed_velocity_by_penalty
+!!$  PUBLIC :: pp_exact
+!!$  PUBLIC :: temperature_exact
+!!$  PUBLIC :: level_set_exact
+!!$  PUBLIC :: penal_in_real_space
+!!$  PUBLIC :: extension_velocity
+!!$  PUBLIC :: Vexact
+!!$  PUBLIC :: H_B_quasi_static
+!!$  PUBLIC :: Hexact
+!!$  PUBLIC :: Phiexact
+!!$  PUBLIC :: Jexact_gauss
+!!$  PUBLIC :: Eexact_gauss
+!!$  PUBLIC :: init_maxwell
+!!$  PUBLIC :: mu_bar_in_fourier_space
+!!$  PUBLIC :: grad_mu_bar_in_fourier_space
+!!$  PUBLIC :: mu_in_real_space
+!!$  PUBLIC :: sigma_bar_in_fourier_space
+!!$  PUBLIC :: chi_coeff_law
+!!$  PUBLIC :: T_dchi_dT_coeff_law
+!!$  PUBLIC :: nu_tilde_law
+!!$  PRIVATE
 
 CONTAINS
   !===============================================================================
@@ -479,4 +479,4 @@ CONTAINS
     RETURN
   END FUNCTION nu_tilde_law
 
-END MODULE boundary_generic
+END SUBMODULE boundary_generic

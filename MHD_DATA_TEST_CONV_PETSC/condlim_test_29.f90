@@ -852,7 +852,7 @@ CONTAINS
   FUNCTION smooth_penal_in_real_space(mesh,rr_gauss,angles,nb_angles,nb,ne,time) RESULT(vv)
     USE def_type_mesh
     USE input_data
-    USE user_data
+    !USE user_data
     USE my_util
     IMPLICIT NONE
     TYPE(mesh_type)                            :: mesh
@@ -892,7 +892,7 @@ CONTAINS
   FUNCTION smooth_top_propeller(r,z,angles,nb_angles,time) RESULT(vv)
     USE def_type_mesh
     USE input_data
-    USE user_data
+    !USE user_data
     USE my_util
     IMPLICIT NONE
     REAL(KIND=8)                               :: r,theta,z,time
@@ -976,7 +976,7 @@ CONTAINS
   FUNCTION smooth_bottom_propeller(r,z,angles,nb_angles,time) RESULT(vv)
     USE def_type_mesh
     USE input_data
-    USE user_data
+    !USE user_data
     USE my_util
     IMPLICIT NONE
     REAL(KIND=8)                               :: r,theta,z,time
@@ -1057,7 +1057,7 @@ CONTAINS
   FUNCTION smooth_top_supporting_disk(r,z) RESULT(vv)
     USE def_type_mesh
     USE input_data
-    USE user_data
+    !USE user_data
     USE my_util
     IMPLICIT NONE
     REAL(KIND=8)                               :: r,z
@@ -1125,7 +1125,7 @@ CONTAINS
   FUNCTION smooth_bottom_supporting_disk(r,z) RESULT(vv)
     USE def_type_mesh
     USE input_data
-    USE user_data
+    !USE user_data
     USE my_util
     IMPLICIT NONE
     REAL(KIND=8)                               :: r,z

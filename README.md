@@ -1,2 +1,2 @@
 # SFEMaNS
-Initial version of SFEMaNS starting from v5.3 
+Version 5.4
