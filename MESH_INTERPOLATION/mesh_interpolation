@@ -16,7 +16,7 @@ do
 done < data_interpol
 nproc=$(( ns ))
 
-$MY_MPIRUN  $nproc i.exe petsc_nonpetsc >> lis 2>&1
+$MY_MPIRUN  $nproc $1 petsc_nonpetsc >> lis 2>&1
 
 
 ########Second call (NonPetsc to Petsc)
@@ -35,4 +35,4 @@ do
 done < data_interpol
 nproc=$(( ns ))
 
-$MY_MPIRUN  $nproc i.exe nonpetsc_petsc >> lis 2>&1
+$MY_MPIRUN  $nproc $1 nonpetsc_petsc >> lis 2>&1

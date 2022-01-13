@@ -3,6 +3,9 @@ MESSAGE(STATUS "")
 
 # Includes various variables depending on native
 include(variables.cmake)
+#execute_process(COMMAND export SFEMaNS_DIR=${SFEMaNS_DIR})
+set(ENV{SFEMaNS_DIR} ${SFEMaNS_DIR})
+message($ENV{SFEMaNS_DIR} " environment variable SFEMaNS_DIR")
 
 # Cmake minimum version
 cmake_minimum_required(VERSION 3.5)
@@ -98,3 +101,29 @@ target_link_libraries(a.exe PUBLIC sfemans_lib_F
   ${MPI_Fortran_LIBRARIES}
   ${ADDITIONAL_LINKS})
 
+# REGRESSION TESTS
+
+# Create local sources from TEMPLATE
+file(GLOB_RECURSE regression_sources
+  ${SFEMaNS_DIR}/TEMPLATE/condlim.F90
+  ${SFEMaNS_DIR}/TEMPLATE/read_user_data.F90
+  ${SFEMaNS_DIR}/MESH_INTERPOLATION/*.F90)
+
+# Add executable
+add_executable(a_mesh_interpolation.exe ${regression_sources})
+
+# Include and link library
+target_link_libraries(a_mesh_interpolation.exe PUBLIC sfemans_lib_F
+  ${PETSC_LINK_LIBRARIES}
+  ${PETSC_PRIVATE_LIBRARIES}
+  ${FFTW_LINK_LIBRARIES}
+  ${ZLIB_LIBRARIES}
+  ${MPI_Fortran_LIBRARIES}
+  ${ADDITIONAL_LINKS})
+
+ADD_CUSTOM_TARGET(regression
+  COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target a.exe -j20
+  COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target a_mesh_interpolation.exe -j20
+  COMMAND cp ${SFEMaNS_DIR}/TEMPLATE/debug_SFEMaNS_template .
+  COMMAND ./debug_SFEMaNS_template ${SFEMaNS_DIR} ../EXECUTABLE/a.exe ../EXECUTABLE/a_mesh_interpolation.exe
+)
