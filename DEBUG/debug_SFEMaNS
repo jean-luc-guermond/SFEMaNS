@@ -3,17 +3,13 @@
 iter_beg=19
 iter_end=20
 
-#Set local environment variables
-export MY_MPIRUN="mpirun -np"
 ##################################################################
 
 
 ##################################################################
 #Definition of SFEMaNS_TEST_DIR
-export SFEMaNS_TEST_DIR=$1/MHD_DATA_TEST_CONV_PETSC
+export SFEMaNS_TEST_DIR=$1/SOURCES/MHD_DATA_TEST_CONV_PETSC
 export SFEMaNS_DIR=$1
-echo $SFEMaNS_DIR
-echo $SFEMaNS_TEST_DIR
 
 #Check status of files
 echo '' > lis
@@ -43,10 +39,10 @@ if [ -f fort.10 ]; then
 fi
 
 #Start tests
-echo 'Starting test '$iter
+echo "Starting test $iter"
 
 datatest=$SFEMaNS_TEST_DIR/debug_data_$iter
-echo $datatest
+
 ok_ns=0
 ok_nf=0
 ns=1
@@ -67,36 +63,30 @@ do
    if [ "$line" == "===Number of processors in Fourier space" ]; then
       ok_nf=1
    fi
-done < $datatest
+done < "$datatest"
 nproc=$(( ns*nf ))
 
 if (( iter == 20 )); then #iter = 20 is a special case 
-    cp ${SFEMaNS_DIR}/MESH_INTERPOLATION/mesh_interpolation .
-    cp $SFEMaNS_TEST_DIR/Mesh_10_form.FEM .
-    cp $SFEMaNS_TEST_DIR/Mesh_20_form.FEM .
+    # shellcheck disable=SC2086
+    cp "$SFEMaNS_DIR/SOURCES/MESH_INTERPOLATION/mesh_interpolation" .
+    cp "$SFEMaNS_TEST_DIR/Mesh_10_form.FEM" .
+    cp "$SFEMaNS_TEST_DIR/Mesh_20_form.FEM" .
     cp suite_ns_S000_I001.Mesh_10_form.FEM suite_ns_S000_I002.Mesh_10_form.FEM 
-    cp $SFEMaNS_TEST_DIR/debug_data_19_interpol data_interpol
-    ./mesh_interpolation $3
-    for FILE in suite_*I002*; do mv "$FILE" $(echo "$FILE" | sed 's/_I002//'); done
+    cp "$SFEMaNS_TEST_DIR/debug_data_19_interpol" data_interpol
+    ./mesh_interpolation "$3" "$4" "$5" "$6"
+    for FILE in suite_*I002*; do mv "$FILE" "$(echo "$FILE" | sed 's/_I002//')"; done
 fi
 
-if (( iter == 32 )); then #iter = 32 is a special case 
-    cd INTERPOLATION_MESH
-    cp ${SFEMaNS_DIR}/MESH_INTERPOLATION/mesh_interpolation .
-    cp $SFEMaNS_TEST_DIR/SOLID_FLUID_10.FEM .
-    cp $SFEMaNS_TEST_DIR/SOLID_FLUID_20.FEM .
-    cp ../suite_ns_S000_I001.SOLID_FLUID_10.FEM .
-    cp ../suite_temp_S000_I001.SOLID_FLUID_10.FEM .
-    cp ../mesh_part_S1.SOLID_FLUID_10.FEM .
-    cp $SFEMaNS_TEST_DIR/debug_data_31_interpol data_interpol
-    ./mesh_interpolation
-    for FILE in suite_*; do mv "$FILE" $(echo "$FILE" | sed 's/_I001//'); done
-    mv suite* ..
-    mv mesh_part_S5.SOLID_FLUID_20.FEM ..
-    cd ..
+if (( iter == 32 )); then #iter = 32 is a special case
+    cp "$SFEMaNS_DIR/SOURCES/MESH_INTERPOLATION/mesh_interpolation" .
+    cp "$SFEMaNS_TEST_DIR/SOLID_FLUID_10.FEM" .
+    cp "$SFEMaNS_TEST_DIR/SOLID_FLUID_20.FEM" .
+    cp "$SFEMaNS_TEST_DIR/debug_data_31_interpol" data_interpol
+    ./mesh_interpolation "$3" "$4" "$5" "$6"
+    for FILE in suite_*I001*; do mv "$FILE" "$(echo "$FILE" | sed 's/_I001//')"; done
 fi
 
-$MY_MPIRUN $nproc ./$2 debug $iter debug_dir $SFEMaNS_TEST_DIR  >> lis 2>&1
+$4 "$5$nproc" $6 "./$2" debug "$iter" debug_dir "$SFEMaNS_TEST_DIR"  >> lis 2>&1
     
 testok=$( grep 'Reading failure' lis | tail -n 1 )
 if [ "$testok" == " Reading failure" ]; then
@@ -105,7 +95,7 @@ if [ "$testok" == " Reading failure" ]; then
 else
    if [ -f fort.57 ] ; then
       cat fort.57
-      mv fort.10 fort.10_T$iter
+      mv fort.10 "fort.10_T$iter"
    else
       echo 'Test failure'
       nerr=$(( nproc + 1 ))
