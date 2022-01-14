@@ -2,6 +2,8 @@
 set(ENV{CC} "icc")
 set(ENV{CXX} "icpc")
 set(ENV{FC} "ifort")
+set(debug_bounds "$(FFLAGS) -O2 -g -traceback -heap-arrays")
+set(release_bounds "-O3")
 set(SFEMaNS_DIR "/gpfswork/rech/nor/commun/SFEMaNS_v5.4/SFEMaNS")
 set(RUN_PRE_PROC "srun")
 set(PROC_CALL "--ntasks=")
