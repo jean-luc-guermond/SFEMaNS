@@ -31,6 +31,31 @@ file(GLOB_RECURSE template_sources ${SFEMaNS_DIR}/TEMPLATE/*.F90)
 # Define runtime output directory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./EXECUTABLE)
 
+# Setting for different builds
+set(CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS_DEBUG} ${debug_bounds}")
+set(CMAKE_Fortran_FLAGS_RELEASE ${release_bounds} CACHE STRING
+  " Flags used by the compiler during release builds. ")
+set(CMAKE_Fortran_FLAGS_NATIVE ${native_bounds} CACHE STRING
+  " Flags used by the compiler during native builds. ")
+
+ADD_CUSTOM_TARGET(debug
+  COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug ${CMAKE_SOURCE_DIR}
+  COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all
+  COMMENT "Switch CMAKE_BUILD_TYPE to Debug"
+  )
+
+ADD_CUSTOM_TARGET(release
+  COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Release ${CMAKE_SOURCE_DIR}
+  COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all
+  COMMENT "Switch CMAKE_BUILD_TYPE to Release"
+  )
+
+ADD_CUSTOM_TARGET(native
+  COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Native ${CMAKE_SOURCE_DIR}
+  COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all
+  COMMENT "Switch CMAKE_BUILD_TYPE to Native"
+  )
+
 # Add executable
 add_executable(a.exe ${template_sources})
 
@@ -44,6 +69,7 @@ target_link_libraries(a.exe PUBLIC sfemans_lib_F
   ${ADDITIONAL_LINKS})
 
 target_include_directories(a.exe PUBLIC ${SFEMaNS_DIR}/LIBS)
+
 # REGRESSION TESTS
 
 # Create local sources from TEMPLATE
@@ -69,7 +95,7 @@ target_include_directories(a_mesh_interpolation.exe PUBLIC ${SFEMaNS_DIR}/LIBS)
 ADD_CUSTOM_TARGET(regression ALL
   COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target a.exe -j20
   COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target a_mesh_interpolation.exe -j20
-  COMMAND ./regression_SFEMaNS ${SFEMaNS_DIR} ./EXECUTABLE/a.exe ./EXECUTABLE/a_mesh_interpolation.exe ${RUN_PRE_PROC} ${PROC_CALL} ${RUN_POST_PROC}
+  COMMAND ../regression_SFEMaNS ${SFEMaNS_DIR} ./EXECUTABLE/a.exe ./EXECUTABLE/a_mesh_interpolation.exe ${RUN_PRE_PROC} ${PROC_CALL} ${RUN_POST_PROC}
 )
 
 # Adding directory to build lib_f

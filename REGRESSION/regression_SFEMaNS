@@ -1,7 +1,7 @@
 #!/bin/bash
 
-iter_beg=19
-iter_end=20
+iter_beg=32
+iter_end=32
 
 ##################################################################
 
@@ -86,7 +86,7 @@ if (( iter == 32 )); then #iter = 32 is a special case
     for FILE in suite_*I001*; do mv "$FILE" "$(echo "$FILE" | sed 's/_I001//')"; done
 fi
 
-$4 "$5$nproc" $6 "./$2" debug "$iter" debug_dir "$SFEMaNS_TEST_DIR"  >> lis 2>&1
+$4 $5$nproc $6 "./$2" debug "$iter" debug_dir "$SFEMaNS_TEST_DIR"  >> lis 2>&1
     
 testok=$( grep 'Reading failure' lis | tail -n 1 )
 if [ "$testok" == " Reading failure" ]; then

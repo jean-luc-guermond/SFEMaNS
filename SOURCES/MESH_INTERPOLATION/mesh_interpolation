@@ -16,7 +16,7 @@ do
 done < data_interpol
 nproc=$(( ns ))
 
-$2 "$3$nproc" $4 "./$1" petsc_nonpetsc  >> lis 2>&1
+$2 $3$nproc $4 "./$1" petsc_nonpetsc  >> lis 2>&1
 
 
 
@@ -36,4 +36,4 @@ do
 done < data_interpol
 nproc=$(( ns ))
 
-$2 "$3$nproc" $4 "./$1" nonpetsc_petsc  >> lis 2>&1
+$2 $3$nproc $4 "./$1" nonpetsc_petsc  >> lis 2>&1
