@@ -1,0 +1,4 @@
+This directory is meant to run the regression tests.
+
+cmake ..
+make
