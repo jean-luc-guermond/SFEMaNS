@@ -22,8 +22,8 @@ pkg_check_modules(PETSC PETSc)
 pkg_check_modules(FFTW fftw3)
 
 # Searching all petsc linked libraries
-execute_process (COMMAND pkg-config PETSc --libs --static OUTPUT_VARIABLE PETSC_PRIVATE_LIBRARIES)
-string(STRIP "${PETSC_PRIVATE_LIBRARIES}" PETSC_PRIVATE_LIBRARIES)
+# execute_process (COMMAND pkg-config PETSc --libs --static OUTPUT_VARIABLE PETSC_PRIVATE_LIBRARIES)
+# string(STRIP "${PETSC_PRIVATE_LIBRARIES}" PETSC_PRIVATE_LIBRARIES)
 
 # Create local sources from DEBUG
 file(GLOB_RECURSE template_sources ${SFEMaNS_DIR}/TEMPLATE/*.F90)
@@ -48,8 +48,8 @@ target_include_directories(a.exe PUBLIC ${SFEMaNS_DIR}/LIBS)
 
 # Create local sources from TEMPLATE
 file(GLOB_RECURSE regression_sources
-  ./condlim.F90
-  ./read_user_data.F90
+  ${SFEMaNS_DIR}/TEMPLATE/condlim.F90
+  ${SFEMaNS_DIR}/TEMPLATE/read_user_data.F90
   ${SFEMaNS_DIR}/SOURCES/MESH_INTERPOLATION/*.F90)
 
 # Add executable
