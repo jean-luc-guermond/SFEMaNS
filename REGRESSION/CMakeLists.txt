@@ -25,7 +25,7 @@ pkg_check_modules(FFTW fftw3)
 # execute_process (COMMAND pkg-config PETSc --libs --static OUTPUT_VARIABLE PETSC_PRIVATE_LIBRARIES)
 # string(STRIP "${PETSC_PRIVATE_LIBRARIES}" PETSC_PRIVATE_LIBRARIES)
 
-# Create local sources from DEBUG
+# Create local sources from REGRESSION
 file(GLOB_RECURSE template_sources ${SFEMaNS_DIR}/TEMPLATE/*.F90)
 
 # Define runtime output directory
@@ -69,7 +69,7 @@ target_include_directories(a_mesh_interpolation.exe PUBLIC ${SFEMaNS_DIR}/LIBS)
 ADD_CUSTOM_TARGET(regression ALL
   COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target a.exe -j20
   COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target a_mesh_interpolation.exe -j20
-  COMMAND ./debug_SFEMaNS_template ${SFEMaNS_DIR} ./EXECUTABLE/a.exe ./EXECUTABLE/a_mesh_interpolation.exe ${RUN_PRE_PROC} ${PROC_CALL} ${RUN_POST_PROC}
+  COMMAND ./regression_SFEMaNS ${SFEMaNS_DIR} ./EXECUTABLE/a.exe ./EXECUTABLE/a_mesh_interpolation.exe ${RUN_PRE_PROC} ${PROC_CALL} ${RUN_POST_PROC}
 )
 
 # Adding directory to build lib_f

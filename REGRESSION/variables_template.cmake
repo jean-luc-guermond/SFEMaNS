@@ -7,7 +7,7 @@ set(release_bounds "-O3")
 set(SFEMaNS_DIR "/gpfswork/rech/nor/commun/SFEMaNS_v5.4/SFEMaNS")
 set(RUN_PRE_PROC "srun")
 set(PROC_CALL "--ntasks=")
-set(RUN_POST_PROC "--hint=nomultithread --job-name=debug_SFEMaNS --time=00:02:00 --qos=qos_cpu-dev -A nor@cpu")
+set(RUN_POST_PROC "--hint=nomultithread --job-name=regression_SFEMaNS --time=00:02:00 --qos=qos_cpu-dev -A nor@cpu")
 
 # Variables to set for Whistler
 #set(SFEMaNS_DIR "/home/guermond/SFEMaNS/GIT_SFEMaNS/SFEMaNS")

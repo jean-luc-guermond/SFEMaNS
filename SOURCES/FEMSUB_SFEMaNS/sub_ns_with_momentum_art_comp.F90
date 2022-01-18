@@ -294,7 +294,7 @@ CONTAINS
        ELSE
           momentumext = 2*momentum - momentum_m1
        END IF
-       !TEST LC DEBUG: above 2nd order extrapolation not stable
+       !TEST LC REGRESSION: above 2nd order extrapolation not stable
        IF (inputs%if_level_set) THEN
           !First time order: momentumext = rho_np1*un
           CALL FFT_SCALAR_VECT_DCL(comm_one_d(2), un, density_p1, momentumext_div, 1, nb_procs, &
@@ -302,7 +302,7 @@ CONTAINS
        ELSE
           momentumext_div = momentum
        END IF
-       !END TEST LC DEBUG
+       !END TEST LC REGRESSION
     ELSE
        uext = un
        IF (inputs%if_level_set) THEN

@@ -1058,7 +1058,7 @@ CONTAINS
           ENDIF
           sigma_np_gauss = SUM(sigma_nj_m(:,m)*ww_H(:,l))
 
-          !DCQ DEBUG
+          !DCQ REGRESSION
           !===JLG (Nov 14, 2016); remove this warning. We may work with dimensional variables
           !if ( muhl < 0.5d0) then
           !   write(*,*)'!! Warning:  mu_bar is almost negative in the matrix construction, value = ',  muhl
@@ -1776,9 +1776,9 @@ CONTAINS
           !===Compute radius of Gauss point
           ray = SUM(phi_mesh%rr(1,phi_mesh%jjs(:,ms2))* phi_mesh%gauss%wws(:,ls))
           x = rjs(ls,ms2)*ray/sigma(m1)
-          ! TEST DEBUG
+          ! TEST REGRESSION
 
-          ! TEST DEBUG
+          ! TEST REGRESSION
           !H to B
           muhl   = SUM(mu_H_field(interface_H_phi%jjs1(1:n_ws1,ms))*w_cs(1:n_ws1,ls))
           drmuhl = SUM(mu_H_field(H_mesh%jj(:,m1))*dw_cs(1,:,ls,ms1))
@@ -1909,9 +1909,9 @@ CONTAINS
           !===Compute radius of Gauss point
           ray = SUM(phi_mesh%rr(1,phi_mesh%jjs(:,ms2))* phi_mesh%gauss%wws(:,ls))
           x = rjs(ls,ms2)*ray /sigma(m1)
-          ! TEST DEBUG
+          ! TEST REGRESSION
 
-          ! TEST DEBUG
+          ! TEST REGRESSION
           !H to B
           muhl   = SUM(mu_H_field(interface_H_phi%jjs1(1:n_ws1,ms))*w_cs(1:n_ws1,ls))
           !H to B
@@ -2304,9 +2304,9 @@ CONTAINS
           !===Compute radius of Gauss point
           ray = SUM(phi_mesh%rr(1,phi_mesh%jjs(:,ms2))* phi_mesh%gauss%wws(:,ls))
           x = rjs(ls,ms2)*ray/sigma(m1)
-          ! TEST DEBUG
+          ! TEST REGRESSION
 
-          ! TEST DEBUG
+          ! TEST REGRESSION
           !H to B
           muhl   = SUM(mu_H_field(interface_H_phi%jjs1(1:n_ws1,ms))*w_cs(1:n_ws1,ls))
           drmuhl = SUM(mu_H_field(H_mesh%jj(:,m1))*dw_cs(1,:,ls,ms1))
@@ -2413,9 +2413,9 @@ CONTAINS
           !===Compute radius of Gauss point
           ray = SUM(phi_mesh%rr(1,phi_mesh%jjs(:,ms2))* phi_mesh%gauss%wws(:,ls))
           x = rjs(ls,ms2)*ray/sigma(m1)
-          ! TEST DEBUG
+          ! TEST REGRESSION
 
-          ! TEST DEBUG
+          ! TEST REGRESSION
           !H to B
           muhl = SUM(mu_H_field(interface_H_phi%jjs1(1:n_ws1,ms))*w_cs(1:n_ws1,ls))
           !H to B
@@ -2481,9 +2481,9 @@ CONTAINS
           !===Compute radius of Gauss point
           ray = SUM(phi_mesh%rr(1,phi_mesh%jjs(:,ms2))* phi_mesh%gauss%wws(:,ls))
           x = rjs(ls,ms2)*ray/sigma(m1)
-          ! TEST DEBUG
+          ! TEST REGRESSION
 
-          ! TEST DEBUG
+          ! TEST REGRESSION
           !H to B
           muhl   = SUM(mu_H_field(interface_H_phi%jjs1(1:n_ws1,ms))*w_cs(1:n_ws1,ls))
           !H to B
@@ -2540,9 +2540,9 @@ CONTAINS
           !===Compute radius of Gauss point
           ray = SUM(phi_mesh%rr(1,phi_mesh%jjs(:,ms2))* phi_mesh%gauss%wws(:,ls))
           x = rjs(ls,ms2)*ray/sigma(m1)
-          ! TEST DEBUG
+          ! TEST REGRESSION
 
-          ! TEST DEBUG
+          ! TEST REGRESSION
           muhl   = SUM(mu_H_field(interface_H_phi%jjs1(1:n_ws1,ms))*w_cs(1:n_ws1,ls))
           drmuhl = SUM(mu_H_field(H_mesh%jj(:,m1))*dw_cs(1,:,ls,ms1))
           dzmuhl = SUM(mu_H_field(H_mesh%jj(:,m1))*dw_cs(2,:,ls,ms1))
@@ -3000,7 +3000,7 @@ CONTAINS
              dummy_mu_bar(:)  =  mu_bar_in_fourier_space(H_mesh,1,1,gauss_pt,gauss_pt_id) 
              muhl=dummy_mu_bar(1)
           END IF
-          !DCQ DEBUG
+          !DCQ REGRESSION
 
           x = hm1*H_mesh%gauss%rjs(ls,ms)*ray /muhl
           ! H to B
@@ -3091,13 +3091,13 @@ CONTAINS
              dzmuhl =Dmu_field(2)     
           ENDIF
 
-          ! TEST DEBUG
+          ! TEST REGRESSION
           IF (jj_v_to_H(H_mesh%jj(1,m1)) == -1) THEN
              x = H_mesh%gauss%rjs(ls,ms)*ray/sigma(m1)
           ELSE
              x = H_mesh%gauss%rjs(ls,ms)*ray/SUM(sigma_np(H_mesh%jjs(:,ms))*H_mesh%gauss%wws(:,ls))
           END IF
-          ! TEST DEBUG
+          ! TEST REGRESSION
 
           !H to B
           !terms without derivatives
@@ -3229,13 +3229,13 @@ CONTAINS
              muhl=dummy_mu_bar(1)       
           END IF
 
-          ! TEST DEBUG
+          ! TEST REGRESSION
           IF (jj_v_to_H(H_mesh%jj(1,m1)) == -1) THEN
              x = H_mesh%gauss%rjs(ls,ms)*ray/(sigma(m1)*muhl)
           ELSE
              x = H_mesh%gauss%rjs(ls,ms)*ray/(SUM(sigma_np(H_mesh%jjs(:,ms))*H_mesh%gauss%wws(:,ls))*muhl)
           END IF
-          ! TEST DEBUG
+          ! TEST REGRESSION
 
           !H to B
           !terms with derivatives
@@ -3753,7 +3753,7 @@ CONTAINS
                   muhl, time, mesh_id1, B_ext_l)/sigma(m1) &
                   + SUM(NL(H_mesh%jjs(1:n_ws1,ms1),k)*w_cs(1:n_ws1,ls))
           END DO
-!!$! TEST DEBUG : to do before using H with phi 
+!!$! TEST REGRESSION : to do before using H with phi
 !!$          IF (inputs%if_level_set.AND.inputs%variation_sigma_fluid) THEN
 !!$             DO k = 1, 6
 !!$                JsolH_anal(k) = J_over_sigma_gauss(index,k) + sigma_curl(index,k) &
@@ -3766,7 +3766,7 @@ CONTAINS
 !!$                  + SUM(NL(H_mesh%jjs(1:n_ws1,ms1),k)*w_cs(1:n_ws1,ls))
 !!$             END DO
 !!$          END IF
-!!$! TEST DEBUG
+!!$! TEST REGRESSION
 
           !---------forcage pour H            
 
@@ -4118,9 +4118,9 @@ CONTAINS
              !===I put boggus values for sigma and mu_H_field, Feb 8 2007, Jean-Luc Guermond       
              Esolphi_anal(k) = Eexact_gauss(k,gaussp,mode,mu_phi,sigma(1),mu_H_field(1),time)
           ENDDO
-          !TO DEBUG
+          !TO REGRESSION
 
-          !TO DEBUG
+          !TO REGRESSION
           
           !===Nemnann forcing for phi in rhs:  - E.(grad(phi) x nv)
           DO ns=1, phi_mesh%gauss%n_ws           
@@ -4537,7 +4537,7 @@ CONTAINS
           drmuhl2 = SUM(mu_H_field(H_mesh%jj(:,m2))* dw_s(1,:,ls,ms2))
           dzmuhl1 = SUM(mu_H_field(H_mesh%jj(:,m1))*dw_cs(2,:,ls,ms1))
           dzmuhl2 = SUM(mu_H_field(H_mesh%jj(:,m2))* dw_s(2,:,ls,ms2))
-          ! TEST DEBUG
+          ! TEST REGRESSION
           IF (jj_v_to_H(H_mesh%jj(1,m1)) == -1) THEN
              sigmal1 = sigma(m1)
           ELSE
@@ -4548,7 +4548,7 @@ CONTAINS
           ELSE
              sigmal2 = SUM(sigma_np(H_mesh%jjs(:,ms2))* wws(:,ls))
           END IF
-          ! TEST DEBUG
+          ! TEST REGRESSION
           ! H to B
           DO ci = 1, 2
              IF (ci==1) THEN
@@ -4556,17 +4556,17 @@ CONTAINS
                 wwsi = w_cs(:,ls)
                 n_wsi = n_ws1
                 !                sigmai = sigma(m1)
-                ! TEST DEBUG
+                ! TEST REGRESSION
                 sigmai = sigmal1
-                ! TEST DEBUG
+                ! TEST REGRESSION
              ELSE
                 normi = rnorms(:,ls,ms2)
                 wwsi = wws(:,ls)
                 n_wsi = n_ws2
                 !                sigmai = sigma(m2)
-                ! TEST DEBUG
+                ! TEST REGRESSION
                 sigmai = sigmal2
-                ! TEST DEBUG
+                ! TEST REGRESSION
              END IF
              DO cj = 1, 2
                 IF (cj==1) THEN
@@ -4574,9 +4574,9 @@ CONTAINS
                    wwsj = w_cs(:,ls)
                    n_wsj = n_ws1
                    !                   sigmaj = sigma(m1)
-                   ! TEST DEBUG
+                   ! TEST REGRESSION
                    sigmaj = sigmal1
-                   ! TEST DEBUG
+                   ! TEST REGRESSION
                    ! H to B
                    muhj = muhl1
                    drmuhj = drmuhl1
@@ -4587,9 +4587,9 @@ CONTAINS
                    wwsj = wws(:,ls)
                    n_wsj = n_ws2
                    !                   sigmaj = sigma(m2)
-                   ! TEST DEBUG
+                   ! TEST REGRESSION
                    sigmaj = sigmal2
-                   ! TEST DEBUG
+                   ! TEST REGRESSION
                    ! H to B
                    muhj = muhl2
                    drmuhj = drmuhl2
@@ -4712,7 +4712,7 @@ CONTAINS
           muhl1 = SUM(mu_H_field(H_mesh%jjs(:,ms1))*w_cs(:,ls))
           muhl2 = SUM(mu_H_field(H_mesh%jjs(:,ms2))* wws(:,ls))
           ! H to B
-          ! TEST DEBUG
+          ! TEST REGRESSION
           IF (jj_v_to_H(H_mesh%jj(1,m1)) == -1) THEN
              sigmal1 = sigma(m1)
           ELSE
@@ -4723,7 +4723,7 @@ CONTAINS
           ELSE
              sigmal2 = SUM(sigma_np(H_mesh%jjs(:,ms2))* wws(:,ls))
           END IF
-          ! TEST DEBUG
+          ! TEST REGRESSION
           DO ci = 1, 2
              IF (ci==1) THEN
                 normi = rnorms(:,ls,ms1)
@@ -4732,9 +4732,9 @@ CONTAINS
                 n_wsi = n_ws1
                 n_wi = n_w1
                 !                sigmai = sigma(m1)
-                ! TEST DEBUG
+                ! TEST REGRESSION
                 sigmai = sigmal1
-                ! TEST DEBUG
+                ! TEST REGRESSION
              ELSE
                 normi = rnorms(:,ls,ms2)
                 wwsi = wws(:,ls)
@@ -4742,9 +4742,9 @@ CONTAINS
                 n_wsi = n_ws2
                 n_wi = n_w2
                 !                sigmai = sigma(m2)
-                ! TEST DEBUG
+                ! TEST REGRESSION
                 sigmai = sigmal2
-                ! TEST DEBUG
+                ! TEST REGRESSION
              END IF
              DO cj = 1, 2
                 IF (cj==1) THEN
@@ -4754,9 +4754,9 @@ CONTAINS
                    n_wsj = n_ws1
                    n_wj = n_w1
                    !                   sigmaj = sigma(m1)
-                   ! TEST DEBUG
+                   ! TEST REGRESSION
                    sigmaj = sigmal1
-                   ! TEST DEBUG
+                   ! TEST REGRESSION
                    muhj = muhl1 ! H to B
                 ELSE
                    normj = rnorms(:,ls,ms2)
@@ -4765,9 +4765,9 @@ CONTAINS
                    n_wsj = n_ws2
                    n_wj = n_w2
                    !                   sigmaj = sigma(m2)
-                   ! TEST DEBUG
+                   ! TEST REGRESSION
                    sigmaj = sigmal2
-                   ! TEST DEBUG
+                   ! TEST REGRESSION
                    muhj = muhl2 ! H to B
                 END IF
 
@@ -5211,7 +5211,7 @@ CONTAINS
 !!$                  + SUM(NL(H_mesh%jjs(:,ms),k)*H_mesh%gauss%wws(:,ls)) &
 !!$                  + hm1*Hlocxn(k,ls)
 !!$          END DO
-          ! TEST DEBUG
+          ! TEST REGRESSION
           IF (inputs%if_level_set.AND.inputs%variation_sigma_fluid) THEN
              DO k = 1, 6
                 JsolH_anal(k) = J_over_sigma_bdy(index,k) &
@@ -5227,7 +5227,7 @@ CONTAINS
                      + hm1*Hlocxn(k,ls)
              END DO
           END IF
-          ! TEST DEBUG
+          ! TEST REGRESSION
           DO ni = 1, H_mesh%gauss%n_ws
              i = H_mesh%jjs(ni,ms)
              x = H_mesh%gauss%rjs(ls,ms)*ray*H_mesh%gauss%wws(ni,ls)
