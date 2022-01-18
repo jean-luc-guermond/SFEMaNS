@@ -275,7 +275,7 @@ CONTAINS
        CALL write_compressed_block(unit_file, r4_threed_xml_field(1:3*mesh%np))
     ELSE
        DO n = 1, mesh%np
-          WRITE(unit_file,'(3(e14.7,x))') field(n,1), field(n,2), field(n,3)
+          WRITE(unit_file,'(3(e14.7,x))') field(n,1), field(n,3), field(n,5) !===JLG+NORE Jan 18, 2022
        END DO
     END IF
     WRITE(unit_file,'(A)') '</DataArray>'
