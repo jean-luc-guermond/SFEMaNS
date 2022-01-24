@@ -1,4 +1,4 @@
-This directory is meant to run the regression tests.
+This directory is propose to make the executable.
 
 #FIRST
 cp ../variables_template.cmake ../variables.cmake
@@ -10,7 +10,6 @@ cmake ..
 #to run the tests
 make debug/release/native
 
-#to completely reset cmake (changing compiler, ...)
+#to completely reset cmake (changing compiler, ...), in BUILD do
 rm -rf *
-#in BUILD
 #!!! THIS WILL DELETE THIS README

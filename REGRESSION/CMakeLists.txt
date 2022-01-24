@@ -21,10 +21,6 @@ find_package(PkgConfig)
 pkg_check_modules(PETSC PETSc)
 pkg_check_modules(FFTW fftw3)
 
-# Searching all petsc linked libraries
-# execute_process (COMMAND pkg-config PETSc --libs --static OUTPUT_VARIABLE PETSC_PRIVATE_LIBRARIES)
-# string(STRIP "${PETSC_PRIVATE_LIBRARIES}" PETSC_PRIVATE_LIBRARIES)
-
 # Create local sources from REGRESSION
 file(GLOB_RECURSE template_sources ${SFEMaNS_DIR}/TEMPLATE/*.F90)
 
@@ -41,18 +37,21 @@ set(CMAKE_Fortran_FLAGS_NATIVE ${native_bounds} CACHE STRING
 ADD_CUSTOM_TARGET(debug
   COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug ${CMAKE_SOURCE_DIR}
   COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all
+  COMMAND ../regression_SFEMaNS ${SFEMaNS_DIR} ./EXECUTABLE/a.exe ./EXECUTABLE/a_mesh_interpolation.exe ${RUN_PRE_PROC} ${PROC_CALL} ${RUN_POST_PROC}
   COMMENT "Switch CMAKE_BUILD_TYPE to Debug"
   )
 
 ADD_CUSTOM_TARGET(release
   COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Release ${CMAKE_SOURCE_DIR}
   COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all
+  COMMAND ../regression_SFEMaNS ${SFEMaNS_DIR} ./EXECUTABLE/a.exe ./EXECUTABLE/a_mesh_interpolation.exe ${RUN_PRE_PROC} ${PROC_CALL} ${RUN_POST_PROC}
   COMMENT "Switch CMAKE_BUILD_TYPE to Release"
   )
 
 ADD_CUSTOM_TARGET(native
   COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Native ${CMAKE_SOURCE_DIR}
   COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all
+  COMMAND ../regression_SFEMaNS ${SFEMaNS_DIR} ./EXECUTABLE/a.exe ./EXECUTABLE/a_mesh_interpolation.exe ${RUN_PRE_PROC} ${PROC_CALL} ${RUN_POST_PROC}
   COMMENT "Switch CMAKE_BUILD_TYPE to Native"
   )
 
@@ -91,12 +90,6 @@ target_link_libraries(a_mesh_interpolation.exe PUBLIC sfemans_lib_F
   ${ADDITIONAL_LINKS})
 
 target_include_directories(a_mesh_interpolation.exe PUBLIC ${SFEMaNS_DIR}/LIBS)
-
-ADD_CUSTOM_TARGET(regression ALL
-  COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target a.exe -j20
-  COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target a_mesh_interpolation.exe -j20
-  COMMAND ../regression_SFEMaNS ${SFEMaNS_DIR} ./EXECUTABLE/a.exe ./EXECUTABLE/a_mesh_interpolation.exe ${RUN_PRE_PROC} ${PROC_CALL} ${RUN_POST_PROC}
-)
 
 # Adding directory to build lib_f
 add_subdirectory(${SFEMaNS_DIR}/LIBS ${SFEMaNS_DIR}/LIBS)
