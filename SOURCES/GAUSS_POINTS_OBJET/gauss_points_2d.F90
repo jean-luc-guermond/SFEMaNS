@@ -43,7 +43,6 @@ CONTAINS
     INTEGER      :: m, l, k, k1, n, n1, n2, ms, ns, ls, face, cote, orient
     INTEGER      :: n_w, n_ws, l_G, l_Gs
     REAL(KIND=8), DIMENSION(k_d) :: rnor, rsd
-
     SELECT CASE(type_fe)
     CASE(1)
        n_w=3;  n_ws=2; l_G=3; l_Gs=2
