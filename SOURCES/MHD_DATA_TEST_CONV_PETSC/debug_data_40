@@ -3,11 +3,11 @@
 ===Directory and name of mesh file
 '.' 'RECT20.FEM'
 ===Number of processors in meridian section
-2
+1
 ===Number of processors in Fourier space
-4
+5
 ===Number of Fourier modes
-4
+5
 ===Select Fourier modes? (true/false)
 .f.
 ===Problem type: (nst, mxw, mhd, fhd)
@@ -53,7 +53,7 @@
 ===Solve Navier-Stokes with u (true) or m (false)?
 .f.
 ===Reynolds number
-250.d0
+1.d0
 
 ============================================
               LES-NAVIER-STOKES
@@ -61,7 +61,7 @@
 ===Use LES? (true/false)
 .t.
 ===Use LES in momentum? (true/false)
-.t.
+.f.
 ===Coefficient multiplying residual
 1.0d0
 
@@ -117,9 +117,9 @@ MUMPS
 ===Compression factor for level set
 0.d0
 ===Density of fluid 0, fluid 1, ...
-1.d0 100.d0
+1.d0 10.d0
 ===Dynamic viscosity of fluid 0, fluid 1, ...
-1.d0 100.d0
+0.1d0 1.d0
 ===multiplier for h_min for level set
 1.d0
 ===How are the variables reconstructed from the level set function? (lin, reg)
@@ -152,7 +152,7 @@ MUMPS
 ============================================
 (RECT20.FEM)
 ===Reference results
-8.7749796248369450E-004  L2 error on velocity
-1.0482305912429532E-002  H1 error on velocity
-2.6353807435704957E-005  L2 error on level set
-8.1493730051115043E-002  L2 error on pressure
+7.7817557169258106E-004  L2 error on velocity
+4.7009006550561847E-003  H1 error on velocity
+2.9504697548656780E-004  L2 error on level set
+1.3381140807414703E-002  L2 error on pressure

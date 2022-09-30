@@ -87,7 +87,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,2,SIZE(list_mode))   :: stab_div_vel
     REAL(KIND=8), DIMENSION(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: tensor_surface_gauss
     REAL(KIND=8), DIMENSION(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: tensor_gauss
-    REAL(KIND=8), DIMENSION(3,vv_mesh%np,6,SIZE(list_mode))                       :: tensor  
+    REAL(KIND=8), DIMENSION(3,vv_mesh%np,6,SIZE(list_mode))                       :: tensor
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode))   :: rhs_gauss
     REAL(KIND=8), DIMENSION(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6)                 :: visc_grad_vel_ext
     REAL(KIND=8), DIMENSION(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6)                 :: tensor_gauss_ext
@@ -231,8 +231,12 @@ CONTAINS
              stab_bar = MAX(stab_bar,1.d0/inputs%density_fluid(n))
           END DO
           !LC: To be tested thoroughly
-          nu_bar    = 2.d0*nu_bar
+          !nu_bar    = 2.0d0*nu_bar
+          nu_bar    = 1.1d0*nu_bar
           stab_bar  = 1.1d0*stab_bar
+          
+          ! Normalization penal_coeff_art_comp
+          inputs%penal_coeff_art_comp=inputs%penal_coeff_art_comp*MAX(1.d0,nu_bar/stab_bar)
        ELSE
           nu_bar    = 1.d0
           stab_bar  = 1.d0
@@ -294,7 +298,7 @@ CONTAINS
        ELSE
           momentumext = 2*momentum - momentum_m1
        END IF
-       !TEST LC REGRESSION: above 2nd order extrapolation not stable
+       !TEST LC (above 2nd order extrapolation not stable)
        IF (inputs%if_level_set) THEN
           !First time order: momentumext = rho_np1*un
           CALL FFT_SCALAR_VECT_DCL(comm_one_d(2), un, density_p1, momentumext_div, 1, nb_procs, &
@@ -302,7 +306,7 @@ CONTAINS
        ELSE
           momentumext_div = momentum
        END IF
-       !END TEST LC REGRESSION
+       !END TEST LC
     ELSE
        uext = un
        IF (inputs%if_level_set) THEN
@@ -548,15 +552,15 @@ CONTAINS
     END DO
     !------------END LOOP ON FOURIER MODES FOR DIVERGENCE P1-------------
 
-    !===Compute visco_dyn*div on P1 elements
-    DO i = 1, m_max_c
-       DO k=1, 2  
-          CALL project_P2_P1(vv_mesh%jj, pp_mesh%jj, visco_dyn(:,k,i), visco_dyn_P1(:,k,i))
-       END DO
-    END DO
-    bloc_size_P1 = SIZE(div,1)/nb_procs+1
-    CALL FFT_PAR_PROD_DCL(comm_one_d(2), visco_dyn_P1, div, visc_div, nb_procs, bloc_size_P1, m_max_pad)
-    !===End Compute visco_dyn*div on P1 elements
+!!$    !===Compute visco_dyn*div on P1 elements
+!!$    DO i = 1, m_max_c
+!!$       DO k=1, 2  
+!!$          CALL project_P2_P1(vv_mesh%jj, pp_mesh%jj, visco_dyn(:,k,i), visco_dyn_P1(:,k,i))
+!!$       END DO
+!!$    END DO
+!!$    bloc_size_P1 = SIZE(div,1)/nb_procs+1
+!!$    CALL FFT_PAR_PROD_DCL(comm_one_d(2), visco_dyn_P1, div, visc_div, nb_procs, bloc_size_P1, m_max_pad)
+!!$    !===End Compute visco_dyn*div on P1 elements
 
     !------------BEGIN LOOP ON FOURIER MODES FOR PRESSURE----------------
     DO i = 1, m_max_c
@@ -1012,7 +1016,7 @@ CONTAINS
 !!$    REAL(KIND=8)                                :: ray
 !!$    INTEGER                                     :: m, l , i, mode, index, k
 !!$    INTEGER                                     :: m_max_pad, bloc_size
-!!$    
+!!$
 !!$    PetscErrorCode :: ierr
 !!$    PetscMPIInt    :: rank
 !!$    MPI_Comm       :: communicator

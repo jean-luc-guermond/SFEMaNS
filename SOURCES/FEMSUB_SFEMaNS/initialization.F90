@@ -497,9 +497,11 @@ CONTAINS
     TYPE(mesh_type)                         :: p1_mesh_glob, p2_mesh_glob, p1_c0_mesh_glob, p2_c0_mesh_glob_temp
     TYPE(mesh_type)                         :: p3_mesh_glob !===JLG july 20, 2019, p3 mesh
     TYPE(interface_type)                    :: interface_H_phi_glob, interface_H_mu_glob
-    INTEGER, DIMENSION(:), ALLOCATABLE      :: list_dom_H, list_dom_temp 
+    INTEGER, DIMENSION(:), ALLOCATABLE      :: list_dom_H, list_dom_H_ref
+    INTEGER, DIMENSION(:), ALLOCATABLE      :: list_dom_temp 
     INTEGER, DIMENSION(:), ALLOCATABLE      :: list_dom, list_inter, part, list_dummy, list_inter_temp
-    INTEGER, DIMENSION(:), ALLOCATABLE      :: H_in_to_new, temp_in_to_new 
+    INTEGER, DIMENSION(:), ALLOCATABLE      :: H_in_to_new, H_in_to_new_ref 
+    INTEGER, DIMENSION(:), ALLOCATABLE      :: temp_in_to_new 
     CHARACTER(len=200)                      :: data_file
     CHARACTER(len=200)                      :: data_directory
     CHARACTER(len=200)                      :: tit_part, mesh_part_name
@@ -614,6 +616,7 @@ CONTAINS
     !===Check mesh that vv_mesh is a subset of H_mesh===============================
     IF (if_induction) THEN
        ALLOCATE(list_dom_H(inputs%nb_dom_H), H_in_to_new(inputs%nb_dom_H)) ! JLG/AR Nov 17 2008
+       ALLOCATE(list_dom_H_ref(inputs%nb_dom_H), H_in_to_new_ref(inputs%nb_dom_H))
        IF (if_momentum .OR. inputs%type_pb=='mxx') THEN 
           IF (SIZE(list_dom_H) < SIZE(inputs%list_dom_ns)) THEN
              CALL error_Petsc(' BUG: NS must be a subset of Maxwell ')
@@ -646,48 +649,78 @@ CONTAINS
        END IF
     ELSE
        ALLOCATE(H_in_to_new(0))
+       ALLOCATE(H_in_to_new_ref(0))
     END IF
 
     !===Check mesh that vv_mesh is a subset of temp_mesh============================
     IF (if_energy) THEN
        ALLOCATE(list_dom_temp(inputs%nb_dom_temp), temp_in_to_new(inputs%nb_dom_temp))
-       IF (SIZE(list_dom_temp) < SIZE(inputs%list_dom_ns)) THEN
-          CALL error_Petsc(' BUG: NS must be a subset of temp ')
-       END IF
-       DO k = 1, inputs%nb_dom_ns
-          IF (MINVAL(ABS(inputs%list_dom_temp - inputs%list_dom_ns(k))) /= 0) THEN
+       IF (if_momentum) THEN
+          IF (SIZE(list_dom_temp) < SIZE(inputs%list_dom_ns)) THEN
              CALL error_Petsc(' BUG: NS must be a subset of temp ')
           END IF
-          DO kp = 1, inputs%nb_dom_temp
-             IF (inputs%list_dom_temp(kp) == inputs%list_dom_ns(k)) EXIT  
+          DO k = 1, inputs%nb_dom_ns
+             IF (MINVAL(ABS(inputs%list_dom_temp - inputs%list_dom_ns(k))) /= 0) THEN
+                CALL error_Petsc(' BUG: NS must be a subset of temp ')
+             END IF
+             DO kp = 1, inputs%nb_dom_temp
+                IF (inputs%list_dom_temp(kp) == inputs%list_dom_ns(k)) EXIT  
+             END DO
+             temp_in_to_new(k) = kp
+             list_dom_temp(k) = inputs%list_dom_ns(k)
           END DO
-          temp_in_to_new(k) = kp
-          list_dom_temp(k) = inputs%list_dom_ns(k)
-       END DO
-       m = inputs%nb_dom_ns 
-       DO k = 1, inputs%nb_dom_temp
-          IF (MINVAL(ABS(inputs%list_dom_temp(k) - inputs%list_dom_ns)) == 0) CYCLE 
-          m = m + 1
-          temp_in_to_new(m) = k
-          list_dom_temp(m) = inputs%list_dom_temp(k)
-       END DO
-       IF (m/=inputs%nb_dom_temp) THEN
-          CALL error_Petsc(' BUG: m/=inputs%nb_dom_temp ')
+          m = inputs%nb_dom_ns 
+          DO k = 1, inputs%nb_dom_temp
+             IF (MINVAL(ABS(inputs%list_dom_temp(k) - inputs%list_dom_ns)) == 0) CYCLE 
+             m = m + 1
+             temp_in_to_new(m) = k
+             list_dom_temp(m) = inputs%list_dom_temp(k)
+          END DO
+          IF (m/=inputs%nb_dom_temp) THEN
+             CALL error_Petsc(' BUG: m/=inputs%nb_dom_temp ')
+          END IF
+       ELSE
+          DO k = 1, inputs%nb_dom_temp
+             temp_in_to_new(k) = k
+          END DO
+          list_dom_temp = inputs%list_dom_temp
        END IF
     ELSE
        ALLOCATE(temp_in_to_new(0))
     END IF
 
     !===Check mesh that temp_mesh is a subset of H_mesh=============================
-    IF ((if_energy).AND.(if_induction)) THEN
-       IF (SIZE(list_dom_H) < SIZE(list_dom_temp)) THEN
-          CALL error_Petsc(' BUG: temp must be a subset of H ')
-       END IF
-       DO k = 1, inputs%nb_dom_temp
-          IF (MINVAL(ABS(list_dom_H - list_dom_temp(k))) /= 0) THEN
+    IF (if_induction) THEN
+       H_in_to_new_ref=H_in_to_new
+       list_dom_H_ref=list_dom_H
+       IF (if_energy) THEN
+          IF (SIZE(list_dom_H) < SIZE(list_dom_temp)) THEN
              CALL error_Petsc(' BUG: temp must be a subset of H ')
           END IF
-       END DO
+          DO k = 1+inputs%nb_dom_ns, inputs%nb_dom_temp
+             IF (MINVAL(ABS(list_dom_H - list_dom_temp(k))) /= 0) THEN
+                CALL error_Petsc(' BUG: temp must be a subset of H ')
+             END IF
+             DO kp = 1+inputs%nb_dom_ns, inputs%nb_dom_H
+                IF (list_dom_H_ref(kp) == list_dom_temp(k)) EXIT
+             END DO
+             !H_in_to_new(k) = kp
+             H_in_to_new(k) = H_in_to_new_ref(kp)
+             list_dom_H(k) = list_dom_temp(k)
+          END DO
+          m = inputs%nb_dom_temp
+          DO k = 1+inputs%nb_dom_ns, inputs%nb_dom_H
+             IF (MINVAL(ABS(list_dom_H_ref(k) - list_dom_temp)) == 0) CYCLE
+             m = m + 1
+             !H_in_to_new(m) = k
+             !list_dom_H(m) = list_dom_H(k)
+             H_in_to_new(m) = H_in_to_new_ref(k)
+             list_dom_H(m) = list_dom_H_ref(k)
+          END DO
+          IF (m/=inputs%nb_dom_H) THEN
+             CALL error_Petsc(' BUG: m/=inputs%nb_dom_H ')
+          END IF
+       END IF
     END IF
 
     !===Create interfaces in meshes=================================================

@@ -395,6 +395,10 @@ CONTAINS
     END DO
     !===End compute un_m1 and res_ns on gauss points
 
+    IF (.NOT.inputs%if_LES_in_momentum) THEN
+        res_ns_gauss=0.d0
+    END IF
+
     !===Compute res_mass on gauss points
     CALL  compute_res_mass_gauss(vv_mesh, list_mode, density_m2, density, momentum_m1, res_mass_gauss)
     !===End compute res_mass on gauss points
@@ -449,6 +453,10 @@ CONTAINS
           END DO
        END DO
        !===End compute un_m1 and res_ns on P1 gauss points
+       
+       IF (.NOT.inputs%if_LES_in_momentum) THEN
+          res_ns_P1_gauss=0.d0
+       END IF
 
        !===Compute res_mass on P1 gauss points
        CALL  compute_res_mass_gauss(pp_mesh, list_mode, density_m2_P1, density_P1, momentum_m1_P1, res_mass_P1_gauss)

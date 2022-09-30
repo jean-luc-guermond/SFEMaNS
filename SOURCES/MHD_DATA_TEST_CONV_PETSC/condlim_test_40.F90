@@ -30,7 +30,10 @@ MODULE boundary_test_40
 !!$  PUBLIC :: grad_mu_bar_in_fourier_space
 !!$  PUBLIC :: mu_in_real_space
   PRIVATE
-
+  
+  REAL(KIND=8),  PARAMETER:: a=2.d0
+  REAL(KIND=8),  PARAMETER:: amp=1.d0
+  
 CONTAINS
   !===============================================================================
   !                       Boundary conditions for Navier-Stokes
@@ -154,86 +157,120 @@ CONTAINS
        eta2=inputs%dyna_visc_fluid(2)-inputs%dyna_visc_fluid(1)
 
        !Compute ft
-       IF (m==1 .AND. TYPE==1) THEN      !type 1-2
-          ft = rho2/32.d0 * (SQRT(2.d0)*COS(SQRT(2.d0)*SIN(t))*COS(t)**2 - SIN(SQRT(2.d0)*SIN(t))*SIN(t)) * r**2
-       ELSE IF (m==1 .AND. TYPE==2) THEN
-          ft = -rho2/32.d0*SQRT(2.d0) * (SQRT(2.d0)*SIN(SQRT(2.d0)*SIN(t))*COS(t)**2 + COS(SQRT(2.d0)*SIN(t))*SIN(t)) * r**2
-       ELSE IF (m==2 .AND. TYPE==2) THEN
-          ft =  - (rho2/8.d0*SIN(t-z)*COS(t) + (rho1 + rho2/2.d0 + rho2/8.d0*COS(t-z))*SIN(t)) * r/2.d0
-       ELSE IF (m==3 .AND. TYPE==1) THEN
-          ft = -rho2/32.d0 * (SQRT(2.d0)*COS(SQRT(2.d0)*SIN(t))*COS(t)**2 - SIN(SQRT(2.d0)*SIN(t))*SIN(t)) * r**2
-       ELSE IF (m==3 .AND. TYPE==2) THEN
-          ft = -rho2/32.d0*SQRT(2.d0) * (SQRT(2.d0)*SIN(SQRT(2.d0)*SIN(t))*COS(t)**2 + COS(SQRT(2.d0)*SIN(t))*SIN(t)) * r**2
+       IF (m==2 .AND. TYPE==1) THEN      !type 1-2
+          ft =  amp*r*rho1*z**2*Cos(t - 1.*z) + 0.5d0*amp*r*rho2*z**2*Cos(t - 1.*z) &
+                  + 0.25d0*amp*r*rho2*z**2*Cos(0. + 4.*amp*t - 4.*z)*Cos(t - 1.*z) &
+                  - amp**2*r*rho2*z**2*Sin(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z)
+       ELSE IF (m==4 .AND. TYPE==2) THEN
+          ft =  0.03125d0*a*amp*r**3*rho2*z**2*Cos(0. + t + 4.*amp*t - 5.*z) &
+                 + 0.125d0*a*amp**2*r**3*rho2*z**2*Cos(0. + t + 4.*amp*t - 5.*z) &
+                 + 0.03125d0*a*amp*r**3*rho2*z**2*Cos(0. + t - 4.*amp*t + 3.*z) &
+                 - 0.125d0*a*amp**2*r**3*rho2*z**2*Cos(0. + t - 4.*amp*t + 3.*z)
        ELSE IF (m==0 .AND. TYPE==3) THEN !type 3-4
-          ft = -3.d0 * (rho2/8.d0*SIN(t-z)*COS(t) + (rho1 + rho2/2.d0 + rho2/8.d0*COS(t-z))*SIN(t)) * r/2.d0
-       ELSE IF (m==1 .AND. TYPE==3) THEN
-          ft = -7.d0/32.d0*rho2*SQRT(2.d0) * (SQRT(2.d0)*SIN(SQRT(2.d0)*SIN(t))*COS(t)**2 +COS(SQRT(2.d0)*SIN(t))*SIN(t)) * r**2
-       ELSE IF (m==1 .AND. TYPE==4) THEN
-          ft = 5/32.d0*rho2 * (SQRT(2.d0)*COS(SQRT(2.d0)*SIN(t))*COS(t)**2 - SIN(SQRT(2.d0)*SIN(t))*SIN(t)) * r**2
-       ELSE IF (m==2 .AND. TYPE==3) THEN
-          ft = -(rho2/8.d0*SIN(t-z)*COS(t) + (rho1 + rho2/2.d0 + rho2/8.d0*COS(t-z))*SIN(t)) * r/2.d0
-       ELSE IF (m==3 .AND. TYPE==3) THEN
-          ft = -rho2/32.d0*SQRT(2.d0) * (SQRT(2.d0)*SIN(SQRT(2.d0)*SIN(t))*COS(t)**2 +COS(SQRT(2.d0)*SIN(t))*SIN(t)) * r**2
-       ELSE IF (m==3 .AND. TYPE==4) THEN
-          ft = rho2/32.d0 * (SQRT(2.d0)*COS(SQRT(2.d0)*SIN(t))*COS(t)**2 - SIN(SQRT(2.d0)*SIN(t))*SIN(t)) * r**2
+          ft = 0.25d0*a*amp*r**3*rho2*z**2*(-0.25*Cos(4.*amp*t - 4.*z)*Cos(t - 1.*z) &
+                  +amp*Sin(4.*amp*t - 4.*z)*Sin(t - 1.*z))
+       ELSE IF (m==2 .AND. TYPE==4) THEN
+          ft =  -amp*r*rho1*z**2*Cos(t - 1.*z) - 0.5*amp*r*rho2*z**2*Cos(t - 1.*z) &
+                  - 0.25d0*amp*r*rho2*z**2*Cos(0. + 4.*amp*t - 4.*z)*Cos(t - 1.*z) &
+                  + amp**2*r*rho2*z**2*Sin(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z)
+       ELSE IF (m==4 .AND. TYPE==3) THEN
+          ft =  0.03125d0*a*amp*r**3*rho2*z**2*Cos(0. + t + 4.*amp*t - 5.*z) &
+                  + 0.125d0*a*amp**2*r**3*rho2*z**2*Cos(0. + t + 4.*amp*t - 5.*z) &
+                  + 0.03125d0*a*amp*r**3*rho2*z**2*Cos(0. + t - 4.*amp*t + 3.*z) &
+                  - 0.125d0*a*amp**2*r**3*rho2*z**2*Cos(0. + t - 4.*amp*t + 3.*z)
        ELSE IF (m ==0 .AND. TYPE==5) THEN !type 5-6
-          ft = -rho2/8.d0*SIN(t-z)
-       ELSE IF (m==1 .AND. TYPE==5) THEN
-          ft = -rho2/4.d0*SIN(SQRT(2.d0)*SIN(t))*COS(t)*r
-       ELSE IF (m==1 .AND. TYPE==6) THEN
-          ft = rho2/8.d0*SQRT(2.d0)*COS(SQRT(2.d0)*SIN(t))*COS(t)*r
+          ft = -amp**2*rho2*Sin(4.*amp*t - 4.*z)
+       ELSE IF (m==2 .AND. TYPE==6) THEN
+          ft = -0.5d0*a*amp**2*r**2*rho2*Sin(4.*amp*t - 4.*z)
        ELSE
           ft = 0.d0
        END IF
 
        !Compute fnl
-       IF (m==0 .AND. TYPE==1) THEN      !type 1-2
-          fnl = -(2.d0*rho1 + rho2 + rho2/4.d0*COS(t-z)) * COS(t)**2 * r
-       ELSE IF (m==1 .AND. TYPE==1) THEN
-          fnl = -9.d0/32.d0*rho2*SQRT(2.d0) * COS(SQRT(2.d0)*SIN(t)) * COS(t)**2 * r**2
-       ELSE IF (m==1 .AND. TYPE==2) THEN
-          fnl = -3.d0/16.d0*rho2 * SIN(SQRT(2.d0)*SIN(t)) * COS(t)**2 * r**2
+        IF (m==0 .AND. TYPE==1) THEN      !type 1-2
+          fnl = 0.25d0*amp**2*r*z**4*(4.*rho1 + 2.*rho2 + rho2*Cos(4.*amp*t - 4.*z))*Sin(t - 1.*z)**2
+       ELSE IF (m==2 .AND. TYPE==1) THEN
+          fnl =  - 1.d0*amp**2*r*rho1*z**2*Cos(t - 1.*z) &
+                  - 0.5d0*amp**2*r*rho2*z**2*Cos(t - 1.*z) &
+                  - 0.25d0*amp**2*r*rho2*z**2*Cos(0. + 4.*amp*t - 4.*z)*Cos(t - 1.*z) &
+                  + 2.d0*amp**2*r*rho1*z*Sin(t - 1.*z) + 1.*amp**2*r*rho2*z*Sin(t - 1.*z) &
+                  + 0.5d0*amp**2*r*rho2*z*Cos(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z) &
+                  + amp**2*r*rho2*z**2*Sin(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z)
        ELSE IF (m==2 .AND. TYPE==2) THEN
-          fnl = rho2/16.d0 * SIN(t-z)*COS(t) * r
-       ELSE IF (m==3 .AND. TYPE==1) THEN
-          fnl = rho2/32.d0*SQRT(2.d0) * COS(SQRT(2.d0)*SIN(t)) * COS(t)**2 * r**2
-       ELSE IF (m==3 .AND. TYPE==2) THEN
-          fnl = rho2/16.d0 * SIN(SQRT(2.d0)*SIN(t)) * COS(t)**2 * r**2
+          fnl = 0.125d0*a*amp**2*r**3*rho2*z**4*Cos(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z)**2
+       ELSE IF (m==4 .AND. TYPE==2) THEN
+          fnl = -0.15625d0*a*amp**2*r**3*rho2*z**2*Cos(0. + t + 4.*amp*t - 5.*z) &
+                  + 0.09375d0*a*amp**2*r**3*rho2*z**2*Cos(0. + t - 4.*amp*t + 3.*z) &
+                  + 0.125d0*a*amp**2*r**3*rho2*z*Cos(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z)
        ELSE IF (m==0 .AND. TYPE==3) THEN !type 3-4
-          fnl = 3.d0*rho2/16.d0 * SIN(t-z) * COS(t) * r
-       ELSE IF (m==1 .AND. TYPE==3) THEN
-          fnl = 7.d0*rho2/16.d0 * SIN(SQRT(2.d0)*SIN(t)) * COS(t)**2 * r**2
-       ELSE IF (m==1 .AND. TYPE==4) THEN
-          fnl = -5.d0*rho2/32.d0*SQRT(2.d0) * COS(SQRT(2.d0)*SIN(t)) * COS(t)**2 * r**2
-       ELSE IF (m==2 .AND. TYPE==3) THEN
-          fnl = rho2/16.d0 * SIN(t-z) * COS(t) * r
-       ELSE IF (m==3 .AND. TYPE==3) THEN
-          fnl = rho2/16.d0 * SIN(SQRT(2.d0)*SIN(t)) * COS(t)**2 * r**2
-       ELSE IF (m==3 .AND. TYPE==4) THEN
-          fnl = -rho2/32.d0*SQRT(2.d0) * COS(SQRT(2.d0)*SIN(t)) * COS(t)**2 * r**2
+          fnl = 0.15625d0*a*amp**2*r**3*rho2*z*(1.*z*Cos(t + 4.*amp*t - 5.*z) &
+                  - 0.6*z*Cos(t - 4.*amp*t + 3.*z) - 0.8*Cos(4.*amp*t - 4.*z)*Sin(t - 1.*z))
+       ELSE IF (m==2 .AND. TYPE==4) THEN
+          fnl = 0.625d0*amp**2*r*rho2*z**2*Cos(0. + t + 4.*amp*t - 5.*z) &
+                  + amp**2*r*rho1*z**2*Cos(t - 1.*z) &
+                  + 0.5d0*amp**2*r*rho2*z**2*Cos(t - 1.*z) & 
+                  - 0.375d0*amp**2*r*rho2*z**2*Cos(0. + t - 4.*amp*t + 3.*z) &
+                  - 0.25d0*amp**2*r*rho2*z*Sin(0. + t + 4.*amp*t - 5.*z) &
+                  - 2.d0*amp**2*r*rho1*z*Sin(t - 1.*z) - 1.*amp**2*r*rho2*z*Sin(t - 1.*z) &
+                  - 0.25d0*amp**2*r*rho2*z*Sin(0. + t - 4.*amp*t + 3.*z)
+       ELSE IF (m==4 .AND. TYPE==3) THEN
+          fnl =  -0.15625d0*a*amp**2*r**3*rho2*z**2*Cos(0. + t + 4.*amp*t - 5.*z) &
+                  + 0.09375d0*a*amp**2*r**3*rho2*z**2*Cos(0. + t - 4.*amp*t + 3.*z) &
+                  + 0.125d0*a*amp**2*r**3*rho2*z*Cos(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z)
        ELSE IF (m==0 .AND. TYPE==5) THEN !type 5-6
-          fnl = rho2/8.d0*SIN(t-z)
-       ELSE IF (m==1 .AND. TYPE==5) THEN
-          fnl = rho2/4.0*SIN(SQRT(2.d0)*SIN(t))*COS(t)*r
-       ELSE IF (m==1 .AND. TYPE==6) THEN
-         fnl = -rho2/8.d0*SQRT(2.d0)*COS(SQRT(2.d0)*SIN(t))*COS(t)*r
+          fnl = amp**2*rho2*Sin(4.*amp*t - 4.*z)
+       ELSE IF (m==2 .AND. TYPE==6) THEN
+          fnl = 0.5d0*a*amp**2*r**2*rho2*Sin(4.*amp*t - 4.*z)
        ELSE
           fnl = 0.d0
        END IF
 
        !Compute fd
-       IF (m==1 .AND. TYPE==1) THEN
-          fd = -eta2/(8.d0*inputs%Re)*SIN(SQRT(2.d0)*SIN(t))*COS(t)
-       ELSE IF (m==1 .AND. TYPE==2) THEN
-          fd = -eta2/(8.d0*inputs%Re)*SQRT(2.d0)*COS(SQRT(2.d0)*SIN(t))*COS(t)
-       ELSE IF (m==1 .AND. TYPE==3) THEN
-          fd = -eta2/(8.d0*inputs%Re)*SQRT(2.d0)*COS(SQRT(2.d0)*SIN(t))*COS(t)
-       ELSE IF (m==1 .AND. TYPE==4) THEN
-          fd = eta2/(8.d0*inputs%Re)*SIN(SQRT(2.d0)*SIN(t))*COS(t)
+       IF (m==2 .AND. TYPE==1) THEN      !type 1-2
+          fd =  1.5*amp*eta2*r*z*Cos(0. + t + 4.*amp*t - 5.*z) &
+                  + 4.d0*amp*eta1*r*z*Cos(t - 1.*z) + 2.*amp*eta2*r*z*Cos(t - 1.*z) &
+                  - 0.5d0*amp*eta2*r*z*Cos(0. + t - 4.*amp*t + 3.*z) &
+                  - 0.25d0*amp*eta2*r*Sin(0. + t + 4.*amp*t - 5.*z) &
+                  + 0.625d0*amp*eta2*r*z**2*Sin(0. + t + 4.*amp*t - 5.*z) &
+                  - 2.d0*amp*eta1*r*Sin(t - 1.*z) - 1.*amp*eta2*r*Sin(t - 1.*z) &
+                  + amp*eta1*r*z**2*Sin(t - 1.*z) + 0.5*amp*eta2*r*z**2*Sin(t - 1.*z) &
+                  - 0.25d0*amp*eta2*r*Sin(0. + t - 4.*amp*t + 3.*z) &
+                  - 0.375d0*amp*eta2*r*z**2*Sin(0. + t - 4.*amp*t + 3.*z)
+       ELSE IF (m==4 .AND. TYPE==2) THEN
+          fd =  0.375*a*amp*eta2*r**3*z*Cos(0. + t + 4.*amp*t - 5.*z) &
+                  - 0.125*a*amp*eta2*r**3*z*Cos(0. + t - 4.*amp*t + 3.*z) &
+                  - 0.0625*a*amp*eta2*r**3*Sin(0. + t + 4.*amp*t - 5.*z) &
+                  + 0.15625*a*amp*eta2*r**3*z**2*Sin(0. + t + 4.*amp*t - 5.*z) &
+                  - 0.0625*a*amp*eta2*r**3*Sin(0. + t - 4.*amp*t + 3.*z) &
+                  - 0.09375*a*amp*eta2*r**3*z**2*Sin(0. + t - 4.*amp*t + 3.*z)
+       ELSE IF (m==0 .AND. TYPE==3) THEN !type 3-4
+          fd =  -0.0625d0*a*amp*eta2*r*(r**2*z*Sin(4.*amp*t - 4.*z)* &
+                  ( 4.d0*z*Cos(t - 1.*z) - 8.d0*Sin(t - 1.*z)) &
+                  + Cos(4.*amp*t - 4.*z)*(4.d0*r**2*z*Cos(t - 1.*z) &
+                  + (-8.d0*z**2 + r**2*(-2. + z**2))*Sin(t - 1.*z)))
+       ELSE IF (m==2 .AND. TYPE==4) THEN
+          fd =  -1.5d0*amp*eta2*r*z*Cos(0. + t + 4.*amp*t - 5.*z) &
+                  - 4.d0*amp*eta1*r*z*Cos(t - 1.*z) - 2.*amp*eta2*r*z*Cos(t - 1.*z) &
+                  + 0.5d0*amp*eta2*r*z*Cos(0. + t - 4.*amp*t + 3.*z) &
+                  + 0.25d0*amp*eta2*r*Sin(0. + t + 4.*amp*t - 5.*z) &
+                  - 0.625d0*amp*eta2*r*z**2*Sin(0. + t + 4.*amp*t - 5.*z) &
+                  + 2.d0*amp*eta1*r*Sin(t - 1.*z) + 1.*amp*eta2*r*Sin(t - 1.*z) &
+                  - amp*eta1*r*z**2*Sin(t - 1.*z) - 0.5*amp*eta2*r*z**2*Sin(t - 1.*z) &
+                  + 0.25d0*amp*eta2*r*Sin(0. + t - 4.*amp*t + 3.*z) &
+                  + 0.375d0*amp*eta2*r*z**2*Sin(0. + t - 4.*amp*t + 3.*z)
+       ELSE IF (m==4 .AND. TYPE==3) THEN
+          fd =  0.375d0*a*amp*eta2*r**3*z*Cos(0. + t + 4.*amp*t - 5.*z) &
+                  - 0.125d0*a*amp*eta2*r**3*z*Cos(0. + t - 4.*amp*t + 3.*z) &
+                  - 0.0625d0*a*amp*eta2*r**3*Sin(0. + t + 4.*amp*t - 5.*z) &
+                  + 0.15625d0*a*amp*eta2*r**3*z**2*Sin(0. + t + 4.*amp*t - 5.*z) &
+                  - 0.0625d0*a*amp*eta2*r**3*Sin(0. + t - 4.*amp*t + 3.*z) &
+                  - 0.09375d0*a*amp*eta2*r**3*z**2*Sin(0. + t - 4.*amp*t + 3.*z)
        ELSE
           fd = 0.d0
        END IF
-
+       fd = fd/inputs%Re
+       
+       !Compute fp
        IF (m==0 .AND. TYPE==1) THEN
           fp = 2.d0*r*z**3*COS(t)
        ELSE IF (m==1 .AND. TYPE==2) THEN
@@ -314,25 +351,16 @@ CONTAINS
     z = rr(2,:)
 
     vv = 0.d0
-    IF (m==0) THEN
-       IF(TYPE==3) THEN
-          vv = 1.5d0*r*COS(t)
-       ELSE IF (TYPE==5) THEN
-          vv = 1.d0
-       ELSE
-          vv = 0.d0
-       END IF
-    ELSE IF (m==2) THEN
-       IF (TYPE==2) THEN
-          vv = 0.5d0*r*COS(t)
-       ELSE IF (TYPE==3) THEN
-          vv = 0.5d0*r*COS(t)
-       ELSE
-          vv = 0.d0
-       END IF
+    IF (m==2 .AND. TYPE==1) THEN
+       vv = r*z**2*Sin(t-z)
+    ELSE IF (m==2 .AND. TYPE==4) THEN
+       vv = -r*z**2*Sin(t-z)
+    ELSE IF (m==0 .AND. TYPE==5) THEN
+       vv = 1.d0
     ELSE
        vv = 0.d0
     END IF
+    vv=amp*vv
     RETURN
   END FUNCTION vv_exact
 
@@ -402,11 +430,9 @@ CONTAINS
     
     IF (interface_nb==1) THEN
        IF (m==0 .AND. TYPE==1) THEN
-          vv = 0.5d0 + 0.125d0*COS(t-z)
-       ELSE IF (m==1 .AND. TYPE==1) THEN
-          vv = 0.125d0*SQRT(2.d0)*COS(SQRT(2.d0)*SIN(t))*r
-       ELSE IF (m==1 .AND. TYPE==2) THEN
-          vv = 0.125d0*SIN(SQRT(2.d0)*SIN(t))*r
+          vv = 0.25d0*(2.d0 + Cos(4.d0*(amp*t-z)))
+       ELSE IF (m==2 .AND. TYPE==2) THEN
+          vv = 0.125d0*a*r**2*Cos(4.d0*(amp*t-z))
        ELSE
           vv = 0.d0
        END IF

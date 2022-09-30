@@ -152,7 +152,7 @@ MUMPS
 ============================================
 (RECT20.FEM)
 ===Reference results
-1.1151659124883185E-002  L2 error on velocity
-0.28214438978539214      H1 error on velocity
-6.5882130573437545E-002  L1 error on level set
-2.0819136938335482E-003  L2 error on pressure
+1.1322997749679015E-002  L2 error on velocity
+0.28931692955485655      H1 error on velocity
+6.5821381384494185E-002  L1 error on level set
+2.1330948141428186E-003  L2 error on pressure

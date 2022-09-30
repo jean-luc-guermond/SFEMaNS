@@ -233,7 +233,8 @@ CONTAINS
           DO n = 1, inputs%nb_fluid
              nu_bar = MAX(nu_bar,inputs%dyna_visc_fluid(n)/inputs%density_fluid(n))
           END DO
-          nu_bar = 2.d0*nu_bar
+          !nu_bar = 2.0d0*nu_bar
+          nu_bar = 1.1d0*nu_bar
        ELSE
           mu_bar  = 1.d0
           nu_bar  = 1.d0

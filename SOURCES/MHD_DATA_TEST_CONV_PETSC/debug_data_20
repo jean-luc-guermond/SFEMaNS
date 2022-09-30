@@ -146,7 +146,7 @@ MUMPS
 ============================================
 (Mesh_10_form.FEM)
 ===Reference results
-2.3571855458345411E-003  L2 error on velocity
-9.3634051172294799E-002  H1 error on velocity
-5.9498418056922638E-003  L2 error on level set
-6.9125877580658831E-003  L2 error on pressure
+9.4930368711476794E-004  L2 error on velocity
+2.7233183030374156E-002  H1 error on velocity
+4.0071218896949025E-005  L2 error on level set
+5.4591500307480268E-003  L2 error on pressure
