@@ -21,10 +21,6 @@ find_package(PkgConfig)
 pkg_check_modules(PETSC PETSc)
 pkg_check_modules(FFTW fftw3)
 
-# Searching all petsc linked libraries
-execute_process (COMMAND pkg-config PETSc --libs --static OUTPUT_VARIABLE PETSC_PRIVATE_LIBRARIES)
-string(STRIP "${PETSC_PRIVATE_LIBRARIES}" PETSC_PRIVATE_LIBRARIES)
-
 # Setting for different builds
 set(CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS_DEBUG} ${debug_bounds}")
 set(CMAKE_Fortran_FLAGS_RELEASE ${release_bounds} CACHE STRING
@@ -54,7 +50,7 @@ ADD_CUSTOM_TARGET(native
 file(GLOB_RECURSE template_sources ./*.F90)
 
 # Define runtime output directory
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./EXECUTABLE)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../EXECUTABLE)
 
 # Add executable
 add_executable(a.exe ${template_sources})
@@ -70,5 +66,5 @@ target_link_libraries(a.exe PUBLIC sfemans_lib_F
   )
 
 target_include_directories(a.exe PUBLIC ${SFEMaNS_DIR}/LIBS)
-# Aading directory to build lib_f
+# Ading directory to build lib_f
 add_subdirectory(${SFEMaNS_DIR}/LIBS ${SFEMaNS_DIR}/LIBS)
