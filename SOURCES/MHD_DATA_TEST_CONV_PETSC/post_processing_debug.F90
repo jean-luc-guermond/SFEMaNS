@@ -29,7 +29,7 @@ CONTAINS
     REAL(KIND=8)                                :: time
     INTEGER                                     :: m_max_c, ierr
     REAL(KIND=8) :: error, error_ref, error_cumul, norm
-    CHARACTER(LEN=5) :: error_out
+    INTEGER :: error_out
     MPI_Comm, DIMENSION(:), POINTER         :: comm_one_d, comm_one_d_ns, comm_one_d_temp
 
     !inputs%numero_du_test_debug = 20
@@ -95,17 +95,17 @@ CONTAINS
 
  
     IF (isnan(error_cumul)) THEN
-       error_out = 'fail' !===Test Failed   
+       error_out = 1 !===Test Failed   
     ELSE IF (error_cumul/norm .GT. 1.d-7) THEN
-       error_out = 'fail' !===Test Failed
+       error_out = 2 !===Test Failed
     ELSE
-       error_out= 'okkk' !===Test Passed
+       error_out= 123 !===Test Passed
     END IF
 
     CLOSE(21)
     CLOSE(22)
     CALL PetscFinalize(ierr)
-    STOP error_out
+    CALL EXIT(error_out)
 
   END SUBROUTINE regression
 
