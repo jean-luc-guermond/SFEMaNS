@@ -1,10 +1,114 @@
 MODULE post_processing_debug
 
-PUBLIC :: post_proc_test
+PUBLIC :: post_proc_test, regression
 
 PRIVATE
 CONTAINS
   !---------------------------------------------------------------------------
+
+  SUBROUTINE regression(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, & 
+       un, pn, Hn, Bn, phin, tempn, level_setn, mu_H_field, &
+       time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp) ! MODIFICATION: comm_one_d_temp added
+    USE boundary
+    USE def_type_mesh
+    USE input_data
+    USE my_util
+    USE tn_axi
+    USE subroutine_ns_with_u
+    USE sft_parallele
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    TYPE(mesh_type), POINTER                    :: pp_mesh, vv_mesh
+    TYPE(mesh_type), POINTER                    :: temp_mesh 
+    TYPE(mesh_type), POINTER                    :: H_mesh, phi_mesh
+    INTEGER,      POINTER,  DIMENSION(:)        :: list_mode
+    REAL(KIND=8), POINTER,  DIMENSION(:,:,:)    :: un, pn, Hn, Bn, phin, tempn
+    REAL(KIND=8), POINTER,  DIMENSION(:,:,:,:)  :: level_setn
+    REAL(KIND=8), POINTER,  DIMENSION(:)        :: mu_H_field
+    REAL(KIND=8)                                :: time
+    INTEGER                                     :: m_max_c, ierr
+    REAL(KIND=8) :: error, error_ref, error_cumul, norm
+    CHARACTER(LEN=5) :: error_out
+    MPI_Comm, DIMENSION(:), POINTER         :: comm_one_d, comm_one_d_ns, comm_one_d_temp
+
+    inputs%numero_du_test_debug = 20
+    CALL post_proc_test(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, & 
+       un, pn, Hn, Bn, phin, tempn, level_setn, mu_H_field, &
+       time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp)
+
+    error_cumul=0.d0
+    norm=0.d0
+    
+    OPEN(UNIT = 21, FILE =  'regression_reference', FORM = 'formatted', STATUS = 'unknown')
+    OPEN(UNIT = 22, FILE =  'current_regression_reference', FORM = 'formatted', STATUS = 'unknown')
+
+    IF (vv_mesh%np/=0) THEN
+       error=norm_SF(comm_one_d, 'L2', vv_mesh, list_mode, un)
+       WRITE(22,*) error
+       READ(21,*) error_ref
+       error_cumul = error_cumul + ABS(error-error_ref)
+       norm = norm + ABS(error_ref)
+
+       error=norm_SF(comm_one_d_NS, 'L2', pp_mesh, list_mode, pn)
+       WRITE(22,*) error
+       READ(21,*) error_ref
+       error_cumul = error_cumul + ABS(error-error_ref)
+       norm = norm + ABS(error_ref)
+
+       IF (inputs%if_level_set) THEN
+          IF (inputs%if_level_set_P2) THEN
+             error=norm_SF(comm_one_d_ns, 'L2', vv_mesh, list_mode,level_setn(1,:,:,:))
+          ELSE
+             error=norm_SF(comm_one_d_ns, 'L2', pp_mesh, list_mode,level_setn(1,:,:,:))
+          END IF
+          WRITE(22,*) error
+          READ(21,*) error_ref
+          error_cumul = error_cumul + ABS(error-error_ref)
+          norm = norm + ABS(error_ref)
+       END IF
+    END IF
+
+    IF (temp_mesh%np/=0) THEN
+       error=norm_SF(comm_one_d_temp, 'L2', temp_mesh, list_mode, tempn)
+       WRITE(22,*) error
+       READ(21,*) error_ref
+       error_cumul = error_cumul + ABS(error-error_ref)
+       norm = norm + ABS(error_ref)
+    END IF
+
+    IF (H_mesh%np/=0) THEN
+       error=norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn)
+       WRITE(22,*) error
+       READ(21,*) error_ref
+       error_cumul = error_cumul + ABS(error-error_ref)
+       norm = norm + ABS(error_ref)
+    END IF
+
+    IF (phi_mesh%np/=0) THEN
+       error=norm_SF(comm_one_d, 'L2', phi_mesh, list_mode, phin)
+       WRITE(22,*) error
+       READ(21,*) error_ref
+       error_cumul = error_cumul + ABS(error-error_ref)
+       norm = norm + ABS(error_ref)
+    END IF
+
+ 
+    IF (isnan(error_cumul)) THEN
+       error_out = 'fail' !===Test Failed   
+    ELSE IF (error_cumul/norm .GT. 1.d-7) THEN
+       error_out = 'fail' !===Test Failed
+    ELSE
+       error_out= 'ok' !===Test Passed
+    END IF
+
+    CLOSE(21)
+    CLOSE(22)
+    CALL PetscFinalize(ierr)
+    STOP error_out
+
+  END SUBROUTINE regression
+
   SUBROUTINE post_proc_test(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, & 
        un, pn, Hn, Bn, phin, tempn, level_setn, mu_H_field, &
        time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp) ! MODIFICATION: comm_one_d_temp added

@@ -1,0 +1,104 @@
+===Is mesh file formatted (true/false)?
+.t.
+===Directory and name of mesh file
+'../../MESHES' 'Mesh_10_form.FEM'
+===Number of processors in meridian section
+2
+===Number of processors in Fourier space
+1
+===Number of Fourier modes
+1
+===Select Fourier modes? (true/false)
+.t.
+===List of Fourier modes (if select_mode=.TRUE.)
+1
+===Problem type: (nst, mxw, mhd, fhd)
+'mxw'
+===Restart on velocity (true/false)
+.f.
+===Restart on magnetic field (true/false)
+.f.
+===Time step and number of time iterations
+.01d0, 100
+
+============================================
+              Periodicity
+============================================
+===How many pieces of periodic boundary?
+1
+===Indices of periodic boundaries and corresponding vectors
+4 2 .0 1.
+
+============================================
+              H-MAXWELL
+============================================
+===Number of subdomains in magnetic field (H) mesh
+1
+===List of subdomains for magnetic field (H) mesh
+1
+===Number of interfaces in H mesh
+0
+===List of interfaces in H mesh
+xx
+===Number of Dirichlet sides for Hxn
+0
+===List of Dirichlet sides for Hxn
+xx
+===Permeability in the conductive part (1:nb_dom_H)
+1.d0
+===Conductivity in the conductive part (1:nb_dom_H)
+1.d0
+===Type of finite element for magnetic field
+1
+===Magnetic Reynolds number
+1.d0
+===Stabilization coefficient (divergence)
+1.d0
+===Stabilization coefficient for Dirichlet H and/or interface H/H
+1.d0
+
+============================================
+              Phi-MAXWELL
+============================================
+===Number of subdomains in magnetic potential (phi) mesh
+1
+===List of subdomains for magnetic potential (phi) mesh
+2
+===How many boundary pieces for Dirichlet BCs on phi?
+1
+===List of boundary pieces for Dirichlet BCs on phi
+3
+===Number of interfaces between H and phi
+1
+===List of interfaces between H and phi
+5
+===Permeability in vacuum
+1.d0
+===Type of finite element for scalar potential
+2
+===Stabilization coefficient (interface H/phi)
+1.d0
+
+============================================
+              Solver-MAXWELL
+============================================
+===Maximum number of iterations for Maxwell solver
+100
+===Relative tolerance for Maxwell solver
+1.d-6 
+===Absolute tolerance for Maxwell solver
+1.d-10
+===Solver type for Maxwell (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for Maxwell solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+
+============================================
+Mesh_10_form.FEM, P1P2
+===Reference results
+0.106766425635840 L2 error on Hn     
+0.155679133144781 L2 error on Curl(Hn)  
+0.241214315851452 L2 norm of Div(mu Hn)
+0.238756736925237 H1 error on phin
+

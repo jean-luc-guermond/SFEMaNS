@@ -115,6 +115,7 @@ MODULE my_data_module
      !===Data for periodicity========================================================
      TYPE(periodic_data)                     :: my_periodic
      !===Data for convergence tests==================================================
+     LOGICAL                                 :: if_regression
      LOGICAL                                 :: test_de_convergence
      CHARACTER(len=200)                      :: data_directory_debug
      INTEGER                                 :: numero_du_test_debug

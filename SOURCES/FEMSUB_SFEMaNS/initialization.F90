@@ -518,26 +518,30 @@ CONTAINS
     CALL MPI_COMM_SIZE(PETSC_COMM_WORLD,nb_procs,code)
     CALL MPI_COMM_RANK(PETSC_COMM_WORLD,petsc_rank,code)
 
-    !===Decide whether debugging or not=============================================
-    CALL sfemansinitialize
-    IF (inputs%test_de_convergence) THEN
-       IF (inputs%numero_du_test_debug<1 .OR. inputs%numero_du_test_debug>40) THEN 
-          CALL error_Petsc('BUG in INIT: debug_test_number is not in the correct range')
-       END IF
-       WRITE(tit,'(i2)') inputs%numero_du_test_debug
-       data_file = 'data_'//TRIM(ADJUSTL(tit))
-       data_directory = inputs%data_directory_debug
-       data_fichier = TRIM(ADJUSTL(data_directory))//'/debug_'//TRIM(ADJUSTL(data_file))
-    ELSE
-       data_directory = '.'
-       data_file='data'
-       data_fichier = TRIM(ADJUSTL(data_directory))//'/'//TRIM(ADJUSTL(data_file))
-    END IF
+    !===Check if regression=========================================================
+    CALL regression_initialize
+
+!!$    !===Decide whether debugging or not=============================================
+!!$    CALL sfemansinitialize
+!!$    IF (inputs%test_de_convergence) THEN
+!!$       IF (inputs%numero_du_test_debug<1 .OR. inputs%numero_du_test_debug>40) THEN 
+!!$          CALL error_Petsc('BUG in INIT: debug_test_number is not in the correct range')
+!!$       END IF
+!!$       WRITE(tit,'(i2)') inputs%numero_du_test_debug
+!!$       data_file = 'data_'//TRIM(ADJUSTL(tit))
+!!$       data_directory = inputs%data_directory_debug
+!!$       data_fichier = TRIM(ADJUSTL(data_directory))//'/debug_'//TRIM(ADJUSTL(data_file))
+!!$    ELSE
+!!$       data_directory = '.'
+!!$       data_file='data'
+!!$       data_fichier = TRIM(ADJUSTL(data_directory))//'/'//TRIM(ADJUSTL(data_file))
+!!$    END IF
 
     !===Assign correct user functions in boundary module
     call assign_boundary
 
     !===Read data file==============================================================
+    data_fichier = TRIM(ADJUSTL('data'))
     CALL read_my_data(data_fichier)
 
     !===Debugging===================================================================
@@ -1587,7 +1591,6 @@ CONTAINS
 
   END SUBROUTINE prodmat_maxwell_int_by_parts
 
-
   SUBROUTINE sfemansinitialize
     IMPLICIT NONE
     INTEGER                                          :: narg, i
@@ -1629,6 +1632,35 @@ CONTAINS
 
   END SUBROUTINE sfemansinitialize
 
+  SUBROUTINE regression_initialize
+    IMPLICIT NONE
+    INTEGER                                          :: narg, i
+    CHARACTER(len=200)                               :: inline
+    LOGICAL                                          :: ok
+    CHARACTER(len=3)                                 :: tit
+
+    narg = 0
+    ok = .TRUE.
+
+    DO WHILE (ok)
+       CALL getarg(narg+1,tit)
+       IF (tit == '   ') THEN
+          ok = .FALSE.
+       ELSE
+          narg = narg+1
+       END IF
+    END DO
+    
+    inputs%if_regression = .FALSE.
+    IF (narg==1) THEN
+       CALL getarg(1,inline)
+       IF (TRIM(ADJUSTL(inline)) == 'regression') THEN
+          inputs%if_regression = .TRUE.
+       END IF
+    END IF
+
+  END SUBROUTINE regression_initialize
+  
   SUBROUTINE compute_local_mesh_size(mesh)
     USE def_type_mesh
     TYPE(mesh_type) :: mesh

@@ -1,0 +1,102 @@
+MESSAGE(STATUS "This is CMake ${CMAKE_VERSION}")
+MESSAGE(STATUS "")
+
+# Includes various variables depending on native
+#include(variables.cmake)
+
+# Cmake minimum version
+cmake_minimum_required(VERSION 3.5)
+
+# Project name and version
+project(sfemans)
+
+# Enable Fortran
+enable_language(Fortran)
+
+# Setting for different builds
+set(CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS_DEBUG} ${debug_bounds}")
+set(CMAKE_Fortran_FLAGS_RELEASE ${release_bounds} CACHE STRING
+  " Flags used by the compiler during release builds. ")
+set(CMAKE_Fortran_FLAGS_NATIVE ${native_bounds} CACHE STRING
+  " Flags used by the compiler during native builds. ")
+
+IF (TARGET debug)
+else()
+ADD_CUSTOM_TARGET(debug
+  COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug ${CMAKE_SOURCE_DIR}
+  COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all -j20
+  COMMENT "Switch CMAKE_BUILD_TYPE to Debug"
+  )
+
+ADD_CUSTOM_TARGET(release
+  COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Release ${CMAKE_SOURCE_DIR}
+  COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all -j20
+  COMMENT "Switch CMAKE_BUILD_TYPE to Release"
+  )
+
+ADD_CUSTOM_TARGET(native
+  COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Native ${CMAKE_SOURCE_DIR}
+  COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all -j20
+  COMMENT "Switch CMAKE_BUILD_TYPE to Native"
+  )
+endif()
+
+# Create local sources from local dir
+file(GLOB_RECURSE local_sources ${CMAKE_CURRENT_SOURCE_DIR}/LOCAL_SOURCES/*.F90)
+message(${local_sources} " local_sources")
+# Define runtime output directory
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../EXECUTABLE)
+
+
+# Mesh interpolation exe
+file(GLOB_RECURSE regression_sources
+  ${CMAKE_CURRENT_SOURCE_DIR}/LOCAL_SOURCES/condlim.F90
+  ${CMAKE_CURRENT_SOURCE_DIR}/LOCAL_SOURCES/read_user_data.F90
+  ${SFEMaNS_DIR}/SOURCES/MESH_INTERPOLATION/*.F90)
+add_executable(a_mesh_interpolation.exe ${regression_sources})
+target_link_libraries(a_mesh_interpolation.exe PUBLIC sfemans_lib_F
+  ${PETSC_LINK_LIBRARIES}
+  ${PETSC_PRIVATE_LIBRARIES}
+  ${FFTW_LINK_LIBRARIES}
+  ${ZLIB_LIBRARIES}
+  ${MPI_Fortran_LIBRARIES}
+  ${ADDITIONAL_LINKS}
+  )
+target_include_directories(a_mesh_interpolation.exe PUBLIC ${SFEMaNS_DIR}/LIBS)
+
+# Add executable
+set(exe "test19_20.exe")
+add_executable(${exe} ${local_sources})
+# Include and link library
+target_link_libraries(${exe} PUBLIC sfemans_lib_F
+  ${PETSC_LINK_LIBRARIES}
+  ${PETSC_PRIVATE_LIBRARIES}
+  ${FFTW_LINK_LIBRARIES}
+  ${ZLIB_LIBRARIES}
+  ${MPI_Fortran_LIBRARIES}
+  ${ADDITIONAL_LINKS}
+  )
+target_include_directories(${exe} PUBLIC ${SFEMaNS_DIR}/LIBS)
+
+set(passRegex "ok")
+
+#list(APPEND name_of_test    0      1 )
+#list(APPEND name_of_command job19.sh job20.sh)
+
+list(APPEND name_of_test         1 )
+list(APPEND name_of_command  job20.sh)
+
+#foreach(num IN ZIP_LISTS name_of_test name_of_command)
+#  set (nm "${num_0}")
+#  add_test(NAME ${nm}
+#    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../REGRESSION_TESTS
+#    COMMAND /bin/bash/ ${num_1} ${RUN_PRE_PROC} ${PROC_CALL} ${exe})
+#  set_property (TEST ${nm} PROPERTY PASS_REGULAR_EXPRESSION "${passRegex}")
+#endforeach()
+
+set (nm "test20")
+add_test(NAME ${nm}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../REGRESSION_TESTS
+  COMMAND /bin/bash/ job20.sh ${RUN_PRE_PROC} ${PROC_CALL} ${exe})
+set_property (TEST ${nm} PROPERTY PASS_REGULAR_EXPRESSION "${passRegex}")
+
