@@ -25,11 +25,11 @@ do
 done < "$datatest"
 nproc=$(( ns*nf ))
 
-##cp suite_ns_S000_I001.Mesh_10_form.FEM suite_ns_S000_I002.Mesh_10_form.FEM
-##./mesh_interpolation.sh "../EXECUTABLE/a_mesh_interpolation.exe" "$1" "$2"
+cp suite_ns_S000_I001.Mesh_10_form.FEM suite_ns_S000_I002.Mesh_10_form.FEM
+./mesh_interpolation.sh "../EXECUTABLE/a_mesh_interpolation.exe" "$1" "$2"
 for FILE in suite_*I002*; do mv "$FILE" "$(echo "$FILE" | sed 's/_I002//')"; done
 cp regression_reference_20 regression_reference
 
 $1 $2$nproc ../EXECUTABLE/$3 regression
-#echo $?
-#cp current_regression_reference current_regression_reference_20
+echo $?
+cp current_regression_reference current_regression_reference_20

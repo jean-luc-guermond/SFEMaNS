@@ -63,7 +63,7 @@ target_link_libraries(${exe} PUBLIC sfemans_lib_F
 
 target_include_directories(${exe} PUBLIC ${SFEMaNS_DIR}/LIBS)
 
-set(passRegex "ok")
+set(passRegex "123")
 
 set (nm "test2")
 add_test(NAME ${nm}

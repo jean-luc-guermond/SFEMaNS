@@ -26,3 +26,4 @@ nproc=$(( ns*nf ))
      
 
 $1 $2$nproc ../EXECUTABLE/$3 regression
+echo $?

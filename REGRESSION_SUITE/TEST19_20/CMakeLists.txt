@@ -78,25 +78,16 @@ target_link_libraries(${exe} PUBLIC sfemans_lib_F
   )
 target_include_directories(${exe} PUBLIC ${SFEMaNS_DIR}/LIBS)
 
-set(passRegex "ok")
+set(passRegex "123")
 
-#list(APPEND name_of_test    0      1 )
-#list(APPEND name_of_command job19.sh job20.sh)
+list(APPEND name_of_test    19      20 )
+list(APPEND name_of_command job19.sh job20.sh)
 
-list(APPEND name_of_test         1 )
-list(APPEND name_of_command  job20.sh)
-
-#foreach(num IN ZIP_LISTS name_of_test name_of_command)
-#  set (nm "${num_0}")
-#  add_test(NAME ${nm}
-#    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../REGRESSION_TESTS
-#    COMMAND /bin/bash/ ${num_1} ${RUN_PRE_PROC} ${PROC_CALL} ${exe})
-#  set_property (TEST ${nm} PROPERTY PASS_REGULAR_EXPRESSION "${passRegex}")
-#endforeach()
-
-set (nm "test20")
-add_test(NAME ${nm}
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../REGRESSION_TESTS
-  COMMAND /bin/bash/ job20.sh ${RUN_PRE_PROC} ${PROC_CALL} ${exe})
-set_property (TEST ${nm} PROPERTY PASS_REGULAR_EXPRESSION "${passRegex}")
+foreach(num IN ZIP_LISTS name_of_test name_of_command)
+  set (nm "test${num_0}")
+  add_test(NAME ${nm}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../REGRESSION_TESTS
+    COMMAND /bin/bash/ ${num_1} ${RUN_PRE_PROC} ${PROC_CALL} ${exe})
+  set_property (TEST ${nm} PROPERTY PASS_REGULAR_EXPRESSION "${passRegex}")
+endforeach()
 
