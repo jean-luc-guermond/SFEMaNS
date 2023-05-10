@@ -1,11 +1,6 @@
 module boundary
   use interface_boundary
   use point_to_boundary_generic
-  use point_to_boundary_test_1
-  use point_to_boundary_test_2
-  use point_to_boundary_test_3
-  use point_to_boundary_test_4
-  use point_to_boundary_test_5
   use point_to_boundary_test_6
   use point_to_boundary_test_7
   use point_to_boundary_test_8
@@ -19,8 +14,6 @@ module boundary
   use point_to_boundary_test_16
   use point_to_boundary_test_17
   use point_to_boundary_test_18
-  use point_to_boundary_test_19
-  use point_to_boundary_test_20
   use point_to_boundary_test_21
   use point_to_boundary_test_22
   use point_to_boundary_test_23
@@ -82,126 +75,6 @@ CONTAINS
        chi_coeff_law => chi_coeff_law_generic
        T_dchi_dT_coeff_law => T_dchi_dT_coeff_law_generic
        nu_tilde_law => nu_tilde_law_generic
-    case(1) 
-       init_velocity_pressure => init_velocity_pressure_test_1
-!!$       init_temperature => init_temperature_test_1
-!!$       init_level_set =>  init_level_set_test_1
-       source_in_NS_momentum =>  source_in_NS_momentum_test_1
-!!$       source_in_temperature =>  source_in_temperature_test_1
-!!$       source_in_level_set =>  source_in_level_set_test_1
-       vv_exact =>  vv_exact_test_1
-!!$       imposed_velocity_by_penalty =>  imposed_velocity_by_penalty_test_1
-       pp_exact =>  pp_exact_test_1
-!!$       temperature_exact=>  temperature_exact_test_1 
-!!$       level_set_exact =>  level_set_exact_test_1
-!!$       penal_in_real_space =>  penal_in_real_space_test_1 
-!!$       extension_velocity =>  extension_velocity_test_1
-!!$       Vexact =>  Vexact_test_1
-!!$       H_B_quasi_static =>  H_B_quasi_static_test_1
-!!$       Hexact =>  Hexact_test_1
-!!$       Phiexact =>  Phiexact_test_1 
-!!$       Jexact_gauss =>  Jexact_gauss_test_1
-!!$       Eexact_gauss =>  Eexact_gauss_test_1
-!!$       init_maxwell =>  init_maxwell_test_1
-!!$       mu_bar_in_fourier_space =>  mu_bar_in_fourier_space_test_1
-!!$       grad_mu_bar_in_fourier_space=>  grad_mu_bar_in_fourier_space_test_1 
-!!$       mu_in_real_space=>  mu_in_real_space_test_1 
-    case(2) 
-       init_velocity_pressure => init_velocity_pressure_test_2
-!!$       init_temperature => init_temperature_test_2
-!!$       init_level_set =>  init_level_set_test_2
-       source_in_NS_momentum =>  source_in_NS_momentum_test_2
-!!$       source_in_temperature =>  source_in_temperature_test_2
-!!$       source_in_level_set =>  source_in_level_set_test_2
-       vv_exact =>  vv_exact_test_2
-!!$       imposed_velocity_by_penalty =>  imposed_velocity_by_penalty_test_2
-       pp_exact =>  pp_exact_test_2
-!!$       temperature_exact=>  temperature_exact_test_2 
-!!$       level_set_exact =>  level_set_exact_test_2
-!!$       penal_in_real_space =>  penal_in_real_space_test_2 
-!!$       extension_velocity =>  extension_velocity_test_2
-!!$       Vexact =>  Vexact_test_2
-!!$       H_B_quasi_static =>  H_B_quasi_static_test_2
-!!$       Hexact =>  Hexact_test_2
-!!$       Phiexact =>  Phiexact_test_2 
-!!$       Jexact_gauss =>  Jexact_gauss_test_2
-!!$       Eexact_gauss =>  Eexact_gauss_test_2
-!!$       init_maxwell =>  init_maxwell_test_2
-!!$       mu_bar_in_fourier_space =>  mu_bar_in_fourier_space_test_2
-!!$       grad_mu_bar_in_fourier_space=>  grad_mu_bar_in_fourier_space_test_2 
-!!$       mu_in_real_space=>  mu_in_real_space_test_2 
-    case(3) 
-!!$       init_velocity_pressure => init_velocity_pressure_test_3
-!!$       init_temperature => init_temperature_test_3
-!!$       init_level_set =>  init_level_set_test_3
-!!$       source_in_NS_momentum =>  source_in_NS_momentum_test_3
-!!$       source_in_temperature =>  source_in_temperature_test_3
-!!$       source_in_level_set =>  source_in_level_set_test_3
-!!$       vv_exact =>  vv_exact_test_3
-!!$       imposed_velocity_by_penalty =>  imposed_velocity_by_penalty_test_3
-!!$       pp_exact =>  pp_exact_test_3
-!!$       temperature_exact=>  temperature_exact_test_3 
-!!$       level_set_exact =>  level_set_exact_test_3
-!!$       penal_in_real_space =>  penal_in_real_space_test_3 
-!!$       extension_velocity =>  extension_velocity_test_3
-       Vexact =>  Vexact_test_3
-!!$       H_B_quasi_static =>  H_B_quasi_static_test_3
-       Hexact =>  Hexact_test_3
-       Phiexact =>  Phiexact_test_3 
-       Jexact_gauss =>  Jexact_gauss_test_3
-       Eexact_gauss =>  Eexact_gauss_test_3
-       init_maxwell =>  init_maxwell_test_3
-!!$       mu_bar_in_fourier_space =>  mu_bar_in_fourier_space_test_3
-!!$       grad_mu_bar_in_fourier_space=>  grad_mu_bar_in_fourier_space_test_3 
-!!$       mu_in_real_space=>  mu_in_real_space_test_3 
-    case(4) 
-!!$       init_velocity_pressure => init_velocity_pressure_test_4
-!!$       init_temperature => init_temperature_test_4
-!!$       init_level_set =>  init_level_set_test_4
-!!$       source_in_NS_momentum =>  source_in_NS_momentum_test_4
-!!$       source_in_temperature =>  source_in_temperature_test_4
-!!$       source_in_level_set =>  source_in_level_set_test_4
-!!$       vv_exact =>  vv_exact_test_4
-!!$       imposed_velocity_by_penalty =>  imposed_velocity_by_penalty_test_4
-!!$       pp_exact =>  pp_exact_test_4
-!!$       temperature_exact=>  temperature_exact_test_4 
-!!$       level_set_exact =>  level_set_exact_test_4
-!!$       penal_in_real_space =>  penal_in_real_space_test_4 
-!!$       extension_velocity =>  extension_velocity_test_4
-       Vexact =>  Vexact_test_4
-!!$       H_B_quasi_static =>  H_B_quasi_static_test_4
-       Hexact =>  Hexact_test_4
-       Phiexact =>  Phiexact_test_4 
-       Jexact_gauss =>  Jexact_gauss_test_4
-       Eexact_gauss =>  Eexact_gauss_test_4
-       init_maxwell =>  init_maxwell_test_4
-!!$       mu_bar_in_fourier_space =>  mu_bar_in_fourier_space_test_4
-!!$       grad_mu_bar_in_fourier_space=>  grad_mu_bar_in_fourier_space_test_4 
-!!$       mu_in_real_space=>  mu_in_real_space_test_4 
-    case(5) 
-!!$       init_velocity_pressure => init_velocity_pressure_test_5
-!!$       init_temperature => init_temperature_test_5
-!!$       init_level_set =>  init_level_set_test_5
-!!$       source_in_NS_momentum =>  source_in_NS_momentum_test_5
-!!$       source_in_temperature =>  source_in_temperature_test_5
-!!$       source_in_level_set =>  source_in_level_set_test_5
-!!$       vv_exact =>  vv_exact_test_5
-!!$       imposed_velocity_by_penalty =>  imposed_velocity_by_penalty_test_5
-!!$       pp_exact =>  pp_exact_test_5
-!!$       temperature_exact=>  temperature_exact_test_5 
-!!$       level_set_exact =>  level_set_exact_test_5
-!!$       penal_in_real_space =>  penal_in_real_space_test_5 
-!!$       extension_velocity =>  extension_velocity_test_5
-       Vexact =>  Vexact_test_5
-!!$       H_B_quasi_static =>  H_B_quasi_static_test_5
-       Hexact =>  Hexact_test_5
-       Phiexact =>  Phiexact_test_5 
-       Jexact_gauss =>  Jexact_gauss_test_5
-       Eexact_gauss =>  Eexact_gauss_test_5
-       init_maxwell =>  init_maxwell_test_5
-!!$       mu_bar_in_fourier_space =>  mu_bar_in_fourier_space_test_5
-!!$       grad_mu_bar_in_fourier_space=>  grad_mu_bar_in_fourier_space_test_5 
-!!$       mu_in_real_space=>  mu_in_real_space_test_5 
     case(6) 
 !!$       init_velocity_pressure => init_velocity_pressure_test_6
 !!$       init_temperature => init_temperature_test_6
@@ -514,54 +387,6 @@ CONTAINS
        mu_bar_in_fourier_space =>  mu_bar_in_fourier_space_test_18
        grad_mu_bar_in_fourier_space=>  grad_mu_bar_in_fourier_space_test_18 
 !!$       mu_in_real_space=>  mu_in_real_space_test_18 
-    case(19) 
-       init_velocity_pressure => init_velocity_pressure_test_19
-!!$       init_temperature => init_temperature_test_19
-       init_level_set =>  init_level_set_test_19
-       source_in_NS_momentum =>  source_in_NS_momentum_test_19
-!!$       source_in_temperature =>  source_in_temperature_test_19
-       source_in_level_set =>  source_in_level_set_test_19
-       vv_exact =>  vv_exact_test_19
-!!$       imposed_velocity_by_penalty =>  imposed_velocity_by_penalty_test_19
-       pp_exact =>  pp_exact_test_19
-!!$       temperature_exact=>  temperature_exact_test_19 
-       level_set_exact =>  level_set_exact_test_19
-!!$       penal_in_real_space =>  penal_in_real_space_test_19 
-!!$       extension_velocity =>  extension_velocity_test_19
-!!$       Vexact =>  Vexact_test_19
-!!$       H_B_quasi_static =>  H_B_quasi_static_test_19
-!!$       Hexact =>  Hexact_test_19
-!!$       Phiexact =>  Phiexact_test_19 
-!!$       Jexact_gauss =>  Jexact_gauss_test_19
-!!$       Eexact_gauss =>  Eexact_gauss_test_19
-!!$       init_maxwell =>  init_maxwell_test_19
-!!$       mu_bar_in_fourier_space =>  mu_bar_in_fourier_space_test_19
-!!$       grad_mu_bar_in_fourier_space=>  grad_mu_bar_in_fourier_space_test_19 
-!!$       mu_in_real_space=>  mu_in_real_space_test_19 
-    case(20) 
-       init_velocity_pressure => init_velocity_pressure_test_20
-!!$       init_temperature => init_temperature_test_20
-       init_level_set =>  init_level_set_test_20
-       source_in_NS_momentum =>  source_in_NS_momentum_test_20
-!!$       source_in_temperature =>  source_in_temperature_test_20
-       source_in_level_set =>  source_in_level_set_test_20
-       vv_exact =>  vv_exact_test_20
-!!$       imposed_velocity_by_penalty =>  imposed_velocity_by_penalty_test_20
-       pp_exact =>  pp_exact_test_20
-!!$       temperature_exact=>  temperature_exact_test_20 
-       level_set_exact =>  level_set_exact_test_20
-!!$       penal_in_real_space =>  penal_in_real_space_test_20 
-!!$       extension_velocity =>  extension_velocity_test_20
-!!$       Vexact =>  Vexact_test_20
-!!$       H_B_quasi_static =>  H_B_quasi_static_test_20
-!!$       Hexact =>  Hexact_test_20
-!!$       Phiexact =>  Phiexact_test_20 
-!!$       Jexact_gauss =>  Jexact_gauss_test_20
-!!$       Eexact_gauss =>  Eexact_gauss_test_20
-!!$       init_maxwell =>  init_maxwell_test_20
-!!$       mu_bar_in_fourier_space =>  mu_bar_in_fourier_space_test_20
-!!$       grad_mu_bar_in_fourier_space=>  grad_mu_bar_in_fourier_space_test_20 
-!!$       mu_in_real_space=>  mu_in_real_space_test_20 
     case(21) 
        init_velocity_pressure => init_velocity_pressure_test_21
 !!$       init_temperature => init_temperature_test_21

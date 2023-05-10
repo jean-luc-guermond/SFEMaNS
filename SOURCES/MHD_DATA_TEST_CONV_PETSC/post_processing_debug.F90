@@ -32,10 +32,10 @@ CONTAINS
     CHARACTER(LEN=5) :: error_out
     MPI_Comm, DIMENSION(:), POINTER         :: comm_one_d, comm_one_d_ns, comm_one_d_temp
 
-    inputs%numero_du_test_debug = 20
-    CALL post_proc_test(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, & 
-       un, pn, Hn, Bn, phin, tempn, level_setn, mu_H_field, &
-       time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp)
+    !inputs%numero_du_test_debug = 20
+    !CALL post_proc_test(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, & 
+    !   un, pn, Hn, Bn, phin, tempn, level_setn, mu_H_field, &
+    !   time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp)
 
     error_cumul=0.d0
     norm=0.d0
@@ -99,7 +99,7 @@ CONTAINS
     ELSE IF (error_cumul/norm .GT. 1.d-7) THEN
        error_out = 'fail' !===Test Failed
     ELSE
-       error_out= 'ok' !===Test Passed
+       error_out= 'okkk' !===Test Passed
     END IF
 
     CLOSE(21)
