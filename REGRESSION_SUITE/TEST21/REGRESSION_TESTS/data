@@ -1,0 +1,200 @@
+===Is mesh file formatted (true/false)?
+.t.
+===Directory and name of mesh file
+'../../MESHES' 'Mesh_10_form.FEM'
+===Number of processors in meridian section
+1
+===Number of processors in Fourier space
+1
+===Number of Fourier modes
+1
+===Select Fourier modes? (true/false)
+.f.
+===Problem type: (nst, mxw, mhd, fhd)
+'mhd'
+===Restart on velocity (true/false)
+.f.
+===Restart on magnetic field (true/false)
+.f.
+===Time step and number of time iterations
+.01d0, 100
+===Do we apply mass correction? (true/false)
+.f.
+===Do we kill level set overshoot? (true/false)
+.f.
+
+============================================
+              Mesh-NAVIER-STOKES
+============================================
+===Number of subdomains in Navier-Stokes mesh
+1
+===List of subdomains for Navier-Stokes mesh
+1
+
+============================================
+              BCs-NAVIER-STOKES
+============================================
+===How many boundary pieces for full Dirichlet BCs on velocity?
+3
+===List of boundary pieces for full Dirichlet BCs on velocity
+2 4 5
+
+============================================
+              Dynamics-NAVIER-STOKES
+============================================
+===Solve Navier-Stokes with u (true) or m (false)?
+.f.
+===Do we solve momentum with bdf2 (true/false)?
+.f.
+===Reynolds number
+250.d0
+
+============================================
+              LES-NAVIER-STOKES
+============================================
+===Use LES? (true/false)
+.t.
+===Coefficient multiplying residual
+0.d0 
+
+============================================
+              Solver-velocity-NAVIER-STOKES
+============================================
+===Maximum number of iterations for velocity solver
+100
+===Relative tolerance for velocity solver
+1.d-6
+===Absolute tolerance for velocity solver
+1.d-10
+===Solver type for velocity (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for velocity solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Solver-pressure-NAVIER-STOKES
+============================================
+===Maximum number of iterations for pressure solver
+100
+===Relative tolerance for pressure solver
+1.d-6
+===Absolute tolerance for pressure solver
+1.d-10
+===Solver type for pressure (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for pressure solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Solver-mass-NAVIER-STOKES
+============================================
+===Maximum number of iterations for mass matrix solver
+100
+===Relative tolerance for mass matrix solver
+1.d-6
+===Absolute tolerance for mass matrix solver
+1.d-10
+===Solver type for mass matrix (FGMRES, CG, ...)
+CG
+===Preconditionner type for mass matrix solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Level set
+============================================
+===Is there a level set?
+.t.
+===How many fluids?
+2
+===Compression factor for level set
+0.d0
+===Density of fluid 0, fluid 1, ...
+1.d0 2.d0
+===Dynamic viscosity of fluid 0, fluid 1, ...
+1.d0 1.d0
+===Conductivity of fluid 0, fluid 1, ...
+1.d0 2.d0
+===multiplier for h_min for level set
+1.d0
+===How are the variables reconstructed from the level set function? (lin, reg)
+'lin'
+===How many boundary pieces for Dirichlet BCs on level set?
+0
+===Do we use P2 finite element for level_set? (true/false)
+.f.
+
+============================================
+              Solver-level set
+============================================
+===Maximum number of iterations for level set solver
+100
+===Relative tolerance for level set solver
+1.d-6
+===Absolute tolerance for level set solver
+1.d-10
+===Solver type for level set (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for level set solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              H-MAXWELL
+============================================
+===Solve Maxwell with H (true) or B (false)?
+.f.
+===Number of subdomains in magnetic field (H) mesh
+1
+===List of subdomains for magnetic field (H) mesh
+1
+===Number of interfaces in H mesh
+0
+===Number of Dirichlet sides for Hxn
+3
+===List of Dirichlet sides for Hxn
+5 2 4
+===Permeability in the conductive part (1:nb_dom_H)
+1.d0
+===Conductivity in the conductive part (1:nb_dom_H)
+1.d0
+===Type of finite element for magnetic field
+2
+===Magnetic Reynolds number
+2.d0  
+===Stabilization coefficient (divergence)
+1.d0
+===Stabilization coefficient for Dirichlet H and/or interface H/H
+1.d0
+
+============================================
+              Phi-MAXWELL
+============================================
+===Number of subdomains in magnetic potential (phi) mesh
+0
+
+============================================
+              Solver-MAXWELL
+============================================
+===Maximum number of iterations for Maxwell solver
+100
+===Relative tolerance for Maxwell solver
+1.d-6 
+===Absolute tolerance for Maxwell solver
+1.d-10
+===Solver type for Maxwell (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for Maxwell solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Verbose (diagnostics)
+============================================
+===Verbose timing? (true/false)
+.t.
+
+============================================
+(Mesh_10_form.FEM)
+===Reference results
+1.3758339917011045E-005  L2 error on velocity
+5.8953649272514094E-006  L2 error on pressure
+6.6284837416848011E-006  L2 error on level set
+3.7352499787006239E-005  L2 error on Magnetic field

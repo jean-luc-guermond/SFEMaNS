@@ -1,0 +1,100 @@
+===Is mesh file formatted (true/false)?
+.t.
+===Directory and name of mesh file
+'../../MESHES' 'VKS_MND_form_10.FEM'
+===Number of processors in meridian section
+1
+===Number of processors in Fourier space
+2
+===Number of Fourier modes
+2
+===Select Fourier modes? (true/false)
+.f.
+===Problem type: (nst, mxw, mhd, fhd)
+'mxw'
+===Restart on velocity (true/false)
+.f.
+===Restart on magnetic field (true/false)
+.f.
+===Time step and number of time iterations
+1.d-2, 1
+
+============================================
+              ARPACK
+============================================
+===Do we use Arpack?
+.t.
+===Number of eigenvalues to compute
+5
+===Maximum number of Arpack iterations
+3000
+===Tolerance for Arpack
+1.d-3
+===Which eigenvalues ('LM', 'SM', 'SR', 'LR' 'LI', 'SI')
+'LR'
+
+============================================
+              Visualization
+============================================
+===Create 2D vtu files for Arpack? (true/false)
+.t.
+
+============================================
+              H-MAXWELL
+============================================
+===Number of subdomains in magnetic field (H) mesh
+1
+===List of subdomains for magnetic field (H) mesh
+1
+===Number of interfaces in H mesh
+0
+===Number of Dirichlet sides for Hxn
+3
+===List of Dirichlet sides for Hxn
+2 4 3
+===Permeability in the conductive part (1:nb_dom_H)
+1.d0
+===Conductivity in the conductive part (1:nb_dom_H)
+1.d0
+===Type of finite element for magnetic field
+2
+===Magnetic Reynolds number
+80.d0
+===Stabilization coefficient (divergence)
+1.d0
+===Stabilization coefficient for Dirichlet H and/or interface H/H
+1.d0
+
+============================================
+              Solver-MAXWELL
+============================================
+===Maximum number of iterations for Maxwell solver
+100
+===Relative tolerance for Maxwell solver
+1.d-6 
+===Absolute tolerance for Maxwell solver
+1.d-10
+===Solver type for Maxwell (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for Maxwell solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Verbose (diagnostics)
+============================================
+===Verbose timing? (true/false)
+.f.
+
+============================================
+Quick test with VKS_MND_form_10.FEM, dt=1.d-2, tol=1.d-3, 5 eigenvalues
+===Reference results
+-4.97410008173271648E-002  Real part eigenvalue 1, mode 0
+7.64643293777484551E-003   |div(Bn)|_L2/|Bn|_H1, eigenvalue 1, mode 0
+4.71269276486770920E-003   Real part eigenvalue 1, mode 1
+1.38537382005007436E-002   |div(Bn)|_L2/|Bn|_H1, eigenvalue 1, mode 1
+
+Accurate test with VKS_MND_form_10.FEM, dt=1.d-2, tol=1.d-6, 3 eigenvalues
+-4.9942724762923045E-002  Real part eigenvalue 1, mode 0
+7.5217880247633283E-003   |div(Bn)|_L2/|Bn|_H1, eigenvalue 1, mode 0
+4.6811968540408653E-003   Real part eigenvalue 1, mode 1
+1.3812375800102094E-002   |div(Bn)|_L2/|Bn|_H1, eigenvalue 1, mode 1

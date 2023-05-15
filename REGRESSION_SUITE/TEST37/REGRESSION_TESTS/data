@@ -1,0 +1,185 @@
+===Is mesh file formatted (true/false)?
+.t.
+===Directory and name of mesh file
+'../../MESHES' 'SOLID_FLUID_10.FEM'
+===Number of processors in meridian section
+1
+===Number of processors in Fourier space
+4
+===Number of Fourier modes
+4
+===Problem type: (nst, mxw, mhd, fhd)
+'fhd'
+===Restart on velocity (true/false)
+.f.
+===Restart on magnetic field (true/false)
+.f.
+===Time step and number of time iterations
+1.d-2 100
+
+============================================
+              Mesh-NAVIER-STOKES
+============================================
+===Number of subdomains in Navier-Stokes mesh
+1
+===List of subdomains for Navier-Stokes mesh
+2
+
+============================================
+              BCs-NAVIER-STOKES
+============================================
+===How many boundary pieces for full Dirichlet BCs on velocity?
+4
+===List of boundary pieces for full Dirichlet BCs on velocity
+2 3 4 5
+
+============================================
+              Dynamics-NAVIER-STOKES
+============================================
+===Reynolds number
+1.d0
+
+============================================
+              Solver-velocity-NAVIER-STOKES
+============================================
+===Maximum number of iterations for velocity solver
+100
+===Relative tolerance for velocity solver
+1.d-6
+===Absolute tolerance for velocity solver
+1.d-10
+===Solver type for velocity (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for velocity solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Solver-pressure-NAVIER-STOKES
+============================================
+===Maximum number of iterations for pressure solver
+100
+===Relative tolerance for pressure solver
+1.d-6
+===Absolute tolerance for pressure solver
+1.d-10
+===Solver type for pressure (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for pressure solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Solver-mass-NAVIER-STOKES
+============================================
+===Maximum number of iterations for mass matrix solver
+100
+===Relative tolerance for mass matrix solver
+1.d-6
+===Absolute tolerance for mass matrix solver
+1.d-10
+===Solver type for mass matrix (FGMRES, CG, ...)
+CG
+===Preconditionner type for mass matrix solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Temperature
+============================================
+===Is there a temperature field?
+.t.
+===Non-dimensional gravity coefficient
+1.d0
+===Helmholtz force for ferrohydrodynamics? (true/false)
+.t.
+===Non-dimensional magnetic force coefficient for ferrohydrodynamics
+1.d0
+===Number of subdomains in temperature mesh
+2
+===List of subdomains for temperature mesh
+1 2
+===Volumetric heat capacity (1:nb_dom_temp)
+1.d0 2.d0
+===Thermal conductivity (1:nb_dom_temp)
+10.d0 1.d0
+===How many boundary pieces for Dirichlet BCs on temperature?
+3
+===List of boundary pieces for Dirichlet BCs on temperature
+2 4 5
+
+============================================
+              Solver-Temperature
+============================================
+===Maximum number of iterations for temperature solver
+100
+===Relative tolerance for temperature solver
+1.d-6
+===Absolute tolerance for temperature solver
+1.d-10
+===Solver type for temperature (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for temperature solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              H-MAXWELL
+============================================
+===Number of subdomains in magnetic field (H) mesh
+2
+===List of subdomains for magnetic field (H) mesh
+1 2
+===Number of interfaces in H mesh
+1
+===List of interfaces in H mesh
+3
+===Number of Dirichlet sides for Hxn
+3
+===List of Dirichlet sides for Hxn
+2 4 5
+===Permeability in the conductive part (1:nb_dom_H)
+1.d0 1.d0
+===Conductivity in the conductive part (1:nb_dom_H)
+1.d0 1.d0
+===Type of finite element for magnetic field
+2
+===Magnetic Reynolds number
+1.d0  
+===Stabilization coefficient (divergence)
+1.d0
+===Stabilization coefficient for Dirichlet H and/or interface H/H
+1.d0
+
+============================================
+              Phi-MAXWELL
+============================================
+===Number of subdomains in magnetic potential (phi) mesh
+0
+
+============================================
+              Solver-MAXWELL
+============================================
+===Maximum number of iterations for Maxwell solver
+100
+===Relative tolerance for Maxwell solver
+1.d-6 
+===Absolute tolerance for Maxwell solver
+1.d-10
+===Maxwell solver verbose? (true/false)
+.f.
+===Solver type for Maxwell (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for Maxwell solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Verbose (diagnostics)
+============================================
+===Verbose timing? (true/false)
+.t.
+
+============================================
+(SOLID_FLUID_10.FEM)
+===Reference results
+3.539527459374360E-004  L2-norm of error on u / L2-norm of u exact
+6.796209345490731E-002  L2-norm of error on p / L2-norm of p exact
+2.156388764026708E-004  L2-norm of error on T / L2-norm of T exact
+6.836860243474763E-003  L2-norm of error on H / L2-norm of H exact
+

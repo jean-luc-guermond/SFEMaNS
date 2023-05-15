@@ -1,0 +1,98 @@
+===Is mesh file formatted (true/false)?
+.t.
+===Directory and name of mesh file
+'../../MESHES' 'Mesh_10_form.FEM'
+===Number of processors in meridian section
+1
+===Number of processors in Fourier space
+3
+===Number of Fourier modes
+3
+===Select Fourier modes? (true/false)
+.f.
+===Problem type: (nst, mxw, mhd, fhd)
+'nst'
+===Restart on velocity (true/false)
+.f.
+===Time step and number of time iterations
+.01d0, 100
+
+============================================
+              Mesh-NAVIER-STOKES
+============================================
+===Number of subdomains in Navier-Stokes mesh
+1
+===List of subdomains for Navier-Stokes mesh
+1
+
+============================================
+              BCs-NAVIER-STOKES
+============================================
+===How many boundary pieces for full Dirichlet BCs on velocity?
+3
+===List of boundary pieces for full Dirichlet BCs on velocity
+5 2 4
+
+============================================
+              Dynamics-NAVIER-STOKES
+============================================
+===Reynolds number
+1.d0
+===Coefficient for penalty of divergence in NS?
+1.d0
+
+============================================
+              Solver-velocity-NAVIER-STOKES
+============================================
+===Maximum number of iterations for velocity solver
+100
+===Relative tolerance for velocity solver
+1.d-6
+===Absolute tolerance for velocity solver
+1.d-10
+===Solver type for velocity (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for velocity solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Solver-pressure-NAVIER-STOKES
+============================================
+===Maximum number of iterations for pressure solver
+100
+===Relative tolerance for pressure solver
+1.d-6
+===Absolute tolerance for pressure solver
+1.d-10
+===Solver type for pressure (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for pressure solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Solver-mass-NAVIER-STOKES
+============================================
+===Maximum number of iterations for mass matrix solver
+100
+===Relative tolerance for mass matrix solver
+1.d-6
+===Absolute tolerance for mass matrix solver
+1.d-10
+===Solver type for mass matrix (FGMRES, CG, ...)
+CG
+===Preconditionner type for mass matrix solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Verbose (diagnostics)
+============================================
+===Verbose timing? (true/false)
+.t.
+
+============================================
+(Mesh_10_form.FEM)
+===Reference results
+1.849614619964180E-005  L2 error on velocity 
+1.090890924305511E-003  H1 error on velocity 
+3.046235725487920E-003  L2 norm of divergence 
+6.311016414861051E-004  L2 error on pressure

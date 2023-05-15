@@ -1,0 +1,82 @@
+===Is mesh file formatted (true/false)?
+.t.
+===Directory and name of mesh file
+'../../MESHES' 'Mesh_10_form.FEM'
+===Number of processors in meridian section
+2
+===Number of processors in Fourier space
+3
+===Number of Fourier modes
+3
+===Select Fourier modes? (true/false)
+.t.
+===List of Fourier modes (if select_mode=.TRUE.)
+1 2 3
+===Problem type: (nst, mxw, mhd, fhd)
+'mxw'
+===Restart on velocity (true/false)
+.f.
+===Restart on magnetic field (true/false)
+.f.
+===Time step and number of time iterations
+.01d0, 100
+
+============================================
+              H-MAXWELL
+============================================
+===Number of subdomains in magnetic field (H) mesh
+1
+===List of subdomains for magnetic field (H) mesh
+1
+===Number of interfaces in H mesh
+0
+===Number of Dirichlet sides for Hxn
+3
+===List of Dirichlet sides for Hxn
+2 4 5
+===Permeability in the conductive part (1:nb_dom_H)
+1.d0
+===Conductivity in the conductive part (1:nb_dom_H)
+1.d0
+===Type of finite element for magnetic field
+2
+===Magnetic Reynolds number
+1.d0
+===Stabilization coefficient (divergence)
+1.d0
+===Stabilization coefficient for Dirichlet H and/or interface H/H
+1.d0
+
+============================================
+              Phi-MAXWELL
+============================================
+===Number of subdomains in magnetic potential (phi) mesh
+0
+
+============================================
+              Solver-MAXWELL
+============================================
+===Maximum number of iterations for Maxwell solver
+100
+===Relative tolerance for Maxwell solver
+1.d-6 
+===Absolute tolerance for Maxwell solver
+1.d-10
+===Solver type for Maxwell (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for Maxwell solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Verbose-MAXWELL
+============================================
+===Verbose divergence? (true/false)
+.t.
+
+============================================
+Mesh_10_form.FEM, P2
+===Reference results
+5.241019723616679E-006 L2 error on Hn     
+4.539830457600800E-005 L2 error on Curl(Hn)  
+1.217746978456389E-004 L2 norm of Div(mu Hn)
+1.d0                    No scalar potential

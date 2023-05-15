@@ -1,0 +1,54 @@
+To create a new TEST_XX in SFEMaNS follows the following steps:
+
+Remark 1: $SFEMaNS_DIR should be define in your shell environment (in file .bashrc or other)
+Remark 2: In the following, XX should be replaced by the number of your test
+Remark 3: If you create a test that use restart, follow what is done for TEST_19_20
+
+===Step1
+cd $SFEMaNS_DIR/REGRESSION_SUITE/
+cp -rf TEST_TEMPLATE TESTXX
+cd TESTXX
+cp ../../TEMPLATE/main.F90 LOCAL_SOURCES
+cp ../../TEMPLATE/read_user_data.F90 LOCAL_SOURCES
+
+===Step2
+Open CMakeLists.txt and replace XX by number of new test (two instantiations)
+
+==Step 3
+Copy your condlim.F90 in LOCAL_SOURCES
+Copy your data in REGRESSION_TESTS
+
+===Step 4
+Open REGRESSION_TESTS/job.sh
+
+Uncomment following line
+#cp current_regression_reference regression_reference_XX
+and replace XX by number of new test (one instantiation)
+
+===Step 5
+Open the file
+$SFEMaNS_DIR/CTEST_SUITE/CMakeList.txt
+and add following line at the end of the followin files (before the line enable testing)
+#add_subdirectory(${ROOT}/REGRESSION_SUITE/TESTXX ${ROOT}/REGRESSION_SUITE/TESTXX/BUILD)
+
+(Do not forget to replace XX by your test number above, two instantiations)
+
+===Step 6
+run ctest (after recompiling) in $SFEMaNS_DIR/CTEST_SUITE/BUILD
+You can use the following commands
+cd $SFEMaNS_DIR/CTEST_SUITE/BUILD
+cmake ..
+make
+ctest
+
+===Step 7
+cd $SFEMaNS_DIR/REGRESSION_SUITE/TESTXX
+mv regression_reference_XX regression_reference
+
+Open $SFEMaNS_DIR/REGRESSION_SUITE/TESTXX/REGRESSION_TESTS/job.sh
+and comment the following line
+cp current_regression_reference regression_reference_XX
+
+===Step 8
+Rerun ctest to make sure everything is ok.
+

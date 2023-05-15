@@ -1,0 +1,156 @@
+===Is mesh file formatted (true/false)?
+.t.
+===Directory and name of mesh file
+'../../MESHES' 'SOLID_FLUID_10.FEM'
+===Number of processors in meridian section
+1
+===Number of processors in Fourier space
+3
+===Number of Fourier modes
+3
+===Select Fourier modes? (true/false)
+.t.
+===List of Fourier modes (if select_mode=.TRUE.)
+0 1 2
+===Problem type: (nst, mxw, mhd, fhd)
+'nst'
+===Restart on velocity (true/false)
+.f.
+===Restart on magnetic field (true/false)
+.f.
+===Time step and number of time iterations
+1.d-2 100
+===Do we read metis partition? (true/false)
+.f.
+===Is the mesh symmetric (true/false)?
+.f.
+===Frequency to write energies
+1
+===Check numerical stability (true/false)
+.t.
+
+============================================
+              Mesh-NAVIER-STOKES
+============================================
+===Number of subdomains in Navier-Stokes mesh
+1
+===List of subdomains for Navier-Stokes mesh
+2
+
+============================================
+              BCs-NAVIER-STOKES
+============================================
+===How many boundary pieces for full Dirichlet BCs on velocity?
+4
+===List of boundary pieces for full Dirichlet BCs on velocity
+2 3 4 5
+
+============================================
+              Dynamics-NAVIER-STOKES
+============================================
+===Reynolds number
+1.d0
+===Is there a precession term (true/false)?
+.f.
+===Precession rate
+1.d0
+===Precession angle over pi
+0.d0
+
+============================================
+              Solver-velocity-NAVIER-STOKES
+============================================
+===Maximum number of iterations for velocity solver
+100
+===Relative tolerance for velocity solver
+1.d-6
+===Absolute tolerance for velocity solver
+1.d-10
+===Solver type for velocity (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for velocity solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Solver-pressure-NAVIER-STOKES
+============================================
+===Maximum number of iterations for pressure solver
+100
+===Relative tolerance for pressure solver
+1.d-6
+===Absolute tolerance for pressure solver
+1.d-10
+===Solver type for pressure (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for pressure solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Solver-mass-NAVIER-STOKES
+============================================
+===Maximum number of iterations for mass matrix solver
+100
+===Relative tolerance for mass matrix solver
+1.d-6
+===Absolute tolerance for mass matrix solver
+1.d-10
+===Solver type for mass matrix (FGMRES, CG, ...)
+CG
+===Preconditionner type for mass matrix solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Temperature
+============================================
+===Is there a temperature field?
+.t.
+===Non-dimensional gravity coefficient
+1.d0
+===Number of subdomains in temperature mesh
+2
+===List of subdomains for temperature mesh
+1 2
+===Volumetric heat capacity (1:nb_dom_temp)
+1.d0 2.d0
+===Thermal conductivity (1:nb_dom_temp)
+10.d0 1.d0
+===How many boundary pieces for Dirichlet BCs on temperature?
+3
+===List of boundary pieces for Dirichlet BCs on temperature
+2 4 5
+===Number of interfaces between velocity and temperature only domains (for nst applications)
+1
+===List of interfaces between velocity and temperature only domains (for nst applications)
+3
+
+============================================
+              Solver-Temperature
+============================================
+===Maximum number of iterations for temperature solver
+100
+===Relative tolerance for temperature solver
+1.d-6
+===Absolute tolerance for temperature solver
+1.d-10
+===Solver type for temperature (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for temperature solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Verbose (diagnostics)
+============================================
+===Verbose timing? (true/false)
+.t.
+===Verbose divergence? (true/false)
+.t.
+===Verbose CFL? (true/false)
+.t.
+
+============================================
+(SOLID_FLUID_10.FEM)
+===Reference results
+1.386516519953694E-005  L2-norm of error on u / L2-norm of u exact
+3.711990325026703E-004  L2-norm of error on p
+1.928060980605850E-005  L2-norm of error on T / L2-norm of T exact
+2.253004640155170E-004  H1-norm of error on T / H1-norm of T exact

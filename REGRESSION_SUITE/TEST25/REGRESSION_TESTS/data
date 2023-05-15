@@ -1,0 +1,150 @@
+===Is mesh file formatted (true/false)?
+.t.
+===Directory and name of mesh file
+'../../MESHES' 'Mesh_20_form.FEM'
+===Number of processors in meridian section
+2
+===Number of processors in Fourier space
+4
+===Number of Fourier modes
+4
+===Select Fourier modes? (true/false)
+.f.
+===Problem type: (nst, mxw, mhd, fhd)
+'nst'
+===Restart on velocity (true/false)
+.f.
+===Time step and number of time iterations
+0.005d0, 200
+===Do we apply mass correction? (true/false)
+.f.
+===Do we kill level set overshoot? (true/false)
+.f.
+
+============================================
+              Mesh-NAVIER-STOKES
+============================================
+===Number of subdomains in Navier-Stokes mesh
+1
+===List of subdomains for Navier-Stokes mesh
+1
+
+============================================
+              BCs-NAVIER-STOKES
+============================================
+===How many boundary pieces for full Dirichlet BCs on velocity?
+3
+===List of boundary pieces for full Dirichlet BCs on velocity
+2 4 5
+
+============================================
+              Dynamics-NAVIER-STOKES
+============================================
+===Solve Navier-Stokes with u (true) or m (false)?
+.f.
+===Do we solve momentum with bdf2 (true/false)?
+.f.
+===Reynolds number
+25.d0
+
+============================================
+              LES-NAVIER-STOKES
+============================================
+===Use LES? (true/false)
+.t.
+===Use LES in momentum? (true/false)
+.t.
+===Coefficient multiplying residual
+.2d0
+
+============================================
+              Solver-velocity-NAVIER-STOKES
+============================================
+===Maximum number of iterations for velocity solver
+100
+===Relative tolerance for velocity solver
+1.d-6
+===Absolute tolerance for velocity solver
+1.d-10
+===Solver type for velocity (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for velocity solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Solver-pressure-NAVIER-STOKES
+============================================
+===Maximum number of iterations for pressure solver
+100
+===Relative tolerance for pressure solver
+1.d-6
+===Absolute tolerance for pressure solver
+1.d-10
+===Solver type for pressure (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for pressure solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Solver-mass-NAVIER-STOKES
+============================================
+===Maximum number of iterations for mass matrix solver
+100
+===Relative tolerance for mass matrix solver
+1.d-6
+===Absolute tolerance for mass matrix solver
+1.d-10
+===Solver type for mass matrix (FGMRES, CG, ...)
+CG
+===Preconditionner type for mass matrix solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Level set
+============================================
+===Is there a level set?
+.t.
+===How many fluids?
+2
+===Compression factor for level set
+0.d0
+===Density of fluid 0, fluid 1, ...
+1.d0 2.d0
+===Dynamic viscosity of fluid 0, fluid 1, ...
+1.d0 2.d0
+===multiplier for h_min for level set
+1.d0
+===How are the variables reconstructed from the level set function? (lin, reg)
+'lin'
+===How many boundary pieces for Dirichlet BCs on level set?
+0
+===Do we use P2 finite element for level_set? (true/false)
+.f.
+
+============================================
+              Solver-level set
+============================================
+===Maximum number of iterations for level set solver
+100
+===Relative tolerance for level set solver
+1.d-6
+===Absolute tolerance for level set solver
+1.d-10
+===Solver type for level set (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for level set solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Verbose (diagnostics)
+============================================
+===Verbose timing? (true/false)
+.t.
+
+============================================
+(Mesh_10_form.FEM)
+===Reference results
+3.0903538245195252E-005  L2 error on velocity
+3.3146687386638370E-004  H1 error on velocity
+4.5007726611526917E-003  L2 error on level set
+1.9580473851171394E-005  L2 error on pressure

@@ -1,0 +1,6 @@
+This directory is meant to run the regression tests.
+
+cd BUILD
+cp ../variables_template.cmake ../variables.cmake
+cmake ..
+make

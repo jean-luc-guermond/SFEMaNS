@@ -1,0 +1,72 @@
+===Is mesh file formatted (true/false)?
+.t.
+===Directory and name of mesh file
+'../../MESHES' 'mesh_18_0.05.FEM'
+===Number of processors in meridian section
+1
+===Number of processors in Fourier space
+1
+===Number of Fourier modes
+1
+===Select Fourier modes? (true/false)
+.f.
+===Problem type: (nst, mxw, mhd, fhd)
+'mxw'
+===Restart on velocity (true/false)
+.f.
+===Restart on magnetic field (true/false)
+.f.
+===Time step and number of time iterations
+1d40, 1 
+
+============================================
+              H-MAXWELL
+============================================
+===Number of subdomains in magnetic field (H) mesh
+2
+===List of subdomains for magnetic field (H) mesh
+1 2    
+===Number of interfaces in H mesh
+1
+===List of interfaces in H mesh
+5
+===Number of Dirichlet sides for Hxn
+3
+===List of Dirichlet sides for Hxn
+2 3 4  
+===Is permeability defined analytically (true/false)?
+.t.
+===Use FEM Interpolation for magnetic permeability (true/false)?
+.f.
+===Conductivity in the conductive part (1:nb_dom_H)
+1.d0 1.d0
+===Type of finite element for magnetic field
+2
+===Magnetic Reynolds number
+1.d0  
+===Stabilization coefficient (divergence)
+1.d0
+===Stabilization coefficient for Dirichlet H and/or interface H/H
+1.d0
+
+============================================
+Solver-MAXWELL
+============================================
+===Maximum number of iterations for Maxwell solver
+100
+===Relative tolerance for Maxwell solver
+1.d-6 
+===Absolute tolerance for Maxwell solver
+1.d-10
+===Solver type for Maxwell (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for Maxwell solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+mesh_18_0.05.FEM, dt=1d40, it_max=1
+===Reference results
+5.551028818608387E-005 !L2 norm of div(mu (H-Hexact))
+5.094652021625039E-005 !L2 norm of curl(H-Hexact)
+6.259213749768464E-006 !L2 norm of H-Hexact
+2.20415757707965       !L2 norm of H
