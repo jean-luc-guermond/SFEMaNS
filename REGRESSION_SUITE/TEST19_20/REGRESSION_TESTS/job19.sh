@@ -28,4 +28,4 @@ cp regression_reference_19 regression_reference
 
 $1 $2$nproc ../EXECUTABLE/$3 regression
 echo $?
-cp current_regression_reference current_regression_reference_19
+#cp current_regression_reference current_regression_reference_19

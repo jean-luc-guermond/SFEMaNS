@@ -53,8 +53,8 @@ file(GLOB_RECURSE regression_sources
   ${CMAKE_CURRENT_SOURCE_DIR}/LOCAL_SOURCES/condlim.F90
   ${CMAKE_CURRENT_SOURCE_DIR}/LOCAL_SOURCES/read_user_data.F90
   ${SFEMaNS_DIR}/SOURCES/MESH_INTERPOLATION/*.F90)
-add_executable(a_mesh_interpolation.exe ${regression_sources})
-target_link_libraries(a_mesh_interpolation.exe PUBLIC sfemans_lib_F
+add_executable(a_mesh_interpolation_19_20.exe ${regression_sources})
+target_link_libraries(a_mesh_interpolation_19_20.exe PUBLIC sfemans_lib_F
   ${PETSC_LINK_LIBRARIES}
   ${PETSC_PRIVATE_LIBRARIES}
   ${FFTW_LINK_LIBRARIES}
@@ -62,7 +62,7 @@ target_link_libraries(a_mesh_interpolation.exe PUBLIC sfemans_lib_F
   ${MPI_Fortran_LIBRARIES}
   ${ADDITIONAL_LINKS}
   )
-target_include_directories(a_mesh_interpolation.exe PUBLIC ${SFEMaNS_DIR}/LIBS)
+target_include_directories(a_mesh_interpolation_19_20.exe PUBLIC ${SFEMaNS_DIR}/LIBS)
 
 # Add executable
 set(exe "test19_20.exe")

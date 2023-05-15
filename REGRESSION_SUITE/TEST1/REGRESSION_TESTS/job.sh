@@ -27,3 +27,6 @@ nproc=$(( ns*nf ))
 
 $1 $2$nproc ../EXECUTABLE/$3 regression
 echo $?
+
+#Clean up
+rm -f fort.* Mesh_*_FE_* dd.plt mesh_part* current_regression_reference

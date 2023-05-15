@@ -42,7 +42,7 @@ CONTAINS
        ENDDO
     ENDDO
   END SUBROUTINE init_velocity_pressure
-!!$
+
   !===Initialize temperature
   SUBROUTINE init_temperature(mesh, time, dt, list_mode, tempn_m1, tempn)
     IMPLICIT NONE
@@ -62,7 +62,7 @@ CONTAINS
        ENDDO
     ENDDO
   END SUBROUTINE init_temperature
-!!$
+
   !===Initialize level_set
   SUBROUTINE init_level_set(pp_mesh, time, &
        dt, list_mode, level_set_m1, level_set)
@@ -87,7 +87,7 @@ CONTAINS
     END DO
 
   END SUBROUTINE init_level_set
-!!$
+
   !===Source in momemtum equation. Always called.
   FUNCTION source_in_NS_momentum(TYPE, rr, mode, i, time, Re, ty, opt_density, opt_tempn) RESULT(vv)
     IMPLICIT NONE
@@ -105,7 +105,7 @@ CONTAINS
     CALL error_petsc('source_in_NS_momentum: should not be called for this test')
     RETURN
   END FUNCTION source_in_NS_momentum
-!!$
+
   !===Extra source in temperature equation. Always called.
   FUNCTION source_in_temperature(TYPE, rr, m, t)RESULT(vv)
     IMPLICIT NONE
@@ -119,7 +119,7 @@ CONTAINS
     CALL error_petsc('source_in_temperature: should not be called for this test')
     RETURN
   END FUNCTION source_in_temperature
-!!$
+
   !===Extra source in level set equation. Always called.
   FUNCTION source_in_level_set(interface_nb,TYPE, rr, m, t)RESULT(vv)
     IMPLICIT NONE
@@ -132,7 +132,7 @@ CONTAINS
     vv=0.d0
     CALL error_petsc('sourece_in_temperature: should not be called for this test')
   END FUNCTION source_in_level_set
-!!$
+
   !===Velocity for boundary conditions in Navier-Stokes.
   !===Can be used also to initialize velocity in: init_velocity_pressure_temperature 
   FUNCTION vv_exact(TYPE,rr,m,t) RESULT(vv)
@@ -148,7 +148,7 @@ CONTAINS
     CALL error_petsc('vv_exact: should not be called for this test')
     RETURN
   END FUNCTION vv_exact
-!!$
+
  !===Solid velocity imposed when using penalty technique
  !===Defined in Fourier space on mode 0 only.
  FUNCTION imposed_velocity_by_penalty(rr,t) RESULT(vv)
@@ -160,7 +160,7 @@ CONTAINS
     vv=0.d0
     RETURN
   END FUNCTION imposed_velocity_by_penalty
-!!$
+
   !===Pressure for boundary conditions in Navier-Stokes.
   !===Can be used also to initialize pressure in the subroutine init_velocity_pressure.  
   !===Use this routine for outflow BCs only.
@@ -178,7 +178,7 @@ CONTAINS
     CALL error_petsc('pp_exact: should not be called for this test')
     RETURN
   END FUNCTION pp_exact
-!!$
+
   !===Temperature for boundary conditions in temperature equation.
   FUNCTION temperature_exact(TYPE,rr,m,t) RESULT (vv)
     IMPLICIT NONE
@@ -192,7 +192,7 @@ CONTAINS
     CALL error_petsc('temperature_exact: should not be called for this test')
     RETURN
   END FUNCTION temperature_exact
-!!$
+
   !===Can be used to initialize level set in the subroutine init_level_set.
   FUNCTION level_set_exact(interface_nb,TYPE,rr,m,t)  RESULT (vv)
     IMPLICIT NONE
@@ -207,7 +207,7 @@ CONTAINS
     RETURN
    
   END FUNCTION level_set_exact
-!!$
+
   !===Penalty coefficient (if needed)
   !===This coefficient is equal to zero in subdomain
   !===where penalty is applied (penalty is zero in solid)
@@ -225,7 +225,7 @@ CONTAINS
     CALL error_petsc('penal_in_real_space: should not be called for this test')
     RETURN
   END FUNCTION penal_in_real_space
-!!$
+
   !===Extension of the velocity field in the solid.
   !===Used when temperature or Maxwell equations are solved.
   !===It extends the velocity field on the Navier-Stokes domain to a
@@ -285,7 +285,6 @@ CONTAINS
     vv = 0.d0
     RETURN
   END FUNCTION H_B_quasi_static
-
 
   !===Magnetic field for boundary conditions in the Maxwell equations.
   FUNCTION Hexact(H_mesh, TYPE, rr, m, mu_H_field, t) RESULT(vv)
@@ -451,7 +450,7 @@ CONTAINS
        ENDDO
     ENDDO
   END SUBROUTINE init_maxwell
-!!$
+
   !===Analytical permeability (if needed)
   !===This function is not needed unless the flag
   !===     ===Use FEM Interpolation for magnetic permeability  (true/false)
@@ -468,7 +467,7 @@ CONTAINS
     CALL error_petsc('mu_bar_in_fourier_space: should not be called for this test')
     RETURN
   END FUNCTION mu_bar_in_fourier_space
-!!$
+
   !===Analytical mu_in_fourier_space (if needed)
   !===This function is not needed unless the flag
   !===     ===Use FEM Interpolation for magnetic permeability  (true/false)

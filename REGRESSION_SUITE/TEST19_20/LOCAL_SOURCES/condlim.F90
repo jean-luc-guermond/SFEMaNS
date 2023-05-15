@@ -179,7 +179,7 @@ CONTAINS
     END IF
     RETURN
   END FUNCTION vv_exact
-!!$
+
  !===Solid velocity imposed when using penalty technique
  !===Defined in Fourier space on mode 0 only.
  FUNCTION imposed_velocity_by_penalty(rr,t) RESULT(vv)
@@ -214,7 +214,7 @@ CONTAINS
     n=TYPE; n=SIZE(rr,1); n=m; r=t
     !===Dummies variables to avoid warning
   END FUNCTION pp_exact
-!!$
+
   !===Temperature for boundary conditions in temperature equation.
   FUNCTION temperature_exact(TYPE,rr,m,t) RESULT (vv)
     IMPLICIT NONE
@@ -272,7 +272,7 @@ CONTAINS
     CALL error_petsc('penal_in_real_space: should not be called for this test')
     RETURN
   END FUNCTION penal_in_real_space
-!!$
+
   !===Extension of the velocity field in the solid.
   !===Used when temperature or Maxwell equations are solved.
   !===It extends the velocity field on the Navier-Stokes domain to a
@@ -291,10 +291,10 @@ CONTAINS
     RETURN
 
   END FUNCTION extension_velocity
-!!$
-!!$  !===============================================================================
-!!$  !                       Boundary conditions for Maxwell
-!!$  !===============================================================================
+
+  !===============================================================================
+  !                       Boundary conditions for Maxwell
+  !===============================================================================
   !===Velocity used in the induction equation.
   !===Used only if problem type is mxw and restart velocity is false
   FUNCTION Vexact(m, H_mesh) RESULT(vv)  !Set uniquement a l'induction
@@ -306,7 +306,7 @@ CONTAINS
     vv = 0.d0
     CALL error_petsc('Vexact: should not be called for this test')
   END FUNCTION Vexact
-!!$
+
   !===Magnetic field and magnetic induction for quasi-static approximation
   !===if needed
   FUNCTION H_B_quasi_static(char_h_b, rr, m) RESULT(vv) 
@@ -319,7 +319,7 @@ CONTAINS
     vv = 0.d0
     RETURN
   END FUNCTION H_B_quasi_static
-!!$
+
   !===Magnetic field for boundary conditions in the Maxwell equations.
   FUNCTION Hexact(H_mesh,TYPE, rr, m, mu_H_field, t) RESULT(vv) 
     IMPLICIT NONE
@@ -335,7 +335,7 @@ CONTAINS
     CALL error_petsc('Hexact: should not be called for this test')
     RETURN
   END FUNCTION Hexact
-!!$
+
   !===Scalar potential for boundary conditions in the Maxwell equations.
  FUNCTION Phiexact(TYPE, rr, m, mu_phi,t) RESULT(vv) 
    IMPLICIT NONE
@@ -349,7 +349,7 @@ CONTAINS
    CALL error_petsc('Phiexact: should not be called for this test')
    RETURN
  END FUNCTION Phiexact
-!!$
+
   !===Current in Ohm's law. Curl(H) = sigma(E + uxB) + current
  FUNCTION Jexact_gauss(TYPE, rr, m, mu_phi, sigma, mu_H, t, mesh_id, opt_B_ext) RESULT(vv) 
    IMPLICIT NONE
@@ -365,7 +365,7 @@ CONTAINS
    CALL error_petsc('Jexact_gauss: should not be called for this test')
    RETURN
  END FUNCTION Jexact_gauss
-!!$
+
   !===Electric field for Neumann BC (cf. doc)
   FUNCTION Eexact_gauss(TYPE, rr, m, mu_phi, sigma, mu_H, t) RESULT(vv)
     IMPLICIT NONE
@@ -378,7 +378,7 @@ CONTAINS
     vv = 0.d0
     CALL error_petsc('Eexact: should not be called for this test')
   END FUNCTION Eexact_gauss
-!!$
+
   !===Initialization of magnetic field and scalar potential (if present)
   SUBROUTINE init_maxwell(H_mesh, phi_mesh, time, dt, mu_H_field, mu_phi, &
        list_mode, Hn1, Hn, phin1, phin)
@@ -394,7 +394,7 @@ CONTAINS
 
     CALL error_petsc('init_maxwell: should not be called for this test')
   END SUBROUTINE init_maxwell
-!!$
+
   !===Analytical permeability (if needed)
   !===This function is not needed unless the flag
   !===     ===Use FEM Interpolation for magnetic permeability  (true/false)
@@ -411,7 +411,7 @@ CONTAINS
     CALL error_petsc('mu_bar_in_fourier_space: should not be called for this test')
     RETURN
   END FUNCTION mu_bar_in_fourier_space
-!!$
+
   !===Analytical mu_in_fourier_space (if needed)
   !===This function is not needed unless the flag
   !===     ===Use FEM Interpolation for magnetic permeability  (true/false)
@@ -426,7 +426,7 @@ CONTAINS
     CALL error_petsc('grad_mu_bar_in_fourier_space: should not be called for this test')
     RETURN
   END FUNCTION grad_mu_bar_in_fourier_space
-!!$
+
   !===Analytical permeability, mu in real space (if needed)
   FUNCTION mu_in_real_space(H_mesh,angles,nb_angles,nb,ne,time) RESULT(vv)
     IMPLICIT NONE

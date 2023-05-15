@@ -5,34 +5,6 @@ SUBMODULE (boundary_generic_module) boundary_generic
   USE bessel
   USE user_data
 
-!!$ATTENTION
-!!$Some subroutines have been commented to avoid warning messages when compiling executable.
-!!$It can not be done in the module boundary_generic that expects all subroutines to be present.
-!!$END ATTENTION
-  !  PUBLIC :: init_velocity_pressure
-!!$  PUBLIC :: init_temperature
-!!$  PUBLIC :: init_level_set
-  !  PUBLIC :: source_in_NS_momentum
-!!$  PUBLIC :: source_in_temperature
-!!$  PUBLIC :: source_in_level_set
-  !  PUBLIC :: vv_exact
-!!$  PUBLIC :: imposed_velocity_by_penalty
-  !  PUBLIC :: pp_exact
-!!$  PUBLIC :: temperature_exact
-!!$  PUBLIC :: level_set_exact
-!!$  PUBLIC :: penal_in_real_space
-!!$  PUBLIC :: extension_velocity
-!!$  PUBLIC :: Vexact
-!!$  PUBLIC :: H_B_quasi_static
-!!$  PUBLIC :: Hexact
-!!$  PUBLIC :: Phiexact
-!!$  PUBLIC :: Jexact_gauss
-!!$  PUBLIC :: Eexact_gauss
-!!$  PUBLIC :: init_maxwell
-!!$  PUBLIC :: mu_bar_in_fourier_space
-!!$  PUBLIC :: grad_mu_bar_in_fourier_space
-!!$  PUBLIC :: mu_in_real_space
-  !  PRIVATE
 CONTAINS
   !===============================================================================
   !                       Boundary conditions for Navier-Stokes
@@ -653,4 +625,4 @@ CONTAINS
     RETURN
   END FUNCTION sigma_bar_in_fourier_space
 
-END SUBMODULE boundary_generic
+END SUBMODULE BOUNDARY_GENERIC

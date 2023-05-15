@@ -32,7 +32,7 @@ CONTAINS
     INTEGER :: error_out
     MPI_Comm, DIMENSION(:), POINTER         :: comm_one_d, comm_one_d_ns, comm_one_d_temp
 
-    !inputs%numero_du_test_debug = 20
+    !inputs%numero_du_test_debug = 40
     !CALL post_proc_test(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, & 
     !   un, pn, Hn, Bn, phin, tempn, level_setn, mu_H_field, &
     !   time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp)
