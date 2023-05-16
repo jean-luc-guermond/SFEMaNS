@@ -31,24 +31,30 @@ set(CMAKE_Fortran_FLAGS_NATIVE ${native_bounds} CACHE STRING
 ADD_CUSTOM_TARGET(debug
   COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug ${CMAKE_SOURCE_DIR}
   COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all
-  COMMENT "Switch CMAKE_BUILD_TYPE to Debug"
-  )
+  COMMENT "Switch CMAKE_BUILD_TYPE to Debug")
 
 ADD_CUSTOM_TARGET(release
   COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Release ${CMAKE_SOURCE_DIR}
   COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all
-  COMMENT "Switch CMAKE_BUILD_TYPE to Release"
-  )
+  COMMENT "Switch CMAKE_BUILD_TYPE to Release")
 
 ADD_CUSTOM_TARGET(native
   COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Native ${CMAKE_SOURCE_DIR}
   COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all
-  COMMENT "Switch CMAKE_BUILD_TYPE to Native"
-  )
+  COMMENT "Switch CMAKE_BUILD_TYPE to Native")
 
 # Create local sources from local dir
+file(GLOB_RECURSE sfemans_sources_F
+  ${SFEMaNS_DIR}/SOURCES/FEMSUB/*.F90
+  ${SFEMaNS_DIR}/SOURCES/FEMSUB_OBJET/*.F90
+  ${SFEMaNS_DIR}/SOURCES/GAUSS_POINTS_OBJET/*.F90
+  ${SFEMaNS_DIR}/SOURCES/FEMSUB_PARALLEL/*.F90
+  ${SFEMaNS_DIR}/SOURCES/FEMSUB_SFEMaNS/*.F90
+  ${SFEMaNS_DIR}/SOURCES/MHD_DATA_TEST_CONV_PETSC/*.F90
+  ${SFEMaNS_DIR}/SOURCES/WRITE_BLOCK_MM/*.F90)
+list(REMOVE_ITEM sfemans_sources_F ${SFEMaNS_DIR}/SOURCES/FEMSUB_SFEMaNS/sub_temperature.F90)    
+      
 file(GLOB_RECURSE local_sources ${CMAKE_CURRENT_SOURCE_DIR}/LOCAL_SOURCES/*.F90)
-#list(REMOVE_ITEM local_sources path_to_file_to_be_removed/file_name.F90)
 
 message(${CMAKE_CURRENT_SOURCE_DIR} " is the current directory")
 
@@ -56,18 +62,19 @@ message(${CMAKE_CURRENT_SOURCE_DIR} " is the current directory")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../EXECUTABLE)
 
 # Add executable
-add_executable(a.exe ${local_sources})
+add_executable(a.exe ${local_sources} ${sfemans_sources_F})
+
+target_include_directories(a.exe PUBLIC
+    ${FFTW_INCLUDEDIR} ${FFTW_INCLUDE_DIRS}
+    ${PETSC_INCLUDEDIR} ${PETSC_INCLUDE_DIRS})
 
 # Include and link library
-target_link_libraries(a.exe PUBLIC sfemans_lib_F
+target_link_libraries(a.exe PUBLIC
   ${PETSC_LINK_LIBRARIES}
   ${PETSC_PRIVATE_LIBRARIES}
   ${FFTW_LINK_LIBRARIES}
   ${ZLIB_LIBRARIES}
   ${MPI_Fortran_LIBRARIES}
   ${ADDITIONAL_LINKS}
-  )
+  ${SFEMaNS_DIR}/LIBS/libsfemans_lib_C.so)
 
-target_include_directories(a.exe PUBLIC ${SFEMaNS_DIR}/LIBS)
-# Ading directory to build lib_f
-add_subdirectory(${SFEMaNS_DIR}/LIBS ${SFEMaNS_DIR}/LIBS)
