@@ -36,8 +36,6 @@ find_package(PkgConfig)
 pkg_check_modules(PETSC PETSc)
 pkg_check_modules(FFTW fftw3)
 
-
-
 # Adding directory to build lib_f
 add_subdirectory(${SFEMaNS_DIR}/LIBS ${SFEMaNS_DIR}/LIBS)
 

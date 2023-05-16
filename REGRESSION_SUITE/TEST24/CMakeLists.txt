@@ -42,9 +42,10 @@ ADD_CUSTOM_TARGET(native
 endif()
 
 # Create local sources from local dir
-file(GLOB_RECURSE local_sources ${CMAKE_CURRENT_SOURCE_DIR}/LOCAL_SOURCES/*.F90)
-message(${local_sources} " local_sources")
-# Define runtime output directory
+file(GLOB_RECURSE local_sources ${SFEMaNS_DIR}/TEMPLATE/*.F90
+  ${CMAKE_CURRENT_SOURCE_DIR}/LOCAL_SOURCES/*.F90)
+list(REMOVE_ITEM local_sources ${SFEMaNS_DIR}/TEMPLATE/condlim.F90)
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../EXECUTABLE)
 
 # Add executable

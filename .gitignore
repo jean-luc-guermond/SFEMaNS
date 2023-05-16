@@ -1,0 +1,9 @@
+*.mod
+*.smod
+*.so
+BUILD
+EXECUTABLE
+LIBS/CMakeFiles/
+LIBS/CTestTestfile.cmake
+LIBS/Makefile
+LIBS/cmake_install.cmake
