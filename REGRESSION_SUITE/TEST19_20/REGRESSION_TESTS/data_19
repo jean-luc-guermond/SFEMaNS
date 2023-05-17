@@ -2,8 +2,6 @@
 .t.
 ===Directory and name of mesh file
 '../../MESHES' 'Mesh_10_form.FEM'
-===Frequency to create plots
-100
 ===Number of processors in meridian section
 1
 ===Number of processors in Fourier space
