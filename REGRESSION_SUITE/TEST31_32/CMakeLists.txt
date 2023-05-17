@@ -53,7 +53,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../EXECUTABLE)
 # Mesh interpolation exe
 file(GLOB_RECURSE regression_sources
   ${CMAKE_CURRENT_SOURCE_DIR}/LOCAL_SOURCES/condlim.F90
-  ${CMAKE_CURRENT_SOURCE_DIR}/LOCAL_SOURCES/read_user_data.F90
+  ${SFEMaNS_DIR}/TEMPLATE/read_user_data.F90
   ${SFEMaNS_DIR}/SOURCES/MESH_INTERPOLATION/*.F90)
 add_executable(a_mesh_interpolation_31_32.exe ${regression_sources})
 target_link_libraries(a_mesh_interpolation_31_32.exe PUBLIC sfemans_lib_F

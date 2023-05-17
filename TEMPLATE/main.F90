@@ -121,8 +121,9 @@ PROGRAM mhd_prog
   CALL write_verbose(rank,opt_tps=tps,opt_tploc_max=tploc_max)
 
   !===Postprocessing to check convergence=========================================
-  IF (inputs%test_de_convergence) THEN
-     CALL post_proc_test(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, & 
+  !IF (inputs%test_de_convergence) THEN
+  IF (inputs%if_regression) THEN
+     CALL regression(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, & 
           un, pn, Hn, Bn, phin, temperature, level_set, mu_H_field, &
           time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp)
      CALL error_Petsc('End of convergence test')
