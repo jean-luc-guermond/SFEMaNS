@@ -25,7 +25,7 @@ done < "$datatest"
 nproc=$(( ns*nf ))                                                               
      
 
-$1 $2$nproc ../EXECUTABLE/$3 regression
+$1 $2$nproc $4  ../EXECUTABLE/$3 regression
 echo $?
 
 #Clean up

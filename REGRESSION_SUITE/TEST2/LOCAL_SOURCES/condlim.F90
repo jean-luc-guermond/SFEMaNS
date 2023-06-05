@@ -11,7 +11,7 @@ CONTAINS
   !===============================================================================
 
   !===Initialize velocity, pressure
-  SUBROUTINE init_velocity_pressure(mesh_f, mesh_c, time, dt, list_mode, &
+  MODULE SUBROUTINE init_velocity_pressure(mesh_f, mesh_c, time, dt, list_mode, &
        un_m1, un, pn_m1, pn, phin_m1, phin)
     IMPLICIT NONE
     TYPE(mesh_type)                            :: mesh_f, mesh_c
@@ -89,7 +89,7 @@ CONTAINS
   
 
   !===Source in momemtum equation. Always called.
-  FUNCTION source_in_NS_momentum(TYPE, rr, mode, i, time, Re, ty, opt_density, opt_tempn) RESULT(vv)
+  MODULE FUNCTION source_in_NS_momentum(TYPE, rr, mode, i, time, Re, ty, opt_density, opt_tempn) RESULT(vv)
     IMPLICIT NONE
     INTEGER     ,                             INTENT(IN) :: TYPE
     REAL(KIND=8), DIMENSION(:,:),             INTENT(IN) :: rr
@@ -253,7 +253,7 @@ CONTAINS
 
   !===Velocity for boundary conditions in Navier-Stokes.
   !===Can be used also to initialize velocity in: init_velocity_pressure_temperature 
-  FUNCTION vv_exact(TYPE,rr,m,t) RESULT(vv)
+  MODULE FUNCTION vv_exact(TYPE,rr,m,t) RESULT(vv)
     IMPLICIT NONE
     INTEGER     ,                        INTENT(IN)   :: TYPE
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
@@ -307,7 +307,7 @@ CONTAINS
   !===Use this routine for outflow BCs only.
   !===CAUTION: Do not enfore BCs on pressure where normal component 
   !            of velocity is prescribed.
-  FUNCTION pp_exact(TYPE,rr,m,t) RESULT (vv)
+  MODULE FUNCTION pp_exact(TYPE,rr,m,t) RESULT (vv)
     IMPLICIT NONE
     INTEGER     ,                        INTENT(IN)   :: TYPE
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr

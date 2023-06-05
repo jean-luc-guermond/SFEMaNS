@@ -26,6 +26,6 @@ done < "$datatest"
 nproc=$(( ns*nf ))
 cp regression_reference_31 regression_reference
 
-$1 $2$nproc ../EXECUTABLE/$3 regression
+$1 $2$nproc $4 ../EXECUTABLE/$3 regression
 echo $?
 #cp current_regression_reference current_regression_reference_31

@@ -11,7 +11,7 @@ CONTAINS
   !===============================================================================
 
   !===Initialize velocity, pressure
-  SUBROUTINE init_velocity_pressure(mesh_f, mesh_c, time, dt, list_mode, &
+  MODULE SUBROUTINE init_velocity_pressure(mesh_f, mesh_c, time, dt, list_mode, &
        un_m1, un, pn_m1, pn, phin_m1, phin)
     IMPLICIT NONE
     TYPE(mesh_type)                            :: mesh_f, mesh_c
@@ -43,7 +43,7 @@ CONTAINS
   END SUBROUTINE init_velocity_pressure
 
   !===Initialize temperature
-  SUBROUTINE init_temperature(mesh, time, dt, list_mode, tempn_m1, tempn)
+  MODULE SUBROUTINE init_temperature(mesh, time, dt, list_mode, tempn_m1, tempn)
     IMPLICIT NONE
     TYPE(mesh_type)                            :: mesh
     REAL(KIND=8),                   INTENT(OUT):: time
@@ -63,7 +63,7 @@ CONTAINS
   END SUBROUTINE init_temperature
 
   !===Initialize level_set
-  SUBROUTINE init_level_set(pp_mesh, time, &
+  MODULE SUBROUTINE init_level_set(pp_mesh, time, &
        dt, list_mode, level_set_m1, level_set)
     IMPLICIT NONE
     TYPE(mesh_type)                              :: pp_mesh 
@@ -86,7 +86,7 @@ CONTAINS
   END SUBROUTINE init_level_set
 
   !===Source in momemtum equation. Always called.
-  FUNCTION source_in_NS_momentum(TYPE, rr, mode, i, time, Re, ty, opt_density, opt_tempn) RESULT(vv)
+  MODULE FUNCTION source_in_NS_momentum(TYPE, rr, mode, i, time, Re, ty, opt_density, opt_tempn) RESULT(vv)
     IMPLICIT NONE
     INTEGER     ,                             INTENT(IN) :: TYPE
     REAL(KIND=8), DIMENSION(:,:),             INTENT(IN) :: rr
@@ -182,7 +182,7 @@ CONTAINS
   END FUNCTION source_in_NS_momentum
 
   !===Extra source in temperature equation. Always called.
-  FUNCTION source_in_temperature(TYPE, rr, m, t)RESULT(vv)
+  MODULE FUNCTION source_in_temperature(TYPE, rr, m, t)RESULT(vv)
     IMPLICIT NONE
     INTEGER     ,                        INTENT(IN)   :: TYPE
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
@@ -254,7 +254,7 @@ CONTAINS
   END FUNCTION source_in_temperature
 
   !===Extra source in level set equation. Always called.
-  FUNCTION source_in_level_set(interface_nb,TYPE, rr, m, t)RESULT(vv)
+  MODULE FUNCTION source_in_level_set(interface_nb,TYPE, rr, m, t)RESULT(vv)
     IMPLICIT NONE
     INTEGER     ,                        INTENT(IN)   :: TYPE
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
@@ -268,7 +268,7 @@ CONTAINS
 
   !===Velocity for boundary conditions in Navier-Stokes.
   !===Can be used also to initialize velocity in: init_velocity_pressure_temperature 
-  FUNCTION vv_exact(TYPE,rr,m,t) RESULT(vv)
+  MODULE FUNCTION vv_exact(TYPE,rr,m,t) RESULT(vv)
     IMPLICIT NONE
     INTEGER     ,                        INTENT(IN)   :: TYPE
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
@@ -313,7 +313,7 @@ CONTAINS
 
   !===Solid velocity imposed when using penalty technique
   !===Defined in Fourier space on mode 0 only.
-  FUNCTION imposed_velocity_by_penalty(rr,t) RESULT(vv)
+  MODULE FUNCTION imposed_velocity_by_penalty(rr,t) RESULT(vv)
     IMPLICIT NONE 
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     REAL(KIND=8),                        INTENT(IN)   :: t
@@ -328,7 +328,7 @@ CONTAINS
   !===Use this routine for outflow BCs only.
   !===CAUTION: Do not enfore BCs on pressure where normal component 
   !            of velocity is prescribed.
-  FUNCTION pp_exact(TYPE,rr,m,t) RESULT (vv)
+  MODULE FUNCTION pp_exact(TYPE,rr,m,t) RESULT (vv)
     IMPLICIT NONE
     INTEGER     ,                        INTENT(IN)   :: TYPE
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
@@ -347,7 +347,7 @@ CONTAINS
   END FUNCTION pp_exact
 
   !===Temperature for boundary conditions in temperature equation.
-  FUNCTION temperature_exact(TYPE,rr,m,t) RESULT (vv)
+  MODULE FUNCTION temperature_exact(TYPE,rr,m,t) RESULT (vv)
     IMPLICIT NONE
     INTEGER     ,                        INTENT(IN)   :: TYPE
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
@@ -379,7 +379,7 @@ CONTAINS
   END FUNCTION temperature_exact
 
   !===Can be used to initialize level set in: init_level_set
-  FUNCTION level_set_exact(interface_nb,TYPE,rr,m,t)  RESULT (vv)
+  MODULE FUNCTION level_set_exact(interface_nb,TYPE,rr,m,t)  RESULT (vv)
     IMPLICIT NONE
     INTEGER     ,                        INTENT(IN)   :: TYPE
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
@@ -394,7 +394,7 @@ CONTAINS
   !===Penalty coefficient (if needed)
   !===This coefficient is equal to zero in subdomain
   !===where penalty is applied
-  FUNCTION penal_in_real_space(mesh,rr_gauss,angles,nb_angles,nb,ne,time) RESULT(vv)
+  MODULE FUNCTION penal_in_real_space(mesh,rr_gauss,angles,nb_angles,nb,ne,time) RESULT(vv)
     IMPLICIT NONE
     TYPE(mesh_type)                            :: mesh
     REAL(KIND=8), DIMENSION(:,:), INTENT(IN)   :: rr_gauss
@@ -414,7 +414,7 @@ CONTAINS
   !===velocity field on the temperature and the Maxwell domain.
   !===It is also used if problem type=mxw and restart velocity
   !===is set to true in data (type problem denoted mxx in the code).
-  FUNCTION extension_velocity(TYPE, H_mesh, mode, t, n_start) RESULT(vv)
+  MODULE FUNCTION extension_velocity(TYPE, H_mesh, mode, t, n_start) RESULT(vv)
     IMPLICIT NONE
     TYPE(mesh_type),                     INTENT(IN)   :: H_mesh     
     INTEGER     ,                        INTENT(IN)   :: TYPE, n_start
@@ -437,7 +437,7 @@ CONTAINS
   !===============================================================================
   !===Velocity used in the induction equation.
   !===Used only if problem type is mxw and restart velocity is false
-  FUNCTION Vexact(m, H_mesh) RESULT(vv)  !Set uniquement a l'induction
+  MODULE FUNCTION Vexact(m, H_mesh) RESULT(vv)  !Set uniquement a l'induction
     IMPLICIT NONE
     TYPE(mesh_type),                       INTENT(IN) :: H_mesh 
     INTEGER,                               INTENT(IN) :: m
@@ -447,7 +447,7 @@ CONTAINS
     RETURN
   END FUNCTION Vexact
 
-  FUNCTION H_B_quasi_static(char_h_b, rr, m) RESULT(vv) 
+  MODULE FUNCTION H_B_quasi_static(char_h_b, rr, m) RESULT(vv) 
     IMPLICIT NONE
     CHARACTER(LEN=1),                    INTENT(IN)   :: char_h_b
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
@@ -463,7 +463,7 @@ CONTAINS
   END FUNCTION H_B_quasi_static
 
   !===Magnetic field for boundary conditions in the Maxwell equations.
-  FUNCTION Hexact(H_mesh, TYPE, rr, m, mu_H_field, t) RESULT(vv)  
+  MODULE FUNCTION Hexact(H_mesh, TYPE, rr, m, mu_H_field, t) RESULT(vv)  
     IMPLICIT NONE
     TYPE(mesh_type),                     INTENT(IN)   :: H_mesh
     INTEGER     ,                        INTENT(IN)   :: TYPE
@@ -478,7 +478,7 @@ CONTAINS
   END FUNCTION Hexact
 
   !===Scalar potential for boundary conditions in the Maxwell equations.
-  FUNCTION Phiexact(TYPE, rr, m, mu_phi,t) RESULT(vv) 
+  MODULE FUNCTION Phiexact(TYPE, rr, m, mu_phi,t) RESULT(vv) 
     IMPLICIT NONE
     INTEGER     ,                        INTENT(IN)   :: TYPE
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
@@ -491,7 +491,7 @@ CONTAINS
   END FUNCTION Phiexact
 
   !===Current in Ohm's law. Curl(H) = sigma(E + uxB) + current
-  FUNCTION Jexact_gauss(TYPE, rr, m, mu_phi, sigma, mu_H, t, mesh_id, opt_B_ext) RESULT(vv) 
+  MODULE FUNCTION Jexact_gauss(TYPE, rr, m, mu_phi, sigma, mu_H, t, mesh_id, opt_B_ext) RESULT(vv) 
     IMPLICIT NONE
     INTEGER     ,                        INTENT(IN)   :: TYPE
     REAL(KIND=8), DIMENSION(:),          INTENT(IN)   :: rr
@@ -506,7 +506,7 @@ CONTAINS
   END FUNCTION Jexact_gauss
 
   !===Electric field for Neumann BC (cf. doc)
-  FUNCTION Eexact_gauss(TYPE, rr, m, mu_phi, sigma, mu_H, t) RESULT(vv)
+  MODULE FUNCTION Eexact_gauss(TYPE, rr, m, mu_phi, sigma, mu_H, t) RESULT(vv)
     IMPLICIT NONE
     INTEGER,                             INTENT(IN)   :: TYPE
     REAL(KIND=8), DIMENSION(:),          INTENT(IN)   :: rr
@@ -519,7 +519,7 @@ CONTAINS
   END FUNCTION Eexact_gauss
 
   !===Initialization of magnetic field and scalar potential (if present)
-  SUBROUTINE init_maxwell(H_mesh, phi_mesh, time, dt, mu_H_field, mu_phi, &
+  MODULE SUBROUTINE init_maxwell(H_mesh, phi_mesh, time, dt, mu_H_field, mu_phi, &
        list_mode, Hn1, Hn, phin1, phin)
     IMPLICIT NONE
     TYPE(mesh_type)                            :: H_mesh, phi_mesh     
@@ -543,7 +543,7 @@ CONTAINS
   !===This function is not needed unless the flag
   !===     ===Use FEM Interpolation for magnetic permeability  (true/false)
   !===is activated and set to .FALSE. in the data data file. Default is .TRUE.
-  FUNCTION mu_bar_in_fourier_space(H_mesh,nb,ne,pts,pts_ids) RESULT(vv)
+  MODULE FUNCTION mu_bar_in_fourier_space(H_mesh,nb,ne,pts,pts_ids) RESULT(vv)
     IMPLICIT NONE
     TYPE(mesh_type), INTENT(IN)                :: H_mesh
     REAL(KIND=8), DIMENSION(ne-nb+1)           :: vv
@@ -559,7 +559,7 @@ CONTAINS
   !===This function is not needed unless the flag
   !===     ===Use FEM Interpolation for magnetic permeability  (true/false)
   !===is activated and set to .FALSE. in the data data file. Default is .TRUE.
-  FUNCTION grad_mu_bar_in_fourier_space(pt,pt_id) RESULT(vv)
+  MODULE FUNCTION grad_mu_bar_in_fourier_space(pt,pt_id) RESULT(vv)
     IMPLICIT NONE
     REAL(KIND=8),DIMENSION(2), INTENT(in):: pt
     INTEGER,DIMENSION(1), INTENT(in)     :: pt_id
@@ -570,7 +570,7 @@ CONTAINS
   END FUNCTION grad_mu_bar_in_fourier_space
 
   !===Analytical permeability, mu in real space (if needed)
-  FUNCTION mu_in_real_space(H_mesh,angles,nb_angles,nb,ne,time) RESULT(vv)
+  MODULE FUNCTION mu_in_real_space(H_mesh,angles,nb_angles,nb,ne,time) RESULT(vv)
     IMPLICIT NONE
     TYPE(mesh_type), INTENT(IN)                :: H_mesh
     REAL(KIND=8), DIMENSION(:), INTENT(IN)     :: angles
@@ -583,25 +583,41 @@ CONTAINS
     RETURN
   END FUNCTION mu_in_real_space
 
-  FUNCTION sigma_bar_in_fourier_space(H_mesh) RESULT(vv)
+  MODULE FUNCTION sigma_bar_in_fourier_space(H_mesh) RESULT(vv)
     USE def_type_mesh
     TYPE(mesh_type), INTENT(IN)                :: H_mesh
     REAL(KIND=8), DIMENSION(SIZE(H_mesh%rr,2)) :: vv
+
+    vv = 1.d0
+    CALL error_petsc('sigma_bar_in_fourier_space: should not be called for this test')
+    RETURN
   END FUNCTION sigma_bar_in_fourier_space
 
-  FUNCTION chi_coeff_law(temp) RESULT(vv)
+  MODULE FUNCTION chi_coeff_law(temp) RESULT(vv)
     REAL(KIND=8) :: temp
     REAL(KIND=8) :: vv
+
+    vv = 1.d0
+    CALL error_petsc('chi_coeff_law: should not be called for this test')
+    RETURN
   END FUNCTION chi_coeff_law
 
-  FUNCTION T_dchi_dT_coeff_law(temp) RESULT(vv)
+  MODULE FUNCTION T_dchi_dT_coeff_law(temp) RESULT(vv)
     REAL(KIND=8) :: temp
     REAL(KIND=8) :: vv
+
+    vv = 1.d0
+    CALL error_petsc('T_dchi_dT_coeff_law: should not be called for this test')
+    RETURN
   END FUNCTION T_dchi_dT_coeff_law
 
-  FUNCTION nu_tilde_law(temp) RESULT(vv)
+  MODULE FUNCTION nu_tilde_law(temp) RESULT(vv)
     REAL(KIND=8) :: temp
     REAL(KIND=8) :: vv
+
+    vv = 1.d0
+    CALL error_petsc('nu_tilde_law: should not be called for this test')
+    RETURN
   END FUNCTION nu_tilde_law
 
 END SUBMODULE BOUNDARY_GENERIC

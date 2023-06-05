@@ -1,6 +1,8 @@
 # Cmake minimum version
 cmake_minimum_required(VERSION 3.5)
 
+include(variables.cmake)
+
 # Enable Fortran
 enable_language(Fortran)
 
@@ -8,7 +10,6 @@ enable_language(Fortran)
 project(regression_test)
 
 include(CTest) # We include CTest which is part of CMake
-include(variables.cmake)
 
 set(ROOT ${SFEMaNS_DIR})
 message (STATUS "${ROOT}")

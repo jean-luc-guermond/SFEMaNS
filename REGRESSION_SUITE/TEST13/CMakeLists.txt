@@ -70,5 +70,5 @@ set(passRegex "123")
 set (nm "test13")
 add_test(NAME ${nm}
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../REGRESSION_TESTS
-  COMMAND /bin/bash/ job.sh ${RUN_PRE_PROC} ${PROC_CALL} ${exe})
+  COMMAND /bin/bash/ job.sh ${RUN_PRE_PROC} ${PROC_CALL} ${exe} ${RUN_POST_PROC})
 set_property (TEST ${nm} PROPERTY PASS_REGULAR_EXPRESSION "${passRegex}")
