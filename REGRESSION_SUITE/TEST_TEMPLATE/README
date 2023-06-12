@@ -28,8 +28,8 @@ and replace XX by number of new test (one instantiation)
 ===Step 5
 Open the file
 $SFEMaNS_DIR/CTEST_SUITE/CMakeList.txt
-and add following line at the end of the followin files (before the line enable testing)
-#add_subdirectory(${ROOT}/REGRESSION_SUITE/TESTXX ${ROOT}/REGRESSION_SUITE/TESTXX/BUILD)
+and add following line at the end of file (before the line enable testing)
+add_subdirectory(${ROOT}/REGRESSION_SUITE/TESTXX ${ROOT}/REGRESSION_SUITE/TESTXX/BUILD)
 
 (Do not forget to replace XX by your test number above, two instantiations)
 
@@ -52,3 +52,9 @@ cp current_regression_reference regression_reference_XX
 ===Step 8
 Rerun ctest to make sure everything is ok.
 
+===Step 9
+Before commit/push changes, one needs to check that:
+   1) condlim.F90 is indented corrected and has no whitespace at end of line
+(use emacs and command M-x delete-trailing-whitespace)
+   2) Compilation code with debug option does not create warning
+(see condlim.F90 of TEST1 to remove warning due to unused variables)

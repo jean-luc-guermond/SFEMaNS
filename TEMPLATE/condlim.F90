@@ -125,7 +125,7 @@ CONTAINS
     REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
 
-    vv=0.d0
+    vv = 0.d0
     RETURN
   END FUNCTION source_in_level_set
 
@@ -139,7 +139,7 @@ CONTAINS
     REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
 
-    vv(:) = 0.d0
+    vv = 0.d0
     RETURN
   END FUNCTION vv_exact
 
@@ -151,7 +151,7 @@ CONTAINS
     REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(SIZE(rr,2),6)             :: vv
 
-    vv=0.d0
+    vv = 0.d0
     RETURN
   END FUNCTION imposed_velocity_by_penalty
 
@@ -168,7 +168,7 @@ CONTAINS
     REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
 
-    vv=0.d0
+    vv = 0.d0
     RETURN
   END FUNCTION pp_exact
 
@@ -341,7 +341,7 @@ CONTAINS
              IF (k<3) THEN
                 phin1(:,k,i) = Phiexact(k, phi_mesh%rr, list_mode(i) , mu_phi, time)
              ENDIF
-          END  IF
+          ENDIF
        ENDDO
     ENDDO
 
@@ -353,7 +353,7 @@ CONTAINS
              IF (k<3) THEN
                 phin(:,k,i) = Phiexact(k, phi_mesh%rr, list_mode(i), mu_phi, time)
              ENDIF
-          END  IF
+          ENDIF
        ENDDO
     ENDDO
     RETURN
@@ -414,7 +414,7 @@ CONTAINS
     TYPE(mesh_type), INTENT(IN)                :: H_mesh
     REAL(KIND=8), DIMENSION(SIZE(H_mesh%rr,2)) :: vv
 
-    vv=0.9d0*MINVAL(inputs%sigma_fluid)
+    vv = 0.9d0*MINVAL(inputs%sigma_fluid)
     RETURN
   END FUNCTION sigma_bar_in_fourier_space
 

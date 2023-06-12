@@ -6,6 +6,12 @@ SUBMODULE (boundary_generic_module) boundary_generic
   USE user_data
   REAL(KIND=8) :: pi=ACOS(-1.d0)
 
+  !===Dummy variables to avoid warning
+  REAL(KIND=8) :: rd
+  INTEGER      :: nd
+  CHARACTER(LEN=2)  :: cd2
+  CHARACTER(LEN=1)  :: cd1
+  !===Dummy variables to avoid warning
 CONTAINS
   !===============================================================================
   !                       Boundary conditions for Navier-Stokes
@@ -85,7 +91,6 @@ CONTAINS
           END DO
        END DO
     END DO
-
   END SUBROUTINE init_level_set
 
   !===Source in momemtum equation. Always called.
@@ -104,7 +109,6 @@ CONTAINS
     REAL(KIND=8), DIMENSION(SIZE(rr,2))                  :: ur, ut, uz
     INTEGER                                              :: m
     REAL(KIND=8)                                         :: t
-    CHARACTER(LEN=2)  :: np
 
     IF (PRESENT(opt_density)) CALL error_petsc('density should not be present for test 9')
 
@@ -143,10 +147,11 @@ CONTAINS
             + inputs%gravity_coefficient*opt_tempn(:,TYPE-4,i)
     END IF
     RETURN
-
-    !===Dummies variables to avoid warning
-    np=ty
-    !===Dummies variables to avoid warning
+    !===Dummy variables to avoid warning
+    nd=TYPE; nd=SIZE(rr,1); nd=mode; nd=i; rd=time; rd=Re; cd2=ty
+    IF (PRESENT(opt_density)) nd=SIZE(opt_density,1)
+    IF (PRESENT(opt_tempn)) nd=SIZE(opt_tempn,1)
+    !===Dummy variables to avoid warning
   END FUNCTION source_in_NS_momentum
 
   !===Extra source in temperature equation. Always called.
@@ -197,6 +202,9 @@ CONTAINS
        END IF
     END IF
     RETURN
+    !===Dummy variables to avoid warning
+    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION source_in_temperature
 
   !===Extra source in level set equation. Always called.
@@ -208,8 +216,12 @@ CONTAINS
     REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
 
-    vv=0.d0
+    vv = 0.d0
     CALL error_petsc('sourece_in_temperature: should not be called for this test')
+    RETURN
+    !===Dummy variables to avoid warning
+    nd=TYPE; nd=SIZE(rr,1); nd=m; nd=interface_nb; rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION source_in_level_set
 
   !===Velocity for boundary conditions in Navier-Stokes.
@@ -245,6 +257,9 @@ CONTAINS
     ENDIF
     vv(:) = vv(:) * SIN(t)
     RETURN
+    !===Dummy variables to avoid warning
+    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION vv_exact
 
   !===Solid velocity imposed when using penalty technique
@@ -255,8 +270,11 @@ CONTAINS
     REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(SIZE(rr,2),6)             :: vv
 
-    vv=0.d0
+    vv = 0.d0
     RETURN
+    !===Dummy variables to avoid warning
+    nd=SIZE(rr,1); rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION imposed_velocity_by_penalty
 
   !===Pressure for boundary conditions in Navier-Stokes.
@@ -288,6 +306,9 @@ CONTAINS
        vv(:) = 0
     END IF
     RETURN
+    !===Dummy variables to avoid warning
+    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION pp_exact
 
   !===Temperature for boundary conditions in temperature equation.
@@ -325,6 +346,9 @@ CONTAINS
        END IF
     END IF
     RETURN
+    !===Dummy variables to avoid warning
+    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION temperature_exact
 
   !===Can be used to initialize level set in the subroutine init_level_set.
@@ -339,7 +363,9 @@ CONTAINS
     vv = 0.d0
     CALL error_petsc('level_set_exact: should not be called for this test')
     RETURN
-
+    !===Dummy variables to avoid warning
+    nd=TYPE; nd=SIZE(rr,1); nd=m; nd=interface_nb; rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION level_set_exact
 
   !===Penalty coefficient (if needed)
@@ -358,6 +384,9 @@ CONTAINS
     vv = 1.d0
     CALL error_petsc('penal_in_real_space: should not be called for this test')
     RETURN
+    !===Dummy variables to avoid warning
+    nd=mesh%np; nd=SIZE(rr_gauss,1); nd=SIZE(angles); nd=nb_angles; nd=nb; nd=ne; rd=time
+    !===Dummy variables to avoid warning
   END FUNCTION penal_in_real_space
 
   !===Extension of the velocity field in the solid.
@@ -373,15 +402,12 @@ CONTAINS
     INTEGER,                             INTENT(IN)   :: mode
     REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(H_Mesh%np)                :: vv
-    REAL(KIND=8) :: r
-    INTEGER      :: n
 
     vv = 0.d0
     RETURN
-
-    !===Dummies variables to avoid warning
-    n=H_mesh%np; r=t; n=TYPE; n=mode; n=n_start
-    !===Dummies variables to avoid warning
+    !===Dummy variables to avoid warning
+    nd=H_mesh%np; nd=TYPE; nd=n_start; nd=mode; rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION extension_velocity
 
   !===============================================================================
@@ -397,6 +423,10 @@ CONTAINS
 
     vv = 0.d0
     CALL error_petsc('Vexact: should not be called for this test')
+    RETURN
+    !===Dummy variables to avoid warning
+    nd=H_mesh%np; nd=m
+    !===Dummy variables to avoid warning
   END FUNCTION Vexact
 
   !===Magnetic field and magnetic induction for quasi-static approximation
@@ -410,6 +440,9 @@ CONTAINS
 
     vv = 0.d0
     RETURN
+    !===Dummy variables to avoid warning
+    cd1=char_h_b; nd=SIZE(rr,1); nd=m
+    !===Dummy variables to avoid warning
   END FUNCTION H_B_quasi_static
 
   !===Magnetic field for boundary conditions in the Maxwell equations.
@@ -423,9 +456,12 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:),          INTENT(IN)   :: mu_H_field
     REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
 
-    vv=0.d0
+    vv = 0.d0
     CALL error_petsc('Hexact: should not be called for this test')
     RETURN
+    !===Dummy variables to avoid warning
+    nd=H_mesh%np; nd=TYPE; nd=SIZE(rr,1); nd=m; rd=t; nd=SIZE(mu_H_field)
+    !===Dummy variables to avoid warning
   END FUNCTION Hexact
 
   !===Scalar potential for boundary conditions in the Maxwell equations.
@@ -437,9 +473,12 @@ CONTAINS
     REAL(KIND=8),                        INTENT(IN)   :: mu_phi, t
     REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
 
-    vv=0.d0
+    vv = 0.d0
     CALL error_petsc('Phiexact: should not be called for this test')
     RETURN
+    !===Dummy variables to avoid warning
+    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=mu_phi; rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION Phiexact
 
   !===Current in Ohm's law. Curl(H) = sigma(E + uxB) + current
@@ -453,9 +492,13 @@ CONTAINS
     REAL(KIND=8), DIMENSION(6), OPTIONAL,INTENT(IN)   :: opt_B_ext
     REAL(KIND=8)                                      :: vv
 
-    vv=0.d0
+    vv = 0.d0
     CALL error_petsc('Jexact_gauss: should not be called for this test')
     RETURN
+    !===Dummy variables to avoid warning
+    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=mu_phi; rd=sigma; rd=mu_H; rd=t; nd=mesh_id
+    IF (PRESENT(opt_B_ext)) nd=SIZE(opt_B_ext)
+    !===Dummy variables to avoid warning
   END FUNCTION Jexact_gauss
 
   !===Electric field for Neumann BC (cf. doc)
@@ -469,6 +512,10 @@ CONTAINS
 
     vv = 0.d0
     CALL error_petsc('Eexact: should not be called for this test')
+    RETURN
+    !===Dummy variables to avoid warning
+    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=mu_phi; rd=sigma; rd=mu_H; rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION Eexact_gauss
 
   !===Initialization of magnetic field and scalar potential (if present)
@@ -483,13 +530,31 @@ CONTAINS
     INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: Hn, Hn1
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: phin, phin1
+    INTEGER                                    :: i, k
 
-    time=0.d0
-    Hn=0.d0
-    Hn1=0.d0
-    phin=0.d0
-    phin1=0.d0
-    CALL error_petsc('init_maxwell: should not be called for this test')
+    time = -dt
+    DO k=1,6
+       DO i=1, SIZE(list_mode)
+          Hn1(:,k,i) = Hexact(H_mesh,k, H_mesh%rr, list_mode(i), mu_H_field, time)
+          IF (inputs%nb_dom_phi>0) THEN
+             IF (k<3) THEN
+                phin1(:,k,i) = Phiexact(k, phi_mesh%rr, list_mode(i) , mu_phi, time)
+             ENDIF
+          ENDIF
+       ENDDO
+    ENDDO
+
+    time = time + dt
+    DO k=1,6
+       DO i=1, SIZE(list_mode)
+          Hn(:,k,i) = Hexact(H_mesh,k, H_mesh%rr, list_mode(i), mu_H_field, time)
+          IF (inputs%nb_dom_phi>0) THEN
+             IF (k<3) THEN
+                phin(:,k,i) = Phiexact(k, phi_mesh%rr, list_mode(i), mu_phi, time)
+             ENDIF
+          ENDIF
+       ENDDO
+    ENDDO
   END SUBROUTINE init_maxwell
 
   !===Analytical permeability (if needed)
@@ -507,6 +572,11 @@ CONTAINS
     vv = 1.d0
     CALL error_petsc('mu_bar_in_fourier_space: should not be called for this test')
     RETURN
+    !===Dummy variables to avoid warning
+    nd=H_mesh%np; nd=nb; nd=ne
+    IF (PRESENT(pts)) nd=SIZE(pts,1)
+    IF (PRESENT(pts_ids)) nd=SIZE(pts_ids)
+    !===Dummy variables to avoid warning
   END FUNCTION mu_bar_in_fourier_space
 
   !===Analytical mu_in_fourier_space (if needed)
@@ -519,10 +589,13 @@ CONTAINS
     INTEGER,DIMENSION(1), INTENT(in)     :: pt_id
     REAL(KIND=8),DIMENSION(2)            :: vv
 
-    vv=0.d0
+    vv = 0.d0
     CALL error_petsc('grad_mu_bar_in_fourier_space: should not be called for this test')
     RETURN
-  END FUNCTION grad_mu_bar_in_fourier_space
+    !===Dummy variables to avoid warning
+    nd=SIZE(pt,1); nd=SIZE(pt_id)
+    !===Dummy variables to avoid warning
+ END FUNCTION grad_mu_bar_in_fourier_space
 
   !===Analytical permeability, mu in real space (if needed)
   MODULE FUNCTION mu_in_real_space(H_mesh,angles,nb_angles,nb,ne,time) RESULT(vv)
@@ -537,6 +610,9 @@ CONTAINS
     vv = 1.d0
     CALL error_petsc('mu_in_real_space: should not be called for this test')
     RETURN
+    !===Dummy variables to avoid warning
+    nd=H_mesh%np; nd=SIZE(angles); rd=time
+    !===Dummy variables to avoid warning
   END FUNCTION mu_in_real_space
 
   MODULE FUNCTION sigma_bar_in_fourier_space(H_mesh) RESULT(vv)
@@ -553,7 +629,7 @@ CONTAINS
     REAL(KIND=8) :: temp
     REAL(KIND=8) :: vv
 
-    vv = 1.d0
+    vv = 0.d0*temp
     CALL error_petsc('chi_coeff_law: should not be called for this test')
     RETURN
   END FUNCTION chi_coeff_law
@@ -562,7 +638,7 @@ CONTAINS
     REAL(KIND=8) :: temp
     REAL(KIND=8) :: vv
 
-    vv = 1.d0
+    vv = 0.d0*temp
     CALL error_petsc('T_dchi_dT_coeff_law: should not be called for this test')
     RETURN
   END FUNCTION T_dchi_dT_coeff_law
@@ -571,7 +647,7 @@ CONTAINS
     REAL(KIND=8) :: temp
     REAL(KIND=8) :: vv
 
-    vv = 1.d0
+    vv = 0.d0*temp
     CALL error_petsc('nu_tilde_law: should not be called for this test')
     RETURN
   END FUNCTION nu_tilde_law

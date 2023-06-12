@@ -67,7 +67,7 @@ target_link_libraries(a_mesh_interpolation_31_32.exe PUBLIC sfemans_lib_F
 target_include_directories(a_mesh_interpolation_31_32.exe PUBLIC ${SFEMaNS_DIR}/LIBS)
 
 # Add executable
-set(exe "test31_31.exe")
+set(exe "test31_32.exe")
 add_executable(${exe} ${local_sources})
 # Include and link library
 target_link_libraries(${exe} PUBLIC sfemans_lib_F
