@@ -15,7 +15,7 @@
 ===Restart on velocity (true/false)
 .f.
 ===Time step and number of time iterations
-.00125d0, 400
+.00125d0, 40
 ===Do we apply mass correction? (true/false)
 .f.
 ===Do we kill level set overshoot? (true/false)
@@ -151,7 +151,12 @@ MUMPS
 
 ============================================
 (RECT20.FEM)
-===Reference results
+===Reference results 40 time iterations
+4.6012054378938229E-004  L2 error on velocity
+4.1200649583487403E-003  H1 error on velocity
+7.3352130513437946E-005  L2 error on level set
+2.2116445299047247E-002  L2 error on pressure
+===Reference results 400 time iterations
 7.7817557169258106E-004  L2 error on velocity
 4.7009006550561847E-003  H1 error on velocity
 2.9504697548656780E-004  L2 error on level set
