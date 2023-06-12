@@ -51,7 +51,7 @@ CONTAINS
     TYPE(periodic_data)                   :: my_periodic
 
     INTEGER, DIMENSION(:), ALLOCATABLE    :: list_inter, list_inter_temp, list_inter_v_T, &
-         list_inter_mu, list_inter_H_phi, list_dom_H, & 
+         list_inter_mu, list_inter_H_phi, list_dom_H, &
          list_dom_ns, list_dom_temp, list_dom_temp_in, list_dom_phi, list_dom_H_in, list_dom, part, &
          list_mode, controle_H, controle_phi, &
          controle_vv, controle_pp, controle_temp, temp_in_to_new, H_in_to_new, &
@@ -188,7 +188,7 @@ CONTAINS
     END IF
 
     !===Input and Output mesh files
-    CALL read_until(22, '===Directory and name of input mesh file') 
+    CALL read_until(22, '===Directory and name of input mesh file')
     READ(22,*) old_directory, old_filename
     CALL read_until(22, '===Is input mesh file formatted (true/false)?')
     READ(22,*) old_is_form
@@ -197,7 +197,7 @@ CONTAINS
        new_filename = old_filename
        new_is_form = old_is_form
     ELSE
-       CALL read_until(22, '===Directory and name of output mesh file') 
+       CALL read_until(22, '===Directory and name of output mesh file')
        READ(22,*) new_directory, new_filename
        CALL read_until(22, '===Is output mesh file formatted (true/false)?')
        READ(22,*) new_is_form
@@ -206,7 +206,7 @@ CONTAINS
     !===Data for NS
     IF ( (type_pb == 'nst') .OR. (type_pb == 'mhd') .OR. (type_pb == 'fhd')) THEN
        CALL read_until(22, '===Number of subdomains in Navier-Stokes mesh')
-       READ(22,*) nb_dom_ns 
+       READ(22,*) nb_dom_ns
        ALLOCATE(list_dom_ns(nb_dom_ns))
        CALL read_until(22, '===List of subdomains for Navier-Stokes mesh')
        READ (22, *)  list_dom_ns
@@ -233,7 +233,7 @@ CONTAINS
     !===Data for temperature
     IF (if_temperature) THEN
        CALL read_until(22, '===Number of subdomains in temperature mesh')
-       READ(22,*) nb_dom_temp 
+       READ(22,*) nb_dom_temp
        ALLOCATE(list_dom_temp_in(nb_dom_temp), list_dom_temp(nb_dom_temp), temp_in_to_new(nb_dom_temp))
        CALL read_until(22, '===List of subdomains for temperature mesh')
        READ (22, *)  list_dom_temp_in
@@ -330,33 +330,33 @@ CONTAINS
     IF (if_induction) THEN
        IF (if_momentum) THEN
           IF (SIZE(list_dom_H) < SIZE(list_dom_ns)) THEN
-             WRITE(*,*) ' BUG: NS must be a subset of Maxwell ' 
+             WRITE(*,*) ' BUG: NS must be a subset of Maxwell '
              STOP
           END IF
           DO k = 1, nb_dom_ns
-             ! JLG/AR Nov 17 2008 
+             ! JLG/AR Nov 17 2008
              IF (MINVAL(ABS(list_dom_H_in - list_dom_ns(k))) /= 0) THEN
                 WRITE(*,*) ' BUG : NS must be a subset of Maxwell '
                 STOP
              END IF
              DO kp = 1, nb_dom_H
-                IF (list_dom_H_in(kp) == list_dom_ns(k)) EXIT  
+                IF (list_dom_H_in(kp) == list_dom_ns(k)) EXIT
              END DO
              H_in_to_new(k) = kp
-             ! JLG/AR Nov 17 2008 
+             ! JLG/AR Nov 17 2008
              list_dom_H(k) = list_dom_ns(k)
           END DO
-          m = nb_dom_ns 
+          m = nb_dom_ns
           DO k = 1, nb_dom_H
-             IF (MINVAL(ABS(list_dom_H_in(k) - list_dom_ns)) == 0) CYCLE 
+             IF (MINVAL(ABS(list_dom_H_in(k) - list_dom_ns)) == 0) CYCLE
              m = m + 1
-             ! JLG/AR Nov 17 2008 
+             ! JLG/AR Nov 17 2008
              H_in_to_new(m) = k
-             ! JLG/AR Nov 17 2008 
+             ! JLG/AR Nov 17 2008
              list_dom_H(m) = list_dom_H_in(k)
           END DO
           IF (m/=nb_dom_H) THEN
-             WRITE(*,*) ' BUG : m/=nb_dom_H ' 
+             WRITE(*,*) ' BUG : m/=nb_dom_H '
              STOP
           END IF
           IF (nb_dom_H > nb_dom_ns) THEN
@@ -365,11 +365,11 @@ CONTAINS
              dom_H_larger_dom_ns = .FALSE.
           END IF
        ELSE
-          ! JLG/AR Nov 17 2008 
+          ! JLG/AR Nov 17 2008
           DO k = 1, nb_dom_H
              H_in_to_new(k) = k
           END DO
-          ! JLG/AR Nov 17 2008 
+          ! JLG/AR Nov 17 2008
           list_dom_H = list_dom_H_in
        END IF
     END IF
@@ -377,7 +377,7 @@ CONTAINS
     !===Check that vv_mesh is a subset of temp_mesh
     IF (if_energy) THEN
        IF (SIZE(list_dom_temp) < SIZE(list_dom_ns)) THEN
-          WRITE(*,*) ' BUG: NS must be a subset of temp ' 
+          WRITE(*,*) ' BUG: NS must be a subset of temp '
           STOP
        END IF
        DO k = 1, nb_dom_ns
@@ -386,20 +386,20 @@ CONTAINS
              STOP
           END IF
           DO kp = 1, nb_dom_temp
-             IF (list_dom_temp_in(kp) == list_dom_ns(k)) EXIT  
+             IF (list_dom_temp_in(kp) == list_dom_ns(k)) EXIT
           END DO
           temp_in_to_new(k) = kp
           list_dom_temp(k) = list_dom_ns(k)
        END DO
-       m = nb_dom_ns 
+       m = nb_dom_ns
        DO k = 1, nb_dom_temp
-          IF (MINVAL(ABS(list_dom_temp_in(k) - list_dom_ns)) == 0) CYCLE 
+          IF (MINVAL(ABS(list_dom_temp_in(k) - list_dom_ns)) == 0) CYCLE
           m = m + 1
           temp_in_to_new(m) = k
           list_dom_temp(m) = list_dom_temp_in(k)
        END DO
        IF (m/=nb_dom_temp) THEN
-          WRITE(*,*) ' BUG : m/=nb_dom_temp ' 
+          WRITE(*,*) ' BUG : m/=nb_dom_temp '
           STOP
        END IF
        IF (nb_dom_temp > nb_dom_ns) THEN
@@ -412,12 +412,12 @@ CONTAINS
     !===Check that temp_mesh is a subset of H_mesh
     IF (if_induction .AND. if_energy) THEN
        IF (SIZE(list_dom_H) < SIZE(list_dom_temp)) THEN
-          WRITE(*,*) ' BUG: temp must be a subset of Maxwell ' 
+          WRITE(*,*) ' BUG: temp must be a subset of Maxwell '
           STOP
        END IF
        DO k = 1, nb_dom_temp
           IF (MINVAL(ABS(list_dom_H - list_dom_temp(k))) /= 0) THEN
-             WRITE(*,*) ' BUG: temp must be a subset of Maxwell ' 
+             WRITE(*,*) ' BUG: temp must be a subset of Maxwell '
              STOP
           END IF
        END DO
@@ -449,7 +449,7 @@ CONTAINS
        IF (SIZE(list_inter_mu)>0) THEN
           list_inter(1:SIZE(list_inter_mu)) = list_inter_mu
        END IF
-       IF (SIZE(list_inter_H_phi)>0) THEN 
+       IF (SIZE(list_inter_H_phi)>0) THEN
           list_inter(SIZE(list_inter_mu)+1:) = list_inter_H_phi
        END IF
     END IF
@@ -532,7 +532,7 @@ CONTAINS
        CALL extract_mesh(comm_one_d(1),nb_S,p2_mesh_glob,part,list_dom_ns,vv_mesh_glob,vv_mesh)
 
        ALLOCATE(comm_one_d_ns(2))
-       comm_one_d_ns(2) = comm_one_d(2) 
+       comm_one_d_ns(2) = comm_one_d(2)
        CALL MPI_COMM_RANK(comm_one_d(1),rank_S,code)
        IF (pp_mesh%me/=0) THEN
           CALL MPI_COMM_SPLIT (comm_one_d(1),1,rank_S,comm_one_d_ns(1),code)
@@ -931,8 +931,8 @@ CONTAINS
                    CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, Hn_glob(:,2,i), 'gH_r_sin_m='//tit_m//'_999.plt' )
                    CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, Hn_glob(:,3,i), 'gH_t_cos_m='//tit_m//'_999.plt' )
                    CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, Hn_glob(:,4,i), 'gH_t_sin_m='//tit_m//'_999.plt' )
-                   CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, Hn_glob(:,5,i), 'gH_z_cos_m='//tit_m//'_999.plt' )     
-                   CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, Hn_glob(:,6,i), 'gH_z_sin_m='//tit_m//'_999.plt' )     
+                   CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, Hn_glob(:,5,i), 'gH_z_cos_m='//tit_m//'_999.plt' )
+                   CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, Hn_glob(:,6,i), 'gH_z_sin_m='//tit_m//'_999.plt' )
                 END DO
              END IF
           END IF
@@ -980,7 +980,7 @@ CONTAINS
              CALL MPI_Barrier( MPI_Comm_WORLD, code)
 
              IF (vv_mesh%me/=0) THEN
-                IF (if_level_set)THEN 
+                IF (if_level_set)THEN
                    CALL read_restart_ns(comm_one_d_ns, time_u, list_mode, un_in, un_m1_in, &
                         pn_in, pn_m1_in, incpn_in, incpn_m1_in, old_filename,opt_level_set=level_setn_in, &
                         opt_level_set_m1=level_setn_m1_in, opt_max_vel=max_vel, opt_mono = mono_in)
@@ -1095,7 +1095,7 @@ CONTAINS
                      comm_one_d_ns(1))
                 CALL inter_mesh_loc_to_glob(vv_mesh_in, vv_mesh_out, un_m1_in, un_m1_out, l_t_g_vv, is_in, &
                      comm_one_d_ns(1))
-                CALL inter_mesh_loc_to_glob(pp_mesh_in, pp_mesh_out, pn_in, pn_out, l_t_g_pp, is_in, & 
+                CALL inter_mesh_loc_to_glob(pp_mesh_in, pp_mesh_out, pn_in, pn_out, l_t_g_pp, is_in, &
                      comm_one_d_ns(1))
                 CALL inter_mesh_loc_to_glob(pp_mesh_in, pp_mesh_out, pn_m1_in, pn_m1_out, l_t_g_pp, is_in, &
                      comm_one_d_ns(1))
@@ -1165,7 +1165,7 @@ CONTAINS
                    CALL plot_scalar_field(vv_mesh_glob%jj, vv_mesh_glob%rr, un_glob(:,1,i), 'gu_r_cos_m='//tit_m//'_999.plt' )
                    CALL plot_scalar_field(vv_mesh_glob%jj, vv_mesh_glob%rr, un_glob(:,3,i), 'gu_t_cos_m='//tit_m//'_999.plt' )
                    CALL plot_scalar_field(vv_mesh_glob%jj, vv_mesh_glob%rr, un_glob(:,4,i), 'gu_t_sin_m='//tit_m//'_999.plt' )
-                   CALL plot_scalar_field(vv_mesh_glob%jj, vv_mesh_glob%rr, un_glob(:,5,i), 'gu_z_cos_m='//tit_m//'_999.plt' )     
+                   CALL plot_scalar_field(vv_mesh_glob%jj, vv_mesh_glob%rr, un_glob(:,5,i), 'gu_z_cos_m='//tit_m//'_999.plt' )
                 END DO
              END IF
           END IF

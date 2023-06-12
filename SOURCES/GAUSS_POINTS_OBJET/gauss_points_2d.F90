@@ -131,13 +131,13 @@ CONTAINS
     CASE(3)
        CALL element_1d_p3(wws, dds, pps, n_ws, l_Gs)
     END SELECT
-    !===surface elements   
+    !===surface elements
     DO ms = 1, mes
        m = mesh%neighs(ms)
        !===Determine which face of the reference element is associated with ms
        DO n = 1, 3
           IF (MINVAL(ABS(js(:,ms)-jj(n,m)))==0) CYCLE
-          face = n 
+          face = n
        END DO
        SELECT CASE(type_fe)
        CASE(1)
@@ -158,7 +158,7 @@ CONTAINS
           orient = -orient
        END IF
        !=========TEST
-       !orient = 1 
+       !orient = 1
        !=========TEST
        DO ls = 1, l_Gs
           ngauss(ls) = orient*ls+(l_Gs+1)*(1-orient)/2 !===rearrangement of gauss points
@@ -191,7 +191,7 @@ CONTAINS
           m = mesh%neighs(ms)
           DO n = 1, n_w
              IF (MINVAL(ABS(js(:,ms)-jj(n,m)))==0) CYCLE
-             face = n 
+             face = n
           END DO
           rsd(1:k_d) = rr(:,jj(face,m)) - (rr(:,js(1,ms))+rr(:,js(2,ms)))/2
           x = SUM(rnorms(:,ls,ms)*rsd(1:k_d))
@@ -224,7 +224,7 @@ CONTAINS
              !===Find correct face and orient normal outwards
              DO n = 1, n_w
                 IF (MINVAL(ABS(js(:,ms)-jj(n,m)))==0) CYCLE
-                face = n 
+                face = n
              END DO
              rs = rr(:,jj(face,m)) - (rr(:,js(1,ms))+rr(:,js(2,ms)))/2
              x = SUM(mesh%gauss%rnorms_v(:,ns,ms)*rs)
@@ -255,7 +255,7 @@ CONTAINS
              m = mesh%neighi(cote,ms)
              DO n = 1, 3
                 IF (MINVAL(ABS(mesh%jjsi(1:2,ms)-jj(n,m)))==0) CYCLE
-                face = n 
+                face = n
              END DO
              SELECT CASE(type_fe)
              CASE(1)
@@ -336,4 +336,3 @@ CONTAINS
     DEALLOCATE(dd,dds,pp,pps,r,rs,ww_s,dds_v,ngauss)
   END SUBROUTINE gauss_points_2d
 END MODULE mod_gauss_points_2d
-

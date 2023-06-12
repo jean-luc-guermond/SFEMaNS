@@ -1,4 +1,4 @@
-SUBMODULE (boundary_generic_module) boundary_generic  
+SUBMODULE (boundary_generic_module) boundary_generic
   USE my_util
   USE def_type_mesh
   USE input_data
@@ -20,15 +20,15 @@ CONTAINS
     INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: un_m1, un
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: pn_m1, pn, phin_m1, phin
-    INTEGER                                    :: mode, i, j 
+    INTEGER                                    :: mode, i, j
     REAL(KIND=8), DIMENSION(mesh_c%np)         :: pn_m2
 
     time = 0.d0
     DO i= 1, SIZE(list_mode)
-       mode = list_mode(i) 
-       DO j = 1, 6 
+       mode = list_mode(i)
+       DO j = 1, 6
           !===velocity
-          un_m1(:,j,i) = vv_exact(j,mesh_f%rr,mode,time-dt)  
+          un_m1(:,j,i) = vv_exact(j,mesh_f%rr,mode,time-dt)
           un   (:,j,i) = vv_exact(j,mesh_f%rr,mode,time)
        END DO
        DO j = 1, 2
@@ -50,12 +50,12 @@ CONTAINS
     REAL(KIND=8),                   INTENT(IN) :: dt
     INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: tempn_m1, tempn
-    INTEGER                                    :: mode, i, j 
+    INTEGER                                    :: mode, i, j
 
     time = 0.d0
     DO i= 1, SIZE(list_mode)
-       mode = list_mode(i) 
-       DO j = 1, 2 
+       mode = list_mode(i)
+       DO j = 1, 2
           tempn_m1(:,j,i) = temperature_exact(j, mesh%rr, mode, time-dt)
           tempn   (:,j,i) = temperature_exact(j, mesh%rr, mode, time)
        ENDDO
@@ -66,19 +66,19 @@ CONTAINS
   MODULE SUBROUTINE init_level_set(pp_mesh, time, &
        dt, list_mode, level_set_m1, level_set)
     IMPLICIT NONE
-    TYPE(mesh_type)                              :: pp_mesh 
+    TYPE(mesh_type)                              :: pp_mesh
     REAL(KIND=8),                     INTENT(OUT):: time
     REAL(KIND=8),                     INTENT(IN) :: dt
     INTEGER,      DIMENSION(:),       INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:,:), INTENT(OUT):: level_set, level_set_m1
-    INTEGER                                      :: mode, i, j, n 
+    INTEGER                                      :: mode, i, j, n
     time = 0.d0
     DO i= 1, SIZE(list_mode)
-       mode = list_mode(i) 
+       mode = list_mode(i)
        DO j = 1, 2
           !===level_set
           DO n = 1, inputs%nb_fluid -1
-             level_set_m1(n,:,j,i) = level_set_exact(n,j,pp_mesh%rr,mode,time-dt)  
+             level_set_m1(n,:,j,i) = level_set_exact(n,j,pp_mesh%rr,mode,time-dt)
              level_set   (n,:,j,i) = level_set_exact(n,j,pp_mesh%rr,mode,time)
           END DO
        END DO
@@ -91,26 +91,26 @@ CONTAINS
     INTEGER     ,                             INTENT(IN) :: TYPE
     REAL(KIND=8), DIMENSION(:,:),             INTENT(IN) :: rr
     INTEGER     ,                             INTENT(IN) :: mode, i
-    REAL(KIND=8),                             INTENT(IN) :: time   
+    REAL(KIND=8),                             INTENT(IN) :: time
     REAL(KIND=8),                             INTENT(IN) :: Re
     CHARACTER(LEN=2),                         INTENT(IN) :: ty
     REAL(KIND=8), DIMENSION(:,:,:), OPTIONAL, INTENT(IN) :: opt_density
-    REAL(KIND=8), DIMENSION(:,:,:), OPTIONAL, INTENT(IN) :: opt_tempn 
+    REAL(KIND=8), DIMENSION(:,:,:), OPTIONAL, INTENT(IN) :: opt_tempn
     REAL(KIND=8), DIMENSION(SIZE(rr,2))                  :: vv, r, z
     REAL(KIND=8)                                         :: alpha, r0 = 0.5d0
     CHARACTER(LEN=2)  :: np
 
-    IF (PRESENT(opt_density)) CALL error_petsc('density should not be present for test 33') 
+    IF (PRESENT(opt_density)) CALL error_petsc('density should not be present for test 33')
 
     alpha = inputs%gravity_coefficient
     r = rr(1,:)
     z = rr(2,:)
 
-    IF (TYPE==5) THEN 
+    IF (TYPE==5) THEN
        vv = alpha*(opt_tempn(:,1,i) - temperature_exact(1,rr,mode,time))
     ELSE IF (TYPE==6) THEN
        vv = alpha*(opt_tempn(:,2,i) - temperature_exact(2,rr,mode,time))
-    ELSE 
+    ELSE
        vv = 0.d0
     END IF
 
@@ -173,7 +173,7 @@ CONTAINS
           vv = vv -(((r - r0)**3*Cos(time)**2*Sin(2*z))/r)
        END IF
     END IF
-    
+
     IF (TYPE == 1) THEN
        IF (mode == 0) THEN
           vv = vv - 0.25 * exp(2*z) * r**7 * (215.d0 + 51*r**2) * (r - r0)**4 * cos(time)**4 * sin(z)**2
@@ -196,7 +196,7 @@ CONTAINS
        ELSE IF (mode == 3) THEN
           vv = vv - exp(2*z) * r**7 * (8.d0 + 3*r**2) * (r - r0)**4 * cos(time)**4 * sin(z)**2
        ELSE IF (mode == 4) THEN
-          vv = vv + 2 * exp(2*z) * r**7 * (r - r0)**4 * cos(time)**4 * sin(z)**2 
+          vv = vv + 2 * exp(2*z) * r**7 * (r - r0)**4 * cos(time)**4 * sin(z)**2
        ELSE
           vv = 0.d0
        END IF
@@ -218,9 +218,9 @@ CONTAINS
        IF (mode == 1) THEN
           vv = vv - 0.5 * exp(2*z) * r**7 * (25.d0 + 2*r**2) * (r - r0)**4 * cos(time)**4 * sin(z)**2
        ELSE IF (mode == 2) THEN
-          vv = vv - 0.25 * exp(2*z) * r**7 * (61.d0 + 6*r**2) * (r - r0)**4 * cos(time)**4 * sin(z)**2  
+          vv = vv - 0.25 * exp(2*z) * r**7 * (61.d0 + 6*r**2) * (r - r0)**4 * cos(time)**4 * sin(z)**2
        ELSE IF (mode == 3) THEN
-          vv = vv - 0.5 * exp(2*z) * r**7 * (17.d0 + 2*r**2) * (r - r0)**4 * cos(time)**4 * sin(z)**2  
+          vv = vv - 0.5 * exp(2*z) * r**7 * (17.d0 + 2*r**2) * (r - r0)**4 * cos(time)**4 * sin(z)**2
        ELSE IF (mode == 4) THEN
           vv = vv - 0.125 * exp(2*z) * r**7 * (15.d0 + 2*r**2) * (r - r0)**4 * cos(time)**4 * sin(z)**2
        ELSE
@@ -267,7 +267,7 @@ CONTAINS
     INTEGER     ,                        INTENT(IN)   :: TYPE
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m
-    REAL(KIND=8),                        INTENT(IN)   :: t   
+    REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv, r, z, c, lambda
     INTEGER                                           :: i
     REAL(KIND=8)                                      :: r0 = 0.5d0
@@ -334,7 +334,7 @@ CONTAINS
     INTEGER     ,                        INTENT(IN)   :: TYPE
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m, interface_nb
-    REAL(KIND=8),                        INTENT(IN)   :: t   
+    REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
 
     vv=0.d0
@@ -342,7 +342,7 @@ CONTAINS
   END FUNCTION source_in_level_set
 
   !===Velocity for boundary conditions in Navier-Stokes.
-  !===Can be used also to initialize velocity in: init_velocity_pressure_temperature 
+  !===Can be used also to initialize velocity in: init_velocity_pressure_temperature
   MODULE FUNCTION vv_exact(TYPE,rr,m,t) RESULT(vv)
     IMPLICIT NONE
     INTEGER     ,                        INTENT(IN)   :: TYPE
@@ -354,7 +354,7 @@ CONTAINS
 
     r = rr(1,:)
     z = rr(2,:)
-  
+
     IF (TYPE==1) THEN
        IF ((m==0).OR.(m==1)) THEN
           vv = -(r-r0)**2*cos(t)*cos(z)
@@ -372,7 +372,7 @@ CONTAINS
           vv = (r-r0)*cos(t)*sin(z)/r * (3*r-r0)
        ELSE
           vv = 0.d0
-      END IF
+       END IF
     ELSE IF (TYPE==6) THEN
        IF (m==1) THEN
           vv = (r-r0)*cos(t)*sin(z)/r * (r-r0)
@@ -388,7 +388,7 @@ CONTAINS
   !===Solid velocity imposed when using penalty technique
   !===Defined in Fourier space on mode 0 only.
   MODULE FUNCTION imposed_velocity_by_penalty(rr,t) RESULT(vv)
-    IMPLICIT NONE 
+    IMPLICIT NONE
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(SIZE(rr,2),6)             :: vv
@@ -400,7 +400,7 @@ CONTAINS
   !===Pressure for boundary conditions in Navier-Stokes.
   !===Can be used also to initialize pressure in the subroutine init_velocity_pressure.
   !===Use this routine for outflow BCs only.
-  !===CAUTION: Do not enfore BCs on pressure where normal component 
+  !===CAUTION: Do not enfore BCs on pressure where normal component
   !            of velocity is prescribed.
   MODULE FUNCTION pp_exact(TYPE,rr,m,t) RESULT (vv)
     IMPLICIT NONE
@@ -408,7 +408,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: t
-    REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv 
+    REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
     REAL(KIND=8) :: r
     INTEGER      :: n
 
@@ -479,9 +479,9 @@ CONTAINS
   !===is set to true in data (type problem denoted mxx in the code).
   MODULE FUNCTION extension_velocity(TYPE, H_mesh, mode, t, n_start) RESULT(vv)
     IMPLICIT NONE
-    TYPE(mesh_type),                     INTENT(IN)   :: H_mesh     
+    TYPE(mesh_type),                     INTENT(IN)   :: H_mesh
     INTEGER     ,                        INTENT(IN)   :: TYPE, n_start
-    INTEGER,                             INTENT(IN)   :: mode 
+    INTEGER,                             INTENT(IN)   :: mode
     REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(H_Mesh%np)                :: vv
     REAL(KIND=8) :: r
@@ -502,7 +502,7 @@ CONTAINS
   !===Used only if problem type is mxw and restart velocity is false
   MODULE FUNCTION Vexact(m, H_mesh) RESULT(vv)  !Set uniquement a l'induction
     IMPLICIT NONE
-    TYPE(mesh_type),                       INTENT(IN) :: H_mesh 
+    TYPE(mesh_type),                       INTENT(IN) :: H_mesh
     INTEGER,                               INTENT(IN) :: m
     REAL(KIND=8), DIMENSION(H_mesh%np,6)              :: vv
 
@@ -510,7 +510,7 @@ CONTAINS
     RETURN
   END FUNCTION Vexact
 
-  MODULE FUNCTION H_B_quasi_static(char_h_b, rr, m) RESULT(vv) 
+  MODULE FUNCTION H_B_quasi_static(char_h_b, rr, m) RESULT(vv)
     IMPLICIT NONE
     CHARACTER(LEN=1),                    INTENT(IN)   :: char_h_b
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
@@ -519,20 +519,20 @@ CONTAINS
 
     IF (inputs%if_quasi_static_approx) THEN
        vv = 0.d0
-    ELSE 
-       CALL error_petsc('H_B_quasi_static should not be called') 
+    ELSE
+       CALL error_petsc('H_B_quasi_static should not be called')
     END IF
     RETURN
   END FUNCTION H_B_quasi_static
 
   !===Magnetic field for boundary conditions in the Maxwell equations.
-  MODULE FUNCTION Hexact(H_mesh, TYPE, rr, m, mu_H_field, t) RESULT(vv)  
+  MODULE FUNCTION Hexact(H_mesh, TYPE, rr, m, mu_H_field, t) RESULT(vv)
     IMPLICIT NONE
     TYPE(mesh_type),                     INTENT(IN)   :: H_mesh
     INTEGER     ,                        INTENT(IN)   :: TYPE
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m
-    REAL(KIND=8),                        INTENT(IN)   :: t 
+    REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(:),          INTENT(IN)   :: mu_H_field
     REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv, r, z
     INTEGER      :: n
@@ -561,7 +561,7 @@ CONTAINS
     ELSE IF (TYPE == 4) THEN
        IF (m == 1) THEN
           vv = exp(z) * r**3 * cos(t)
-       ELSE 
+       ELSE
           vv = 0.d0
        END IF
     ELSE IF (TYPE == 5) THEN
@@ -587,13 +587,13 @@ CONTAINS
   END FUNCTION Hexact
 
   !===Scalar potential for boundary conditions in the Maxwell equations.
-  MODULE FUNCTION Phiexact(TYPE, rr, m, mu_phi,t) RESULT(vv) 
+  MODULE FUNCTION Phiexact(TYPE, rr, m, mu_phi,t) RESULT(vv)
     IMPLICIT NONE
     INTEGER     ,                        INTENT(IN)   :: TYPE
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: mu_phi, t
-    REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv   
+    REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
     REAL(KIND=8) :: r
     INTEGER      :: n
 
@@ -606,14 +606,14 @@ CONTAINS
   END FUNCTION Phiexact
 
   !===Current in Ohm's law. Curl(H) = sigma(E + uxB) + current
-  MODULE FUNCTION Jexact_gauss(TYPE, rr, m, mu_phi, sigma, mu_H, t, mesh_id, opt_B_ext) RESULT(vv) 
+  MODULE FUNCTION Jexact_gauss(TYPE, rr, m, mu_phi, sigma, mu_H, t, mesh_id, opt_B_ext) RESULT(vv)
     IMPLICIT NONE
     INTEGER     ,                        INTENT(IN)   :: TYPE
     REAL(KIND=8), DIMENSION(:),          INTENT(IN)   :: rr
-    INTEGER     ,                        INTENT(IN)   :: m 
-    REAL(KIND=8),                        INTENT(IN)   :: mu_phi, sigma, mu_H, t 
+    INTEGER     ,                        INTENT(IN)   :: m
+    REAL(KIND=8),                        INTENT(IN)   :: mu_phi, sigma, mu_H, t
     INTEGER     ,                        INTENT(IN)   :: mesh_id
-    REAL(KIND=8), DIMENSION(6), OPTIONAL,INTENT(IN)   :: opt_B_ext 
+    REAL(KIND=8), DIMENSION(6), OPTIONAL,INTENT(IN)   :: opt_B_ext
     REAL(KIND=8)                                      :: vv
     REAL(KIND=8)                                      :: r, z
     INTEGER      :: n
@@ -657,7 +657,7 @@ CONTAINS
        ELSE
           vv = 0.d0
        END IF
-    ELSE 
+    ELSE
        IF (m == 1) THEN
           vv = 4 * exp(z) * r**2 * cos(t)
        ELSE
@@ -679,7 +679,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:),          INTENT(IN)   :: rr
     INTEGER,                             INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: mu_phi, sigma, mu_H, t
-    REAL(KIND=8)                                      :: vv 
+    REAL(KIND=8)                                      :: vv
     REAL(KIND=8) :: r
     INTEGER      :: n
 
@@ -695,16 +695,16 @@ CONTAINS
   MODULE SUBROUTINE init_maxwell(H_mesh, phi_mesh, time, dt, mu_H_field, mu_phi, &
        list_mode, Hn1, Hn, phin1, phin)
     IMPLICIT NONE
-    TYPE(mesh_type)                            :: H_mesh, phi_mesh     
+    TYPE(mesh_type)                            :: H_mesh, phi_mesh
     REAL(KIND=8),                   INTENT(OUT):: time
     REAL(KIND=8),                   INTENT(IN) :: dt
     REAL(KIND=8), DIMENSION(:),     INTENT(IN) :: mu_H_field
     REAL(KIND=8),                   INTENT(IN) :: mu_phi
-    INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode    
+    INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: Hn, Hn1
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: phin, phin1
     INTEGER                                    :: i, k
-    
+
     time = -dt
     DO k=1,6
        DO i=1, SIZE(list_mode)
@@ -785,26 +785,26 @@ CONTAINS
     RETURN
   END FUNCTION sigma_bar_in_fourier_space
 
-  !===Coefficient contaning the magnetic susceptibility for magnetic force in ferrofluids: 
+  !===Coefficient contaning the magnetic susceptibility for magnetic force in ferrofluids:
   !===F = chi_coeff(T) * grad(H**2/2) (Kelvin form)
   !===or F = -H**2/2 * grad(chi_coeff(T)) (Helmholtz form)
   MODULE FUNCTION chi_coeff_law(temp) RESULT(vv)
     IMPLICIT NONE
     REAL(KIND=8) :: temp
     REAL(KIND=8) :: vv
-    
+
     vv = temp**2
     RETURN
   END FUNCTION chi_coeff_law
 
   !===Coefficient contaning the temperature dependant factor in the
-  !===pyromagnetic coefficient term of the temperature equation for ferrofluids: 
+  !===pyromagnetic coefficient term of the temperature equation for ferrofluids:
   !===T * dchi/dT(T) * D/Dt(H**2/2)
   MODULE FUNCTION T_dchi_dT_coeff_law(temp) RESULT(vv)
     IMPLICIT NONE
     REAL(KIND=8) :: temp
     REAL(KIND=8) :: vv
-    
+
     vv = 0.d0
     RETURN
 

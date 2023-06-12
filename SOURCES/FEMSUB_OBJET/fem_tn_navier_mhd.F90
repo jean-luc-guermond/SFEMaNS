@@ -11,7 +11,7 @@ CONTAINS
     USE def_type_mesh
     USE fem_tn_axi
     IMPLICIT NONE
-    TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage  
+    TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage
     REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN) ::  v
     INTEGER                                     :: mode_idx
     REAL(KIND=8)                        :: err1, s1, s2,norm
@@ -43,15 +43,15 @@ CONTAINS
     USE def_type_mesh
     USE fem_tn_axi
     IMPLICIT NONE
-    TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage  
-    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode  
+    TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage
+    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN) ::  v
     REAL(KIND=8)                        :: err1, s1, s2, norm
     INTEGER                             :: k, nn
 
     err1 = 0.d0
     IF (SIZE(v,2)==mesh%np) THEN
-       DO k = 1, SIZE(list_mode) 
+       DO k = 1, SIZE(list_mode)
           s2 = 0.d0
           DO nn = 1,SIZE(v,1)
              s1 = 0.d0
@@ -95,8 +95,8 @@ CONTAINS
     USE fem_tn_axi
 
     IMPLICIT NONE
-    TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage  
-    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode  
+    TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage
+    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN) ::  v, w
 
     REAL(KIND=8)                        :: err1, s1, s2, norm
@@ -104,7 +104,7 @@ CONTAINS
 
     err1 = 0.d0
     IF (SIZE(v,2)==mesh%np) THEN
-       DO k = 1, SIZE(list_mode) 
+       DO k = 1, SIZE(list_mode)
           s2 = 0.d0
           DO nn = 1,SIZE(v,1)
              s1 = 0.d0
@@ -148,8 +148,8 @@ CONTAINS
     USE fem_tn_axi
 
     IMPLICIT NONE
-    TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage  
-    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode  
+    TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage
+    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN) ::  v
 
     REAL(KIND=8)                        :: err1, s1, s2, s0, norm
@@ -157,7 +157,7 @@ CONTAINS
 
     err1 = 0.d0
     IF (SIZE(v,2)==mesh%np) THEN
-       DO k = 1, SIZE(list_mode) 
+       DO k = 1, SIZE(list_mode)
           s2 = 0.d0
           DO nn = 1,SIZE(v,1)
              CALL ns_1(mesh , v(nn,:,k), s1)
@@ -173,7 +173,7 @@ CONTAINS
           ! CN-AR Tue Jan 13 2009
        ENDDO
     ELSE
-       DO k = 1, SIZE(list_mode) 
+       DO k = 1, SIZE(list_mode)
           s2=0.d0
           DO nn = 1,SIZE(v,2)
              CALL ns_1(mesh , v(:,nn,k), s1)
@@ -200,21 +200,21 @@ CONTAINS
     USE fem_tn_axi
 
     IMPLICIT NONE
-    TYPE(mesh_type),                 INTENT(IN) :: H_mesh !type de maillage  
-    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode  
+    TYPE(mesh_type),                 INTENT(IN) :: H_mesh !type de maillage
+    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN), TARGET :: v
 
 
     INTEGER              :: m_max_c, mode, k, m, l, ni, i
     REAL(KIND=8)         :: norm, err, div1, div2, jr, ray
 
-    err = 0.d0 
+    err = 0.d0
 
     m_max_c = SIZE(list_mode)
 
     IF (SIZE(v,2)==H_mesh%np) THEN
 
-       DO m = 1, H_mesh%me     
+       DO m = 1, H_mesh%me
           DO l = 1, H_mesh%gauss%l_G
 
              !===Compute radius of Gauss point
@@ -250,7 +250,7 @@ CONTAINS
           END DO
        END DO
     ELSE
-       DO m = 1, H_mesh%me     
+       DO m = 1, H_mesh%me
           DO l = 1, H_mesh%gauss%l_G
 
              !===Compute radius of Gauss point
@@ -299,19 +299,19 @@ CONTAINS
     USE fem_tn_axi
 
     IMPLICIT NONE
-    TYPE(mesh_type),                 INTENT(IN) :: H_mesh !type de maillage  
-    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode  
+    TYPE(mesh_type),                 INTENT(IN) :: H_mesh !type de maillage
+    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN) :: v
     REAL(KIND=8)         :: err, norm, jr, ray
     INTEGER              :: m_max_c, mode, k, m, l, ni, i
     REAL(KIND=8), DIMENSION(6) :: c
 
     m_max_c = SIZE(list_mode)
-    err = 0.d0 
+    err = 0.d0
 
     IF (SIZE(v,2)==H_mesh%np) THEN
 
-       DO m = 1, H_mesh%me     
+       DO m = 1, H_mesh%me
           DO l = 1, H_mesh%gauss%l_G
 
              !===Compute radius of Gauss point
@@ -327,12 +327,12 @@ CONTAINS
                 DO ni = 1,H_mesh%gauss%n_w; i = H_mesh%jj(ni,m)
                    !--------Composante r------
                    c(1) = c(1) + ( mode/ray*v(6,i,k)*H_mesh%gauss%ww(ni,l) &
-                        - v(3,i,k)*H_mesh%gauss%dw(2,ni,l,m)) 
+                        - v(3,i,k)*H_mesh%gauss%dw(2,ni,l,m))
                    c(2) = c(2) + (-mode/ray*v(5,i,k)*H_mesh%gauss%ww(ni,l) &
-                        - v(4,i,k)*H_mesh%gauss%dw(2,ni,l,m)) 
+                        - v(4,i,k)*H_mesh%gauss%dw(2,ni,l,m))
                    !--------Composante theta------
                    c(3) = c(3) + (v(1,i,k)*H_mesh%gauss%dw(2,ni,l,m) &
-                        - v(5,i,k)*H_mesh%gauss%dw(1,ni,l,m)) 
+                        - v(5,i,k)*H_mesh%gauss%dw(1,ni,l,m))
                    c(4) = c(4) + (v(2,i,k)*H_mesh%gauss%dw(2,ni,l,m) &
                         - v(6,i,k)*H_mesh%gauss%dw(1,ni,l,m))
                    !--------Composante z------
@@ -349,7 +349,7 @@ CONTAINS
        END DO
 
     ELSE
-       DO m = 1, H_mesh%me     
+       DO m = 1, H_mesh%me
           DO l = 1, H_mesh%gauss%l_G
 
              !===Compute radius of Gauss point
@@ -365,12 +365,12 @@ CONTAINS
                 DO ni = 1,H_mesh%gauss%n_w; i = H_mesh%jj(ni,m)
                    !--------Composante r------
                    c(1) = c(1) + ( mode/ray*v(i,6,k)*H_mesh%gauss%ww(ni,l) &
-                        - v(i,3,k)*H_mesh%gauss%dw(2,ni,l,m)) 
+                        - v(i,3,k)*H_mesh%gauss%dw(2,ni,l,m))
                    c(2) = c(2) + (-mode/ray*v(i,5,k)*H_mesh%gauss%ww(ni,l) &
-                        - v(i,4,k)*H_mesh%gauss%dw(2,ni,l,m)) 
+                        - v(i,4,k)*H_mesh%gauss%dw(2,ni,l,m))
                    !--------Composante theta------
                    c(3) = c(3) + (v(i,1,k)*H_mesh%gauss%dw(2,ni,l,m) &
-                        - v(i,5,k)*H_mesh%gauss%dw(1,ni,l,m)) 
+                        - v(i,5,k)*H_mesh%gauss%dw(1,ni,l,m))
                    c(4) = c(4) + (v(i,2,k)*H_mesh%gauss%dw(2,ni,l,m) &
                         - v(i,6,k)*H_mesh%gauss%dw(1,ni,l,m))
                    !--------Composante z------
@@ -402,7 +402,7 @@ CONTAINS
     TYPE(interface_type),         INTENT(IN)  :: INTERFACE
     REAL(KIND=8), DIMENSION(:,:), INTENT(IN)  :: H
     REAL(KIND=8), DIMENSION(:,:), INTENT(IN)  :: phi
-    INTEGER,                      INTENT(IN)  :: mode    
+    INTEGER,                      INTENT(IN)  :: mode
     REAL(KIND=8), DIMENSION(:),   INTENT(IN)  :: mu_H_field
     REAL(KIND=8),                 INTENT(IN)  :: mu_phi
     REAL(KIND=8),                 INTENT(OUT) :: x
@@ -418,7 +418,7 @@ CONTAINS
     IF (H_mesh%gauss%n_ws == n_ws) THEN
        w_cs = wws
     ELSE
-       DO ls = 1, l_Gs      
+       DO ls = 1, l_Gs
           w_cs(1,ls)= wws(1,ls)+0.5*wws(3,ls)
           w_cs(2,ls)= wws(2,ls)+0.5*wws(3,ls)
           w_cs(3,ls)=0
@@ -467,7 +467,7 @@ CONTAINS
              !Error on tangential component (magnetic induction)
              x  = x + ray* rjs(ls,ms2)*( &
                   ((b(5)-grd(5))*rnorms(1,ls,ms2) - &
-                  (b(1)-grd(1))*rnorms(2,ls,ms2))**2 + & 
+                  (b(1)-grd(1))*rnorms(2,ls,ms2))**2 + &
                   ((b(6)-grd(6))*rnorms(1,ls,ms2) - &
                   (b(2)-grd(2))*rnorms(2,ls,ms2))**2  + &
                   (b(3)-grd(3))**2 + (b(4)-grd(4))**2)
@@ -501,7 +501,7 @@ CONTAINS
 
              DO i = 1, 6
                 b(i) = SUM(H(interface%jjs1(1:n_ws1,ms),i)*w_cs(1:n_ws1,ls))
-                mub(i) = b(i)*muhl 
+                mub(i) = b(i)*muhl
              ENDDO
 
              grd(1) = SUM(phi(phi_mesh%jj(:,m),1)*dw_s(1,:,ls,ms2))
@@ -517,7 +517,7 @@ CONTAINS
              !Error on tangential component (magnetic induction)
              x  = x + ray* rjs(ls,ms2)*( &
                   ((b(5)-grd(5))*rnorms(1,ls,ms2) - &
-                  (b(1)-grd(1))*rnorms(2,ls,ms2))**2 + & 
+                  (b(1)-grd(1))*rnorms(2,ls,ms2))**2 + &
                   ((b(6)-grd(6))*rnorms(1,ls,ms2) - &
                   (b(2)-grd(2))*rnorms(2,ls,ms2))**2   + &
                   (b(3)-grd(3))**2 + (b(4)-grd(4))**2)
@@ -547,14 +547,14 @@ CONTAINS
 
     TYPE(mesh_type),              INTENT(IN)  :: H_mesh
     TYPE(interface_type),         INTENT(IN)  :: INTERFACE
-    REAL(KIND=8), DIMENSION(:,:), INTENT(IN)  :: H   
+    REAL(KIND=8), DIMENSION(:,:), INTENT(IN)  :: H
     REAL(KIND=8), DIMENSION(:),   INTENT(IN)  :: mu_H_field
     REAL(KIND=8),                 INTENT(OUT) :: x
     REAL(KIND=8), DIMENSION(2) :: rgauss
     REAL(KIND=8), DIMENSION(H_mesh%gauss%n_ws,H_mesh%gauss%l_Gs)   :: w_1s, w_2s
 
     INTEGER :: ms, ls, ms2, n_ws1, n_ws2, m, i, ni
-    REAL(KIND=8), DIMENSION(6) :: b1, mub1, b2, mub2 
+    REAL(KIND=8), DIMENSION(6) :: b1, mub1, b2, mub2
     REAL(KIND=8) :: z, zmu, ray, err
     CALL gauss(H_mesh)
 
@@ -597,7 +597,7 @@ CONTAINS
           !Error on tangential component (magnetic field)
           x  = x + ray* rjs(ls,ms2)*( &
                ((b1(5)-b2(5))*rnorms(1,ls,ms2) - &
-               (b1(1)-b2(1))*rnorms(2,ls,ms2))**2 + & 
+               (b1(1)-b2(1))*rnorms(2,ls,ms2))**2 + &
                ((b1(6)-b2(6))*rnorms(1,ls,ms2) - &
                (b1(2)-b2(2))*rnorms(2,ls,ms2))**2  + &
                (b1(3)-b2(3))**2 + (b1(4)-b2(4))**2)

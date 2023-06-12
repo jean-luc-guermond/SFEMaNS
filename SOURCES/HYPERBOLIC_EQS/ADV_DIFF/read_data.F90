@@ -20,7 +20,7 @@ MODULE input_data
      LOGICAL                        :: if_xml
   END type my_data
   TYPE(my_data), PUBLIC  :: inputs
-  PRIVATE 
+  PRIVATE
 CONTAINS
   SUBROUTINE read_my_data(data_fichier)
     USE chaine_caractere
@@ -29,7 +29,7 @@ CONTAINS
     CHARACTER(len=*), INTENT(IN) :: data_fichier
     LOGICAL                      :: test
     OPEN(UNIT = in_unit, FILE = data_fichier, FORM = 'formatted', STATUS = 'unknown')
-    CALL read_until(in_unit, "===Name of directory for mesh file===") 
+    CALL read_until(in_unit, "===Name of directory for mesh file===")
     READ (in_unit,*) inputs%directory
     CALL read_until(in_unit, "===Name of mesh file===")
     READ (in_unit,*) inputs%file_name
@@ -49,9 +49,9 @@ CONTAINS
     ALLOCATE(inputs%Dir_list(inputs%nb_Dir_bdy))
     READ (in_unit,*) inputs%Dir_list
 
-    
+
     !===Format for paraview============================!
-    CALL read_until(21, '===Create vtu files? (true/false)===') 
+    CALL read_until(21, '===Create vtu files? (true/false)===')
     READ(21,*) inputs%if_plot_vtu
     CALL find_string(21, '===Vtu files in xml format? (true=xml/false=ascii)===', test)
     IF (test) THEN
@@ -60,9 +60,7 @@ CONTAINS
        inputs%if_xml=.TRUE.
     END IF
 
-    
+
     CLOSE(in_unit)
   END SUBROUTINE read_my_data
 END MODULE input_data
-
-

@@ -10,13 +10,13 @@ MODULE vtk_viz
   PRIVATE
 CONTAINS
 
-  SUBROUTINE check_list(communicator, file_list, check) 
+  SUBROUTINE check_list(communicator, file_list, check)
     IMPLICIT NONE
     CHARACTER(LEN=200), DIMENSION(:), POINTER :: file_list
     CHARACTER(LEN=200), DIMENSION(:), POINTER :: dummy_list
     INTEGER, DIMENSION(SIZE(file_list)) :: check_mylist
     INTEGER                             :: check, n, count
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     MPI_Comm                            :: communicator
     PetscMPIInt                         :: rank, nb_procs
     PetscErrorCode                      :: ierr
@@ -28,13 +28,13 @@ CONTAINS
 
     count = 0
     DO n = 1, SIZE(file_list)
-       IF (check_mylist(n)==0) CYCLE 
+       IF (check_mylist(n)==0) CYCLE
        count = count + 1
     END DO
     ALLOCATE(dummy_list(count))
     count = 0
     DO n = 1, SIZE(file_list)
-       IF (check_mylist(n)==0) CYCLE 
+       IF (check_mylist(n)==0) CYCLE
        count = count + 1
        dummy_list(count) = file_list(n)
     END DO
@@ -43,7 +43,7 @@ CONTAINS
     file_list = dummy_list
   END SUBROUTINE check_list
 
-  SUBROUTINE create_pvd_file(file_list, file_header, time_step, what) 
+  SUBROUTINE create_pvd_file(file_list, file_header, time_step, what)
     IMPLICIT NONE
     CHARACTER(*), DIMENSION(:), INTENT(IN) :: file_list
     CHARACTER(*),               INTENT(IN) :: file_header, what
@@ -59,10 +59,10 @@ CONTAINS
             ' byte_order="LittleEndian" compressor="vtkZLibDataCompressor">'
        WRITE(unit_file, '(A)') '<Collection>'
     ELSE
-      OPEN (UNIT=unit_file, FILE=file_header//'.pvd', FORM = 'formatted', &
+       OPEN (UNIT=unit_file, FILE=file_header//'.pvd', FORM = 'formatted', &
             ACCESS = 'append', STATUS = 'old')
-      BACKSPACE(unit_file)
-      BACKSPACE(unit_file)
+       BACKSPACE(unit_file)
+       BACKSPACE(unit_file)
     END IF
     WRITE(tit,'(I5)') time_step
     DO j = 1, SIZE(file_list)
@@ -183,7 +183,7 @@ CONTAINS
        END DO
     END IF
     WRITE(unit_file,'(A)') '</DataArray>'
-    
+
     WRITE(unit_file,'(A)') '<DataArray type="Int32" Name="offsets" format="'&
          //TRIM(ADJUSTL(ascii_or_binary))//'">'
     IF (inputs%if_xml) THEN
@@ -197,10 +197,10 @@ CONTAINS
        END DO
     END IF
     WRITE(unit_file,'(A)') '</DataArray>'
-    
+
     WRITE(unit_file,'(A)') '<DataArray type="UInt8" Name="types" format="'&
          //TRIM(ADJUSTL(ascii_or_binary))//'">'
-        IF (inputs%if_xml) THEN
+    IF (inputs%if_xml) THEN
        DO m = 1, mesh%me
           i1_xml_field(m) = INT(type_cell,1)
        END DO
@@ -387,8 +387,8 @@ CONTAINS
 
     CLOSE(unit_file)
   END SUBROUTINE create_xml_vtu_vect_file
-  
- 
+
+
 
   SUBROUTINE make_vtu_file_arpack(communicator, mesh, header, field, field_name, what, num_vp)
     USE def_type_mesh
@@ -401,7 +401,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:),  INTENT(IN) :: field
     CHARACTER(LEN=200), DIMENSION(1)          :: file_list
     CHARACTER(LEN=3)                          :: st_rank
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     PetscErrorCode                            :: ierr
     PetscMPIInt                               :: rank, nb_procs
     MPI_Comm                                  :: communicator
@@ -413,7 +413,7 @@ CONTAINS
 
     CALL create_pvd_file(file_list, TRIM(header), num_vp, TRIM(what))
 
-!=========TEST FL Feb. 11th, 2013
+    !=========TEST FL Feb. 11th, 2013
     IF (SIZE(field,2) == 6) THEN
        !CALL create_vtu_vect_file(field, mesh, TRIM(ADJUSTL(file_list(1))), field_name)
        CALL create_xml_vtu_vect_file(field, mesh, TRIM(ADJUSTL(file_list(1))), field_name)
@@ -424,11 +424,11 @@ CONTAINS
     ELSE
        CALL error_Petsc('Bug in make_vtu_file_arpack: field needs at least one component')
     END IF
-!=========TEST FL Feb. 11th, 2013
+    !=========TEST FL Feb. 11th, 2013
   END SUBROUTINE make_vtu_file_arpack
 
   SUBROUTINE create_vtu_file_axi3D(field, mesh, file_name, opt_st)
-    USE def_type_mesh     
+    USE def_type_mesh
     IMPLICIT NONE
     TYPE(mesh_type)                            :: mesh
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN) :: field
@@ -457,7 +457,7 @@ CONTAINS
     WRITE(unit_file,'(A)') '<VTKFile type="UnstructuredGrid" version="0.1"'// &
          ' byte_order="LittleEndian">'
     WRITE(unit_file,'(A)') '<UnstructuredGrid>'
-    
+
     WRITE(unit_file,'(A,I9,A,I9,A)') '<Piece NumberOfPoints="', nb_angle*mesh%np, &
          '" NumberOfCells="', nb_angle*mesh%me, '">'
     ! PointData Block ------------------------------------------------------------
@@ -511,13 +511,13 @@ CONTAINS
     WRITE(unit_file,'(A)') '<DataArray type="Int64" Name="connectivity" format="ascii">'
     DO k = 1, nb_angle-1
        DO m = 1, mesh%me
-          WRITE(unit_file,'(3(I8,1x))') mesh%jj(1:3,m)-1+(k-1)*mesh%np  
+          WRITE(unit_file,'(3(I8,1x))') mesh%jj(1:3,m)-1+(k-1)*mesh%np
           WRITE(unit_file,'(3(I8,1x))') mesh%jj(1:3,m)-1+k*mesh%np
        END DO
     END DO
     k = nb_angle
     DO m = 1, mesh%me
-       WRITE(unit_file,'(3(I8,1x))') mesh%jj(1:3,m)-1+(k-1)*mesh%np  
+       WRITE(unit_file,'(3(I8,1x))') mesh%jj(1:3,m)-1+(k-1)*mesh%np
        WRITE(unit_file,'(3(I8,1x))') mesh%jj(1:3,m)-1
     END DO
     WRITE(unit_file,'(A)') '</DataArray>'
@@ -554,7 +554,7 @@ CONTAINS
     INTEGER                                   :: j, it
     CHARACTER(LEN=200), DIMENSION(:), POINTER :: file_list
     CHARACTER(LEN=3)                          :: st_rank, st_it
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     PetscErrorCode                            :: ierr
     PetscMPIInt                               :: rank, nb_procs
     MPI_Comm                                  :: communicator
@@ -583,7 +583,7 @@ CONTAINS
           it = opt_it
        ELSE
           it = 1
- 
+
        END IF
        CALL create_pvd_file(file_list, TRIM(header), it, TRIM(what))
     END IF
@@ -592,7 +592,7 @@ CONTAINS
     !     opt_st=field_name)
     CALL create_xml_vtu_file_3D(field, mesh, TRIM(ADJUSTL(file_list(rank+1))), &
          opt_st=field_name)
-    
+
   END SUBROUTINE make_vtu_file_3D
 
 
@@ -617,10 +617,10 @@ CONTAINS
 
     IF (SIZE(field,2)==0) RETURN
 
-    IF (SIZE(mesh%jj,1)==6) THEN 
+    IF (SIZE(mesh%jj,1)==6) THEN
        type_cell = 13
        stride = 6
-    ELSE IF (SIZE(mesh%jj,1)==15) THEN 
+    ELSE IF (SIZE(mesh%jj,1)==15) THEN
        type_cell = 26
        stride = 15
     ELSE
@@ -805,8 +805,8 @@ CONTAINS
 !!$    CALL create_xml_vtu_scal_file(field, mesh, TRIM(ADJUSTL(file_list(rank+1))), TRIM(ADJUSTL(field_name)))
 !!$  END SUBROUTINE make_vtu_file_scalar_2D
 
-  !!$  SUBROUTINE create_vtk_file(comm, field, mesh, file_name, opt_it)
-!!$    USE def_type_mesh     
+!!$  SUBROUTINE create_vtk_file(comm, field, mesh, file_name, opt_it)
+!!$    USE def_type_mesh
 !!$    USE chaine_caractere
 !!$    IMPLICIT NONE
 !!$    TYPE(mesh_type)                        :: mesh
@@ -936,7 +936,7 @@ CONTAINS
 !!$  END SUBROUTINE create_vtk_file
 
 !!$  SUBROUTINE create_vtu_vect_file(field, mesh, file_name, opt_st)
-!!$    USE def_type_mesh     
+!!$    USE def_type_mesh
 !!$    IMPLICIT NONE
 !!$    TYPE(mesh_type)                          :: mesh
 !!$    REAL(KIND=8), DIMENSION(:,:), INTENT(IN) :: field
@@ -958,7 +958,7 @@ CONTAINS
 !!$    WRITE(unit_file,'(A)') '<VTKFile type="UnstructuredGrid" version="0.1"'// &
 !!$         ' byte_order="LittleEndian">'
 !!$    WRITE(unit_file,'(A)') '<UnstructuredGrid>'
-!!$    
+!!$
 !!$    WRITE(unit_file,'(A,I9,A,I9,A)') '<Piece NumberOfPoints="', mesh%np, &
 !!$         '" NumberOfCells="', mesh%me, '">'
 !!$    ! PointData Block ------------------------------------------------------------
@@ -1030,7 +1030,7 @@ CONTAINS
 !!$    CLOSE(unit_file)
 !!$  END SUBROUTINE create_vtu_vect_file
 
-  !!$  SUBROUTINE make_vtu_file_axi3D(communicator, mesh, header, &
+!!$  SUBROUTINE make_vtu_file_axi3D(communicator, mesh, header, &
 !!$       field, field_name, what, opt_it)
 !!$    USE def_type_mesh
 !!$    USE my_util
@@ -1068,10 +1068,10 @@ CONTAINS
 !!$    CALL create_vtu_file_axi3D(field, mesh, TRIM(ADJUSTL(file_list(rank+1))), &
 !!$         opt_st=field_name)
 !!$  END SUBROUTINE make_vtu_file_axi3D
-  
+
 !!$  SUBROUTINE create_vtu_file_3D(field, mesh, file_name, opt_st)
 !!$    USE def_type_mesh
-!!$    USE my_util    
+!!$    USE my_util
 !!$    IMPLICIT NONE
 !!$    TYPE(mesh_type)                            :: mesh
 !!$    REAL(KIND=8), DIMENSION(:,:),   INTENT(IN) :: field
@@ -1082,10 +1082,10 @@ CONTAINS
 !!$
 !!$    IF (SIZE(field,2)==0) RETURN
 !!$
-!!$    IF (SIZE(mesh%jj,1)==6) THEN 
+!!$    IF (SIZE(mesh%jj,1)==6) THEN
 !!$       type_cell = 13
 !!$       stride = 6
-!!$    ELSE IF (SIZE(mesh%jj,1)==15) THEN 
+!!$    ELSE IF (SIZE(mesh%jj,1)==15) THEN
 !!$       type_cell = 26
 !!$       stride = 15
 !!$    ELSE
@@ -1196,5 +1196,5 @@ CONTAINS
 !!$       dg=0
 !!$    END IF
 !!$  END FUNCTION nb_digit
-!!$  
+!!$
 END MODULE vtk_viz

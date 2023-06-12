@@ -22,7 +22,7 @@ CONTAINS
     !     THIS ROUTINE CALCULATES THE MODIFIED BESSEL FUNCTION OF THE THIRD
     !     KIND OF INTEGER ORDER, N FOR ANY POSITIVE REAL ARGUMENT, X. THE
     !     CLASSICAL RECURSION FORMULA IS USED, STARTING FROM BESSK0 AND BESSK1.
-    ! ------------------------------------------------------------------------ 
+    ! ------------------------------------------------------------------------
     !     REFERENCE:
     !     C.W.CLENSHAW, CHEBYSHEV SERIES FOR MATHEMATICAL FUNCTIONS,
     !     MATHEMATICAL TABLES, VOL.5, 1962.
@@ -56,13 +56,13 @@ CONTAINS
        !     CALCUL DE LA FONCTION BESSEL MODIFIEE DU 3EME ESPECE D'ORDRE 0
        !     POUR TOUT X REEL NON NUL.
        !
-       !     CALCULATES THE THE MODIFIED BESSEL FUNCTION OF THE THIRD KIND OF 
+       !     CALCULATES THE THE MODIFIED BESSEL FUNCTION OF THE THIRD KIND OF
        !     ORDER ZERO FOR ANY POSITIVE REAL ARGUMENT, X.
        ! ----------------------------------------------------------------------
        REAL*8 X,vv,Y,AX,P1,P2,P3,P4,P5,P6,P7,Q1,Q2,Q3,Q4,Q5,Q6,Q7
        DATA P1,P2,P3,P4,P5,P6,P7/-0.57721566D0,0.42278420D0,0.23069756D0, &
             0.3488590D-1,0.262698D-2,0.10750D-3,0.74D-5/
-       DATA Q1,Q2,Q3,Q4,Q5,Q6,Q7/1.25331414D0,-0.7832358D-1,0.2189568D-1, & 
+       DATA Q1,Q2,Q3,Q4,Q5,Q6,Q7/1.25331414D0,-0.7832358D-1,0.2189568D-1, &
             -0.1062446D-1,0.587872D-2,-0.251540D-2,0.53208D-3/
        IF(X.EQ.0.D0) THEN
           vv=1.D30
@@ -84,7 +84,7 @@ CONTAINS
        !     CALCUL DE LA FONCTION BESSEL MODIFIEE DE 3EME ESPECE D'ORDRE 1
        !     POUR TOUT X REEL POSITF NON NUL.
        !
-       !     CALCULATES THE MODIFIED BESSEL FUNCTION OF THE THIRD KIND OF 
+       !     CALCULATES THE MODIFIED BESSEL FUNCTION OF THE THIRD KIND OF
        !     ORDER ONE FOR ANY POSITIVE REAL ARGUMENT, X.
        ! ----------------------------------------------------------------------
        REAL*8 X,vv,Y,AX,P1,P2,P3,P4,P5,P6,P7,Q1,Q2,Q3,Q4,Q5,Q6,Q7
@@ -114,7 +114,7 @@ CONTAINS
        !     This subroutine calculates the first kind modified Bessel function
        !     of integer order N, for any REAL X. We use here the classical
        !     recursion formula, when X > N. For X < N, the Miller's algorithm
-       !     is used to avoid overflows. 
+       !     is used to avoid overflows.
        !     REFERENCE:
        !     C.W.CLENSHAW, CHEBYSHEV SERIES FOR MATHEMATICAL FUNCTIONS,
        !     MATHEMATICAL TABLES, VOL.5, 1962.
@@ -245,7 +245,7 @@ CONTAINS
           DATA s1,s2,s3,s4,s5,s6/144725228442.d0,2300535178.d0,18583304.74d0, &
                99447.43394d0,376.9991397d0,1.d0/
           DATA p1,p2,p3,p4,p5/1.d0,.183105d-2,-.3516396496d-4, &
-               .2457520174d-5,-.240337019d-6/ 
+               .2457520174d-5,-.240337019d-6/
           DATA  q1,q2,q3,q4,q5/.04687499995d0, &
                -.2002690873d-3,.8449199096d-5,-.88228987d-6,.105787412d-6/
           !
@@ -267,4 +267,4 @@ CONTAINS
         END FUNCTION BESSJ1
 
 
-      END MODULE bessel 
+      END MODULE bessel

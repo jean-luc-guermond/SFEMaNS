@@ -9,16 +9,16 @@ MODULE subroutine_level_set
   PUBLIC :: three_level_level_set
   PRIVATE
   REAL(KIND=8)  :: max_velocity_at_tn
-!===JLG Sept 27, 2016
-!  LOGICAL :: compression_mthd_JLG=.TRUE.
-!===JLG Sept 27, 2016
+  !===JLG Sept 27, 2016
+  !  LOGICAL :: compression_mthd_JLG=.TRUE.
+  !===JLG Sept 27, 2016
 
 CONTAINS
 
   SUBROUTINE three_level_level_set(comm_one_d,time, cc_1_LA, dt, list_mode, cc_mesh, cn_m1, cn, &
        chmp_vit, max_vel, my_par_cc, cc_list_dirichlet_sides, cc_per, nb_inter, &
        visc_entro_level)
-    !============================== 
+    !==============================
     USE def_type_mesh
     USE fem_M_axi
     USE fem_rhs_axi
@@ -36,7 +36,7 @@ CONTAINS
     USE input_data
     IMPLICIT NONE
     REAL(KIND=8)                                        :: time, dt
-    INTEGER,      DIMENSION(:),     INTENT(IN)          :: list_mode 
+    INTEGER,      DIMENSION(:),     INTENT(IN)          :: list_mode
     INTEGER,                        INTENT(IN)          :: nb_inter
     TYPE(mesh_type),                INTENT(IN)          :: cc_mesh
     type(petsc_csr_LA)                                  :: cc_1_LA
@@ -74,9 +74,9 @@ CONTAINS
     REAL(KIND=8) :: int_mass_correct
     REAL(KIND=8) :: tps, tps_tot, tps_cumul
     REAL(KIND=8) :: one, zero, three
-    DATA zero, one, three/0.d0,1.d0,3.d0/  
+    DATA zero, one, three/0.d0,1.d0,3.d0/
     !Communicators for Petsc, in space and Fourier------------------------------
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     PetscErrorCode                   :: ierr
     MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
     Mat, DIMENSION(:), POINTER, SAVE :: cc_mat
@@ -97,7 +97,7 @@ CONTAINS
        !-----CREATE PETSC VECTORS AND GHOSTS-----------------------------------------
        CALL create_my_ghost(cc_mesh,cc_1_LA,cc_1_ifrom)
        n = cc_mesh%dom_np
-       CALL VecCreateGhost(comm_one_d(1), n, & 
+       CALL VecCreateGhost(comm_one_d(1), n, &
             PETSC_DETERMINE, SIZE(cc_1_ifrom), cc_1_ifrom, cx_1, ierr)
        CALL VecGhostGetLocalForm(cx_1, cx_1_ghost, ierr)
        CALL VecDuplicate(cx_1, cb_1, ierr)
@@ -194,7 +194,7 @@ CONTAINS
        !---------------REGULARIZATION OF LEVEL SET FOR COMPRESSION---------------------------
        DO i = 1, m_max_c
           !===Compute rhs for level set regularization
-          CALL qs_00 (cc_mesh,cc_1_LA, cext(:,1,i), cb_reg_1)        
+          CALL qs_00 (cc_mesh,cc_1_LA, cext(:,1,i), cb_reg_1)
           CALL qs_00 (cc_mesh,cc_1_LA, cext(:,2,i), cb_reg_2)
 
           !===RHS periodicity
@@ -216,13 +216,13 @@ CONTAINS
           tps = user_time()
           !Solve system cc_c
           CALL solver(cc_reg_ksp(i),cb_reg_1,cx_1,reinit=.FALSE.,verbose=my_par_cc%verbose)
-          CALL VecGhostUpdateBegin(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+          CALL VecGhostUpdateBegin(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
           CALL VecGhostUpdateEnd(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
           CALL extract(cx_1_ghost,1,1,cc_1_LA,cext_reg(:,1,i))
 
           !Solve system cc_s
           CALL solver(cc_reg_ksp(i),cb_reg_2,cx_1,reinit=.FALSE.,verbose=my_par_cc%verbose)
-          CALL VecGhostUpdateBegin(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+          CALL VecGhostUpdateBegin(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
           CALL VecGhostUpdateEnd(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
           CALL extract(cx_1_ghost,1,1,cc_1_LA,cext_reg(:,2,i))
           tps = user_time() - tps; tps_cumul=tps_cumul+tps
@@ -263,7 +263,7 @@ CONTAINS
           ff = (2/dt)*cn(:,1,i) - (1/(2*dt))*cn_m1(:,1,i) &
                +source_in_level_set(nb_inter,1, cc_mesh%rr, mode, time)
           CALL qs_00_level_set_gauss (cc_mesh, cc_1_LA, ff, -ff_conv(:,1,i), &
-               mode, 1, cb_1, cext(:,1,i),  & 
+               mode, 1, cb_1, cext(:,1,i),  &
                ff_entro(:,:,i), -ff_phi_1mphi(:,1,i), int_mass_correct)
 
           ff = (2/dt)*cn(:,2,i) - (1/(2*dt))*cn_m1(:,2,i) &
@@ -300,24 +300,24 @@ CONTAINS
 
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
        !WRITE(*,*) ' Tps second membre vitesse', tps
-       !------------------------------------------------------------------------------------- 
+       !-------------------------------------------------------------------------------------
 
        !--------------------INVERSION DES OPERATEURS--------------
        tps = user_time()
        !Solve system cc_c
        CALL solver(cc_ksp(i),cb_1,cx_1,reinit=.FALSE.,verbose=my_par_cc%verbose)
-       CALL VecGhostUpdateBegin(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(cx_1_ghost,1,1,cc_1_LA,cn_p1(:,1))
 
        !Solve system cc_s
        CALL solver(cc_ksp(i),cb_2,cx_1,reinit=.FALSE.,verbose=my_par_cc%verbose)
-       CALL VecGhostUpdateBegin(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(cx_1_ghost,1,1,cc_1_LA,cn_p1(:,2))
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
        !WRITE(*,*) ' Tps solution des pb de vitesse', tps, 'for mode ', mode
-       !------------------------------------------------------------------------------------- 
+       !-------------------------------------------------------------------------------------
 
        !---------------UPDATES-----------------------
        tps = user_time()
@@ -326,7 +326,7 @@ CONTAINS
           cn_p1 (:,2) = 0.d0
        END IF
 
-       cn_m1(:,:,i) = cn(:,:,i) 
+       cn_m1(:,:,i) = cn(:,:,i)
        cn   (:,:,i) = cn_p1
 
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
@@ -355,21 +355,21 @@ CONTAINS
 
   SUBROUTINE smb_ugradc_gauss_fft_par(communicator,mesh,list_mode,V_in,c_in, nb_procs, c_out)
     !=================================
-    USE Gauss_points     
+    USE Gauss_points
     USE sft_parallele
     USE chaine_caractere
     USE boundary
     IMPLICIT NONE
     TYPE(mesh_type), TARGET                     :: mesh
     INTEGER,                        INTENT(IN)  :: nb_procs
-    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode    
+    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: V_in, c_in
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT) :: c_out
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%me,6,SIZE(list_mode)) :: Gradc, W
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%me,2,SIZE(list_mode)) :: Div, Cgauss
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%me,2,SIZE(list_mode)) :: cint
     INTEGER,      DIMENSION(mesh%gauss%n_w)                  :: j_loc
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc     
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc
     INTEGER                                                  ::  m, l , i, mode, index, k
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)   :: Vs
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,2)   :: cs
@@ -378,7 +378,7 @@ CONTAINS
     REAL(KIND=8)   :: ray, tps
     REAL(KIND=8), DIMENSION(3)                  :: temps
     INTEGER                                     :: m_max_pad, bloc_size
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     MPI_Comm       :: communicator
 
     CALL gauss(mesh)
@@ -457,7 +457,7 @@ CONTAINS
 
   SUBROUTINE smb_compression_gauss_fft_par(communicator,mesh,list_mode,V_in,c_in, nb_procs, c_out)
     !=================================
-    USE Gauss_points     
+    USE Gauss_points
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -466,13 +466,13 @@ CONTAINS
     IMPLICIT NONE
     TYPE(mesh_type), TARGET                     :: mesh
     INTEGER,                        INTENT(IN)  :: nb_procs
-    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode    
+    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: V_in, c_in
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT) :: c_out
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%me,6,SIZE(list_mode)) :: Gradc, W
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%me,2,SIZE(list_mode)) :: Cgauss
     INTEGER,      DIMENSION(mesh%gauss%n_w)                  :: j_loc
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc     
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc
     INTEGER                                                  ::  m, l , i, mode, index, k
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)   :: Vs
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,2)   :: cs
@@ -480,7 +480,7 @@ CONTAINS
     INTEGER,                      POINTER       :: me
     REAL(KIND=8)   :: ray, tps, norm_vel_L2, Volume_3D
     INTEGER                                     :: m_max_pad, bloc_size
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     MPI_Comm, DIMENSION(2)       :: communicator
 
     CALL gauss(mesh)
@@ -534,11 +534,11 @@ CONTAINS
     bloc_size = mesh%gauss%l_G*(bloc_size/mesh%gauss%l_G)+mesh%gauss%l_G
     m_max_pad = 3*SIZE(list_mode)*nb_procs/2
 
-!TEST JLG LC vel L2
+    !TEST JLG LC vel L2
     CALL twoD_volume(communicator(1),mesh,Volume_3D)
     Volume_3D = Volume_3D*2*ACOS(-1.d0)
     norm_vel_L2 = norm_SF(communicator, 'L2', mesh, list_mode, V_in)/Volume_3D
-!TEST JLG LC vel L2
+    !TEST JLG LC vel L2
 
     CALL FFT_COMPRESSION_LEVEL_SET_DCL(communicator(2), communicator(1),Gradc, W, Cgauss, c_out, &
          mesh%hloc_gauss, mesh%gauss%l_G, nb_procs, bloc_size, m_max_pad)
@@ -561,10 +561,10 @@ CONTAINS
     INTEGER,      DIMENSION(mesh%gauss%n_w)  :: j_loc
     INTEGER                                  :: m, l , i , ni, code
     REAL(KIND=8)                             :: ray
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     MPI_Comm                                 :: communicator
 
-    vol_loc = 0.d0   
+    vol_loc = 0.d0
     DO m = 1, mesh%dom_me
        j_loc = mesh%jj(:,m)
        DO l = 1, mesh%gauss%l_G
@@ -595,16 +595,16 @@ CONTAINS
     REAL(KIND=8)                                           :: ray
     INTEGER      :: m, l, ni, nj, i, j, iglob, jglob, n_w
     REAL(KIND=8) :: viscolm, xij, viscomode, hm, hh
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     Mat                                         :: matrix
     PetscErrorCode                              :: ierr
 
     CALL MatZeroEntries (matrix, ierr)
     CALL MatSetOption (matrix, MAT_ROW_ORIENTED, PETSC_FALSE, ierr)
 
-    DO l = 1, mesh%gauss%l_G 
-       DO ni = 1, mesh%gauss%n_w 
-          DO nj = 1, mesh%gauss%n_w 
+    DO l = 1, mesh%gauss%l_G
+       DO ni = 1, mesh%gauss%n_w
+          DO nj = 1, mesh%gauss%n_w
              wwprod(ni,nj,l) = mesh%gauss%ww(ni,l)*mesh%gauss%ww(nj,l)
           END DO
        END DO
@@ -615,11 +615,11 @@ CONTAINS
        jj_loc = mesh%jj(:,m)
        a_loc = 0.d0
 
-       DO nj = 1, mesh%gauss%n_w;  
+       DO nj = 1, mesh%gauss%n_w;
           j = jj_loc(nj)
           jglob = LA%loc_to_glob(1,j)
           idxn(nj) = jglob-1
-          DO ni = 1, mesh%gauss%n_w;  
+          DO ni = 1, mesh%gauss%n_w;
              i = jj_loc(ni)
              iglob = LA%loc_to_glob(1,i)
              idxm(ni) = iglob-1
@@ -636,18 +636,18 @@ CONTAINS
           hm=MIN(mesh%hm(i_mode),hh)!WRONG choice
           !hm=0.5d0/inputs%m_max
           !hm=mesh%hm(i_mode) !(JLG April 7 2017)
-          
+
           viscolm  = (stab*hh)**2*mesh%gauss%rj(l,m)
           viscomode = (stab*hm)**2*mesh%gauss%rj(l,m)
-          DO nj = 1, n_w  
-             DO ni = 1, n_w  
+          DO nj = 1, n_w
+             DO ni = 1, n_w
                 !grad(u).grad(v) w.r.t. r and z
                 xij = SUM(mesh%gauss%dw(:,nj,l,m)*mesh%gauss%dw(:,ni,l,m))
                 !start diagonal block
                 a_loc(ni,nj) =  a_loc(ni,nj) + ray * viscolm* xij  &
                      + ray*wwprod(ni,nj,l)*mesh%gauss%rj(l,m) &
                      + viscomode*mode**2*wwprod(ni,nj,l)/ray
-                !end diagonal block             
+                !end diagonal block
              END DO
           END DO
        END DO
@@ -661,7 +661,7 @@ CONTAINS
   SUBROUTINE smb_compr_visc_entro_gauss_fft_par(communicator, mesh, list_mode, c_in, c_reg_in, visc_entro_real,&
        coeff1_in_level, nb_procs, V_out, c_out)
     !=================================
-    USE Gauss_points     
+    USE Gauss_points
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -669,17 +669,17 @@ CONTAINS
     IMPLICIT NONE
     TYPE(mesh_type), TARGET                     :: mesh
     INTEGER,                        INTENT(IN)  :: nb_procs
-    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode    
+    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: c_in
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: c_reg_in
     REAL(KIND=8), DIMENSION(:,:),   INTENT(IN)  :: visc_entro_real
     REAL(KIND=8),                   INTENT(IN)  :: coeff1_in_level
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,6,SIZE(list_mode)), INTENT(OUT) :: V_out
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,2,SIZE(list_mode)), INTENT(OUT) :: c_out
-    REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,6,SIZE(list_mode)) :: Gradc_in, Gradc_reg_in 
+    REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,6,SIZE(list_mode)) :: Gradc_in, Gradc_reg_in
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,2,SIZE(list_mode)) :: c_in_gauss
     INTEGER,      DIMENSION(mesh%gauss%n_w)                  :: j_loc
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc     
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,2)                :: c_in_loc
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,2)                :: c_reg_in_loc
     INTEGER,      DIMENSION(:,:), POINTER       :: jj
@@ -687,7 +687,7 @@ CONTAINS
     REAL(KIND=8)                                :: ray, hh, hm
     INTEGER                                     :: m, l , i, mode, index, k
     INTEGER                                     :: m_max_pad, bloc_size
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     MPI_Comm, DIMENSION(2)       :: communicator
 
     CALL gauss(mesh)
@@ -711,10 +711,10 @@ CONTAINS
              !===Compute local mesh sizes
              hh=mesh%hloc_gauss(index)
              hm=MIN(mesh%hm(i),hh)!WRONG choice
-             !===Hm must have a dimension (JLG, April 7 2017)  
+             !===Hm must have a dimension (JLG, April 7 2017)
              !hm=0.5d0/inputs%m_max
              !hm=mesh%hm(i) !(JLG April 7 2017)
-             !===Hm did not have a dimension (JLG, April 7 2017)  
+             !===Hm did not have a dimension (JLG, April 7 2017)
 
              !===Compute radius of Gauss point
              ray = SUM(mesh%rr(1,j_loc)*ww(:,l))
@@ -755,7 +755,7 @@ CONTAINS
   SUBROUTINE smb_visc_entro_gauss_fft_par(communicator, mesh, list_mode, c_in, visc_entro_real,&
        coeff1_in_level, nb_procs, V_out, c_out)
     !=================================
-    USE Gauss_points     
+    USE Gauss_points
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -763,7 +763,7 @@ CONTAINS
     IMPLICIT NONE
     TYPE(mesh_type), TARGET                     :: mesh
     INTEGER,                        INTENT(IN)  :: nb_procs
-    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode    
+    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: c_in
     REAL(KIND=8), DIMENSION(:,:),   INTENT(IN)  :: visc_entro_real
     REAL(KIND=8),                   INTENT(IN)  :: coeff1_in_level
@@ -772,14 +772,14 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,6,SIZE(list_mode)) :: Gradc_in
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,2,SIZE(list_mode)) :: c_in_gauss
     INTEGER,      DIMENSION(mesh%gauss%n_w)                  :: j_loc
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc     
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,2)                :: c_in_loc
     INTEGER,      DIMENSION(:,:), POINTER       :: jj
     INTEGER,                      POINTER       :: me
     REAL(KIND=8)                                :: ray, hh, hm
     INTEGER                                     :: m, l , i, mode, index, k
     INTEGER                                     :: m_max_pad, bloc_size
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     MPI_Comm, DIMENSION(2)       :: communicator
 
     CALL gauss(mesh)
@@ -804,7 +804,7 @@ CONTAINS
              hm=MIN(mesh%hm(i),hh)!WRONG choice
              !hm=0.5d0/inputs%m_max
              !hm=mesh%hm(i) !(JLG April 7 2017)
-             
+
              !===Compute radius of Gauss point
              ray = SUM(mesh%rr(1,j_loc)*ww(:,l))
 
@@ -836,10 +836,10 @@ CONTAINS
 
   SUBROUTINE compute_int_mass_correct(communicator, mesh, list_mode, c1_in, c2_in, int_out)
     !=================================
-    USE Gauss_points     
+    USE Gauss_points
     IMPLICIT NONE
     TYPE(mesh_type), TARGET                     :: mesh
-    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode    
+    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: c1_in  !=ff_conv
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: c2_in  !=ff_phi_1mphi
     REAL(KIND=8),                   INTENT(OUT) :: int_out
@@ -848,7 +848,7 @@ CONTAINS
     REAL(KIND=8)                                :: int_c1_in, int_c1_in_loc, int_c1_in_F
     REAL(KIND=8)                                :: int_c2_in, int_c2_in_loc, int_c2_in_F
     INTEGER                                     :: m, l , i, index, code
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     MPI_Comm, DIMENSION(2)       :: communicator
 
     int_c1_in_loc = 0.d0
@@ -914,7 +914,7 @@ CONTAINS
     INTEGER,      DIMENSION(mesh%gauss%n_w)     :: idxm
     INTEGER                                     :: i, m, l, ni, iglob, index
     REAL(KIND=8)                                :: fl, ray
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     Vec                                         :: vect
     PetscErrorCode                              :: ierr
 

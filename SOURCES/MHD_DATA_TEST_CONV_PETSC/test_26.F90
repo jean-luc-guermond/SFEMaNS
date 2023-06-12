@@ -15,13 +15,13 @@ CONTAINS
     REAL(KIND=8)                               :: x,x0,x1
     REAL(KIND=8)                               :: vv
     REAL(KIND=8)                               :: a0,a1,a2,a3
-    !This function is 1 at x0, 
-    !This function is 0 at x1, 
-    !Its derivative is 0  at (x1+x0)/2, 
+    !This function is 1 at x0,
+    !This function is 0 at x1,
+    !Its derivative is 0  at (x1+x0)/2,
     !Cubic (Factorized)
 
-    a0 = x1**2*(3*x0-x1)/(x0-x1)**3; 
-    a1 = -6.0*x0*x1/(x0-x1)**3; 
+    a0 = x1**2*(3*x0-x1)/(x0-x1)**3;
+    a1 = -6.0*x0*x1/(x0-x1)**3;
     a2 = (3.0*(x0+x1))/(x0-x1)**3;
     a3 = -2.0/(x0-x1)**3;
 
@@ -34,26 +34,26 @@ CONTAINS
     REAL(KIND=8)                               :: x,x0,x1
     REAL(KIND=8)                               :: vv
     REAL(KIND=8)                               :: a0,a1,a2,a3
-    !This function is 1 at x0, 
-    !This function is 0 at x1, 
-    !Its derivative is 0  at (x1+x0)/2, 
+    !This function is 1 at x0,
+    !This function is 0 at x1,
+    !Its derivative is 0  at (x1+x0)/2,
     !Cubic Factorized
 
-    a0 = x1**2*(3*x0-x1)/(x0-x1)**3; 
-    a1 = -6.0*x0*x1/(x0-x1)**3; 
+    a0 = x1**2*(3*x0-x1)/(x0-x1)**3;
+    a1 = -6.0*x0*x1/(x0-x1)**3;
     a2 = (3.0*(x0+x1))/(x0-x1)**3;
     a3 = -2.0/(x0-x1)**3;
 
-    vv = a1+2.d0*a2*x + 3.d0*a3*x*x 
+    vv = a1+2.d0*a2*x + 3.d0*a3*x*x
     RETURN
   END FUNCTION Dsmooth_jump_down_T26
 
   FUNCTION smooth_jump_up_T26(x,x0,x1) RESULT(vv)
     REAL(KIND=8)                               :: x,x0,x1
     REAL(KIND=8)                               :: vv
-    !This function is 0 at x0, 
-    !This function is 1 at x1, 
-    !Its derivative is 0  at (x1+x0)/2, 
+    !This function is 0 at x0,
+    !This function is 1 at x1,
+    !Its derivative is 0  at (x1+x0)/2,
 
     vv = 1.d0 - smooth_jump_down_T26( x,x0,x1 );
     RETURN
@@ -63,9 +63,9 @@ CONTAINS
   FUNCTION Dsmooth_jump_up_T26(x,x0,x1) RESULT(vv)
     REAL(KIND=8)                               :: x,x0,x1
     REAL(KIND=8)                               :: vv
-    !This function is 0 at x0, 
-    !This function is 1 at x1, 
-    !Its derivative is 0  at (x1+x0)/2, 
+    !This function is 0 at x0,
+    !This function is 1 at x1,
+    !Its derivative is 0  at (x1+x0)/2,
 
     vv =  - Dsmooth_jump_down_T26( x,x0,x1 );
     RETURN
@@ -80,12 +80,12 @@ CONTAINS
     !! A smooth jump in z
 
     Fz=smooth_jump_up_T26(z,zm_T26,z1_T26)
-    IF ( z.GE.zm_T26 ) THEN       
+    IF ( z.GE.zm_T26 ) THEN
        vv  = 1.d0
     ELSE  IF ( z.LE. z1_T26 ) THEN
        vv  = mu_disk_T26
-    ELSE   
-       vv = Fz*(mu_disk_T26-1.d0) + 1.d0                    
+    ELSE
+       vv = Fz*(mu_disk_T26-1.d0) + 1.d0
     END IF
     RETURN
 
@@ -103,11 +103,11 @@ CONTAINS
     !! A smooth jump in z
 
     DFz=Dsmooth_jump_up_T26(z,zm_T26,z1_T26)
-    IF ( z.GE.zm_T26 ) THEN       
+    IF ( z.GE.zm_T26 ) THEN
        vv  = 0.d0
     ELSE  IF ( z.LE. z1_T26 ) THEN
        vv  = 0.d0
-    ELSE   
+    ELSE
        vv(1)  = 0
        vv(2)  = DFz*(mu_disk_T26-1.d0)
     END IF

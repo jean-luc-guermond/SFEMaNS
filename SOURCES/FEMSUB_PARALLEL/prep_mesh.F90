@@ -34,22 +34,22 @@ CONTAINS
     v_dof = 3 !===Vertex dofs
     f_dof = type_fe-1 !===Face dofs
     c_dof = (type_fe-2)*(type_fe-1)/2 !===Cell dofs
-    p3_mesh%gauss%n_w = (type_fe+1)*(type_fe+2)/2 
+    p3_mesh%gauss%n_w = (type_fe+1)*(type_fe+2)/2
     p3_mesh%gauss%n_ws = type_fe+1
     p3_mesh%gauss%k_d = 2
 
-    p3_mesh%me  = p1_mesh%me 
+    p3_mesh%me  = p1_mesh%me
     p3_mesh%mes = p1_mesh%mes
     !===Nb of edges
     edge = 0
     DO m = 1, p1_mesh%me
        DO n = 1, 3
-          IF (p1_mesh%neigh(n,m)==0) CYCLE  
+          IF (p1_mesh%neigh(n,m)==0) CYCLE
           edge = edge + 1
        END DO
     END DO
     edge = edge/2
-    nb_edges = edge + p1_mesh%mes 
+    nb_edges = edge + p1_mesh%mes
     IF (edge /= (3*p1_mesh%me - p1_mesh%mes)/2) THEN
        CALL error_PETSC('BUG in create_p3_mesh, nb of edges is wrong')
     END IF
@@ -72,7 +72,7 @@ CONTAINS
     p3_mesh%i_d    = p1_mesh%i_d
     p3_mesh%sides  = p1_mesh%sides
 
-    !===Create vertices 
+    !===Create vertices
     p3_mesh%jj(1:3,:) = p1_mesh%jj(1:3,:)
     IF (MAXVAL(p3_mesh%jj(1:3,:)).NE.nb_vertices) THEN
        write(*,*) MAXVAL(p1_mesh%jj(1:3,p1_mesh%me)), nb_vertices
@@ -83,7 +83,7 @@ CONTAINS
 
     !===Create face dofs
     p2_virgin = .TRUE.
-    n_dof = nb_vertices 
+    n_dof = nb_vertices
     DO m = 1, p3_mesh%me
        DO n = 1, v_dof !===n is the face number of the face to be populated
           n_mid = n+3 !===n_mid is the mid point on the p2 mesh
@@ -108,17 +108,17 @@ CONTAINS
                 n2 = n1
                 n1 = i
              END IF
-             IF (n2-n1>0) THEN 
+             IF (n2-n1>0) THEN
                 sgn = 1
              ELSE
                 sgn = -1
              END IF
-             IF (n2_op-n1_op>0) THEN 
+             IF (n2_op-n1_op>0) THEN
                 sgn_op = 1
              ELSE
                 sgn_op = -1
              END IF
-             DO h = 1, f_dof 
+             DO h = 1, f_dof
                 hh = h*sgn + ((1-sgn)/2)*(f_dof+1)
                 hh_op = h*sgn_op + ((1-sgn_op)/2)*(f_dof+1)
                 p3_mesh%jj(v_dof+(n-1)*f_dof+hh, m) = p3_mesh%jj(v_dof+(n_op-1)*f_dof+hh_op, m_op)
@@ -132,9 +132,9 @@ CONTAINS
              r1 = p2_mesh%rr(:,j1)
              r2 = p2_mesh%rr(:,j2)
              r3 = p2_mesh%rr(:,j_mid) !===middle node is P2 to have curved boundaries
- 
+
              !===Create face dofs
-             DO h = 1, f_dof 
+             DO h = 1, f_dof
                 n_dof = n_dof + 1 !===New index created
                 p3_mesh%jj(v_dof+(n-1)*f_dof+h, m) = n_dof
                 s1 = 0.d0
@@ -145,8 +145,8 @@ CONTAINS
                 ELSE
                    sh = 1-h/DBLE(type_fe) !===Move from r2 to r1
                 END IF
-                p3_mesh%rr(:, n_dof) = r1(:)*(sh - s2)*(sh - s3)/((s1 - s2)*(s1 - s3)) & 
-                     + r2(:)*(sh - s3)*(sh - s1)/((s2 - s3)*(s2 - s1)) & 
+                p3_mesh%rr(:, n_dof) = r1(:)*(sh - s2)*(sh - s3)/((s1 - s2)*(s1 - s3)) &
+                     + r2(:)*(sh - s3)*(sh - s1)/((s2 - s3)*(s2 - s1)) &
                      + r3(:)*(sh - s1)*(sh - s2)/((s3 - s1)*(s3 - s2))
              END DO
           END IF
@@ -167,7 +167,7 @@ CONTAINS
              p3_mesh%rr(:,n_dof) = (1-sh-sk)*r1+sk*r2+sh*r3
           END DO
        END DO
-    END DO 
+    END DO
 
     !===Create surface connectivity
     DO ms = 1, p1_mesh%mes
@@ -191,14 +191,14 @@ CONTAINS
           ELSE
              sgn_op = -1
           END IF
-          DO h = 1, f_dof 
+          DO h = 1, f_dof
              hh_op = h*sgn_op + ((1-sgn_op)/2)*(f_dof+1)
              p3_mesh%jjs(2+h,ms) = p3_mesh%jj(v_dof+(n_op-1)*f_dof+hh_op, m_op) !===Face dofs
           END DO
        END DO
     END DO
 
-    !===Take care of leftover 
+    !===Take care of leftover
     ALLOCATE(p3_mesh%iis(p3_mesh%gauss%n_ws,p3_mesh%mes))
     CALL dirichlet_nodes(p3_mesh%jjs, SPREAD(1,1,p3_mesh%mes), SPREAD(.TRUE.,1,1), p3_mesh%j_s)
     CALL surf_nodes_i(p3_mesh%jjs, p3_mesh%j_s, p3_mesh%iis)
@@ -293,15 +293,15 @@ CONTAINS
     INTEGER :: mnouv, nnouv, i, dom
     INTEGER :: n, m, mop, ms, msnouv, neighs1, neighs2
     INTEGER :: d_end, f_end
-    INTEGER :: np, nw, me, nws, mes, kd, nwneigh                 
+    INTEGER :: np, nw, me, nws, mes, kd, nwneigh
     CHARACTER(len=40) :: text
     CHARACTER(len=2)  :: truc
 
     mesh%gauss%k_d = 2 !===Space dimension (meridian section)
 
-    text = 'Mesh'   
+    text = 'Mesh'
     d_end = last_c_leng (20, text)
-    DO n = 1, SIZE(list_dom)   
+    DO n = 1, SIZE(list_dom)
        d_end = last_c_leng (20, text)
        WRITE(truc,'(i2)') list_dom(n)
        f_end = start_of_string (truc)
@@ -358,7 +358,7 @@ CONTAINS
        kd = 3; nwneigh = 4
     ELSE IF (nw==10 .AND. nws==6) THEN
        kd = 3; nwneigh = 4
-    ELSE 
+    ELSE
        WRITE(*,*) ' Finite element not yet programmed '
        WRITE(*,*) nw, nws
        STOP
@@ -405,14 +405,14 @@ CONTAINS
        neighs2 = neigh_lect(n,neighs1)
        IF (neighs2==0) THEN
           IF (t1) THEN
-             stat(ms) = 2  ! face on the boundary of the domain of interest 
+             stat(ms) = 2  ! face on the boundary of the domain of interest
           ELSE
-             stat(ms) = 1  ! face does not touch the domain of interest 
+             stat(ms) = 1  ! face does not touch the domain of interest
           END IF
           CYCLE
        END IF
-       ! neighs2 /=0 
-       IF (MINVAL(ABS(i_d_lect(neighs2) - list_dom))==0) THEN 
+       ! neighs2 /=0
+       IF (MINVAL(ABS(i_d_lect(neighs2) - list_dom))==0) THEN
           t2 = .TRUE.
        ELSE
           t2 = .FALSE.
@@ -425,7 +425,7 @@ CONTAINS
              ELSE IF (MINVAL(ABS(sides_lect(ms)-list_inter))==0) THEN
                 stat(ms) = 3 ! real interface
              ELSE
-                stat(ms) = 1 ! interface to be forgotten 
+                stat(ms) = 1 ! interface to be forgotten
              END IF
           ELSE
              stat(ms) = 2 ! face at the boundary of the domain of interest
@@ -470,11 +470,11 @@ CONTAINS
           IF (stat(ms) == 1) CYCLE
           neighs1 = neighs_lect(ms)
           DO n = 1, nw
-             IF (MINVAL(ABS(jjs_lect(:,ms)-jj_lect(n,neighs1))) /= 0) EXIT 
+             IF (MINVAL(ABS(jjs_lect(:,ms)-jj_lect(n,neighs1))) /= 0) EXIT
              ! exit when n is not on the interface
           END DO
           neighs2 = neigh_lect(n,neighs1)
-          IF (i_d_lect(neighs1) /= list_dom(dom)) THEN 
+          IF (i_d_lect(neighs1) /= list_dom(dom)) THEN
              IF (neighs2 == 0) CYCLE ! face on the boundary and does not touch dom yet
              IF (i_d_lect(neighs2) /= list_dom(dom)) CYCLE ! dom is on neither sides
           END IF
@@ -484,7 +484,7 @@ CONTAINS
              virgin_ms(ms) = .FALSE.
              msnouv = msnouv + 1
           END IF
-          IF (stat(ms) ==3) THEN 
+          IF (stat(ms) ==3) THEN
              ! Nodes and sides on the interface are virgin again
              virgin_nd(jjs_lect(:,ms)) = .TRUE. ! interface nodes are virgin again
              virgin_ms(ms) = .TRUE.
@@ -521,7 +521,7 @@ CONTAINS
           IF (list_dom(dom) /=i_d_lect(m))  CYCLE ! i_d(m) pas dans la liste
           DO n = 1, nw; i = jj_lect(n,m)
              IF (n .LE. nwneigh) THEN
-                mop = neigh_lect(n,m) 
+                mop = neigh_lect(n,m)
                 IF (mop .LE. 0) THEN
                    mesh%neigh(n,nouv_el(m)) = 0
                 ELSE IF (MINVAL(ABS(list_dom - i_d_lect(mop))) == 0) THEN
@@ -542,11 +542,11 @@ CONTAINS
           IF (stat(ms) == 1) CYCLE
           neighs1 = neighs_lect(ms)
           DO n = 1, nw
-             IF (MINVAL(ABS(jjs_lect(:,ms)-jj_lect(n,neighs1))) /= 0) EXIT 
+             IF (MINVAL(ABS(jjs_lect(:,ms)-jj_lect(n,neighs1))) /= 0) EXIT
              ! exit when n is not on the interface
           END DO
           neighs2 = neigh_lect(n,neighs1)
-          IF (i_d_lect(neighs1) /= list_dom(dom)) THEN 
+          IF (i_d_lect(neighs1) /= list_dom(dom)) THEN
              IF (neighs2 == 0) CYCLE ! face on the boundary and does not touch dom yet
              IF (i_d_lect(neighs2) /= list_dom(dom)) CYCLE ! dom is on neither sides
           END IF
@@ -557,7 +557,7 @@ CONTAINS
              msnouv = msnouv + 1
              nouv_els(ms) = msnouv
           END IF
-          IF (stat(ms) ==3) THEN 
+          IF (stat(ms) ==3) THEN
              ! Nodes and sides on the interface are virgin again
              virgin_nd(jjs_lect(:,ms)) = .TRUE. ! interface nodes are virgin again
              virgin_ms(ms) = .TRUE.
@@ -577,14 +577,14 @@ CONTAINS
           IF (neighs2==0) THEN
              CYCLE
           END IF
-          ! neighs2 /=0 
-          IF ((ABS(i_d_lect(neighs2) - list_dom(dom)))==0) THEN 
+          ! neighs2 /=0
+          IF ((ABS(i_d_lect(neighs2) - list_dom(dom)))==0) THEN
              t2 = .TRUE.
           ELSE
              t2 = .FALSE.
           END IF
           IF (.NOT.t1 .AND. t2) THEN
-             neighs_lect(ms) = neighs2 !get things right (swap neighs) 
+             neighs_lect(ms) = neighs2 !get things right (swap neighs)
           END IF
        END DO
 
@@ -595,11 +595,11 @@ CONTAINS
           IF (stat(ms) == 1) CYCLE
           neighs1 = neighs_lect(ms)
           DO n = 1, nw
-             IF (MINVAL(ABS(jjs_lect(:,ms)-jj_lect(n,neighs1))) /= 0) EXIT 
+             IF (MINVAL(ABS(jjs_lect(:,ms)-jj_lect(n,neighs1))) /= 0) EXIT
              ! exit when n is not on the interface
           END DO
           neighs2 = neigh_lect(n,neighs1)
-          IF (i_d_lect(neighs1) /= list_dom(dom)) THEN 
+          IF (i_d_lect(neighs1) /= list_dom(dom)) THEN
              IF (neighs2 == 0) CYCLE ! face on the boundary and does not touch dom yet
              IF (i_d_lect(neighs2) /= list_dom(dom)) CYCLE ! dom is on neither sides
           END IF
@@ -679,9 +679,9 @@ CONTAINS
     INTEGER :: np, nw, me, nws, mes, kd, nwneigh
     CHARACTER(len=60)                 :: text
     CHARACTER(len=2)                  :: truc
-    text = 'Mesh'   
+    text = 'Mesh'
     d_end = last_c_leng (20, text)
-    DO n = 1, SIZE(list_dom)   
+    DO n = 1, SIZE(list_dom)
        d_end = last_c_leng (20, text)
        WRITE(truc,'(i2)') list_dom(n)
        f_end = start_of_string (truc)
@@ -694,7 +694,7 @@ CONTAINS
     ELSE
        text = text(1:d_end)//'_FE_2'
     END IF
-    !WRITE (*,*) 'Loading mesh-file ...' 
+    !WRITE (*,*) 'Loading mesh-file ...'
     !d_end = last_c_leng (64, dir)
     !f_end = last_c_leng (64, fil)
     IF (mesh_formatted) THEN
@@ -752,7 +752,7 @@ CONTAINS
        kd = 3; nwneigh = 4
     ELSE IF (nw==10 .AND. nws==6) THEN
        kd = 3; nwneigh = 4
-    ELSE 
+    ELSE
        WRITE(*,*) ' Finite element not yet programmed '
        WRITE(*,*) kd, nw, nws
        STOP
@@ -842,9 +842,9 @@ CONTAINS
           END IF
 
           IF (.NOT.test) CYCLE
-          !11 June 2007 
-          IF (.NOT.virgin_el(ms)) CYCLE 
-          !11 June 2007 
+          !11 June 2007
+          IF (.NOT.virgin_el(ms)) CYCLE
+          !11 June 2007
           virgin_el(ms) = .FALSE.
           msnouv = msnouv + 1
           nouv_els(ms) = msnouv
@@ -892,7 +892,7 @@ CONTAINS
     WRITE (20,*)  'np_lect',np,'nw_lect',nw,'nws_lect',nws,'me_lect',me,&
          'mes_lect',mes
     WRITE (20,*)  'np ', mesh%np, 'me ',  mesh%me, &
-         'mes ',mesh%mes,'nps ', mesh%nps 
+         'mes ',mesh%mes,'nps ', mesh%nps
     WRITE (20,*) 'MAXVAL(sides)', MAXVAL(mesh%sides), 'MAXVAL(i_d)', MAXVAL(mesh%i_d)
     !     CALL Gauss_gen(mesh%np, mesh%me, mesh%nps, mesh%mes, &
     !     mesh%jj, mesh%jjs, mesh%rr)
@@ -905,7 +905,7 @@ CONTAINS
 
     CLOSE(20)
     CLOSE(30)
- 
+
   END SUBROUTINE load_mesh_free_format_ordered
 
   !------------------------------------------------------------------------------
@@ -939,9 +939,9 @@ CONTAINS
     CHARACTER(len=60)                 :: text
     CHARACTER(len=2)                  :: truc
 
-    text = 'Mesh'   
+    text = 'Mesh'
     d_end = last_c_leng (20, text)
-    DO n = 1, SIZE(list_dom)   
+    DO n = 1, SIZE(list_dom)
        d_end = last_c_leng (20, text)
        WRITE(truc,'(i2)') list_dom(n)
        f_end = start_of_string (truc)
@@ -1013,7 +1013,7 @@ CONTAINS
        kd = 3; nwneigh = 4
     ELSE IF (nw==10 .AND. nws==6) THEN
        kd = 3; nwneigh = 4
-    ELSE 
+    ELSE
        WRITE(*,*) ' Finite element not yet programmed '
        STOP
     END IF
@@ -1147,7 +1147,7 @@ CONTAINS
     WRITE (20,*)  'np_lect',np,'nw_lect',nw,'nws_lect',nws,'me_lect',me,&
          'mes_lect',mes
     WRITE (20,*)  'np ', mesh%np, 'me ',  mesh%me, &
-         'mes ',mesh%mes,'nps ', mesh%nps 
+         'mes ',mesh%mes,'nps ', mesh%nps
     WRITE (20,*) 'MAXVAL(sides)', MAXVAL(mesh%sides), 'MAXVAL(i_d)', MAXVAL(mesh%i_d)
     !   CALL Gauss_gen(mesh%np, mesh%me, mesh%nps, mesh%mes, &
     !                    mesh%jj, mesh%jjs, mesh%rr)
@@ -1229,7 +1229,7 @@ CONTAINS
        kd = 3; nwneigh = 4
     ELSE IF (nw==10 .AND. nws==6) THEN
        kd = 3; nwneigh = 4
-    ELSE 
+    ELSE
        WRITE(*,*) ' Finite element not yet programmed '
        STOP
     END IF
@@ -1342,7 +1342,7 @@ CONTAINS
 
     DEALLOCATE(jj_lect, neigh_lect, i_d_lect)
     DEALLOCATE(jjs_lect, neighs_lect, sides_lect)
-    DEALLOCATE(rr_lect, virgin_el, virgin_nd)   
+    DEALLOCATE(rr_lect, virgin_el, virgin_nd)
     DEALLOCATE(nouv_nd,nouv_el,nouv_els,ancien_nd,ancien_el,ancien_els)
     !  END OF GRID READING --------------------------------------------------------
 
@@ -1354,7 +1354,7 @@ CONTAINS
     WRITE (20,*)  'np_lect',np,'nw_lect',nw,'nws_lect',nws,'me_lect',me,&
          'mes_lect',mes
     WRITE (20,*)  'np ', mesh%np, 'me ',  mesh%me, &
-         'mes ',mesh%mes,'nps ', mesh%nps 
+         'mes ',mesh%mes,'nps ', mesh%nps
     WRITE (20,*) 'MAXVAL(sides)', MAXVAL(mesh%sides), 'MAXVAL(i_d)', MAXVAL(mesh%i_d)
     !   CALL Gauss_gen(mesh%np, mesh%me, mesh%nps, mesh%mes, &
     !                    mesh%jj, mesh%jjs, mesh%rr)
@@ -1392,9 +1392,9 @@ CONTAINS
     CHARACTER(len=20)                 :: text
     CHARACTER(len=2)                  :: truc
 
-    text = 'Mesh'   
+    text = 'Mesh'
     d_end = last_c_leng (20, text)
-    DO n = 1, SIZE(list_dom)   
+    DO n = 1, SIZE(list_dom)
        d_end = last_c_leng (20, text)
        WRITE(truc,'(i2)') list_dom(n)
        f_end = start_of_string (truc)
@@ -1430,7 +1430,7 @@ CONTAINS
        !   READ(30,*)
        !END DO
 
-       ! DO m = 1, mes 
+       ! DO m = 1, mes
        !     READ(30)
        ! END DO
        READ(30)
@@ -1452,7 +1452,7 @@ CONTAINS
        kd = 3; nwneigh = 4
     ELSE IF (nw==10 .AND. nws==6) THEN
        kd = 3; nwneigh = 4
-    ELSE 
+    ELSE
        WRITE(*,*) ' Finite element not yet programmed '
        STOP
     END IF
@@ -1686,7 +1686,7 @@ CONTAINS
                 STOP
              END IF
           END IF
-          IF (m<mop) THEN 
+          IF (m<mop) THEN
              l = 1 ! Side 1 on smallest cell index
              lop = 2
              mesh%neighi(1,edge) = m
@@ -1707,7 +1707,3 @@ CONTAINS
   END SUBROUTINE prep_interfaces
 
 END MODULE prep_maill
-
-
-
-

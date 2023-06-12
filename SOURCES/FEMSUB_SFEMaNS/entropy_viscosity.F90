@@ -1,7 +1,7 @@
 MODULE entropy_viscosity
   USE my_util
   PUBLIC :: compute_entropy_viscosity, compute_entropy_viscosity_mom, &
-        compute_entropy_viscosity_mom_no_level_set
+       compute_entropy_viscosity_mom_no_level_set
   PRIVATE
 CONTAINS
   SUBROUTINE compute_entropy_viscosity(comm_one_d, vv_3_LA, vv_mesh, pp_mesh, time, list_mode, vvz_per, &
@@ -27,7 +27,7 @@ CONTAINS
     TYPE(mesh_type),                INTENT(IN)            :: pp_mesh, vv_mesh
     TYPE(periodic_type),            INTENT(IN)            :: vvz_per
     REAL(KIND=8),                   INTENT(IN)            :: time
-    INTEGER,      DIMENSION(:),     INTENT(IN)            :: list_mode   
+    INTEGER,      DIMENSION(:),     INTENT(IN)            :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)         :: un, un_m1, un_m2
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)         :: pn_m1
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)            :: rotv_v_m1
@@ -66,7 +66,7 @@ CONTAINS
        !===CREATE PETSC VECTORS AND GHOSTS
        CALL create_my_ghost(vv_mesh,vv_3_LA,vv_3_ifrom)
        n = 3*vv_mesh%dom_np
-       CALL VecCreateGhost(comm_one_d(1), n, & 
+       CALL VecCreateGhost(comm_one_d(1), n, &
             PETSC_DETERMINE, SIZE(vv_3_ifrom), vv_3_ifrom, vx_3, ierr)
        CALL VecGhostGetLocalForm(vx_3, vx_3_ghost, ierr)
        CALL VecDuplicate(vx_3, vb_3_145, ierr)
@@ -93,7 +93,7 @@ CONTAINS
           CALL create_local_petsc_matrix(comm_one_d(1), vv_3_LA,LES_mat(nu_mat), clean=.FALSE.)
           CALL qs_mass_vect_3x3(vv_3_LA, vv_mesh, 1.d0, LES_mat(nu_mat))
           IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
-             CALL periodic_matrix_petsc(vvz_per%n_bord, vvz_per%list,vvz_per%perlist, & 
+             CALL periodic_matrix_petsc(vvz_per%n_bord, vvz_per%list,vvz_per%perlist, &
                   LES_mat(nu_mat), vv_3_LA)
           END IF
           CALL init_solver(inputs%my_par_vv,LES_ksp(nu_mat),LES_mat(nu_mat),comm_one_d(1),&
@@ -101,7 +101,7 @@ CONTAINS
        END DO
        iteration = 0
     END IF !end of once
-    
+
     iteration = iteration + 1
 
     !===Compute Strain rate tensor
@@ -118,7 +118,7 @@ CONTAINS
        CALL rhs_residual_ns_gauss_3x3(vv_mesh, pp_mesh, comm_one_d(2), list_mode, time-inputs%dt, &
             (un-un_m2)/(2*inputs%dt), pn_m1, rotv_v_m1, rhs_gauss)
     END IF
-    !===End Computation of rhs 
+    !===End Computation of rhs
 
     DO i = 1, SIZE(list_mode)
        mode = list_mode(i)
@@ -131,14 +131,14 @@ CONTAINS
           CALL periodic_rhs_petsc(vvz_per%n_bord, vvz_per%list, vvz_per%perlist, vb_3_236, vv_3_LA)
           CALL periodic_rhs_petsc(vvz_per%n_bord, vvz_per%list, vvz_per%perlist, vb_3_145, vv_3_LA)
        END IF
-      !===End Assemble vb_3_145, vb_3_236 using rhs_gauss
+       !===End Assemble vb_3_145, vb_3_236 using rhs_gauss
 
 
        !===Solve linear system for momentum equation
        !Solve system 1, ur_c, ut_s, uz_c
        nu_mat  = 1
        CALL solver(LES_ksp(nu_mat),vb_3_145,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
-       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,res_ns(:,1,i))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,res_ns(:,4,i))
@@ -147,12 +147,12 @@ CONTAINS
        !Solve system 2, ur_s, ut_c, uz_s
        nu_mat = 2
        CALL solver(LES_ksp(nu_mat),vb_3_236,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
-       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,res_ns(:,2,i))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,res_ns(:,3,i))
        CALL extract(vx_3_ghost,3,3,vv_3_LA,res_ns(:,6,i))
-       !===End Solve linear system for momentum equation 
+       !===End Solve linear system for momentum equation
     END DO
 
     !norm_res_ns_L2 = norm_SF(comm_one_d, 'L2', vv_mesh, list_mode, res_ns)
@@ -182,7 +182,7 @@ CONTAINS
        END DO
     END DO
     !===End compute un_m1 and res_ns on gauss points
-    
+
     !===Compute entropy viscosity times gradient of 2*un-un_m1 in real space by FFT
     CALL smb_explicit_grad_vel_LES(vv_mesh, list_mode, 2*un-un_m1, strain_rate_tensor)
 
@@ -222,12 +222,12 @@ CONTAINS
     TYPE(petsc_csr_LA)                                    :: vv_3_LA
     TYPE(mesh_type),                  INTENT(IN)          :: pp_mesh, vv_mesh
     REAL(KIND=8),                     INTENT(IN)          :: time
-    INTEGER,      DIMENSION(:),       INTENT(IN)          :: list_mode   
+    INTEGER,      DIMENSION(:),       INTENT(IN)          :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: momentum, momentum_m1, momentum_m2
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: un_m1
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: pn_m1
     REAL(KIND=8), DIMENSION(:,:,:,:), INTENT(IN)          :: tensor_m1, visc_grad_vel_m1
-    REAL(KIND=8), DIMENSION(:,:,:,:), INTENT(IN)          :: tensor_surface_gauss !t=tn_m1 in bdf1 / tn if bdf2) 
+    REAL(KIND=8), DIMENSION(:,:,:,:), INTENT(IN)          :: tensor_surface_gauss !t=tn_m1 in bdf1 / tn if bdf2)
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: rotb_b_m1
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: visco_dyn_m1
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: density_m2, density_m1, density
@@ -274,7 +274,7 @@ CONTAINS
        !===CREATE PETSC VECTORS AND GHOSTS
        CALL create_my_ghost(vv_mesh,vv_3_LA,vv_3_ifrom)
        n = 3*vv_mesh%dom_np
-       CALL VecCreateGhost(comm_one_d(1), n, & 
+       CALL VecCreateGhost(comm_one_d(1), n, &
             PETSC_DETERMINE, SIZE(vv_3_ifrom), vv_3_ifrom, vx_3, ierr)
        CALL VecGhostGetLocalForm(vx_3, vx_3_ghost, ierr)
        CALL VecDuplicate(vx_3, vb_3_145, ierr)
@@ -291,16 +291,16 @@ CONTAINS
           CALL create_local_petsc_matrix(comm_one_d(1), vv_3_LA,LES_mat(nu_mat), clean=.FALSE.)
           CALL qs_mass_vect_3x3(vv_3_LA, vv_mesh, 1.d0, LES_mat(nu_mat))
 !!$          IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
-!!$             CALL periodic_matrix_petsc(vvz_per%n_bord, vvz_per%list,vvz_per%perlist, & 
+!!$             CALL periodic_matrix_petsc(vvz_per%n_bord, vvz_per%list,vvz_per%perlist, &
 !!$                  LES_mat(nu_mat), vv_3_LA)
 !!$          END IF
           CALL init_solver(inputs%my_par_vv,LES_ksp(nu_mat),LES_mat(nu_mat),comm_one_d(1),&
                solver=inputs%my_par_vv%solver,precond=inputs%my_par_vv%precond)
        END DO
-       
+
        iteration = 0
     END IF !end of once
-   
+
     iteration = iteration + 1
 
     !===Compute Strain rate tensor scalar normal on bdy
@@ -314,7 +314,7 @@ CONTAINS
     !===Computation of rhs at Gauss points for every mode without tensors
     CALL rhs_residual_ns_gauss_3x3_mom(vv_mesh, pp_mesh, list_mode, time-inputs%dt, &
          (momentum-momentum_m2)/(2*inputs%dt), pn_m1, density_m1, rotb_b_m1, rhs_gauss, opt_tempn=tempn)
-    !===End Computation of rhs 
+    !===End Computation of rhs
 
     !===Computation of tensor_m1(=m x u) on gauss points
     DO i = 1, SIZE(list_mode)
@@ -345,14 +345,14 @@ CONTAINS
 !!$          CALL periodic_rhs_petsc(vvz_per%n_bord, vvz_per%list, vvz_per%perlist, vb_3_236, vv_3_LA)
 !!$          CALL periodic_rhs_petsc(vvz_per%n_bord, vvz_per%list, vvz_per%perlist, vb_3_145, vv_3_LA)
 !!$       END IF
-      !===End Assemble vb_3_145, vb_3_236 using rhs_gauss
+       !===End Assemble vb_3_145, vb_3_236 using rhs_gauss
 
 
        !===Solve linear system for momentum equation
        !Solve system 1, ur_c, ut_s, uz_c
        nu_mat  = 1
        CALL solver(LES_ksp(nu_mat),vb_3_145,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
-       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,res_ns(:,1,i))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,res_ns(:,4,i))
@@ -361,12 +361,12 @@ CONTAINS
        !Solve system 2, ur_s, ut_c, uz_s
        nu_mat = 2
        CALL solver(LES_ksp(nu_mat),vb_3_236,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
-       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,res_ns(:,2,i))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,res_ns(:,3,i))
        CALL extract(vx_3_ghost,3,3,vv_3_LA,res_ns(:,6,i))
-       !===End Solve linear system for momentum equation 
+       !===End Solve linear system for momentum equation
     END DO
 
 !!$    IF (MOD(iteration,inputs%freq_en) == 0) THEN
@@ -396,7 +396,7 @@ CONTAINS
     !===End compute un_m1 and res_ns on gauss points
 
     IF (.NOT.inputs%if_LES_in_momentum) THEN
-        res_ns_gauss=0.d0
+       res_ns_gauss=0.d0
     END IF
 
     !===Compute res_mass on gauss points
@@ -453,7 +453,7 @@ CONTAINS
           END DO
        END DO
        !===End compute un_m1 and res_ns on P1 gauss points
-       
+
        IF (.NOT.inputs%if_LES_in_momentum) THEN
           res_ns_P1_gauss=0.d0
        END IF
@@ -509,7 +509,7 @@ CONTAINS
     TYPE(petsc_csr_LA)                                    :: vv_3_LA
     TYPE(mesh_type),                  INTENT(IN)          :: pp_mesh, vv_mesh
     REAL(KIND=8),                     INTENT(IN)          :: time
-    INTEGER,      DIMENSION(:),       INTENT(IN)          :: list_mode   
+    INTEGER,      DIMENSION(:),       INTENT(IN)          :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: momentum, momentum_m1, momentum_m2
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: un_m1
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: pn_m1
@@ -551,7 +551,7 @@ CONTAINS
        !===CREATE PETSC VECTORS AND GHOSTS
        CALL create_my_ghost(vv_mesh,vv_3_LA,vv_3_ifrom)
        n = 3*vv_mesh%dom_np
-       CALL VecCreateGhost(comm_one_d(1), n, & 
+       CALL VecCreateGhost(comm_one_d(1), n, &
             PETSC_DETERMINE, SIZE(vv_3_ifrom), vv_3_ifrom, vx_3, ierr)
        CALL VecGhostGetLocalForm(vx_3, vx_3_ghost, ierr)
        CALL VecDuplicate(vx_3, vb_3_145, ierr)
@@ -570,10 +570,10 @@ CONTAINS
           CALL init_solver(inputs%my_par_vv,LES_ksp(nu_mat),LES_mat(nu_mat),comm_one_d(1),&
                solver=inputs%my_par_vv%solver,precond=inputs%my_par_vv%precond)
        END DO
-       
+
        iteration = 0
     END IF !end of once
-   
+
     iteration = iteration + 1
 
     !===Compute Strain rate tensor
@@ -582,14 +582,14 @@ CONTAINS
     CALL smb_explicit_strain_rate_tensor_bdy(vv_mesh, list_mode, un_m1, visc_grad_vel_m1_scal_n_bdy)
     visc_grad_vel_m1_scal_n_bdy = -1/inputs%Re*visc_grad_vel_m1_scal_n_bdy
     !===End Compute Strain rate tensor
-    
+
     !===Compute tensor scalar normal on bdy
     CALL smb_explicit_tensor_bdy(vv_mesh, list_mode, tensor_m1, tensor_m1_scal_n_bdy)
 
     !===Computation of rhs at Gauss points for every mode without tensors
     CALL rhs_residual_ns_gauss_3x3(vv_mesh, pp_mesh, comm_one_d(2), list_mode, time-inputs%dt, &
          (momentum-momentum_m2)/(2*inputs%dt), pn_m1, -rotb_b_m1, rhs_gauss, opt_tempn=tempn)
-    !===End Computation of rhs 
+    !===End Computation of rhs
 
     !===Computation of tensor_m1(=m x u) on gauss points
     DO i = 1, SIZE(list_mode)
@@ -615,14 +615,14 @@ CONTAINS
        CALL rhs_3x3(vv_mesh, vv_3_LA, mode, rhs_gauss(:,:,i), vb_3_145, vb_3_236,&
             opt_tensor=-tensor_m1_gauss(:,:,:,i)+visc_grad_vel_m1(:,:,:,i), &
             opt_tensor_scaln_bdy=visc_grad_vel_m1_scal_n_bdy(:,:,i)+tensor_m1_scal_n_bdy(:,:,i))
-      !===End Assemble vb_3_145, vb_3_236 using rhs_gauss
+       !===End Assemble vb_3_145, vb_3_236 using rhs_gauss
 
 
        !===Solve linear system for momentum equation
        !Solve system 1, ur_c, ut_s, uz_c
        nu_mat  = 1
        CALL solver(LES_ksp(nu_mat),vb_3_145,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
-       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,res_ns(:,1,i))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,res_ns(:,4,i))
@@ -631,12 +631,12 @@ CONTAINS
        !Solve system 2, ur_s, ut_c, uz_s
        nu_mat = 2
        CALL solver(LES_ksp(nu_mat),vb_3_236,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
-       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,res_ns(:,2,i))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,res_ns(:,3,i))
        CALL extract(vx_3_ghost,3,3,vv_3_LA,res_ns(:,6,i))
-       !===End Solve linear system for momentum equation 
+       !===End Solve linear system for momentum equation
     END DO
 
     !===Compute un_m1 and res_ns on gauss points
@@ -674,19 +674,19 @@ CONTAINS
   END SUBROUTINE compute_entropy_viscosity_mom_no_level_set
 
   SUBROUTINE smb_explicit_grad_vel_LES(mesh, list_mode, vel, V_out)
-    USE Gauss_points     
+    USE Gauss_points
     USE sft_parallele
     USE chaine_caractere
     USE boundary
     USE input_data
     IMPLICIT NONE
     TYPE(mesh_type), TARGET                     :: mesh
-    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode   
+    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: vel
     REAL(KIND=8), DIMENSION(3,mesh%gauss%l_G*mesh%dom_me,6,SIZE(list_mode)), INTENT(OUT) :: V_out
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,6,SIZE(list_mode))                :: grad1_vel, grad2_vel, grad3_vel
     INTEGER,      DIMENSION(mesh%gauss%n_w)                  :: j_loc
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc     
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)                :: vel_loc
     REAL(KIND=8)                                :: ray, hh, hm
     INTEGER                                     :: m, l , i, mode, index, k
@@ -749,20 +749,20 @@ CONTAINS
   END SUBROUTINE smb_explicit_grad_vel_LES
 
   SUBROUTINE smb_explicit_strain_rate_tensor(mesh, list_mode, vel, V_out)
-    USE Gauss_points     
+    USE Gauss_points
     USE sft_parallele
     USE chaine_caractere
     USE boundary
     USE input_data
     IMPLICIT NONE
     TYPE(mesh_type), TARGET                     :: mesh
-    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode   
+    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: vel
     REAL(KIND=8), DIMENSION(3,mesh%gauss%l_G*mesh%dom_me,6,SIZE(list_mode)), INTENT(OUT) :: V_out
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,6,SIZE(list_mode))                :: grad1_vel, grad2_vel, grad3_vel
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,6,SIZE(list_mode))                :: gradT1_vel, gradT2_vel, gradT3_vel
     INTEGER,      DIMENSION(mesh%gauss%n_w)                  :: j_loc
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc     
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)                :: vel_loc
     REAL(KIND=8)                                :: ray
     INTEGER                                     :: m, l , i, mode, index, k
@@ -818,7 +818,7 @@ CONTAINS
     gradT1_vel(:,2,:) = grad1_vel(:,2,:)
     gradT1_vel(:,3,:) = grad2_vel(:,1,:)
     gradT1_vel(:,4,:) = grad2_vel(:,2,:)
-    gradT1_vel(:,5,:) = grad3_vel(:,1,:) 
+    gradT1_vel(:,5,:) = grad3_vel(:,1,:)
     gradT1_vel(:,6,:) = grad3_vel(:,2,:)
     !-----------------GradT u_th on Gauss points-----------------------------------
     gradT2_vel(:,1,:) = grad1_vel(:,3,:)
@@ -843,21 +843,21 @@ CONTAINS
   END SUBROUTINE smb_explicit_strain_rate_tensor
 
   SUBROUTINE smb_explicit_strain_rate_tensor_bdy(mesh, list_mode, vel, V_out)
-    USE Gauss_points     
+    USE Gauss_points
     USE sft_parallele
     USE chaine_caractere
     USE boundary
     USE input_data
     IMPLICIT NONE
     TYPE(mesh_type), TARGET                     :: mesh
-    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode   
+    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: vel
     REAL(KIND=8), DIMENSION(mesh%gauss%l_Gs*mesh%dom_mes,6,SIZE(list_mode)), INTENT(OUT) :: V_out
     REAL(KIND=8), DIMENSION(mesh%gauss%l_Gs*mesh%dom_mes,6,SIZE(list_mode))              :: grad1_vel, grad2_vel, grad3_vel
     REAL(KIND=8), DIMENSION(mesh%gauss%l_Gs*mesh%dom_mes,6,SIZE(list_mode))              :: gradT1_vel, gradT2_vel, gradT3_vel
     INTEGER,      DIMENSION(mesh%gauss%n_ws)                 :: js_loc
     INTEGER,      DIMENSION(mesh%gauss%n_w)                  :: j_loc
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dws_loc     
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dws_loc
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)                :: vel_loc
     REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,6)               :: vels_loc
     REAL(KIND=8)                                :: ray
@@ -920,7 +920,7 @@ CONTAINS
              gradT1_vel(indexs,2,i) = grad1_vel(indexs,2,i)
              gradT1_vel(indexs,3,i) = grad2_vel(indexs,1,i)
              gradT1_vel(indexs,4,i) = grad2_vel(indexs,2,i)
-             gradT1_vel(indexs,5,i) = grad3_vel(indexs,1,i) 
+             gradT1_vel(indexs,5,i) = grad3_vel(indexs,1,i)
              gradT1_vel(indexs,6,i) = grad3_vel(indexs,2,i)
              !-----------------GradT u_th on Gauss points-----------------------------------
              gradT2_vel(indexs,1,i) = grad1_vel(indexs,3,i)
@@ -939,17 +939,17 @@ CONTAINS
 
              !-----------------Grad_sym_u scalar normal-------------------------------------
              V_out(indexs,1,i) = (grad1_vel(indexs,1,i)+gradT1_vel(indexs,1,i))*mesh%gauss%rnorms(1,ls,ms) &
-                               + (grad1_vel(indexs,5,i)+gradT1_vel(indexs,5,i))*mesh%gauss%rnorms(2,ls,ms) 
+                  + (grad1_vel(indexs,5,i)+gradT1_vel(indexs,5,i))*mesh%gauss%rnorms(2,ls,ms)
              V_out(indexs,2,i) = (grad1_vel(indexs,2,i)+gradT1_vel(indexs,2,i))*mesh%gauss%rnorms(1,ls,ms) &
-                               + (grad1_vel(indexs,6,i)+gradT1_vel(indexs,6,i))*mesh%gauss%rnorms(2,ls,ms) 
+                  + (grad1_vel(indexs,6,i)+gradT1_vel(indexs,6,i))*mesh%gauss%rnorms(2,ls,ms)
              V_out(indexs,3,i) = (grad2_vel(indexs,1,i)+gradT2_vel(indexs,1,i))*mesh%gauss%rnorms(1,ls,ms) &
-                               + (grad2_vel(indexs,5,i)+gradT2_vel(indexs,5,i))*mesh%gauss%rnorms(2,ls,ms) 
+                  + (grad2_vel(indexs,5,i)+gradT2_vel(indexs,5,i))*mesh%gauss%rnorms(2,ls,ms)
              V_out(indexs,4,i) = (grad2_vel(indexs,2,i)+gradT2_vel(indexs,2,i))*mesh%gauss%rnorms(1,ls,ms) &
-                               + (grad2_vel(indexs,6,i)+gradT2_vel(indexs,6,i))*mesh%gauss%rnorms(2,ls,ms) 
+                  + (grad2_vel(indexs,6,i)+gradT2_vel(indexs,6,i))*mesh%gauss%rnorms(2,ls,ms)
              V_out(indexs,5,i) = (grad3_vel(indexs,1,i)+gradT3_vel(indexs,1,i))*mesh%gauss%rnorms(1,ls,ms) &
-                               + (grad3_vel(indexs,5,i)+gradT3_vel(indexs,5,i))*mesh%gauss%rnorms(2,ls,ms)
+                  + (grad3_vel(indexs,5,i)+gradT3_vel(indexs,5,i))*mesh%gauss%rnorms(2,ls,ms)
              V_out(indexs,6,i) = (grad3_vel(indexs,2,i)+gradT3_vel(indexs,2,i))*mesh%gauss%rnorms(1,ls,ms) &
-                               + (grad3_vel(indexs,6,i)+gradT3_vel(indexs,6,i))*mesh%gauss%rnorms(2,ls,ms)
+                  + (grad3_vel(indexs,6,i)+gradT3_vel(indexs,6,i))*mesh%gauss%rnorms(2,ls,ms)
           ENDDO !l_Gs
        ENDDO !mes
     END DO !i
@@ -957,7 +957,7 @@ CONTAINS
   END SUBROUTINE smb_explicit_strain_rate_tensor_bdy
 
   SUBROUTINE smb_explicit_strain_rate_tensor_bdy_mom(communicator, mesh, list_mode, visc_dyn, vel, V_out)
-    USE Gauss_points     
+    USE Gauss_points
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -966,7 +966,7 @@ CONTAINS
     USE petsc
     IMPLICIT NONE
     TYPE(mesh_type), TARGET                     :: mesh
-    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode   
+    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: visc_dyn
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: vel
     REAL(KIND=8), DIMENSION(mesh%gauss%l_Gs*mesh%dom_mes,6,SIZE(list_mode)), INTENT(OUT) :: V_out
@@ -976,7 +976,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%l_Gs*mesh%dom_mes,2,SIZE(list_mode))    :: visc_dyn_gauss
     INTEGER,      DIMENSION(mesh%gauss%n_ws)                 :: js_loc
     INTEGER,      DIMENSION(mesh%gauss%n_w)                  :: j_loc
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dws_loc     
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dws_loc
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)                :: vel_loc
     REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,6)               :: vels_loc
     REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,2)               :: visc_dyns_loc
@@ -1012,7 +1012,7 @@ CONTAINS
                 V_bdy(indexs,:,i) =0.d0
                 CYCLE
              END IF
-            
+
              !-----------------Visc_dyn on Gauss points------------------------------------
              visc_dyn_gauss(indexs,1,i) = SUM(visc_dyns_loc(:,1)*mesh%gauss%wws(:,ls))
              visc_dyn_gauss(indexs,2,i) = SUM(visc_dyns_loc(:,2)*mesh%gauss%wws(:,ls))
@@ -1050,7 +1050,7 @@ CONTAINS
              gradT1_vel(indexs,2,i) = grad1_vel(indexs,2,i)
              gradT1_vel(indexs,3,i) = grad2_vel(indexs,1,i)
              gradT1_vel(indexs,4,i) = grad2_vel(indexs,2,i)
-             gradT1_vel(indexs,5,i) = grad3_vel(indexs,1,i) 
+             gradT1_vel(indexs,5,i) = grad3_vel(indexs,1,i)
              gradT1_vel(indexs,6,i) = grad3_vel(indexs,2,i)
              !-----------------GradT u_th on Gauss points-----------------------------------
              gradT2_vel(indexs,1,i) = grad1_vel(indexs,3,i)
@@ -1069,17 +1069,17 @@ CONTAINS
 
              !-----------------Grad_sym_u scalar normal-------------------------------------
              V_bdy(indexs,1,i) = (grad1_vel(indexs,1,i)+gradT1_vel(indexs,1,i))*mesh%gauss%rnorms(1,ls,ms) &
-                               + (grad1_vel(indexs,5,i)+gradT1_vel(indexs,5,i))*mesh%gauss%rnorms(2,ls,ms) 
+                  + (grad1_vel(indexs,5,i)+gradT1_vel(indexs,5,i))*mesh%gauss%rnorms(2,ls,ms)
              V_bdy(indexs,2,i) = (grad1_vel(indexs,2,i)+gradT1_vel(indexs,2,i))*mesh%gauss%rnorms(1,ls,ms) &
-                               + (grad1_vel(indexs,6,i)+gradT1_vel(indexs,6,i))*mesh%gauss%rnorms(2,ls,ms) 
+                  + (grad1_vel(indexs,6,i)+gradT1_vel(indexs,6,i))*mesh%gauss%rnorms(2,ls,ms)
              V_bdy(indexs,3,i) = (grad2_vel(indexs,1,i)+gradT2_vel(indexs,1,i))*mesh%gauss%rnorms(1,ls,ms) &
-                               + (grad2_vel(indexs,5,i)+gradT2_vel(indexs,5,i))*mesh%gauss%rnorms(2,ls,ms) 
+                  + (grad2_vel(indexs,5,i)+gradT2_vel(indexs,5,i))*mesh%gauss%rnorms(2,ls,ms)
              V_bdy(indexs,4,i) = (grad2_vel(indexs,2,i)+gradT2_vel(indexs,2,i))*mesh%gauss%rnorms(1,ls,ms) &
-                               + (grad2_vel(indexs,6,i)+gradT2_vel(indexs,6,i))*mesh%gauss%rnorms(2,ls,ms) 
+                  + (grad2_vel(indexs,6,i)+gradT2_vel(indexs,6,i))*mesh%gauss%rnorms(2,ls,ms)
              V_bdy(indexs,5,i) = (grad3_vel(indexs,1,i)+gradT3_vel(indexs,1,i))*mesh%gauss%rnorms(1,ls,ms) &
-                               + (grad3_vel(indexs,5,i)+gradT3_vel(indexs,5,i))*mesh%gauss%rnorms(2,ls,ms)
+                  + (grad3_vel(indexs,5,i)+gradT3_vel(indexs,5,i))*mesh%gauss%rnorms(2,ls,ms)
              V_bdy(indexs,6,i) = (grad3_vel(indexs,2,i)+gradT3_vel(indexs,2,i))*mesh%gauss%rnorms(1,ls,ms) &
-                               + (grad3_vel(indexs,6,i)+gradT3_vel(indexs,6,i))*mesh%gauss%rnorms(2,ls,ms)
+                  + (grad3_vel(indexs,6,i)+gradT3_vel(indexs,6,i))*mesh%gauss%rnorms(2,ls,ms)
           ENDDO !l_Gs
        ENDDO !mes
     END DO !i
@@ -1094,14 +1094,14 @@ CONTAINS
   END SUBROUTINE smb_explicit_strain_rate_tensor_bdy_mom
 
   SUBROUTINE smb_explicit_tensor_bdy(mesh, list_mode, tensor, V_out)
-    USE Gauss_points     
+    USE Gauss_points
     USE sft_parallele
     USE chaine_caractere
     USE boundary
     USE input_data
     IMPLICIT NONE
     TYPE(mesh_type), TARGET                       :: mesh
-    INTEGER,      DIMENSION(:),     INTENT(IN)    :: list_mode   
+    INTEGER,      DIMENSION(:),     INTENT(IN)    :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:,:), INTENT(IN)  :: tensor
     REAL(KIND=8), DIMENSION(mesh%gauss%l_Gs*mesh%dom_mes,6,SIZE(list_mode)), INTENT(OUT) :: V_out
     INTEGER,      DIMENSION(mesh%gauss%n_ws)                 :: js_loc
@@ -1117,8 +1117,8 @@ CONTAINS
           m = mesh%neighs(ms)
           DO k = 1, 6
              DO n = 1, 3
-             tensors_loc(n,:,k) = tensor(n,js_loc,k,i)
-          END DO
+                tensors_loc(n,:,k) = tensor(n,js_loc,k,i)
+             END DO
           END DO
           DO ls = 1, mesh%gauss%l_Gs
              indexs = indexs + 1
@@ -1133,17 +1133,17 @@ CONTAINS
              END IF
              !-----------------Tensor scalar normal on gauss points------------------------
              V_out(indexs,1,i) = SUM(tensors_loc(1,:,1)*mesh%gauss%wws(:,ls))*mesh%gauss%rnorms(1,ls,ms) &
-                               + SUM(tensors_loc(1,:,5)*mesh%gauss%wws(:,ls))*mesh%gauss%rnorms(2,ls,ms) 
+                  + SUM(tensors_loc(1,:,5)*mesh%gauss%wws(:,ls))*mesh%gauss%rnorms(2,ls,ms)
              V_out(indexs,2,i) = SUM(tensors_loc(1,:,2)*mesh%gauss%wws(:,ls))*mesh%gauss%rnorms(1,ls,ms) &
-                               + SUM(tensors_loc(1,:,6)*mesh%gauss%wws(:,ls))*mesh%gauss%rnorms(2,ls,ms) 
+                  + SUM(tensors_loc(1,:,6)*mesh%gauss%wws(:,ls))*mesh%gauss%rnorms(2,ls,ms)
              V_out(indexs,3,i) = SUM(tensors_loc(2,:,1)*mesh%gauss%wws(:,ls))*mesh%gauss%rnorms(1,ls,ms) &
-                               + SUM(tensors_loc(2,:,5)*mesh%gauss%wws(:,ls))*mesh%gauss%rnorms(2,ls,ms) 
+                  + SUM(tensors_loc(2,:,5)*mesh%gauss%wws(:,ls))*mesh%gauss%rnorms(2,ls,ms)
              V_out(indexs,4,i) = SUM(tensors_loc(2,:,2)*mesh%gauss%wws(:,ls))*mesh%gauss%rnorms(1,ls,ms) &
-                               + SUM(tensors_loc(2,:,6)*mesh%gauss%wws(:,ls))*mesh%gauss%rnorms(2,ls,ms) 
+                  + SUM(tensors_loc(2,:,6)*mesh%gauss%wws(:,ls))*mesh%gauss%rnorms(2,ls,ms)
              V_out(indexs,5,i) = SUM(tensors_loc(3,:,1)*mesh%gauss%wws(:,ls))*mesh%gauss%rnorms(1,ls,ms) &
-                               + SUM(tensors_loc(3,:,5)*mesh%gauss%wws(:,ls))*mesh%gauss%rnorms(2,ls,ms)
+                  + SUM(tensors_loc(3,:,5)*mesh%gauss%wws(:,ls))*mesh%gauss%rnorms(2,ls,ms)
              V_out(indexs,6,i) = SUM(tensors_loc(3,:,2)*mesh%gauss%wws(:,ls))*mesh%gauss%rnorms(1,ls,ms) &
-                               + SUM(tensors_loc(3,:,6)*mesh%gauss%wws(:,ls))*mesh%gauss%rnorms(2,ls,ms)
+                  + SUM(tensors_loc(3,:,6)*mesh%gauss%wws(:,ls))*mesh%gauss%rnorms(2,ls,ms)
           ENDDO !l_Gs
        ENDDO !mes
     END DO !i
@@ -1151,21 +1151,21 @@ CONTAINS
   END SUBROUTINE smb_explicit_tensor_bdy
 
   SUBROUTINE compute_res_mass_gauss(mesh, list_mode, density_m2, density, momentum_m1, c_out)
-    USE Gauss_points     
+    USE Gauss_points
     USE sft_parallele
     USE chaine_caractere
     USE boundary
     USE input_data
     IMPLICIT NONE
     TYPE(mesh_type), TARGET                     :: mesh
-    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode   
+    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: density_m2, density
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: momentum_m1
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,2,SIZE(list_mode)), INTENT(OUT) :: c_out
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%me,2,SIZE(list_mode)) :: Div
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%me,2,SIZE(list_mode)) :: dens_m2_gauss, dens_gauss
     INTEGER,      DIMENSION(mesh%gauss%n_w)                  :: j_loc
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc     
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)                :: mom_loc
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,2)                :: dens_m2_loc, dens_loc
     REAL(KIND=8)                                :: ray
@@ -1223,7 +1223,7 @@ CONTAINS
     INTEGER                                  ::  m, l , i , ni, code
     REAL(KIND=8)                             :: ray
     MPI_Comm                                 :: communicator
-    vol_loc = 0.d0   
+    vol_loc = 0.d0
     DO m = 1, mesh%dom_me
        j_loc = mesh%jj(:,m)
        DO l = 1, mesh%gauss%l_G

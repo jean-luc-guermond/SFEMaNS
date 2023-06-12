@@ -65,7 +65,7 @@ MODULE my_data_module
      REAL(KIND=8), DIMENSION(3)              :: stab
      TYPE(solver_param)                      :: my_par_H_p_phi
      INTEGER                                 :: phi_nb_dirichlet_sides
-     INTEGER, DIMENSION(:), POINTER          :: phi_list_dirichlet_sides 
+     INTEGER, DIMENSION(:), POINTER          :: phi_list_dirichlet_sides
      LOGICAL                                 :: if_quasi_static_approx
      LOGICAL                                 :: if_steady_current_fhd ! MODIFICATION: for fhd, possibility of computing H only once in the case of steady current
      !===Data for temperature========================================================
@@ -75,7 +75,7 @@ MODULE my_data_module
      REAL(KIND=8)                            :: gravity_coefficient
      REAL(KIND=8)                            :: mag_force_coefficient ! MODIFICATION: coefficient for magnetic force in ferrofluids
      REAL(KIND=8), DIMENSION(:), POINTER     :: temperature_diffusivity
-     REAL(KIND=8), DIMENSION(:), POINTER     :: density, heat_capacity, vol_heat_capacity ! MODIFICATION: density and heat capacity found in the litterature more often than vol heat capacity    
+     REAL(KIND=8), DIMENSION(:), POINTER     :: density, heat_capacity, vol_heat_capacity ! MODIFICATION: density and heat capacity found in the litterature more often than vol heat capacity
      TYPE(solver_param)                      :: my_par_temperature
      INTEGER                                 :: temperature_nb_dirichlet_sides
      INTEGER, DIMENSION(:), POINTER          :: temperature_list_dirichlet_sides
@@ -83,7 +83,7 @@ MODULE my_data_module
      INTEGER, DIMENSION(:), POINTER          :: temperature_list_robin_sides
      REAL(KIND=8), DIMENSION(:), POINTER     :: convection_coeff ! MODIFICATION: Robin
      REAL(KIND=8), DIMENSION(:), POINTER     :: exterior_temperature ! MODIFICATION: Robin
-     INTEGER                                 :: nb_dom_temp 
+     INTEGER                                 :: nb_dom_temp
      INTEGER, DIMENSION(:), POINTER          :: list_dom_temp
      INTEGER                                 :: nb_inter_v_T
      INTEGER, DIMENSION(:), POINTER          :: list_inter_v_T
@@ -139,7 +139,7 @@ MODULE my_data_module
      LOGICAL                                 :: verbose_timing, verbose_divergence, verbose_CFL
      LOGICAL                                 :: if_just_processing
      LOGICAL                                 :: if_xml
-     CONTAINS
+   CONTAINS
      PROCEDURE, PUBLIC                       :: init
   END TYPE my_data
 CONTAINS
@@ -189,7 +189,7 @@ CONTAINS
     a%is_mesh_symmetric=.FALSE.
     a%if_zero_out_modes=.FALSE.
     a%verbose_timing =.FALSE.
-    a%verbose_divergence=.FALSE. 
+    a%verbose_divergence=.FALSE.
     a%verbose_CFL=.FALSE.
     a%if_just_processing=.FALSE.
     a%my_par_vv%verbose=.FALSE.
@@ -200,16 +200,16 @@ CONTAINS
     a%my_par_level_set%verbose=.FALSE.
     !===Reals
     a%LES_coeff1=0.d0
-    a%LES_coeff2=0.d0 
-    a%LES_coeff3=0.d0 
+    a%LES_coeff2=0.d0
+    a%LES_coeff3=0.d0
     a%LES_coeff4=0.d0
     a%LES_coeff1_mom=0.d0
     a%taux_precession=0.d0
     a%angle_s_pi=0.d0
     a%div_stab_in_ns=0.d0
     a%stab=0.d0
-    a%gravity_coefficient=0.d0 
-    a%mag_force_coefficient=0.d0 
+    a%gravity_coefficient=0.d0
+    a%mag_force_coefficient=0.d0
     a%level_set_cmax=0.d0
     a%level_set_comp_factor=0.d0
     a%level_set_tanh_coeff_reconstruction=0.d0
@@ -218,7 +218,7 @@ CONTAINS
     a%stab_bdy_ns=0.d0
     a%h_min_distance=0.d0
     a%multiplier_for_h_min_distance=0.d0
-    a%taylor_lambda = 1.d0 
+    a%taylor_lambda = 1.d0
     a%penal_coeff_art_comp=1.d0
     !===Integers
     a%vv_nb_dirichlet=0
@@ -236,8 +236,8 @@ MODULE input_data
   IMPLICIT NONE
   PUBLIC :: read_my_data
   TYPE(my_data), PUBLIC  :: inputs
-  PRIVATE 
-  
+  PRIVATE
+
 CONTAINS
 
   SUBROUTINE read_my_data(data_fichier)
@@ -258,7 +258,7 @@ CONTAINS
     !===Location of mesh============================================================
     CALL read_until(21, '===Is mesh file formatted (true/false)?')
     READ(21,*) inputs%iformatted
-    CALL read_until(21, '===Directory and name of mesh file') 
+    CALL read_until(21, '===Directory and name of mesh file')
     READ(21,*) inputs%directory, inputs%file_name
 
     !===Processor distribution======================================================
@@ -295,7 +295,7 @@ CONTAINS
     !===Restarts====================================================================
     CALL read_until(21, '===Restart on velocity (true/false)')
     READ (21 ,*) inputs%irestart_u
-    IF (inputs%type_pb=='mhd' .OR. inputs%type_pb=='mxw' .OR. inputs%type_pb=='fhd') THEN 
+    IF (inputs%type_pb=='mhd' .OR. inputs%type_pb=='mxw' .OR. inputs%type_pb=='fhd') THEN
        CALL read_until(21, '===Restart on magnetic field (true/false)')
        READ (21 ,*) inputs%irestart_h
     ELSE
@@ -372,10 +372,10 @@ CONTAINS
           IF (test) THEN
              READ(21,*) inputs%penal_coeff_art_comp
           ELSE
-              inputs%penal_coeff_art_comp=1.d0
+             inputs%penal_coeff_art_comp=1.d0
           END IF
        END IF
-       
+
        !==========Navier Stokes with u or m===============!
        CALL find_string(21, '===Solve Navier-Stokes with u (true) or m (false)?', test)
        IF (test) THEN
@@ -411,7 +411,7 @@ CONTAINS
              inputs%if_moment_bdf2=.FALSE.
           END IF
           IF (inputs%if_moment_bdf2) THEN
-                inputs%if_level_bdf2=.TRUE.
+             inputs%if_level_bdf2=.TRUE.
           ELSE
              CALL find_string(21, '===Do we solve level set with bdf2 (true/false)?', test)
              IF (test) THEN
@@ -437,13 +437,13 @@ CONTAINS
        END IF
 
        CALL read_until(21, '===Number of subdomains in Navier-Stokes mesh')
-       READ(21,*) inputs%nb_dom_ns 
+       READ(21,*) inputs%nb_dom_ns
        ALLOCATE(inputs%list_dom_ns(inputs%nb_dom_ns))
        CALL read_until(21, '===List of subdomains for Navier-Stokes mesh')
        READ(21,*) inputs%list_dom_ns
 
        !==========Dirichlet BCs for velocity==============!
-       DO k = 1, 3 
+       DO k = 1, 3
           CALL find_string(21, '===How many boundary pieces for Dirichlet BCs on '//TRIM(vel_component(k))//'?', test)
           IF (test) THEN
              CALL error_petsc( '===How many boundary pieces for Dirichlet BCs on '//TRIM(vel_component(k))//'? is disabled')
@@ -503,7 +503,7 @@ CONTAINS
        END IF
 
        !===Stress boundary conditions=====================! !Disabled
-       CALL find_string(21, '===Stress boundary conditions? (true/false)', test) 
+       CALL find_string(21, '===Stress boundary conditions? (true/false)', test)
        IF (test) THEN
           CALL error_petsc('===Stress boundary conditions Does not work any more')
        END IF
@@ -656,7 +656,7 @@ CONTAINS
              CALL error_petsc('===Coefficients for LES is disabled')
           END IF
           !===LES_coeff4 is fixed and coeff3 is disabled
-          inputs%LES_coeff4 = 0.125d0  
+          inputs%LES_coeff4 = 0.125d0
           inputs%LES_coeff3 = 0.d0
           !===LES_coeff2 in [0.15,1.0] for viscosity entropy
           !===LES_coeff2 is equal to 1.d10 for test with first order viscosity
@@ -914,8 +914,8 @@ CONTAINS
        ALLOCATE(inputs%temperature_diffusivity(inputs%nb_dom_temp)) ! In both cases, temperature_diffusivity is used, it contains the conductivities in 1) and the diffusivities in 2)
        CALL find_string(21, '===Density (1:nb_dom_temp)', test)
        IF (test) THEN ! Case 1)
-          ALLOCATE(inputs%density(inputs%nb_dom_temp)) 
-          ALLOCATE(inputs%heat_capacity(inputs%nb_dom_temp)) 
+          ALLOCATE(inputs%density(inputs%nb_dom_temp))
+          ALLOCATE(inputs%heat_capacity(inputs%nb_dom_temp))
           READ(21,*) inputs%density
           CALL read_until(21, '===Heat capacity (1:nb_dom_temp)')
           READ(21,*) inputs%heat_capacity
@@ -923,7 +923,7 @@ CONTAINS
           DEALLOCATE (inputs%density)
           DEALLOCATE (inputs%heat_capacity)
           CALL read_until(21, '===Thermal conductivity (1:nb_dom_temp)')
-          READ(21,*) inputs%temperature_diffusivity        
+          READ(21,*) inputs%temperature_diffusivity
        ELSE ! Case 1) bis
           CALL find_string(21, '===Volumetric heat capacity (1:nb_dom_temp)', test)
           IF (test) THEN
@@ -1153,7 +1153,7 @@ CONTAINS
        ELSE
           inputs%if_arpack = .FALSE.
        END IF
-       IF (inputs%if_arpack)THEN 
+       IF (inputs%if_arpack)THEN
           CALL read_until(21, '===Number of eigenvalues to compute')
           READ (21,*) inputs%nb_eigenvalues
           CALL read_until(21, '===Maximum number of Arpack iterations')
@@ -1219,7 +1219,7 @@ CONTAINS
 
 
     !==========Modes to be zeroed out==================!
-    IF (inputs%type_pb=='mhd') THEN 
+    IF (inputs%type_pb=='mhd') THEN
        CALL find_string(21, '===Should some modes be zeroed out?', test)
        IF (test) THEN
           READ (21,*) inputs%if_zero_out_modes
@@ -1314,8 +1314,8 @@ CONTAINS
 
     !===No penalty with momentum formulation========================================
     IF (.NOT.inputs%if_navier_stokes_with_u .AND. inputs%if_ns_penalty) THEN
-        CALL error_petsc('BUG in read_my_data: No penalty with momentum formulation')
-     END IF
+       CALL error_petsc('BUG in read_my_data: No penalty with momentum formulation')
+    END IF
 
     !===Dirichlet BCs for temperature for Navier-Stokes=============================
     IF (inputs%if_temperature.AND. inputs%my_periodic%nb_periodic_pairs>0) THEN
@@ -1415,7 +1415,7 @@ CONTAINS
     END IF
 
     !===Irestart for postprocessing=================================================
-    IF (inputs%if_just_processing) THEN   
+    IF (inputs%if_just_processing) THEN
        inputs%irestart_u = .FALSE.
        inputs%irestart_h = .FALSE.
        IF (inputs%type_pb/='mxw') inputs%irestart_u = .TRUE.
@@ -1448,4 +1448,3 @@ CONTAINS
   END FUNCTION check_coherence_with_periodic_bcs
 
 END MODULE input_data
-

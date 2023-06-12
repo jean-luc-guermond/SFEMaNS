@@ -4,7 +4,7 @@
 MODULE Dir_nodes_petsc
 
 CONTAINS
-!-------------------------------------------------------------------------------
+  !-------------------------------------------------------------------------------
   SUBROUTINE dir_axis_nodes_parallel(mesh, js_d)
     USE def_type_mesh
     IMPLICIT NONE
@@ -96,7 +96,7 @@ CONTAINS
     END DO
     DEALLOCATE(virgin)
   END SUBROUTINE dirichlet_nodes_parallel
-  
+
   SUBROUTINE dirichlet_nodes_local(mesh, list_dirichlet_sides, js_d)
     USE def_type_mesh
     USE my_util
@@ -192,7 +192,7 @@ CONTAINS
     USE def_type_mesh
     IMPLICIT NONE
     TYPE(mesh_type),                  INTENT(IN) :: vv_mesh
-    INTEGER,            DIMENSION(:), INTENT(IN) :: list_mode 
+    INTEGER,            DIMENSION(:), INTENT(IN) :: list_mode
     TYPE(petsc_csr_LA),               INTENT(IN) :: vv_3_LA
     TYPE(dyn_int_line), DIMENSION(3), INTENT(IN) :: vv_list_dirichlet_sides
     TYPE(dyn_int_line), DIMENSION(:), POINTER    :: vv_mode_global_js_D
@@ -217,13 +217,13 @@ CONTAINS
           nalloc = n123 + 2*nx
        ELSE IF (list_mode(i)==1) THEN
           nalloc = n123 + nx
-       ELSE 
+       ELSE
           nalloc = n123 + 3*nx
        END IF
        ALLOCATE(vv_mode_global_js_D(i)%DIL(nalloc))
        vv_mode_global_js_D(i)%DIL(1:n1)                  = vv_3_LA%loc_to_glob(1,vv_js_D(1)%DIL)
        vv_mode_global_js_D(i)%DIL(n1+1:n1+n2)            = vv_3_LA%loc_to_glob(2,vv_js_D(2)%DIL)
-       vv_mode_global_js_D(i)%DIL(n1+n2+1:n123)          = vv_3_LA%loc_to_glob(3,vv_js_D(3)%DIL) 
+       vv_mode_global_js_D(i)%DIL(n1+n2+1:n123)          = vv_3_LA%loc_to_glob(3,vv_js_D(3)%DIL)
 
        IF (list_mode(i)==0 .AND. nx>0) THEN
           vv_mode_global_js_D(i)%DIL(n123+1:n123+nx)     = vv_3_LA%loc_to_glob(1,vv_js_axis_D)
@@ -243,7 +243,7 @@ CONTAINS
     USE def_type_mesh
     IMPLICIT NONE
     TYPE(mesh_type),                  INTENT(IN) :: vv_mesh
-    INTEGER,            DIMENSION(:), INTENT(IN) :: list_mode 
+    INTEGER,            DIMENSION(:), INTENT(IN) :: list_mode
     TYPE(petsc_csr_LA),               INTENT(IN) :: vv_3_LA
     TYPE(dyn_int_line), DIMENSION(:), POINTER    :: vv_mode_global_js_D
     INTEGER,            DIMENSION(:), POINTER    :: vv_js_axis_D
@@ -258,7 +258,7 @@ CONTAINS
           nalloc = 2*nx
        ELSE IF (list_mode(i)==1) THEN
           nalloc = nx
-       ELSE 
+       ELSE
           nalloc = 3*nx
        END IF
        ALLOCATE(vv_mode_global_js_D(i)%DIL(nalloc))
@@ -282,7 +282,7 @@ CONTAINS
     USE def_type_mesh
     IMPLICIT NONE
     TYPE(mesh_type),                  INTENT(IN) :: pp_mesh
-    INTEGER,            DIMENSION(:), INTENT(IN) :: list_mode 
+    INTEGER,            DIMENSION(:), INTENT(IN) :: list_mode
     TYPE(petsc_csr_LA),               INTENT(IN) :: pp_1_LA
     TYPE(dyn_int_line), DIMENSION(:), POINTER    :: pp_mode_global_js_D
     INTEGER,            DIMENSION(:), INTENT(IN) :: pp_js_D
@@ -316,7 +316,7 @@ CONTAINS
     USE def_type_mesh
     IMPLICIT NONE
     TYPE(mesh_type),                  INTENT(IN) :: pp_mesh
-    INTEGER,            DIMENSION(:), INTENT(IN) :: list_mode 
+    INTEGER,            DIMENSION(:), INTENT(IN) :: list_mode
     TYPE(petsc_csr_LA),               INTENT(IN) :: pp_1_LA
     TYPE(dyn_int_line), DIMENSION(:), POINTER    :: pp_mode_global_js_D
     INTEGER,            DIMENSION(:), POINTER    :: pp_js_axis_D

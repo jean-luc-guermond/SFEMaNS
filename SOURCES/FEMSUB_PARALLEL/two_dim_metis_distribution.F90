@@ -1,14 +1,14 @@
 MODULE metis_reorder_elements
-!#include "petsc/finclude/petsc.h"
-    USE petsc
-PUBLIC :: reorder_mesh, free_mesh_after
-PRIVATE
-    REAL(KIND=8) :: epsilon = 1.d-10
+  !#include "petsc/finclude/petsc.h"
+  USE petsc
+  PUBLIC :: reorder_mesh, free_mesh_after
+  PRIVATE
+  REAL(KIND=8) :: epsilon = 1.d-10
 !!$ Dummy for metis...
   INTEGER      :: METIS_NOPTIONS=40, METIS_OPTION_NUMBERING=18
 !!$ Dummy for metis...
 CONTAINS
-    SUBROUTINE reorder_mesh(communicator,nb_proc,mesh,mesh_loc,list_of_interfaces)
+  SUBROUTINE reorder_mesh(communicator,nb_proc,mesh,mesh_loc,list_of_interfaces)
     USE def_type_mesh
     USE my_util
     USE sub_plot
@@ -36,7 +36,7 @@ CONTAINS
     REAL(KIND=4), DIMENSION(:), ALLOCATABLE  :: tpwgts !(JLG, Feb 20, 2019) Up from petsc.3.8.4,
     REAL(KIND=4), DIMENSION(1)               :: ubvec  !petsc peoples changed metis types
     INTEGER, DIMENSION(METIS_NOPTIONS)       :: metis_opt
- 
+
 #include "petsc/finclude/petsc.h"
     PetscErrorCode :: ierr
     PetscMPIInt    :: rank , nb_proc
@@ -52,7 +52,7 @@ CONTAINS
        RETURN
     END IF
 
-   ! Create the connectivity array based on neigh
+    ! Create the connectivity array based on neigh
     nb_neigh = SIZE(mesh%neigh,1)
     xind(1) = 1
     DO m = 1, mesh%me
@@ -92,15 +92,15 @@ CONTAINS
     ubvec   = 1.01
     CALL METIS_PartGraphRecursive(mesh%me, ncon, xind(1:), xadj(1:), vwgt(1:), vsize(1:), adjwgt(1:), &
          nb_proc, tpwgts(1:), ubvec(1:), metis_opt(1:), edge, part(1:))
-     IF (rank==0) THEN
+    IF (rank==0) THEN
        CALL plot_const_p1_label(mesh%jj, mesh%rr, 1.d0*part, 'dd.plt')
     END IF
 
     ! Count elements on processors
     ALLOCATE(nblmt_per_proc(nb_proc),start(nb_proc),displ(nb_proc))
-    nblmt_per_proc = 0 
+    nblmt_per_proc = 0
     DO m = 1, mesh%me
-       nblmt_per_proc(part(m)) = nblmt_per_proc(part(m)) + 1 
+       nblmt_per_proc(part(m)) = nblmt_per_proc(part(m)) + 1
     END DO
     start(1) = 0
     DO n = 2, nb_proc
@@ -160,7 +160,7 @@ CONTAINS
              virgins(ms) = .FALSE.
              virgins(msop) = .FALSE.
              IF (proc /= rank+1) CYCLE !==ms and msop do not touch the current proc
-             news = news + 1 
+             news = news + 1
              inter_news(1,news)=ms
              inter_news(2,news)=msop
           END DO
@@ -180,8 +180,8 @@ CONTAINS
     DO m = 1, mesh%me
        DO n = 1, SIZE(mesh%jj,1)
           j = mesh%jj(n,m)
-          IF (.NOT.virgin(j)) CYCLE 
-          new_dof = new_dof + 1 
+          IF (.NOT.virgin(j)) CYCLE
+          new_dof = new_dof + 1
           virgin(j) = .FALSE.
           old_j_to_new(j) = new_dof
        END DO
@@ -193,9 +193,9 @@ CONTAINS
     DEALLOCATE(inter)
 
     IF (rank == 0) THEN
-      np_loc(1) = 1
+       np_loc(1) = 1
     ELSE
-      np_loc(1) = MAXVAL(mesh%jj(:,displ(rank)+1:displ(rank)+nblmt_per_proc(rank))) + 1
+       np_loc(1) = MAXVAL(mesh%jj(:,displ(rank)+1:displ(rank)+nblmt_per_proc(rank))) + 1
     END IF
     np_loc(2) = MAXVAL(mesh%jj(:,me_loc(1):me_loc(2)))
     ! End re-order jj
@@ -223,7 +223,7 @@ CONTAINS
     DEALLOCATE(inter)
     ! End re-order neigh
 
-    ! Re-order i_d   
+    ! Re-order i_d
     DEALLOCATE(xadj); ALLOCATE(xadj(mesh%me))
     xadj(old_m_to_new) = mesh%i_d
     mesh%i_d=xadj
@@ -289,7 +289,7 @@ CONTAINS
     TYPE(mesh_type)                          :: mesh, mesh_loc
     INTEGER, DIMENSION(2),   INTENT(IN)      :: me_loc, mes_loc, np_loc
     INTEGER, DIMENSION(:,:), INTENT(IN), OPTIONAL      :: inter_news
-    INTEGER, OPTIONAL                        :: news 
+    INTEGER, OPTIONAL                        :: news
     INTEGER, DIMENSION(mesh%me)              :: m_glob_to_loc,m_loc_to_glob
     INTEGER, DIMENSION(mesh%np)              :: glob_to_loc,loc_to_glob
     LOGICAL, DIMENSION(mesh%np)              :: virgin
@@ -332,7 +332,7 @@ CONTAINS
     !==End test if one proc only
 
     IF (.NOT.PRESENT(news) .OR. .NOT.PRESENT( inter_news)) THEN
-       CALL error_Petsc('BUG in create_local_mesh .NOT.present(news) .OR. .NOT.present( inter_news)') 
+       CALL error_Petsc('BUG in create_local_mesh .NOT.present(news) .OR. .NOT.present( inter_news)')
     END IF
 
     !==Create the new mesh
@@ -345,7 +345,7 @@ CONTAINS
     mesh_loc%dom_np = dom_np
     mesh_loc%dom_mes = dom_mes
     CALL MPI_ALLREDUCE(dom_np, dom_np_glob, 1, MPI_INTEGER, &
-            MPI_MIN, PETSC_COMM_WORLD, ierr)
+         MPI_MIN, PETSC_COMM_WORLD, ierr)
     IF (dom_np_glob.LE.0) THEN
        CALL error_petsc('Pb in create_local_mesh, not enough cells per processors')
     END IF
@@ -382,7 +382,7 @@ CONTAINS
           END IF
        END DO
        m_loc_to_glob(m-me_loc(1)+1) = m
-       m_glob_to_loc(m) = m-me_loc(1)+1 
+       m_glob_to_loc(m) = m-me_loc(1)+1
     END DO
 
     DO n = 1, nw
@@ -415,7 +415,7 @@ CONTAINS
     END DO
     !==End re-order jj
 
-    !==Create mesh%loc_to_glob    
+    !==Create mesh%loc_to_glob
     IF (MAXVAL(mesh_loc%jj)/=dof) THEN
        CALL error_Petsc('BUG in create_local_mesh, mesh_loc%jj)/=dof')
     END IF
@@ -440,9 +440,9 @@ CONTAINS
     DO m = 1, mesh_loc%me
        DO n = 1, nwc
           mop = mesh%neigh(n,m_loc_to_glob(m))
-          IF (mop==0) THEN  
+          IF (mop==0) THEN
              mesh_loc%neigh(n,m) = 0
-          !ELSE IF(mop<minf .OR. mop>msup) THEN 
+             !ELSE IF(mop<minf .OR. mop>msup) THEN
           ELSE IF (not_my_cells(mop)) THEN !JLG Aug 18 2015
              mesh_loc%neigh(n,m) = -1 !JLG Aug 13 2015
           ELSE
@@ -492,7 +492,7 @@ CONTAINS
     DEALLOCATE(mesh%i_d)
 
     NULLIFY(mesh%loc_to_glob)
-    NULLIFY(mesh%disp) 
+    NULLIFY(mesh%disp)
     NULLIFY(mesh%domnp)
     NULLIFY(mesh%j_s)
 
@@ -505,7 +505,7 @@ CONTAINS
     mesh%dom_me = 0
     mesh%dom_np = 0
     mesh%dom_mes = 0
-    mesh%me = 0 
+    mesh%me = 0
     mesh%mes = 0
     mesh%np = 0
     mesh%nps = 0

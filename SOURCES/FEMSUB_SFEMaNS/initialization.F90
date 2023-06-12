@@ -16,7 +16,7 @@ MODULE initialization
   IMPLICIT NONE
   PUBLIC:: initial, save_run, run_SFEMaNS
   PUBLIC:: prodmat_maxwell_int_by_parts
-  PRIVATE 
+  PRIVATE
 
   !Logicals for equations-----------------------------------------------------
   LOGICAL                                         :: if_momentum, if_mass, if_induction, if_energy
@@ -26,7 +26,7 @@ MODULE initialization
   TYPE(petsc_csr_LA)                              :: vv_1_LA, pp_1_LA
   TYPE(petsc_csr_LA)                              :: vv_3_LA   ! for stress bc
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:)  :: un, un_m1
-! CN-HF 16/01/2020
+  ! CN-HF 16/01/2020
   TYPE(dyn_real_array_three), TARGET, ALLOCATABLE, DIMENSION(:)   :: der_un
   ! (noeuds,type,mode) composante du champ de vitesse a deux instants sur vv_mesh
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:)  :: pn, pn_m1
@@ -49,7 +49,7 @@ MODULE initialization
   TYPE(mesh_type), TARGET                              :: temp_mesh
   TYPE(petsc_csr_LA)                                   :: temp_1_LA
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:)  :: tempn, tempn_m1
-  REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:)      :: vol_heat_capacity_field  
+  REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:)      :: vol_heat_capacity_field
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:)      :: temperature_diffusivity_field
   !---------------------------------------------------------------------------
 
@@ -58,7 +58,7 @@ MODULE initialization
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:) :: Bn, Bn1, Bext
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:)     :: sigma_field, mu_H_field
   TYPE(mesh_type), TARGET                             :: H_mesh, phi_mesh, pmag_mesh
-  TYPE(petsc_csr_LA)                                  :: LA_H, LA_pmag, LA_phi, LA_mhd   
+  TYPE(petsc_csr_LA)                                  :: LA_H, LA_pmag, LA_phi, LA_mhd
   TYPE(interface_type), TARGET                        :: interface_H_mu, interface_H_phi
   !---------------------------------------------------------------------------
 
@@ -106,12 +106,12 @@ MODULE initialization
   !---------------------------------------------------------------------------
 
   !-------------END OF DECLARATIONS------------------------------------------
-CONTAINS 
+CONTAINS
   !---------------------------------------------------------------------------
 
   !---------------------------------------------------------------------------
   SUBROUTINE initial(vv_mesh_out, pp_mesh_out, H_mesh_out, phi_mesh_out, temp_mesh_out, &
-       interface_H_phi_out, interface_H_mu_out, list_mode_out, & 
+       interface_H_phi_out, interface_H_mu_out, list_mode_out, &
        un_out, pn_out, Hn_out, Bn_out, phin_out, v_to_Max_out, &
        vol_heat_capacity_field_out, temperature_diffusivity_field_out, &
        mu_H_field_out, sigma_field_out, &
@@ -139,7 +139,7 @@ CONTAINS
 
     !===Initialize meshes for vtu post processing
     CALL sfemans_initialize_postprocessing(comm_one_d, vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, &
-         list_mode, inputs%number_of_planes_in_real_space) 
+         list_mode, inputs%number_of_planes_in_real_space)
 
     vv_mesh_out => vv_mesh
     pp_mesh_out => pp_mesh
@@ -159,7 +159,7 @@ CONTAINS
     Bn_out   => Bn
     phin_out => phin
     v_to_Max_out => v_to_Max
-    vol_heat_capacity_field_out => vol_heat_capacity_field   
+    vol_heat_capacity_field_out => vol_heat_capacity_field
     temperature_diffusivity_field_out => temperature_diffusivity_field
     mu_H_field_out => mu_H_field
     sigma_field_out => sigma_field
@@ -176,7 +176,7 @@ CONTAINS
     USE subroutine_mass
     USE subroutine_temperature
     USE update_navier_stokes
-    USE update_maxwell 
+    USE update_maxwell
     USE update_taylor_navier_stokes
     USE input_data
     IMPLICIT NONE
@@ -215,12 +215,12 @@ CONTAINS
              CALL projection_mag_field(temp_mesh, H_to_NS, jj_v_to_temp, .FALSE., pdt_H_to_energy)
           END IF
        END IF
-       CALL three_level_temperature(comm_one_d_temp, time, temp_1_LA, inputs%dt, list_mode, & 
+       CALL three_level_temperature(comm_one_d_temp, time, temp_1_LA, inputs%dt, list_mode, &
             temp_mesh, tempn_m1, tempn, v_to_energy, H_to_energy, pdt_H_to_energy, &
-            vol_heat_capacity_field, temperature_diffusivity_field, & 
+            vol_heat_capacity_field, temperature_diffusivity_field, &
             inputs%my_par_temperature, inputs%temperature_list_dirichlet_sides, &
             inputs%temperature_list_robin_sides, inputs%convection_coeff, &
-            inputs%exterior_temperature, temp_per) !===MODIFICATION: robin 
+            inputs%exterior_temperature, temp_per) !===MODIFICATION: robin
     END IF
 
     IF (if_momentum) THEN
@@ -236,10 +236,10 @@ CONTAINS
        IF (inputs%if_navier_stokes_with_taylor) THEN
           CALL navier_stokes_taylor(comm_one_d_ns, time, vv_3_LA, pp_1_LA, &
                list_mode, pp_mesh, vv_mesh, pn, der_pn, un, der_un, vvz_per, pp_per)
-          
+
        ELSE
           CALL navier_stokes_decouple(comm_one_d_ns,time, vv_3_LA, pp_1_LA, &
-               list_mode, pp_mesh, vv_mesh, incpn_m1, incpn, & 
+               list_mode, pp_mesh, vv_mesh, incpn_m1, incpn, &
                pn_m1, pn, un_m1, un, vvz_per, pp_per, H_to_NS, B_to_NS, &
                density_m2, density_m1, density, visco_dyn_m1, T_to_NS, level_set_m1, level_set, &
                visc_entro_level)
@@ -269,13 +269,13 @@ CONTAINS
           CALL maxwell_decouple(comm_one_d, H_mesh, pmag_mesh, phi_mesh, &
                interface_H_phi, interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, v_to_Max, &
                inputs%stab, sigma_field, R_fourier, index_fourier, mu_H_field, inputs%mu_phi, &
-               time, inputs%dt, inputs%Rem, list_mode, H_phi_per, LA_H, LA_pmag, LA_phi, LA_mhd, one_over_sigma_ns, jj_v_to_H) 
+               time, inputs%dt, inputs%Rem, list_mode, H_phi_per, LA_H, LA_pmag, LA_phi, LA_mhd, one_over_sigma_ns, jj_v_to_H)
        END IF
     END IF
 
   END SUBROUTINE run_SFEMaNS
   !---------------------------------------------------------------------------
-  
+
   !---------------------------------------------------------------------------
   SUBROUTINE zero_out_modes
     USE input_data
@@ -317,7 +317,7 @@ CONTAINS
     END IF
   END SUBROUTINE zero_out_modes
   !---------------------------------------------------------------------------
-  
+
   !---------------------------------------------------------------------------
   SUBROUTINE prepare_zero_out_modes(list_mode, list_mode_to_zero_out, select_mode)
     USE input_data
@@ -326,7 +326,7 @@ CONTAINS
     INTEGER,          DIMENSION(:) :: list_mode
     INTEGER, POINTER, DIMENSION(:) :: select_mode
     INTEGER               :: i, inc
-    INTEGER, DIMENSION(1) :: kloc          
+    INTEGER, DIMENSION(1) :: kloc
     inc = 0
     DO i = 1, SIZE(list_mode_to_zero_out)
        IF (MINVAL(ABS(list_mode-list_mode_to_zero_out(i)))==0) THEN
@@ -357,7 +357,7 @@ CONTAINS
 
     IF (mesh%np>0) THEN !===Check that ns is a subset of temp before constructing the extended vv field
        DO i = 1, m_max_c
-          DO k= 1, 6 !===The user has to code extension_vel 
+          DO k= 1, 6 !===The user has to code extension_vel
              coupling_variable(:,k,i) = extension_velocity(k, mesh, list_mode(i), time, 1)
           END DO
        END DO
@@ -416,7 +416,7 @@ CONTAINS
              coupling_variable(mesh%jj(5,m),:,:) = (coupling_variable(mesh%jj(3,m),:,:) &
                   + coupling_variable(mesh%jj(1,m),:,:))/2
              coupling_variable(mesh%jj(6,m),:,:) = (coupling_variable(mesh%jj(1,m),:,:) &
-                  + coupling_variable(mesh%jj(2,m),:,:))/2 
+                  + coupling_variable(mesh%jj(2,m),:,:))/2
           END DO
        END IF
     END IF
@@ -425,7 +425,7 @@ CONTAINS
   !---------------------------------------------------------------------------
 
   !----------------SAVE RUN---------------------------------------------------
-  SUBROUTINE save_run(it, freq_restart) 
+  SUBROUTINE save_run(it, freq_restart)
     USE restart
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: it, freq_restart
@@ -434,17 +434,17 @@ CONTAINS
        IF (pp_mesh%me /= 0) THEN
           IF(inputs%if_navier_stokes_with_taylor) THEN
              CALL write_restart_ns_taylor(comm_one_d_ns, vv_mesh, pp_mesh, time, &
-                     list_mode, un, der_un, pn, der_pn, inputs%file_name, it, freq_restart)
+                  list_mode, un, der_un, pn, der_pn, inputs%file_name, it, freq_restart)
           ELSE
              IF (.NOT. if_mass) THEN
                 CALL write_restart_ns(comm_one_d_ns, vv_mesh, pp_mesh, time, &
-                        list_mode, un, un_m1, pn, pn_m1, &
-                        incpn, incpn_m1, inputs%file_name, it, freq_restart)
+                     list_mode, un, un_m1, pn, pn_m1, &
+                     incpn, incpn_m1, inputs%file_name, it, freq_restart)
              ELSE
                 CALL write_restart_ns(comm_one_d_ns, vv_mesh, pp_mesh, time, &
-                        list_mode, un, un_m1, pn, pn_m1, &
-                        incpn, incpn_m1, inputs%file_name, it, freq_restart, &
-                        opt_level_set=level_set, opt_level_set_m1=level_set_m1,opt_max_vel=max_vel)
+                     list_mode, un, un_m1, pn, pn_m1, &
+                     incpn, incpn_m1, inputs%file_name, it, freq_restart, &
+                     opt_level_set=level_set, opt_level_set_m1=level_set_m1,opt_max_vel=max_vel)
              END IF
           END IF
        END IF
@@ -471,7 +471,7 @@ CONTAINS
     USE periodic
     USE prep_maill
     USE prep_mesh_interface
-    USE restart   
+    USE restart
     USE boundary
     USE sub_plot
     USE def_type_mesh
@@ -498,16 +498,16 @@ CONTAINS
     TYPE(mesh_type)                         :: p3_mesh_glob !===JLG july 20, 2019, p3 mesh
     TYPE(interface_type)                    :: interface_H_phi_glob, interface_H_mu_glob
     INTEGER, DIMENSION(:), ALLOCATABLE      :: list_dom_H, list_dom_H_ref
-    INTEGER, DIMENSION(:), ALLOCATABLE      :: list_dom_temp 
+    INTEGER, DIMENSION(:), ALLOCATABLE      :: list_dom_temp
     INTEGER, DIMENSION(:), ALLOCATABLE      :: list_dom, list_inter, part, list_dummy, list_inter_temp
-    INTEGER, DIMENSION(:), ALLOCATABLE      :: H_in_to_new, H_in_to_new_ref 
-    INTEGER, DIMENSION(:), ALLOCATABLE      :: temp_in_to_new 
+    INTEGER, DIMENSION(:), ALLOCATABLE      :: H_in_to_new, H_in_to_new_ref
+    INTEGER, DIMENSION(:), ALLOCATABLE      :: temp_in_to_new
     CHARACTER(len=200)                      :: data_file
     CHARACTER(len=200)                      :: data_directory
     CHARACTER(len=200)                      :: tit_part, mesh_part_name
-    CHARACTER(len=200)                      :: data_fichier 
+    CHARACTER(len=200)                      :: data_fichier
     INTEGER                                 :: nsize
-    INTEGER                                 :: k, kp, m, n, i, j 
+    INTEGER                                 :: k, kp, m, n, i, j
     INTEGER                                 :: code, rank, rank_S, nb_procs, petsc_rank, bloc_size, m_max_pad
     REAL(KIND=8)                            :: time_u, time_h, time_T, error, max_vel_S
     LOGICAL                                 :: ns_periodic, mxw_periodic, temp_periodic
@@ -524,7 +524,7 @@ CONTAINS
 !!$    !===Decide whether debugging or not=============================================
 !!$    CALL sfemansinitialize
 !!$    IF (inputs%test_de_convergence) THEN
-!!$       IF (inputs%numero_du_test_debug<1 .OR. inputs%numero_du_test_debug>40) THEN 
+!!$       IF (inputs%numero_du_test_debug<1 .OR. inputs%numero_du_test_debug>40) THEN
 !!$          CALL error_Petsc('BUG in INIT: debug_test_number is not in the correct range')
 !!$       END IF
 !!$       WRITE(tit,'(i2)') inputs%numero_du_test_debug
@@ -549,7 +549,7 @@ CONTAINS
        inputs%directory = data_directory
     END IF
 
-    !===Initialization for empty vacuum=============================================    
+    !===Initialization for empty vacuum=============================================
     IF (inputs%nb_dom_phi==0) THEN
        inputs%phi_nb_dirichlet_sides = 0
        inputs%nb_inter = 0
@@ -585,7 +585,7 @@ CONTAINS
     END IF
     IF (inputs%select_mode) THEN
        DO i = 1, m_max_c
-          list_mode(i) = inputs%list_mode_lect(i + rank*m_max_c) 
+          list_mode(i) = inputs%list_mode_lect(i + rank*m_max_c)
        END DO
     ELSE
        DO i = 1, m_max_c
@@ -610,7 +610,7 @@ CONTAINS
     if_energy = inputs%if_temperature
     !===JLG july 20, 2019, p3 mesh
     IF (inputs%if_navier_stokes_with_taylor) THEN
-       IF (petsc_rank==0) WRITE(*,*) 'INIT: Everything that is not Navier-Stokes is disabled, for Taylor Method' 
+       IF (petsc_rank==0) WRITE(*,*) 'INIT: Everything that is not Navier-Stokes is disabled, for Taylor Method'
        if_mass = .FALSE. !===Disable everything that is not NS, for the time being
        if_momentum = inputs%type_pb=='nst'
        if_induction = .FALSE.
@@ -621,7 +621,7 @@ CONTAINS
     IF (if_induction) THEN
        ALLOCATE(list_dom_H(inputs%nb_dom_H), H_in_to_new(inputs%nb_dom_H)) ! JLG/AR Nov 17 2008
        ALLOCATE(list_dom_H_ref(inputs%nb_dom_H), H_in_to_new_ref(inputs%nb_dom_H))
-       IF (if_momentum .OR. inputs%type_pb=='mxx') THEN 
+       IF (if_momentum .OR. inputs%type_pb=='mxx') THEN
           IF (SIZE(list_dom_H) < SIZE(inputs%list_dom_ns)) THEN
              CALL error_Petsc(' BUG: NS must be a subset of Maxwell ')
           END IF
@@ -630,14 +630,14 @@ CONTAINS
                 CALL error_Petsc(' BUG: NS must be a subset of Maxwell ')
              END IF
              DO kp = 1, inputs%nb_dom_H
-                IF (inputs%list_dom_H(kp) == inputs%list_dom_ns(k)) EXIT  
+                IF (inputs%list_dom_H(kp) == inputs%list_dom_ns(k)) EXIT
              END DO
              H_in_to_new(k) = kp
              list_dom_H(k) = inputs%list_dom_ns(k)
           END DO
-          m = inputs%nb_dom_ns 
+          m = inputs%nb_dom_ns
           DO k = 1, inputs%nb_dom_H
-             IF (MINVAL(ABS(inputs%list_dom_H(k) - inputs%list_dom_ns)) == 0) CYCLE 
+             IF (MINVAL(ABS(inputs%list_dom_H(k) - inputs%list_dom_ns)) == 0) CYCLE
              m = m + 1
              H_in_to_new(m) = k
              list_dom_H(m) = inputs%list_dom_H(k)
@@ -668,14 +668,14 @@ CONTAINS
                 CALL error_Petsc(' BUG: NS must be a subset of temp ')
              END IF
              DO kp = 1, inputs%nb_dom_temp
-                IF (inputs%list_dom_temp(kp) == inputs%list_dom_ns(k)) EXIT  
+                IF (inputs%list_dom_temp(kp) == inputs%list_dom_ns(k)) EXIT
              END DO
              temp_in_to_new(k) = kp
              list_dom_temp(k) = inputs%list_dom_ns(k)
           END DO
-          m = inputs%nb_dom_ns 
+          m = inputs%nb_dom_ns
           DO k = 1, inputs%nb_dom_temp
-             IF (MINVAL(ABS(inputs%list_dom_temp(k) - inputs%list_dom_ns)) == 0) CYCLE 
+             IF (MINVAL(ABS(inputs%list_dom_temp(k) - inputs%list_dom_ns)) == 0) CYCLE
              m = m + 1
              temp_in_to_new(m) = k
              list_dom_temp(m) = inputs%list_dom_temp(k)
@@ -753,7 +753,7 @@ CONTAINS
        IF (SIZE(inputs%list_inter_mu)>0) THEN
           list_inter(1:SIZE(inputs%list_inter_mu)) = inputs%list_inter_mu
        END IF
-       IF (SIZE(inputs%list_inter_H_phi)>0) THEN 
+       IF (SIZE(inputs%list_inter_H_phi)>0) THEN
           list_inter(SIZE(inputs%list_inter_mu)+1:) = inputs%list_inter_H_phi
        END IF
     END IF
@@ -773,7 +773,7 @@ CONTAINS
     !===JLG july 20, 2019, p3 mesh
     IF (if_energy) THEN
        !===MODIFICATION: Dirichlet nodes in temp_mesh not created if list_dom > list_dom_temp
-       CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom_temp, & 
+       CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom_temp, &
             list_inter_temp, 2, p2_c0_mesh_glob_temp, inputs%iformatted)
     END IF
     IF (if_induction) THEN
@@ -836,7 +836,7 @@ CONTAINS
                   -pp_mesh%rr(1,pp_mesh%jj(:,m))))>1.d-16 &
                   .OR. MINVAL(ABS(vv_mesh%rr(2,vv_mesh%jj(n,m))&
                   -pp_mesh%rr(2,pp_mesh%jj(:,m))))>1.d-16) THEN
-                CALL error_Petsc('BUG in INIT, vv and pp global meshes are different') 
+                CALL error_Petsc('BUG in INIT, vv and pp global meshes are different')
              END IF
           END DO
        END DO
@@ -959,7 +959,7 @@ CONTAINS
                 END DO
              END DO
              IF (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14) THEN
-                CALL error_Petsc('BUG in INIT, (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14') 
+                CALL error_Petsc('BUG in INIT, (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14')
              END IF
 
              error = error + MAXVAL(ABS(vv_mesh%rr(1,vv_mesh%jj(4,1:vv_mesh%me)) &
@@ -1084,7 +1084,7 @@ CONTAINS
        !===d(phi)/dR + (1/R)*phi = 0. Assumes that phi=C/r at infinity
        !===Feature is currently disabled.
        R_fourier=-1.d0 !Negative radius disables the boundary condition
-       index_fourier=0 !Index of spherical boundary where Fourier BC enforced 
+       index_fourier=0 !Index of spherical boundary where Fourier BC enforced
 
     END IF
 
@@ -1099,7 +1099,7 @@ CONTAINS
              END DO
           END DO
           IF (error/MAXVAL(ABS(temp_mesh%rr(1,1) -temp_mesh%rr(1,:))) .GE. 5.d-14) THEN
-             CALL error_Petsc('BUG in INIT, (error/MAXVAL(ABS(temp_mesh%rr(1,1) -temp_mesh%rr(1,:))) .GE. 5.d-14') 
+             CALL error_Petsc('BUG in INIT, (error/MAXVAL(ABS(temp_mesh%rr(1,1) -temp_mesh%rr(1,:))) .GE. 5.d-14')
           END IF
 
           error = error + MAXVAL(ABS(vv_mesh%rr(1,vv_mesh%jj(4,1:vv_mesh%me)) &
@@ -1181,7 +1181,7 @@ CONTAINS
           END DO
        END IF
     END IF
-    IF (ALLOCATED(list_dom_H)) DEALLOCATE(list_dom_H)    
+    IF (ALLOCATED(list_dom_H)) DEALLOCATE(list_dom_H)
 
     !===Check coherence of vv_mesh and temp_mesh====================================
     IF (if_energy) THEN
@@ -1193,7 +1193,7 @@ CONTAINS
           END DO
        END IF
     END IF
-    IF (ALLOCATED(list_dom_temp)) DEALLOCATE(list_dom_temp)    
+    IF (ALLOCATED(list_dom_temp)) DEALLOCATE(list_dom_temp)
 
     !===Compute local mesh size for stabilization================================
     IF (if_momentum .OR. inputs%type_pb=='mxx') THEN
@@ -1239,7 +1239,7 @@ CONTAINS
              bloc_size = vv_mesh%gauss%l_G*vv_mesh%dom_me/nb_procs+1
              bloc_size = vv_mesh%gauss%l_G*(bloc_size/vv_mesh%gauss%l_G)+vv_mesh%gauss%l_G
              m_max_pad = 3*SIZE(list_mode)*nb_procs/2
-             ALLOCATE(visc_entro_level(2*m_max_pad-1,bloc_size))             
+             ALLOCATE(visc_entro_level(2*m_max_pad-1,bloc_size))
           ELSE
              ALLOCATE(level_set_m1   (inputs%nb_fluid-1, pp_mesh%np, 2, m_max_c))
              ALLOCATE(level_set      (inputs%nb_fluid-1, pp_mesh%np, 2, m_max_c))
@@ -1258,14 +1258,14 @@ CONTAINS
        ALLOCATE(Hn   (H_mesh%np,  6,  m_max_c))
        ALLOCATE(Bn1  (H_mesh%np,  6,  m_max_c))
        ALLOCATE(Bn   (H_mesh%np,  6,  m_max_c))
-       ALLOCATE(phin1(phi_mesh%np,2,  m_max_c))   
+       ALLOCATE(phin1(phi_mesh%np,2,  m_max_c))
        ALLOCATE(phin (phi_mesh%np,2,  m_max_c))
     END IF
 
     !===Allocate arrays for temperature=============================================
     IF (if_energy) THEN
-       ALLOCATE(tempn_m1   (temp_mesh%np, 2, m_max_c)) 
-       ALLOCATE(tempn      (temp_mesh%np, 2, m_max_c)) 
+       ALLOCATE(tempn_m1   (temp_mesh%np, 2, m_max_c))
+       ALLOCATE(tempn      (temp_mesh%np, 2, m_max_c))
     END IF
 
     !===Create data structure jj_v_to_H=============================================
@@ -1279,7 +1279,7 @@ CONTAINS
           END DO
        ELSE
           ALLOCATE(jj_v_to_H(H_mesh%np))
-          jj_v_to_H = -1 
+          jj_v_to_H = -1
        END IF
     END IF
     IF (if_momentum) THEN
@@ -1370,7 +1370,7 @@ CONTAINS
                 DO k= 1, 3
                    un(:,2*k,i)       = 0.d0
                    IF(inputs%if_navier_stokes_with_taylor) THEN
-                      DO kp = 1, inputs%taylor_order-1 
+                      DO kp = 1, inputs%taylor_order-1
                          der_un(kp)%DRT( :,2*k,i)= 0.d0
                       END DO
                    ELSE
@@ -1379,7 +1379,7 @@ CONTAINS
                 END DO
                 pn(:,2,i)         = 0.d0
                 IF(inputs%if_navier_stokes_with_taylor) THEN
-                   DO kp = 1, inputs%taylor_order-1 
+                   DO kp = 1, inputs%taylor_order-1
                       der_pn(kp)%DRT( :,2,i)  = 0.d0
                    END DO
                 ELSE
@@ -1414,7 +1414,7 @@ CONTAINS
        !===Use extension_velocity===================================================
        IF (H_mesh%np>0) THEN !We extend v_to_Max
           DO i = 1, m_max_c
-             DO k= 1, 6 !===The user has to code extension_vel 
+             DO k= 1, 6 !===The user has to code extension_vel
                 v_to_Max(:,k,i) = extension_velocity(k, H_mesh, list_mode(i), time_u, 1)
              END DO
           END DO
@@ -1486,7 +1486,7 @@ CONTAINS
           IF (list_mode(i) == 0) THEN
              IF (H_mesh%me/=0) THEN
                 DO k = 1, 3
-                   Hn(:,2*k,i)  = 0.d0 
+                   Hn(:,2*k,i)  = 0.d0
                    Hn1(:,2*k,i) = 0.d0
                 END DO
              END IF
@@ -1580,13 +1580,13 @@ CONTAINS
     DO TYPE = 1, 6
        i_deb = (TYPE-1)*H_mesh%np+1
        i_fin = i_deb + H_mesh%np -1
-       vect_out(i_deb:i_fin) = Hn(:,TYPE,i) 
+       vect_out(i_deb:i_fin) = Hn(:,TYPE,i)
     END DO
 
     DO TYPE = 1, 6
        i_deb = 6*H_mesh%np + (TYPE-1)*H_mesh%np+1
        i_fin = i_deb + H_mesh%np -1
-       vect_out(i_deb:i_fin) = Hn1(:,TYPE,i) 
+       vect_out(i_deb:i_fin) = Hn1(:,TYPE,i)
     END DO
 
   END SUBROUTINE prodmat_maxwell_int_by_parts
@@ -1650,7 +1650,7 @@ CONTAINS
           narg = narg+1
        END IF
     END DO
-    
+
     inputs%if_regression = .FALSE.
     IF (narg==1) THEN
        CALL getarg(1,inline)
@@ -1660,12 +1660,12 @@ CONTAINS
     END IF
 
   END SUBROUTINE regression_initialize
-  
+
   SUBROUTINE compute_local_mesh_size(mesh)
     USE def_type_mesh
     TYPE(mesh_type) :: mesh
     INTEGER         :: m, type_fe, index, l, ierr, i
-    REAL(KIND=8)    :: diam_loc, diam 
+    REAL(KIND=8)    :: diam_loc, diam
 
     IF (mesh%gauss%n_w==3) THEN
        type_fe = 1
@@ -1704,7 +1704,7 @@ CONTAINS
     CALL MPI_ALLREDUCE(diam_loc,diam,1,MPI_DOUBLE_PRECISION,MPI_MAX,comm_one_d(1),ierr)
     ALLOCATE(mesh%hm(m_max_c))
     DO i = 1, m_max_c
-       mesh%hm(i) = 0.5d0*diam/inputs%m_max 
+       mesh%hm(i) = 0.5d0*diam/inputs%m_max
     END DO
     !===end hm (JLG April 7, 2017)
   END SUBROUTINE compute_local_mesh_size
@@ -1714,7 +1714,7 @@ CONTAINS
     INTEGER         :: code
     !===Compute h_min
     IF (inputs%if_level_set_P2) THEN
-       h_min_F=MINVAL(vv_mesh%hloc_gauss) 
+       h_min_F=MINVAL(vv_mesh%hloc_gauss)
     ELSE
        h_min_F=MINVAL(pp_mesh%hloc_gauss)
     END IF

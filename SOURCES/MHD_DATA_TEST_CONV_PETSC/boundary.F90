@@ -1,7 +1,7 @@
 module boundary
   use interface_boundary
   use point_to_boundary_generic
-  
+
 CONTAINS
   SUBROUTINE assign_boundary
     USE input_data
@@ -14,7 +14,7 @@ CONTAINS
        i=0
     END IF
     SELECT case(i)
-    case(0) 
+    case(0)
        init_velocity_pressure => init_velocity_pressure_generic
        init_temperature => init_temperature_generic
        init_level_set =>  init_level_set_generic
@@ -24,19 +24,19 @@ CONTAINS
        vv_exact =>  vv_exact_generic
        imposed_velocity_by_penalty =>  imposed_velocity_by_penalty_generic
        pp_exact =>  pp_exact_generic
-       temperature_exact=>  temperature_exact_generic 
+       temperature_exact=>  temperature_exact_generic
        level_set_exact =>  level_set_exact_generic
-       penal_in_real_space =>  penal_in_real_space_generic 
+       penal_in_real_space =>  penal_in_real_space_generic
        extension_velocity =>  extension_velocity_generic
        Vexact =>  Vexact_generic
        H_B_quasi_static =>  H_B_quasi_static_generic
        Hexact =>  Hexact_generic
-       Phiexact =>  Phiexact_generic 
+       Phiexact =>  Phiexact_generic
        Jexact_gauss =>  Jexact_gauss_generic
        Eexact_gauss =>  Eexact_gauss_generic
        init_maxwell =>  init_maxwell_generic
        mu_bar_in_fourier_space =>  mu_bar_in_fourier_space_generic
-       grad_mu_bar_in_fourier_space=>  grad_mu_bar_in_fourier_space_generic 
+       grad_mu_bar_in_fourier_space=>  grad_mu_bar_in_fourier_space_generic
        mu_in_real_space=>  mu_in_real_space_generic
        sigma_bar_in_fourier_space =>  sigma_bar_in_fourier_space_generic
        chi_coeff_law => chi_coeff_law_generic

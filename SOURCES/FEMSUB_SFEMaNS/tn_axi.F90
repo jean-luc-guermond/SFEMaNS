@@ -13,8 +13,8 @@ CONTAINS
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
-    TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage  
-    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode  
+    TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage
+    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN) :: v, w
     REAL(KIND=8) :: norm_loc, norm_tot, norm
     INTEGER  :: code
@@ -43,8 +43,8 @@ CONTAINS
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
-    TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage  
-    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode  
+    TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage
+    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN) :: v
     CHARACTER(*),                    INTENT(IN) :: norm_type
     REAL(KIND=8) :: norm_loc, norm_tot, norm
@@ -91,8 +91,8 @@ CONTAINS
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
-    TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage  
-    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode  
+    TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage
+    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN) :: v
     CHARACTER(*),                    INTENT(IN) :: norm_type
     REAL(KIND=8) :: norm_loc, norm_tot, norm
@@ -138,8 +138,8 @@ CONTAINS
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
-    TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage  
-    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode  
+    TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage
+    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN) :: v
     REAL(KIND=8) :: norm_loc, norm_tot, norm
     INTEGER  :: code
@@ -187,8 +187,8 @@ CONTAINS
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
-    TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage  
-    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode  
+    TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage
+    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN) :: v
     REAL(KIND=8) :: norm_loc, norm
     MPI_Comm                  :: communicator
@@ -208,8 +208,8 @@ CONTAINS
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
-    TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage  
-    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode  
+    TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage
+    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN) :: v
     REAL(KIND=8) :: norm_loc, norm
     MPI_Comm                  :: communicator
@@ -225,8 +225,8 @@ CONTAINS
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
-    TYPE(mesh_type),                 INTENT(IN) :: H_mesh !type de maillage  
-    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode  
+    TYPE(mesh_type),                 INTENT(IN) :: H_mesh !type de maillage
+    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN) :: v
     REAL(KIND=8) :: norm_loc, norm
     MPI_Comm                  :: communicator
@@ -242,8 +242,8 @@ CONTAINS
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
-    TYPE(mesh_type),                 INTENT(IN) :: H_mesh !type de maillage  
-    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode  
+    TYPE(mesh_type),                 INTENT(IN) :: H_mesh !type de maillage
+    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN) :: v
     REAL(KIND=8) :: norm_loc, norm
     MPI_Comm                  :: communicator
@@ -275,7 +275,7 @@ CONTAINS
              DO l = 1, mesh%gauss%l_G
                 ray = SUM(mesh%rr(1,mesh%jj(:,m))*mesh%gauss%ww(:,l))
                 utc = SUM(field(mesh%jj(:,m),3,i)*mesh%gauss%ww(:,l))
-                
+
                 moments_loc(3) = moments_loc(3) + ray**2*utc*mesh%gauss%rj(l,m)
              END DO
           END DO
@@ -291,7 +291,7 @@ CONTAINS
                 uts = SUM(field(mesh%jj(:,m),4,i)*mesh%gauss%ww(:,l))
                 uzc = SUM(field(mesh%jj(:,m),5,i)*mesh%gauss%ww(:,l))
                 uzs = SUM(field(mesh%jj(:,m),6,i)*mesh%gauss%ww(:,l))
-                
+
                 m_x = ray*(-zed*(urs+utc)+ray*uzs)
                 m_y = ray*(zed*(urc-uts)-ray*uzc)
 
@@ -314,8 +314,8 @@ CONTAINS
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
-    TYPE(mesh_type),                 INTENT(IN) :: H_mesh  
-    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode  
+    TYPE(mesh_type),                 INTENT(IN) :: H_mesh
+    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN) :: v
     REAL(KIND=8), DIMENSION(3),      INTENT(OUT):: dipole_out
     REAL(KIND=8), DIMENSION(3,3),    INTENT(OUT):: quadripole_out
@@ -337,7 +337,7 @@ CONTAINS
        WRITE(*,*) ' BUG in MOMENTS', SIZE(v,1), H_mesh%np
        STOP
     END IF
-    DO m = 1, H_mesh%me     
+    DO m = 1, H_mesh%me
        DO l = 1, H_mesh%gauss%l_G
 
           !--------On calcule le rayon et z du point gauss
@@ -358,12 +358,12 @@ CONTAINS
              DO ni = 1,H_mesh%gauss%n_w; i = H_mesh%jj(ni,m)
                 !--------Composante r------
                 c(1) = c(1) + ( mode/ray*v(i,6,k)*H_mesh%gauss%ww(ni,l) &
-                     - v(i,3,k)*H_mesh%gauss%dw(2,ni,l,m)) 
+                     - v(i,3,k)*H_mesh%gauss%dw(2,ni,l,m))
                 c(2) = c(2) + (-mode/ray*v(i,5,k)*H_mesh%gauss%ww(ni,l) &
-                     - v(i,4,k)*H_mesh%gauss%dw(2,ni,l,m)) 
+                     - v(i,4,k)*H_mesh%gauss%dw(2,ni,l,m))
                 !--------Composante theta------
                 c(3) = c(3) + (v(i,1,k)*H_mesh%gauss%dw(2,ni,l,m) &
-                     - v(i,5,k)*H_mesh%gauss%dw(1,ni,l,m)) 
+                     - v(i,5,k)*H_mesh%gauss%dw(1,ni,l,m))
                 c(4) = c(4) + (v(i,2,k)*H_mesh%gauss%dw(2,ni,l,m) &
                      - v(i,6,k)*H_mesh%gauss%dw(1,ni,l,m))
                 !--------Composante z------
@@ -409,4 +409,4 @@ CONTAINS
     RETURN
   END SUBROUTINE moments
 
-  END MODULE tn_axi
+END MODULE tn_axi

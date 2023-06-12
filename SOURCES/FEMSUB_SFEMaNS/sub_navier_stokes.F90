@@ -1,6 +1,6 @@
 MODULE update_navier_stokes
-PUBLIC :: navier_stokes_decouple
-PRIVATE
+  PUBLIC :: navier_stokes_decouple
+  PRIVATE
 
 CONTAINS
 
@@ -27,7 +27,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:),                        INTENT(IN)     :: Hn_p2
     REAL(KIND=8), DIMENSION(:,:,:),                        INTENT(IN)     :: Bn_p2
     REAL(KIND=8), DIMENSION(:,:,:,:),                      INTENT(IN)     :: level_set_m1, level_set
-    REAL(KIND=8),                   INTENT(IN)     :: time  
+    REAL(KIND=8),                   INTENT(IN)     :: time
     REAL(KIND=8), DIMENSION(:,:),   INTENT(OUT)    :: visc_entro_level
     TYPE(periodic_type),            INTENT(IN)     :: vvz_per, pp_per
     TYPE(petsc_csr_LA)                             :: vv_3_LA, pp_1_LA

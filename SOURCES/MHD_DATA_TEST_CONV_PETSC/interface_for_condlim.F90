@@ -54,7 +54,7 @@ module point_to_boundary_generic
        grad_mu_bar_in_fourier_space_generic =>  grad_mu_bar_in_fourier_space, &
        mu_in_real_space_generic =>  mu_in_real_space, &
        sigma_bar_in_fourier_space_generic =>  sigma_bar_in_fourier_space, &
-       chi_coeff_law_generic => chi_coeff_law, &       
-       T_dchi_dT_coeff_law_generic => T_dchi_dT_coeff_law, &       
+       chi_coeff_law_generic => chi_coeff_law, &
+       T_dchi_dT_coeff_law_generic => T_dchi_dT_coeff_law, &
        nu_tilde_law_generic => nu_tilde_law
 END module point_to_boundary_generic

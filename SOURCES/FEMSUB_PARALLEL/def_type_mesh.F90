@@ -45,7 +45,7 @@ MODULE def_type_mesh
      REAL(KIND=8), DIMENSION(:,    :, :), POINTER :: rnorms_v !(JLG Aug 31, 2017)
      REAL(KIND=8), DIMENSION(:, :, :, :), POINTER :: rnormsi !Interface normal (JLG, June 4 2012)
      REAL(KIND=8), DIMENSION(:, :),       POINTER :: rj   !Interface weight (JLG, April 2009)
-     REAL(KIND=8), DIMENSION(:, :),       POINTER :: rji 
+     REAL(KIND=8), DIMENSION(:, :),       POINTER :: rji
      REAL(KIND=8), DIMENSION(:, :),       POINTER :: rjs
      REAL(KIND=8), DIMENSION(:, :, :, :), POINTER :: dw_s !gradient at the boundary
      REAL(KIND=8), DIMENSION(:, :, :, :), POINTER :: dwps !special!
@@ -66,7 +66,7 @@ MODULE def_type_mesh
   !  neighi(1:2, mi)   interfaces to volume elements --> cell 1 has lowest cell number
   !  jjsi(n_ws, mi)    nodes of the interface elements --> volume numbering (JLG April 2009)
   !  jjs(n_ws, mes)    nodes of the surface_elements --> volume numbering
-  !  iis(n_ws, mes)    nodes of the surface_elements --> surface numbering 
+  !  iis(n_ws, mes)    nodes of the surface_elements --> surface numbering
   !  mm(me)           (possibly sub) set of elements for quadrature
   ! mms(mes)          (possibly sub) set of surface_elements for surf_quadrature
   !------------------------------------------------------------------------------
@@ -86,24 +86,24 @@ MODULE def_type_mesh
      INTEGER,      POINTER, DIMENSION(:)   :: disp, domnp ! (JLG+FL, January 2011)
      INTEGER                               :: dom_me, dom_np, dom_mes ! (JLG+FL, January 2011)
      ! dom_me and dom_mes are obsolete structures.
-     ! dom_np is the number of nodes owned by the processor: dom_np .LE. mesh%np 
+     ! dom_np is the number of nodes owned by the processor: dom_np .LE. mesh%np
      !==End parallel structure
      INTEGER                               :: me, mes, np, nps, mi
-     LOGICAL                               :: edge_stab ! edge stab, yes/no, (JLG April 2009) 
+     LOGICAL                               :: edge_stab ! edge stab, yes/no, (JLG April 2009)
      TYPE(gauss_type)                      :: gauss
      TYPE(periodic_type)                   :: periodic
-     REAL(KIND=8), POINTER, DIMENSION(:)   :: hloc ! local mesh size (JLG+LC January, 21, 2015) 
-     REAL(KIND=8), POINTER, DIMENSION(:)   :: hloc_gauss ! local mesh size (JLG+LC January, 21, 2015) 
+     REAL(KIND=8), POINTER, DIMENSION(:)   :: hloc ! local mesh size (JLG+LC January, 21, 2015)
+     REAL(KIND=8), POINTER, DIMENSION(:)   :: hloc_gauss ! local mesh size (JLG+LC January, 21, 2015)
      REAL(KIND=8)                          :: global_diameter !diameter of domain (LC 2017/01/27)
      REAL(KIND=8), POINTER, DIMENSION(:)   :: hm !local meshsize in azimuth (JLG April 7, 2017)
   END TYPE mesh_type
 
   TYPE mesh_type_interface
-     INTEGER,      POINTER, DIMENSION(:)   :: slave_elem ! list slave elemt in interface 
-     INTEGER,      POINTER, DIMENSION(:)   :: list_slave_node ! list of slave nodes on interface 
+     INTEGER,      POINTER, DIMENSION(:)   :: slave_elem ! list slave elemt in interface
+     INTEGER,      POINTER, DIMENSION(:)   :: list_slave_node ! list of slave nodes on interface
      INTEGER,      POINTER, DIMENSION(:,:) :: master_node ! local --> global numbering; master nodes
      INTEGER,      POINTER, DIMENSION(:,:) :: slave_node  ! local --> global numbering; slave nodes
-     INTEGER                               :: me ! nb of slave elemt in interface  
+     INTEGER                               :: me ! nb of slave elemt in interface
   END TYPE mesh_type_interface
 
   TYPE mesh_type_boundary
@@ -114,11 +114,11 @@ MODULE def_type_mesh
   END TYPE mesh_type_boundary
 
   TYPE interface_type
-     INTEGER                               :: mes ! number of interface elements 
+     INTEGER                               :: mes ! number of interface elements
      INTEGER,      POINTER, DIMENSION(:)   :: mesh1 ! list slave interface elements
      INTEGER,      POINTER, DIMENSION(:)   :: mesh2 ! list master interface elements
-     INTEGER,      POINTER, DIMENSION(:,:) :: jjs1 ! list of slave node on interface elements 
-     INTEGER,      POINTER, DIMENSION(:,:) :: jjs2 ! list of master nodes on interface elements 
+     INTEGER,      POINTER, DIMENSION(:,:) :: jjs1 ! list of slave node on interface elements
+     INTEGER,      POINTER, DIMENSION(:,:) :: jjs2 ! list of master nodes on interface elements
   END TYPE interface_type
 
 

@@ -139,9 +139,9 @@ CONTAINS
        IF (rr(2,n) < 1.0d-4) THEN
 
           r = rr(1,n)
-          IF (r < xm  .AND.  r > xa) THEN;  xa = r;  na = n  
+          IF (r < xm  .AND.  r > xa) THEN;  xa = r;  na = n
           ENDIF
-          IF (r > xm  .AND.  r < xb) THEN;  xb = r;  nb = n  
+          IF (r > xm  .AND.  r < xb) THEN;  xb = r;  nb = n
           ENDIF
 
        ENDIF
@@ -585,9 +585,9 @@ CONTAINS
 
     IMPLICIT NONE
 
-    CHARACTER(LEN=*),             INTENT(IN) :: vit 
+    CHARACTER(LEN=*),             INTENT(IN) :: vit
     REAL(KIND=8), DIMENSION(:,:), INTENT(IN) :: u8
-    CHARACTER(LEN=80)                        :: sketuve 
+    CHARACTER(LEN=80)                        :: sketuve
     INTEGER                                  :: i, j
 
     OPEN(UNIT=33,FILE=vit,STATUS='unknown',FORM='UNFORMATTED')
@@ -608,9 +608,9 @@ CONTAINS
 
     IMPLICIT NONE
 
-    CHARACTER(LEN=*),             INTENT(IN) :: pres 
+    CHARACTER(LEN=*),             INTENT(IN) :: pres
     REAL(KIND=8), DIMENSION(:),   INTENT(IN) :: p8
-    CHARACTER(LEN=80)                        :: sketuve 
+    CHARACTER(LEN=80)                        :: sketuve
     INTEGER                                  :: i
 
     OPEN(UNIT=44,FILE=pres,STATUS='unknown',FORM='UNFORMATTED')
@@ -766,8 +766,8 @@ CONTAINS
           WRITE (unit_w, 100)
        ENDDO
 
-   ELSE IF (SIZE(jj,1)==10) THEN
-       
+    ELSE IF (SIZE(jj,1)==10) THEN
+
        DO m = 1, SIZE(jj, 2)
           n1 = jj(1, m)
           n2 = jj(8, m)
@@ -816,7 +816,7 @@ CONTAINS
           WRITE (unit_w, 100) rr(1,n2), rr(2,n2), uu(n2), n2
           WRITE (unit_w, 100) rr(1,n3), rr(2,n3), uu(n3), n3
           WRITE (unit_w, 100)
-          
+
           n1 = jj(10, m)
           n2 = jj(5, m)
           n3 = jj(7, m)
@@ -856,7 +856,7 @@ CONTAINS
     IMPLICIT NONE
 
     INTEGER,      DIMENSION(:,:), INTENT(IN) :: jj, jj2
-    REAL(KIND=8), DIMENSION(:,:), INTENT(IN) :: rr, rr2 
+    REAL(KIND=8), DIMENSION(:,:), INTENT(IN) :: rr, rr2
     REAL(KIND=8), DIMENSION(:)               :: uu, uu2
     CHARACTER(*) :: file_name
 
@@ -1060,7 +1060,7 @@ CONTAINS
 
   SUBROUTINE vtk_p1_2d(mesh, champ, unit_file, file_name)
 
-    USE def_type_mesh           
+    USE def_type_mesh
 
     IMPLICIT NONE
 
@@ -1102,12 +1102,12 @@ CONTAINS
     DO i=1, mesh%np
        write(unit_file,'(e14.7,2x)') champ(i)
     ENDDO
-    CLOSE(unit_file)                                     
+    CLOSE(unit_file)
   END SUBROUTINE vtk_p1_2d
 
   SUBROUTINE vtk_2d(mesh, champ, unit_file, file_name)
 
-    USE def_type_mesh           
+    USE def_type_mesh
 
     IMPLICIT NONE
 
@@ -1138,7 +1138,7 @@ CONTAINS
     IF (mesh%gauss%n_w==3) THEN
        vtK_cell = 5
        DO m=1, mesh%me
-          write(unit_file,'(I2,6(I8,1x))') mesh%gauss%n_w,  (mesh%jj(n,m)-1, n=1,mesh%gauss%n_w) 
+          write(unit_file,'(I2,6(I8,1x))') mesh%gauss%n_w,  (mesh%jj(n,m)-1, n=1,mesh%gauss%n_w)
        ENDDO
     ELSE IF (mesh%gauss%n_w==6) THEN
        vtK_cell = 22
@@ -1146,7 +1146,7 @@ CONTAINS
           write(unit_file,'(I2,6(I8,1x))') mesh%gauss%n_w,  &
                mesh%jj(1,m)-1,  mesh%jj(2,m)-1, mesh%jj(3,m)-1,  mesh%jj(6,m)-1, mesh%jj(4,m)-1,  mesh%jj(5,m)-1
        ENDDO
-    ELSE 
+    ELSE
        WRITE(*,*) ' BUG  in  vtk_2d '
     END IF
     write(unit_file,'(A,I7)') 'CELL_TYPES ', mesh%me
@@ -1161,7 +1161,7 @@ CONTAINS
     DO i=1, mesh%np
        write(unit_file,'(e14.7,2x)') champ(i)
     ENDDO
-    CLOSE(unit_file)        
+    CLOSE(unit_file)
 
 
     write(*,*) 'ecriture header'
@@ -1187,7 +1187,7 @@ CONTAINS
 !!$       vtK_cell = 5
 !!$    ELSE IF (mesh%gauss%n_w==6) THEN
 !!$       vtK_cell = 22
-!!$    ELSE 
+!!$    ELSE
 !!$       WRITE(*,*) ' BUG  in  vtk_2d '
 !!$    END IF
 !!$    write(unit_file,'(A,I7)') 'CELL_TYPES ', mesh%me
@@ -1202,7 +1202,7 @@ CONTAINS
 !!$    DO i=1, mesh%np
 !!$       write(unit_file,'(e14.7,2x)') champ(i)
 !!$    ENDDO
-!!$    CLOSE(unit_file)                                     
+!!$    CLOSE(unit_file)
   END SUBROUTINE vtk_2d
 
   SUBROUTINE trace_profile(mesh, v, it, freq_plot, list_mode, nom_champ, num_dom)
@@ -1219,7 +1219,7 @@ CONTAINS
     INTEGER, OPTIONAL,                 INTENT(IN)   :: num_dom
 
     INTEGER                           :: l, lblank, rang_S
-    CHARACTER(len=3)                  :: tit, tmode, tit_S 
+    CHARACTER(len=3)                  :: tit, tmode, tit_S
     CHARACTER(len=1)                  :: tcomp
     INTEGER                           :: i, k
 
@@ -1252,7 +1252,7 @@ CONTAINS
        DO k= 1, size(v,2)
           WRITE(tcomp,'(i1)') k
           CALL plot_scalar_field(mesh%jj, mesh%rr, &
-               v(:,k,i) , nom_champ//tcomp//'_m='//tmode//'_'//tit_S//'_'//tit//'.plt')          
+               v(:,k,i) , nom_champ//tcomp//'_m='//tmode//'_'//tit_S//'_'//tit//'.plt')
        ENDDO
 
     END DO

@@ -14,7 +14,7 @@ CONTAINS
 
     REAL(KIND=8),                 INTENT(IN)    :: alpha
     INTEGER,      DIMENSION(:),   INTENT(IN)    :: ia
-    INTEGER,      DIMENSION(:),   INTENT(IN)    :: ja 
+    INTEGER,      DIMENSION(:),   INTENT(IN)    :: ja
     REAL(KIND=8), DIMENSION(:),   INTENT(INOUT) :: a0
 
     INTEGER :: m, l, ni, nj, i, j, p
@@ -39,7 +39,7 @@ CONTAINS
                 !               IF (j >= i) THEN
                 x = ww(nj,l) * al * ww(ni,l)
                 DO p = ia(i),  ia(i+1) - 1
-                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                    ENDIF
                 ENDDO
                 !               ENDIF
@@ -61,7 +61,7 @@ CONTAINS
 
     IMPLICIT NONE
 
-    REAL(KIND=8), DIMENSION(:,:), INTENT(IN)    :: vv 
+    REAL(KIND=8), DIMENSION(:,:), INTENT(IN)    :: vv
     INTEGER,      DIMENSION(:),   INTENT(IN)    :: ia
     INTEGER,      DIMENSION(:),   INTENT(IN)    :: ja
     REAL(KIND=8), DIMENSION(:),   INTENT(INOUT) :: a0
@@ -72,7 +72,7 @@ CONTAINS
 
     INTEGER :: m, l, ni, nj, i, j, p, k
     REAL(KIND=8) :: x
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d) :: vl 
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d) :: vl
 
     CALL gauss(mesh)
     jj => mesh%jj
@@ -82,7 +82,7 @@ CONTAINS
        DO l = 1, l_G
 
           vl = 0
-          DO ni = 1, n_w     
+          DO ni = 1, n_w
              vl = vl + vv(:,jj(ni,m)) * ww(ni,l)
           END DO
 
@@ -99,7 +99,7 @@ CONTAINS
                 x = x * ww(nj,l)
 
                 DO p = ia(i),  ia(i+1) - 1
-                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                    ENDIF
                 ENDDO
 
@@ -123,7 +123,7 @@ CONTAINS
 
     REAL(KIND=8), DIMENSION(:),   INTENT(IN)    :: ff
     INTEGER,      DIMENSION(:),   INTENT(IN)    :: ia
-    INTEGER,      DIMENSION(:),   INTENT(IN)    :: ja 
+    INTEGER,      DIMENSION(:),   INTENT(IN)    :: ja
     REAL(KIND=8), DIMENSION(:),   INTENT(INOUT) :: a0
 
     INTEGER :: m, l, ni, nj, n, i, j, p
@@ -141,7 +141,7 @@ CONTAINS
 
        DO l = 1, l_G
 
-          ffl =0.d0 
+          ffl =0.d0
           DO n = 1, n_w
              ffl =  ffl + ff(jj(n,m)) * ww(n,l)
           ENDDO
@@ -154,7 +154,7 @@ CONTAINS
                 !               IF (j >= i) THEN
                 x = ww(nj,l) * al * ww(ni,l)
                 DO p = ia(i),  ia(i+1) - 1
-                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                    ENDIF
                 ENDDO
                 !               ENDIF
@@ -178,8 +178,8 @@ CONTAINS
     IMPLICIT NONE
 
     REAL(KIND=8),                 INTENT(IN)    :: alpha
-    INTEGER,      DIMENSION(:),   INTENT(IN)    :: ia 
-    INTEGER,      DIMENSION(:),   INTENT(IN)    :: ja 
+    INTEGER,      DIMENSION(:),   INTENT(IN)    :: ia
+    INTEGER,      DIMENSION(:),   INTENT(IN)    :: ja
     REAL(KIND=8), DIMENSION(:),   INTENT(INOUT) :: a0
 
     INTEGER :: m, l, ni, nj, i, j, p
@@ -205,7 +205,7 @@ CONTAINS
                 !               IF (j >= i) THEN
                 x = al * SUM(dw(:,nj,l,m) * dw(:,ni,l,m))
                 DO p = ia(i),  ia(i+1) - 1
-                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                    ENDIF
                 ENDDO
                 !               ENDIF
@@ -228,7 +228,7 @@ CONTAINS
     IMPLICIT NONE
 
     REAL(KIND=8),                 INTENT(IN)    :: alpha
-    REAL(KIND=8), DIMENSION(:,:), INTENT(INOUT) :: bcd 
+    REAL(KIND=8), DIMENSION(:,:), INTENT(INOUT) :: bcd
 
     INTEGER :: m, m_mother, l, ni, nj, i, j
     REAL(KIND=8) :: al, x, mest
@@ -597,9 +597,9 @@ CONTAINS
     jj => mesh%jj
     me => mesh%me
 
-    DO l = 1, l_G 
-       DO ni = 1, n_w 
-          DO nj = 1, n_w 
+    DO l = 1, l_G
+       DO ni = 1, n_w
+          DO nj = 1, n_w
              wwprod(ni,nj,l) = ww(ni,l)*ww(nj,l)
           END DO
        END DO
@@ -621,7 +621,7 @@ CONTAINS
           masslm  = (alpha+0.5*dg)*rj(l,m)
 
           y = 0.
-          DO ni = 1, n_w; 
+          DO ni = 1, n_w;
              DO k = 1, k_d
                 y(ni) =  y(ni) + gl(k) * dw(k,ni,l,m)
              END DO
@@ -647,7 +647,7 @@ CONTAINS
        DO ni = 1, n_w; i = jj(ni, m)
           DO nj = 1, n_w;  j = jj(nj, m)
              DO p = ia(i),  ia(i+1) - 1
-                IF (ja(p) == j) THEN;  a0(p) = a0(p) + aij(ni,nj);  EXIT;  
+                IF (ja(p) == j) THEN;  a0(p) = a0(p) + aij(ni,nj);  EXIT;
                 ENDIF
              ENDDO
           END DO
@@ -691,9 +691,9 @@ CONTAINS
     jj => mesh%jj
     me => mesh%me
 
-    DO l = 1, l_G 
-       DO ni = 1, n_w 
-          DO nj = 1, n_w 
+    DO l = 1, l_G
+       DO ni = 1, n_w
+          DO nj = 1, n_w
              wwprod(ni,nj,l) = ww(ni,l)*ww(nj,l)
           END DO
        END DO
@@ -713,7 +713,7 @@ CONTAINS
           masslm  = alpha*rj(l,m)
 
           y = 0.
-          DO ni = 1, n_w; 
+          DO ni = 1, n_w;
              DO k = 1, k_d
                 y(ni) =  y(ni) + gl(k) * dw(k,ni,l,m)
              END DO
@@ -739,7 +739,7 @@ CONTAINS
        DO ni = 1, n_w; i = jj(ni, m)
           DO nj = 1, n_w;  j = jj(nj, m)
              DO p = ia(i),  ia(i+1) - 1
-                IF (ja(p) == j) THEN;  a0(p) = a0(p) + aij(ni,nj);  EXIT;  
+                IF (ja(p) == j) THEN;  a0(p) = a0(p) + aij(ni,nj);  EXIT;
                 ENDIF
              ENDDO
           END DO
@@ -773,16 +773,16 @@ CONTAINS
     INTEGER :: k, l, m, ni, nj, i, j, p
     REAL(KIND=8), DIMENSION(mesh%gauss%k_d) :: gl
     REAL(KIND=8) :: x, xij, masslm, viscolm
-    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w,mesh%gauss%l_G) :: wwprod 
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w,mesh%gauss%l_G) :: wwprod
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w) :: y
 
     CALL gauss(mesh)
     jj => mesh%jj
     me => mesh%me
 
-    DO l = 1, l_G 
-       DO ni = 1, n_w 
-          DO nj = 1, n_w 
+    DO l = 1, l_G
+       DO ni = 1, n_w
+          DO nj = 1, n_w
              wwprod(ni,nj,l) = ww(ni,l)*ww(nj,l)
           END DO
        END DO
@@ -802,7 +802,7 @@ CONTAINS
           ENDDO
 
           y = 0.
-          DO ni = 1, n_w; 
+          DO ni = 1, n_w;
              DO k = 1, k_d
                 y(ni) =  y(ni) + gl(k) * dw(k,ni,l,m)
              END DO
@@ -818,10 +818,10 @@ CONTAINS
                 END DO
 
                 x = viscolm*xij + masslm*wwprod(ni,nj,l) + &
-                     y(nj)*ww(ni,l) - ww(nj,l)*y(ni) 
+                     y(nj)*ww(ni,l) - ww(nj,l)*y(ni)
 
                 DO p = ia(i),  ia(i+1) - 1
-                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                    ENDIF
                 ENDDO
 
@@ -855,15 +855,15 @@ CONTAINS
 
     INTEGER :: k, l, m, ni, nj, i, j, p
     REAL(KIND=8) :: x, xij, masslm, viscolm
-    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w,mesh%gauss%l_G) :: wwprod 
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w,mesh%gauss%l_G) :: wwprod
 
     CALL gauss(mesh)
     jj => mesh%jj
     me => mesh%me
 
-    DO l = 1, l_G 
-       DO ni = 1, n_w 
-          DO nj = 1, n_w 
+    DO l = 1, l_G
+       DO ni = 1, n_w
+          DO nj = 1, n_w
              wwprod(ni,nj,l) = ww(ni,l)*ww(nj,l)
           END DO
        END DO
@@ -883,10 +883,10 @@ CONTAINS
                    xij =  xij + dw(k,nj,l,m) * dw(k,ni,l,m)
                 END DO
 
-                x = viscolm*xij + masslm*wwprod(ni,nj,l) 
+                x = viscolm*xij + masslm*wwprod(ni,nj,l)
 
                 DO p = ia(i),  ia(i+1) - 1
-                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                    ENDIF
                 ENDDO
 
@@ -919,16 +919,16 @@ CONTAINS
     INTEGER :: k, l, m, ni, nj, i, j, p
     REAL(KIND=8), DIMENSION(mesh%gauss%k_d) :: gl
     REAL(KIND=8) :: dg, x,  masslm
-    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w,mesh%gauss%l_G) :: wwprod 
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w,mesh%gauss%l_G) :: wwprod
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w) :: y
 
     CALL gauss(mesh)
     jj => mesh%jj
     me => mesh%me
 
-    DO l = 1, l_G 
-       DO ni = 1, n_w 
-          DO nj = 1, n_w 
+    DO l = 1, l_G
+       DO ni = 1, n_w
+          DO nj = 1, n_w
              wwprod(ni,nj,l) = ww(ni,l)*ww(nj,l)
           END DO
        END DO
@@ -948,7 +948,7 @@ CONTAINS
           masslm  = 0.5*dg*rj(l,m)
 
           y = 0.
-          DO ni = 1, n_w; 
+          DO ni = 1, n_w;
              DO k = 1, k_d
                 y(ni) =  y(ni) + gl(k) * dw(k,ni,l,m)
              END DO
@@ -961,7 +961,7 @@ CONTAINS
                 x = masslm*wwprod(ni,nj,l) + y(nj)*ww(ni,l)
 
                 DO p = ia(i),  ia(i+1) - 1
-                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                    ENDIF
                 ENDDO
 
@@ -994,8 +994,8 @@ CONTAINS
     INTEGER :: k, l, m, ni, nj, i, j, p
     REAL(KIND=8), DIMENSION(mesh%gauss%k_d) :: gl
     REAL(KIND=8) :: dg, x, masslm, rjlm
-    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w,mesh%gauss%l_G) :: wwprod 
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w) :: dw_loc 
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w,mesh%gauss%l_G) :: wwprod
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w) :: dw_loc
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w) :: y
     INTEGER,      DIMENSION(mesh%gauss%n_w) :: j_loc
 
@@ -1003,9 +1003,9 @@ CONTAINS
     jj => mesh%jj
     me => mesh%me
 
-    DO l = 1, l_G 
-       DO ni = 1, n_w 
-          DO nj = 1, n_w 
+    DO l = 1, l_G
+       DO ni = 1, n_w
+          DO nj = 1, n_w
              wwprod(ni,nj,l) = 0.5d0*ww(ni,l)*ww(nj,l)
           END DO
        END DO
@@ -1031,7 +1031,7 @@ CONTAINS
           ENDDO
           masslm  = dg*rjlm
 
-          DO ni = 1, n_w 
+          DO ni = 1, n_w
              y(ni) = 0.
              DO k = 1, k_d
                 y(ni) =  y(ni) + gl(k) * dw_loc(k,ni)
@@ -1044,7 +1044,7 @@ CONTAINS
                 x = masslm*wwprod(ni,nj,l) + y(nj)*ww(ni,l)
 
                 DO p = ia(i),  ia(i+1) - 1
-                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                    ENDIF
                 ENDDO
 
@@ -1094,7 +1094,7 @@ CONTAINS
           ENDDO
 
           y = 0.
-          DO ni = 1, n_w; 
+          DO ni = 1, n_w;
              DO k = 1, k_d
                 y(ni) =  y(ni) + gl(k) * dw(k,ni,l,m)
              END DO
@@ -1107,7 +1107,7 @@ CONTAINS
                 x = y(nj)*ww(ni,l)
 
                 DO p = ia(i),  ia(i+1) - 1
-                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                    ENDIF
                 ENDDO
 
@@ -1128,7 +1128,7 @@ CONTAINS
 
     IMPLICIT NONE
     REAL(KIND=8), DIMENSION(:,:), INTENT(IN)    :: gg
-    REAL(KIND=8),                 INTENT(IN)    :: alpha 
+    REAL(KIND=8),                 INTENT(IN)    :: alpha
     INTEGER,      DIMENSION(:),   INTENT(IN)    :: ia
     INTEGER,      DIMENSION(:),   INTENT(IN)    :: ja
     REAL(KIND=8), DIMENSION(:),   INTENT(INOUT) :: a0
@@ -1164,7 +1164,7 @@ CONTAINS
           ENDDO
 
           y = 0
-          DO ni = 1, n_w; 
+          DO ni = 1, n_w;
              DO k = 1, k_d
                 y(ni) =  y(ni) + gl(k) * dw(k,ni,l,m)
              END DO
@@ -1177,7 +1177,7 @@ CONTAINS
                 x = y(ni)*ww(nj,l)
 
                 DO p = ia(i),  ia(i+1) - 1
-                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + hloc*x;  EXIT;  
+                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + hloc*x;  EXIT;
                    ENDIF
                 ENDDO
 
@@ -1216,9 +1216,9 @@ CONTAINS
     m = SIZE(jj,1)
     SELECT CASE(m)
     CASE(3); exp = 1.d0/2
-    CASE(6); exp = 1.d0/2 
+    CASE(6); exp = 1.d0/2
     CASE(4); exp = 1.d0/3
-    CASE(10); exp = 1.d0/3 
+    CASE(10); exp = 1.d0/3
     END SELECT
 
     DO m = 1, me
@@ -1245,9 +1245,9 @@ CONTAINS
                    xij =  xij + dw(k,nj,l,m) * dw(k,ni,l,m)
                 END DO
 
-                x = fl*xij 
+                x = fl*xij
                 DO p = ia(i),  ia(i+1) - 1
-                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                    ENDIF
                 ENDDO
 
@@ -1301,9 +1301,9 @@ CONTAINS
                    xij =  xij + dw(k,nj,l,m) * dw(k,ni,l,m)
                 END DO
 
-                x = fl*xij 
+                x = fl*xij
                 DO p = ia(i),  ia(i+1) - 1
-                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                    ENDIF
                 ENDDO
 
@@ -1324,7 +1324,7 @@ CONTAINS
 
     IMPLICIT NONE
     REAL(KIND=8),                 INTENT(IN)    :: p
-    REAL(KIND=8), DIMENSION(:,:), INTENT(IN)    :: vstar 
+    REAL(KIND=8), DIMENSION(:,:), INTENT(IN)    :: vstar
     REAL(KIND=8), DIMENSION(:),   INTENT(IN)    :: ff
     INTEGER,      DIMENSION(:),   INTENT(IN)    :: ia
     INTEGER,      DIMENSION(:),   INTENT(IN)    :: ja
@@ -1357,7 +1357,7 @@ CONTAINS
 
           x = 0.
           DO k= 1, k_d
-             x = x + vl(k)*gl(k) 
+             x = x + vl(k)*gl(k)
           END DO
           IF (ABS(x) .LT. 1.d-12) THEN
              xrjlm = 0.
@@ -1373,9 +1373,9 @@ CONTAINS
                    xij =  xij + dw(k,nj,l,m) * dw(k,ni,l,m)
                 END DO
 
-                x = xrjlm * xij 
+                x = xrjlm * xij
                 DO q = ia(i),  ia(i+1) - 1
-                   IF (ja(q) == j) THEN;  a0(q) = a0(q) + x;  EXIT;  
+                   IF (ja(q) == j) THEN;  a0(q) = a0(q) + x;  EXIT;
                    ENDIF
                 ENDDO
 
@@ -1426,7 +1426,7 @@ CONTAINS
 
           x = 0.
           DO k= 1, k_d
-             x = x + gl(k)*gl(k) 
+             x = x + gl(k)*gl(k)
           END DO
           IF (ABS(x) .LT. 1.d-20) THEN
              xrjlm = 0.
@@ -1442,9 +1442,9 @@ CONTAINS
                    xij =  xij + dw(k,nj,l,m) * dw(k,ni,l,m)
                 END DO
 
-                x = xrjlm * xij 
+                x = xrjlm * xij
                 DO q = ia(i),  ia(i+1) - 1
-                   IF (ja(q) == j) THEN;  a0(q) = a0(q) + x;  EXIT;  
+                   IF (ja(q) == j) THEN;  a0(q) = a0(q) + x;  EXIT;
                    ENDIF
                 ENDDO
 
@@ -1469,8 +1469,8 @@ CONTAINS
 
     IMPLICIT NONE
     REAL(KIND=8), DIMENSION(:,:), INTENT(IN)    :: gg
-    REAL(KIND=8), DIMENSION(:),   INTENT(IN)    :: stab 
-    INTEGER,                      INTENT(IN)    :: istab 
+    REAL(KIND=8), DIMENSION(:),   INTENT(IN)    :: stab
+    INTEGER,                      INTENT(IN)    :: istab
     INTEGER,      DIMENSION(:),   INTENT(IN)    :: ia
     INTEGER,      DIMENSION(:),   INTENT(IN)    :: ja
     REAL(KIND=8), DIMENSION(:),   INTENT(INOUT) :: a0
@@ -1483,11 +1483,11 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%k_d) :: vl
     REAL(KIND=8) :: dg, x, xij, masslm, rjlm
     REAL(KIND=8) :: h,hmu,xrjlm, exponent
-    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w,mesh%gauss%l_G) :: wwprod 
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w) :: dw_loc 
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%k_d) :: gradv 
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w,mesh%gauss%l_G) :: wwprod
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w) :: dw_loc
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%k_d) :: gradv
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w) :: vdw
-    INTEGER,      DIMENSION(mesh%gauss%n_w) :: j_loc 
+    INTEGER,      DIMENSION(mesh%gauss%n_w) :: j_loc
 
     CALL gauss(mesh)
     jj => mesh%jj
@@ -1495,9 +1495,9 @@ CONTAINS
 
     exponent = 1./k_d
 
-    DO l = 1, l_G 
-       DO ni = 1, n_w 
-          DO nj = 1, n_w 
+    DO l = 1, l_G
+       DO ni = 1, n_w
+          DO nj = 1, n_w
              wwprod(ni,nj,l) = 0.5*ww(ni,l)*ww(nj,l)
           END DO
        END DO
@@ -1532,7 +1532,7 @@ CONTAINS
                    gradv(k,kp) = gradv(k,kp) + gg(k, j_loc(ni)) * dw_loc(kp,ni)
                 END DO
              END DO
-             dg = dg + gradv(k,k) 
+             dg = dg + gradv(k,k)
           ENDDO
 
           masslm  = dg*rjlm
@@ -1550,7 +1550,7 @@ CONTAINS
                    x = x +(vl(kp)*gradv(k,kp))**2
                 END DO
              END DO
-          ELSE 
+          ELSE
              WRITE(*,*) 'qs_adv_stab_M: istab > 2'
              STOP
           END IF
@@ -1585,7 +1585,7 @@ CONTAINS
                 !               x =  x + xrjlm * xij
 
                 DO p = ia(i),  ia(i+1) - 1
-                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                    ENDIF
                 ENDDO
 
@@ -1634,7 +1634,7 @@ CONTAINS
                 x = -s * f
 
                 DO p = ia(i),  ia(i+1) - 1
-                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                    ENDIF
                 END DO
 
@@ -1689,7 +1689,7 @@ CONTAINS
                 x = wws(ns,ls) * fls * wws(ns1,ls)
 
                 DO q = ia(i),  ia(i+1) - 1
-                   IF (ja(q) == j) THEN;  a0(q) = a0(q) + x;  EXIT;  
+                   IF (ja(q) == j) THEN;  a0(q) = a0(q) + x;  EXIT;
                    ENDIF
                 ENDDO
 
@@ -1725,9 +1725,9 @@ CONTAINS
     jj => mesh%jj
     me => mesh%me
 
-    bloc_size = (SIZE(ia) - 1)/3 
+    bloc_size = (SIZE(ia) - 1)/3
 
-    DO m = 1, me 
+    DO m = 1, me
        DO l = 1, l_G
 
           fla = alpha * rj(l,m)
@@ -1741,16 +1741,16 @@ CONTAINS
                       j = j_b + (h-1)*bloc_size
 
                       IF (h.EQ.k) THEN
-                         x = dw(k1,n,l,m)*dw(h1,n0,l,m) + &  
-                              dw(k2,n,l,m)*dw(h2,n0,l,m)  
-                      ELSE 
+                         x = dw(k1,n,l,m)*dw(h1,n0,l,m) + &
+                              dw(k2,n,l,m)*dw(h2,n0,l,m)
+                      ELSE
                          x = - dw(h,n,l,m)*dw(k,n0,l,m)
                       END IF
 
                       x = x * fla
 
                       DO q = ia(i),  ia(i+1) - 1
-                         IF (ja(q) == j) THEN;  a0(q) = a0(q) + x;  EXIT;  
+                         IF (ja(q) == j) THEN;  a0(q) = a0(q) + x;  EXIT;
                          ENDIF
                       ENDDO
 
@@ -1773,7 +1773,7 @@ CONTAINS
     USE Gauss_points
 
     IMPLICIT NONE
-    REAL(KIND=8), DIMENSION(:,:), INTENT(IN)    :: gg 
+    REAL(KIND=8), DIMENSION(:,:), INTENT(IN)    :: gg
     INTEGER,      DIMENSION(:),   INTENT(IN)    :: ia
     INTEGER,      DIMENSION(:),   INTENT(IN)    :: ja
     REAL(KIND=8), DIMENSION(:),   INTENT(INOUT) :: a0
@@ -1781,7 +1781,7 @@ CONTAINS
     INTEGER ::  m, l, n, q, n0, k, k1, k2, h, h1, h2, i, j, i_b, j_b, &
          bloc_size, s , o
     REAL(KIND=8) :: x
-    REAL(KIND=8), DIMENSION(3) :: gl 
+    REAL(KIND=8), DIMENSION(3) :: gl
 
     TYPE(mesh_type), TARGET                     :: mesh
     INTEGER,      DIMENSION(:,:), POINTER       :: jj
@@ -1791,7 +1791,7 @@ CONTAINS
     jj => mesh%jj
     me => mesh%me
 
-    bloc_size = (SIZE(ia) - 1)/3 
+    bloc_size = (SIZE(ia) - 1)/3
 
     DO m = 1, me
        DO l = 1, l_G
@@ -1809,20 +1809,20 @@ CONTAINS
                       j = j_b + (h-1)*bloc_size
 
                       IF (h == k) THEN
-                         x = gl(h) * ( dw(k2,n,l,m) * dw(h1,n0,l,m)  &  
-                              - dw(k1,n,l,m) * dw(h2,n0,l,m) )  
-                      ELSE 
-                         o = 6 - k - h 
+                         x = gl(h) * ( dw(k2,n,l,m) * dw(h1,n0,l,m)  &
+                              - dw(k1,n,l,m) * dw(h2,n0,l,m) )
+                      ELSE
+                         o = 6 - k - h
                          s = 0; IF (k > h) s = 1
-                         x = (-1)**(k+h+s) * & 
+                         x = (-1)**(k+h+s) * &
                               ( dw(o,n,l,m) * (gl(h1)*dw(h1,n0,l,m) + gl(h2)*dw(h2,n0,l,m)) &
                               + dw(h,n,l,m) * gl(h) * dw(o,n0,l,m) )
                       END IF
 
-                      x = x * rj(l,m) 
+                      x = x * rj(l,m)
 
                       DO q = ia(i),  ia(i+1) - 1
-                         IF (ja(q) == j) THEN;  a0(q) = a0(q) + x;  EXIT;  
+                         IF (ja(q) == j) THEN;  a0(q) = a0(q) + x;  EXIT;
                          ENDIF
                       ENDDO
 
@@ -1853,7 +1853,7 @@ CONTAINS
 
     INTEGER ::  ms, ls, ns, ns1, i, j, q, i_b, j_b, bloc_size, h, k
     REAL(KIND=8) :: fls, x, wwprod
-    REAL(KIND=8), DIMENSION(3,3) :: tab 
+    REAL(KIND=8), DIMENSION(3,3) :: tab
 
     TYPE(mesh_type), TARGET                     :: mesh
     INTEGER,      DIMENSION(:,:), POINTER       :: js, is
@@ -1864,7 +1864,7 @@ CONTAINS
     is => mesh%iis
     mes => mesh%mes
 
-    bloc_size = (SIZE(ia) - 1)/3 
+    bloc_size = (SIZE(ia) - 1)/3
 
     DO ms = 1, mes
        DO ls = 1, l_Gs
@@ -1886,17 +1886,17 @@ CONTAINS
           DO ns = 1, n_ws;  i_b = js(ns, ms)
              DO ns1 = 1, n_ws;  j_b = js(ns1, ms)
 
-                wwprod = wws(ns, ls) * wws(ns1, ls) * fls 
+                wwprod = wws(ns, ls) * wws(ns1, ls) * fls
 
-                DO k = 1, k_d 
+                DO k = 1, k_d
                    DO h = 1, k_d
 
                       i = i_b + (k-1)*bloc_size;  j = j_b + (h-1)*bloc_size
 
-                      x = wwprod * tab(k,h) 
+                      x = wwprod * tab(k,h)
 
                       DO q = ia(i),  ia(i+1) - 1
-                         IF (ja(q) == j) THEN;  a0(q) = a0(q) + x;  EXIT;  
+                         IF (ja(q) == j) THEN;  a0(q) = a0(q) + x;  EXIT;
                          ENDIF
                       ENDDO
 
@@ -1924,7 +1924,7 @@ CONTAINS
 
     INTEGER ::  ms, ls, ns, ns1, i, j, q, i_b, j_b, bloc_size, h, k
     REAL(KIND=8) :: x, wwprod
-    REAL(KIND=8), DIMENSION(3,3) :: tab 
+    REAL(KIND=8), DIMENSION(3,3) :: tab
 
     TYPE(mesh_type), TARGET                     :: mesh
     INTEGER,      DIMENSION(:,:), POINTER       :: js
@@ -1934,7 +1934,7 @@ CONTAINS
     js => mesh%jjs
     mes => mesh%mes
 
-    bloc_size = (SIZE(ia) - 1)/3 
+    bloc_size = (SIZE(ia) - 1)/3
 
     DO ms = 1, mes
        DO ls = 1, l_Gs
@@ -1950,22 +1950,22 @@ CONTAINS
           tab(3,1) = -rnorms(1,ls,ms) * rnorms(3,ls,ms)
           tab(3,2) = -rnorms(2,ls,ms) * rnorms(3,ls,ms)
 
-          tab = tab * rjs(ls,ms) * alpha 
+          tab = tab * rjs(ls,ms) * alpha
 
           DO ns = 1, n_ws;  i_b = js(ns, ms)
              DO ns1 = 1, n_ws;  j_b = js(ns1, ms)
 
-                wwprod = wws(ns, ls) * wws(ns1, ls) 
+                wwprod = wws(ns, ls) * wws(ns1, ls)
 
-                DO k = 1, k_d 
+                DO k = 1, k_d
                    DO h = 1, k_d
 
                       i = i_b + (k-1)*bloc_size;  j = j_b + (h-1)*bloc_size
 
-                      x = wwprod * tab(k,h) 
+                      x = wwprod * tab(k,h)
 
                       DO q = ia(i),  ia(i+1) - 1
-                         IF (ja(q) == j) THEN;  a0(q) = a0(q) + x;  EXIT;  
+                         IF (ja(q) == j) THEN;  a0(q) = a0(q) + x;  EXIT;
                          ENDIF
                       ENDDO
 
@@ -2035,7 +2035,7 @@ CONTAINS
                 x = viscolm*xij + masslm*wwprod(ni,nj,l)
 
                 DO p = ia(i),  ia(i+1) - 1
-                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                    ENDIF
                 ENDDO
 
@@ -2057,11 +2057,11 @@ CONTAINS
     USE Gauss_points
 
     IMPLICIT NONE
-    REAL(KIND=8), DIMENSION(:),   INTENT(IN)    :: ff 
+    REAL(KIND=8), DIMENSION(:),   INTENT(IN)    :: ff
     REAL(KIND=8), DIMENSION(:,:), INTENT(IN)    :: gg
     INTEGER,      DIMENSION(:),   INTENT(IN)    :: ia, ja
     REAL(KIND=8), DIMENSION(:),   INTENT(INOUT) :: a0
-    REAL(KIND=8), OPTIONAL,       INTENT(IN)    :: a_skew 
+    REAL(KIND=8), OPTIONAL,       INTENT(IN)    :: a_skew
 
     TYPE(mesh_type), TARGET                     :: mesh
     INTEGER,      DIMENSION(:,:), POINTER       :: jj
@@ -2072,7 +2072,7 @@ CONTAINS
     REAL(KIND=8) :: fl, dg, x, masslm, skew=1
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w,mesh%gauss%l_G) :: wwprod
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w) :: y
-    !   REAL(KIND=8), DIMENSION(k_d,n_w) :: dw_loc 
+    !   REAL(KIND=8), DIMENSION(k_d,n_w) :: dw_loc
 
     CALL gauss(mesh)
     jj => mesh%jj
@@ -2086,10 +2086,10 @@ CONTAINS
        END DO
     END DO
 
-    IF (PRESENT(a_skew)) THEN 
+    IF (PRESENT(a_skew)) THEN
        skew =  a_skew
     ELSE
-       skew = 0.5d0 
+       skew = 0.5d0
     END IF
 
     DO m = 1, me
@@ -2104,7 +2104,7 @@ CONTAINS
              fl = fl + ff(jj(ni,m)) * ww(ni,l)
              DO k = 1, k_d
                 gl(k) = gl(k) + gg(k, jj(ni,m)) * ww(ni,l)
-                dg = dg + gg(k, jj(ni,m)) *  dw(k,ni,l,m)   ! divergence 
+                dg = dg + gg(k, jj(ni,m)) *  dw(k,ni,l,m)   ! divergence
              END DO
           ENDDO
           masslm  = (fl + skew*dg)*rj(l,m)   ! skew form
@@ -2125,7 +2125,7 @@ CONTAINS
                 x =  masslm*wwprod(ni,nj,l) + y(nj)*ww(ni,l)
 
                 DO p = ia(i),  ia(i+1) - 1
-                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                    ENDIF
                 ENDDO
 
@@ -2148,11 +2148,11 @@ CONTAINS
 
     IMPLICIT NONE
     REAL(KIND=8),                 INTENT(IN)    :: mass
-    REAL(KIND=8), DIMENSION(:),   INTENT(IN)    :: ff 
+    REAL(KIND=8), DIMENSION(:),   INTENT(IN)    :: ff
     REAL(KIND=8), DIMENSION(:,:), INTENT(IN)    :: gg
     INTEGER,      DIMENSION(:),   INTENT(IN)    :: ia, ja
     REAL(KIND=8), DIMENSION(:),   INTENT(INOUT) :: a0
-    REAL(KIND=8), OPTIONAL,       INTENT(IN)    :: a_skew 
+    REAL(KIND=8), OPTIONAL,       INTENT(IN)    :: a_skew
 
     TYPE(mesh_type), TARGET                     :: mesh
     INTEGER,      DIMENSION(:,:), POINTER       :: jj
@@ -2177,10 +2177,10 @@ CONTAINS
        END DO
     END DO
 
-    IF (PRESENT(a_skew)) THEN 
+    IF (PRESENT(a_skew)) THEN
        skew =  a_skew
     ELSE
-       skew = 0.25d0 
+       skew = 0.25d0
     END IF
 
     DO m = 1, me
@@ -2193,7 +2193,7 @@ CONTAINS
              fl = fl + ff(jj(ni,m)) * ww(ni,l)
              DO k = 1, k_d
                 gl(k) = gl(k) + gg(k, jj(ni,m)) * ww(ni,l)
-                dg = dg + gg(k, jj(ni,m)) *  dw(k,ni,l,m)   ! divergence 
+                dg = dg + gg(k, jj(ni,m)) *  dw(k,ni,l,m)   ! divergence
              END DO
           ENDDO
           masslm  = (mass*fl + fl*skew*dg)*rj(l,m)   ! skew form
@@ -2213,7 +2213,7 @@ CONTAINS
                 x =  masslm*wwprod(ni,nj,l) + y(nj)*ww(ni,l)
 
                 DO p = ia(i),  ia(i+1) - 1
-                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                    ENDIF
                 ENDDO
 
@@ -2299,7 +2299,7 @@ CONTAINS
                      y(nj)*ww(ni,l)
 
                 DO p = ia(i),  ia(i+1) - 1
-                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                    ENDIF
                 ENDDO
 
@@ -2380,7 +2380,7 @@ CONTAINS
                      y(nj)*ww(ni,l)
 
                 DO p = ia(i),  ia(i+1) - 1
-                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                    ENDIF
                 ENDDO
 
@@ -2395,10 +2395,10 @@ CONTAINS
   SUBROUTINE elast_M (mesh, alpha, ia, ja, a0)
     !=======================================
 
-    !   << (Dw), (D_) >> 
-    !  << (Dw), (D_)^t >> 
-    !  alpha << (D.w), (D._) >> 
-    !  ===>   a0   incremental acc. in k_d Dimensions 
+    !   << (Dw), (D_) >>
+    !  << (Dw), (D_)^t >>
+    !  alpha << (D.w), (D._) >>
+    !  ===>   a0   incremental acc. in k_d Dimensions
 
     USE Gauss_points
 
@@ -2441,10 +2441,10 @@ CONTAINS
                          END DO
                       END IF
 
-                      x = x * rj(l,m) 
+                      x = x * rj(l,m)
 
                       DO p = ia(i),  ia(i+1) - 1
-                         IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                         IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                          ENDIF
                       ENDDO
 
@@ -2462,9 +2462,9 @@ CONTAINS
   SUBROUTINE curl_div_2D_M (mesh, alpha, stabh, expdiv, ia, ja, a0)
     !=======================================
     !          << w , _ >>
-    !  +       << (Dxw), (Dx_) >> 
-    !  + alpha << (D.w), (D._) >> 
-    !  ===>   a0   incremental acc. in k_d Dimensions 
+    !  +       << (Dxw), (Dx_) >>
+    !  + alpha << (D.w), (D._) >>
+    !  ===>   a0   incremental acc. in k_d Dimensions
 
     USE Gauss_points
 
@@ -2508,10 +2508,10 @@ CONTAINS
                          x = x - dw(h,ni,l,m)*dw(k,nj,l,m)
                       END IF
 
-                      x = x * rj(l,m) 
+                      x = x * rj(l,m)
 
                       DO p = ia(i),  ia(i+1) - 1
-                         IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                         IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                          ENDIF
                       ENDDO
 
@@ -2529,8 +2529,8 @@ CONTAINS
   SUBROUTINE curl_grad_2D_M (mesh, alpha, stab, exp_sta, ia, ja, a0)
     !=======================================
     ! alpha(phij, phii) + (Curl phij, Curl phii) + (Grad psij, phii) + sta*h^(2*exp_sta)*(div phij, Div phii)
-    ! - (Grad phij, psii) + h^(2(1-exp_sta))*(Grad psij, Grad psii) 
-    !  ===>   a0   incremental acc. in k_d Dimensions 
+    ! - (Grad phij, psii) + h^(2(1-exp_sta))*(Grad psij, Grad psii)
+    !  ===>   a0   incremental acc. in k_d Dimensions
 
     USE Gauss_points
 
@@ -2563,7 +2563,7 @@ CONTAINS
 
     DO m = 1, me
        hloc = SQRT(SUM(rj(:,m)))/type_fe
-       alphah = stab*hloc**(2*exp_sta) 
+       alphah = stab*hloc**(2*exp_sta)
        betah = hloc**(2*(1-exp_sta))*(1.d0/stab)
        DO l = 1, l_G
 
@@ -2582,9 +2582,9 @@ CONTAINS
                       ELSE
                          x = x - dw(h,ni,l,m)*dw(k,nj,l,m)
                       END IF
-                      x = x * rj(l,m) 
+                      x = x * rj(l,m)
                       DO p = ia(i),  ia(i+1) - 1
-                         IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                         IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                          ENDIF
                       ENDDO
 
@@ -2600,9 +2600,9 @@ CONTAINS
                 DO nj = 1, n_w;  j_b = jj(nj,m)
                    h = 3
                    j = j_b + (h-1)*bloc_size
-                   x = dw(k,nj,l,m)*ww(ni,l)* rj(l,m) 
+                   x = dw(k,nj,l,m)*ww(ni,l)* rj(l,m)
                    DO p = ia(i),  ia(i+1) - 1
-                      IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  
+                      IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;
                          EXIT
                       ENDIF
                    ENDDO
@@ -2612,7 +2612,7 @@ CONTAINS
           ENDDO
 
           DO ni = 1, n_w;  i_b = jj(ni, m)
-             k = 3 
+             k = 3
              i = i_b + (k-1)*bloc_size
              DO nj = 1, n_w;  j_b = jj(nj,m)
                 DO h = 1, 3
@@ -2623,7 +2623,7 @@ CONTAINS
                       x = betah*SUM(dw(:,ni,l,m) * dw(:,nj,l,m))* rj(l,m)
                    END IF
                    DO p = ia(i),  ia(i+1) - 1
-                      IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  
+                      IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;
                          EXIT
                       ENDIF
                    ENDDO
@@ -2638,8 +2638,8 @@ CONTAINS
   SUBROUTINE curl_surf_2D_M (mesh, stab_b, exp_b, consist, adj, ia, ja, a0)
     !=======================================
     !         alpha*h << wxn , _xn >>
-    !  -       << (Dxw)xn, _ >> 
-    !  ===>   a0   incremental acc. in k_d Dimensions 
+    !  -       << (Dxw)xn, _ >>
+    !  ===>   a0   incremental acc. in k_d Dimensions
 
     USE Gauss_points
 
@@ -2682,7 +2682,7 @@ CONTAINS
                       x = x * rjs(ls,ms)
 
                       DO p = ia(i),  ia(i+1) - 1
-                         IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                         IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                          ENDIF
                       ENDDO
 
@@ -2702,11 +2702,11 @@ CONTAINS
                       j = j_b + (h-1)*bloc_size
                       h1 = MODULO(h,2) + 1
 
-                      x =consist*(-1)**(k1+h) *wws(ni,ls)*rnorms(k1,ls,ms)*dw_s(h1,nj,ls,ms) 
+                      x =consist*(-1)**(k1+h) *wws(ni,ls)*rnorms(k1,ls,ms)*dw_s(h1,nj,ls,ms)
                       x = x * rjs(ls,ms)
 
                       DO p = ia(i),  ia(i+1) - 1
-                         IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                         IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                          ENDIF
                       ENDDO
 
@@ -2730,7 +2730,7 @@ CONTAINS
                       x = x * rjs(ls,ms)
 
                       DO p = ia(i),  ia(i+1) - 1
-                         IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                         IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                          ENDIF
                       ENDDO
 
@@ -2754,8 +2754,8 @@ CONTAINS
 
     IMPLICIT NONE
     REAL(KIND=8),                 INTENT(IN)    :: alpha
-    INTEGER,      DIMENSION(:),   INTENT(IN)    :: ia 
-    INTEGER,      DIMENSION(:),   INTENT(IN)    :: ja 
+    INTEGER,      DIMENSION(:),   INTENT(IN)    :: ia
+    INTEGER,      DIMENSION(:),   INTENT(IN)    :: ja
     REAL(KIND=8), DIMENSION(:),   INTENT(INOUT) :: a0
 
     INTEGER ::  m, l, ni, nj, i, j, p
@@ -2779,7 +2779,7 @@ CONTAINS
 
                 x = al * dw(1,nj,l,m) * dw(1,ni,l,m)
                 DO p = ia(i),  ia(i+1) - 1
-                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;  
+                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
                    ENDIF
                 ENDDO
 
@@ -2797,17 +2797,17 @@ CONTAINS
     IMPLICIT NONE
     TYPE(mesh_type)    :: mesh
     !TYPE(csr_matrix)   :: mat
-    INTEGER,      DIMENSION(:),   INTENT(IN)    :: ia 
-    INTEGER,      DIMENSION(:),   INTENT(IN)    :: ja 
+    INTEGER,      DIMENSION(:),   INTENT(IN)    :: ia
+    INTEGER,      DIMENSION(:),   INTENT(IN)    :: ja
     REAL(KIND=8), DIMENSION(:),   INTENT(INOUT) :: aa
     REAL(KIND=8)       :: coeff_visc
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%l_Gs, 2) :: dwni_loc
     INTEGER, DIMENSION(mesh%gauss%n_w,2) :: jji_loc
-    INTEGER :: ls, ms, cotei, cotej, p, ni, nj, i, j, type_fe 
+    INTEGER :: ls, ms, cotei, cotej, p, ni, nj, i, j, type_fe
     REAL(KIND=8) :: x, h2, coeff !=  0.02! 0.003!  .003
     IF (mesh%gauss%n_w==3) THEN
        type_fe = 1
-    ELSE 
+    ELSE
        type_fe = 2
     END IF
     coeff = coeff_visc/type_fe**2
@@ -2839,11 +2839,3 @@ CONTAINS
   END SUBROUTINE edge_stab_M
 
 END MODULE fem_s_M
-
-
-
-
-
-
-
-

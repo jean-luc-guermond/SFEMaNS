@@ -3,7 +3,7 @@
 !
 MODULE Gauss_points
 
-  USE def_type_mesh 
+  USE def_type_mesh
 
   PUBLIC
   INTEGER, PUBLIC :: k_d, n_w, l_G , n_ws, l_Gs
@@ -24,7 +24,7 @@ CONTAINS
 
     IMPLICIT NONE
 
-    TYPE(mesh_type) :: mesh 
+    TYPE(mesh_type) :: mesh
 
     ww => mesh%gauss%ww
     wws => mesh%gauss%wws
@@ -45,4 +45,3 @@ CONTAINS
   END SUBROUTINE gauss
 
 END MODULE Gauss_points
-

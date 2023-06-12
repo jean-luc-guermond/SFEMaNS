@@ -3,14 +3,14 @@ MODULE basis_change
   PRIVATE
   !===Compute change of basis matrices for p1 to p2 and p2 to p3
   !===P(k-1) basis: phi_i; P_k basis: psi_j
-  !===phi_i = sum_j (a_ij psi_j) 
+  !===phi_i = sum_j (a_ij psi_j)
   !===a_ij = phi_i(x_j), where x_j is the jth Lagrange node such that psi_k(x_j)=delta_kj
 CONTAINS
   subroutine p1_p2(aij)
     IMPLICIT NONE
     INTEGER, PARAMETER :: type_fe_p2 = 1, nw_p2=(type_fe_p2+2)*(type_fe_p2+1)/2, &
          type_fe_p3 = 2, nw_p3=(type_fe_p3+2)*(type_fe_p3+1)/2
-    REAL(KIND=8), DIMENSION(:,:), POINTER :: aij 
+    REAL(KIND=8), DIMENSION(:,:), POINTER :: aij
     INTEGER, DIMENSION(nw_p3) :: Cart_FE
     REAL(KIND=8) ::  f1, f2, f3, x, y, delta, one = 1.d0
     REAL(KIND=8), DIMENSION(nw_p3) :: xx, yy, xxp, yyp
@@ -51,7 +51,7 @@ CONTAINS
     IMPLICIT NONE
     INTEGER, PARAMETER :: type_fe_p2 = 2, nw_p2=(type_fe_p2+2)*(type_fe_p2+1)/2, &
          type_fe_p3 = 3, nw_p3=(type_fe_p3+2)*(type_fe_p3+1)/2
-    REAL(KIND=8), DIMENSION(:,:), POINTER :: aij 
+    REAL(KIND=8), DIMENSION(:,:), POINTER :: aij
     INTEGER, DIMENSION(nw_p3) :: Cart_FE
     REAL(KIND=8) ::  f1, f2, f3, f4, f5, f6, x, y, delta, half  = 0.5d0, one = 1.d0, two=2.d0, four=4.d0
     REAL(KIND=8), DIMENSION(nw_p3) :: xx, yy, xxp, yyp

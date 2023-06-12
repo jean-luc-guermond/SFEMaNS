@@ -25,7 +25,7 @@ MODULE verbose
   IMPLICIT NONE
   PUBLIC :: write_verbose
   TYPE(my_verbose), PUBLIC  :: talk_to_me
-  PRIVATE 
+  PRIVATE
 
 CONTAINS
   SUBROUTINE write_verbose(rank,opt_tps,opt_tploc_max)

@@ -1,6 +1,6 @@
 MODULE create_comm
-PUBLIC :: create_cart_comm
-PRIVATE
+  PUBLIC :: create_cart_comm
+  PRIVATE
 CONTAINS
   SUBROUTINE create_cart_comm(ndim,comm_cart,comm_one_d,coord_cart)
 #include "petsc/finclude/petsc.h"

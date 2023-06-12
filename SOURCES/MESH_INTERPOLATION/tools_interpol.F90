@@ -284,7 +284,7 @@ CONTAINS
 
     REAL(KIND=8), DIMENSION(2)        :: ab
     INTEGER, INTENT(IN)               :: type_fe
-    REAL(KIND=8), DIMENSION(1+type_fe):: ff    
+    REAL(KIND=8), DIMENSION(1+type_fe):: ff
 
     IF (ABS(1.d0-SUM(ab)) > 1.d-12) THEN
        WRITE(*,*) 'bug in gauss_ff_edge'

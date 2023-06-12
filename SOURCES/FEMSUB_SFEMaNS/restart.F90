@@ -13,16 +13,16 @@ CONTAINS
     USE def_type_mesh
     USE chaine_caractere
     IMPLICIT NONE
-    TYPE(mesh_type), TARGET                                    :: vv_mesh,pp_mesh     
-    REAL(KIND=8),                                   INTENT(IN) :: time 
-    INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator 
+    TYPE(mesh_type), TARGET                                    :: vv_mesh,pp_mesh
+    REAL(KIND=8),                                   INTENT(IN) :: time
+    INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator
     INTEGER,      DIMENSION(:),                     INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),                 INTENT(IN) :: un, un_m1
     REAL(KIND=8), DIMENSION(:,:,:),                 INTENT(IN) :: pn, pn_m1, incpn, incpn_m1
     REAL(KIND=8), DIMENSION(:,:,:,:), OPTIONAL,     INTENT(IN) :: opt_level_set, opt_level_set_m1
     REAL(KIND=8),                     OPTIONAL,     INTENT(IN) :: opt_max_vel, opt_dt
     LOGICAL, OPTIONAL,                              INTENT(IN) :: opt_mono
-    CHARACTER(len=200),                             INTENT(IN) :: filename 
+    CHARACTER(len=200),                             INTENT(IN) :: filename
     INTEGER,                                        INTENT(IN) :: it, freq_restart
     INTEGER                           :: code, n, i, rang_S, rang_F, nb_procs_S, nb_procs_F
     INTEGER                           :: l, lblank
@@ -63,7 +63,7 @@ CONTAINS
        IF ( (rang_F == n-1) .AND. (.NOT. skip) ) THEN
           IF (rang_F == 0) THEN
              OPEN(UNIT = 10, FILE = out_name, POSITION='append', &
-                  FORM = 'unformatted', STATUS = 'replace') 
+                  FORM = 'unformatted', STATUS = 'replace')
              IF (PRESENT(opt_dt)) THEN
                 IF (mono) THEN
                    WRITE(10) time, vv_mesh%np , pp_mesh%np , nb_procs_F, SIZE(list_mode), opt_dt
@@ -79,7 +79,7 @@ CONTAINS
              END IF
           ELSE
              OPEN(UNIT = 10, FILE = out_name, POSITION='append', &
-                  FORM = 'unformatted', STATUS = 'unknown') 
+                  FORM = 'unformatted', STATUS = 'unknown')
           END IF
 
           DO i= 1, SIZE(list_mode)
@@ -96,7 +96,7 @@ CONTAINS
                 WRITE(10) opt_max_vel
              END IF
           END DO
-          CLOSE(10)        
+          CLOSE(10)
        END IF
        CALL MPI_BARRIER(communicator(2),code)
     END DO
@@ -119,7 +119,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:),                 INTENT(OUT):: pn, pn_m1, incpn, incpn_m1
     REAL(KIND=8), DIMENSION(:,:,:,:), OPTIONAL,     INTENT(OUT):: opt_level_set, opt_level_set_m1
     REAL(KIND=8),                     OPTIONAL,     INTENT(OUT):: opt_max_vel
-    CHARACTER(len=200),                             INTENT(IN) :: filename 
+    CHARACTER(len=200),                             INTENT(IN) :: filename
     REAL(KIND=8), OPTIONAL,                         INTENT(IN) :: val_init
     LOGICAL     , OPTIONAL,                         INTENT(IN) :: interpol
     LOGICAL     , OPTIONAL,                         INTENT(IN) :: opt_mono
@@ -128,14 +128,14 @@ CONTAINS
     REAL(KIND=8)                                               :: max_vel_loc, dt_read, dt_ratio
     INTEGER     :: code, n, i, mode, j, rang_S, nb_procs_S, rang_F, nb_procs_F, nlignes, rank
     INTEGER     :: m_max_cr, nb_procs_r, nb_procs_Sr
-    INTEGER     :: m_max_c, nb_mode_r, mode_cherche   
+    INTEGER     :: m_max_c, nb_mode_r, mode_cherche
     LOGICAL     :: trouve, okay
     INTEGER     :: npv, npp
     INTEGER           :: l, lblank
     CHARACTER(len=3)  :: tit_S
-!===HF may 2020
+    !===HF may 2020
     CHARACTER(len=3)  :: tit
-!===HF may 2020
+    !===HF may 2020
     LOGICAL           :: mono=.FALSE.
     CHARACTER(len=250):: in_name
     CALL MPI_COMM_RANK(communicator(2),rang_F,code)
@@ -151,7 +151,7 @@ CONTAINS
        nlignes = nlignes + 3
     END IF
 
-!=== HF may 2020
+    !=== HF may 2020
     IF (PRESENT(opt_it)) THEN
        WRITE(tit,'(i3)') opt_it
        lblank = eval_blank(3,tit)
@@ -159,7 +159,7 @@ CONTAINS
           tit(l:l) = '0'
        END DO
     END IF
-!=== HF may 2020
+    !=== HF may 2020
 
     WRITE(tit_S,'(i3)') rang_S
     lblank = eval_blank(3,tit_S)
@@ -172,7 +172,7 @@ CONTAINS
     END IF
 
     IF (mono) THEN
-!=== HF may 2020
+       !=== HF may 2020
        IF (PRESENT(opt_it)) THEN
           in_name = 'suite_ns_I'//tit//'.'//filename
        ELSE
@@ -184,16 +184,16 @@ CONTAINS
        ELSE
           in_name = 'suite_ns_S'//tit_S//'.'//filename
        END IF
-!=== HF may 2020
+       !=== HF may 2020
     END IF
 
-!=== HF may 2020
+    !=== HF may 2020
     IF (PRESENT(opt_it)) THEN
        WRITE(*,*) 'restart Navier-Stokes for it', opt_it
     ELSE
        WRITE(*,*) 'restart Navier-Stokes'
     END IF
-!=== HF may 2020
+    !=== HF may 2020
     OPEN(UNIT = 10, FILE = in_name, FORM = 'unformatted', STATUS = 'unknown')
 
     IF (PRESENT(opt_dt)) THEN
@@ -226,7 +226,7 @@ CONTAINS
        WRITE(*,*) 'Number of modes per processor from restart file = ',m_max_cr
     ENDIF
 
-    m_max_c   = SIZE(list_mode)      !nombre de modes par proc pour le calcul 
+    m_max_c   = SIZE(list_mode)      !nombre de modes par proc pour le calcul
     nb_mode_r = nb_procs_r*m_max_cr  !nombre total de modes contenus dans le suite
 
     !June 7 2007, JLG
@@ -237,7 +237,7 @@ CONTAINS
     END IF
 
     okay = .FALSE.
-    IF (PRESENT(interpol)) THEN 
+    IF (PRESENT(interpol)) THEN
        IF (interpol) THEN
           okay =.TRUE.
        END IF
@@ -295,7 +295,7 @@ CONTAINS
 
        IF (.NOT.trouve) THEN               !mode_cherche non trouve
           IF (PRESENT(val_init)) THEN ! not implemented yet
-             un(:,:,i)    = val_init  ; un_m1(:,:,i)    = val_init 
+             un(:,:,i)    = val_init  ; un_m1(:,:,i)    = val_init
              pn(:,:,i)    = val_init ; pn_m1(:,:,i)    = val_init
              incpn(:,:,i) = val_init ; incpn_m1(:,:,i) =  val_init
              IF (PRESENT(opt_level_set) .AND. PRESENT(opt_level_set_m1)) THEN
@@ -315,7 +315,7 @@ CONTAINS
              WRITE(*,*) 'mode ns', mode_cherche, ' not found'
           ENDIF
        ENDIF
-       CLOSE(10)                          !fermeture du fichier suite 
+       CLOSE(10)                          !fermeture du fichier suite
     ENDDO
 
     IF (PRESENT(opt_max_vel)) THEN
@@ -323,7 +323,7 @@ CONTAINS
             MPI_MAX, communicator(2), code)
     END IF
 
-!
+    !
     IF (PRESENT(opt_dt)) THEN
        IF (ABS((opt_dt - dt_read)/opt_dt).GT.1d-4) THEN
           dt_ratio = opt_dt/dt_read
@@ -334,9 +334,9 @@ CONTAINS
           un_m1 = dt_ratio * un_m1 +(1.d0 - dt_ratio)* un
           pn_m1 = dt_ratio * pn_m1 +(1.d0 - dt_ratio)* pn
           incpn_m1 = dt_ratio * incpn_m1 +(1.d0 - dt_ratio)* incpn
-             IF (PRESENT(opt_level_set) .AND. PRESENT(opt_level_set_m1)) THEN
-                opt_level_set_m1 = dt_ratio * opt_level_set_m1 +(1.d0 - dt_ratio)* opt_level_set
-             END IF
+          IF (PRESENT(opt_level_set) .AND. PRESENT(opt_level_set_m1)) THEN
+             opt_level_set_m1 = dt_ratio * opt_level_set_m1 +(1.d0 - dt_ratio)* opt_level_set
+          END IF
        END IF
     END IF
 
@@ -349,9 +349,9 @@ CONTAINS
     USE def_type_mesh
     USE chaine_caractere
     IMPLICIT NONE
-    TYPE(mesh_type), TARGET                                    :: vv_mesh,pp_mesh     
-    REAL(KIND=8),                                   INTENT(IN) :: time 
-    INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator 
+    TYPE(mesh_type), TARGET                                    :: vv_mesh,pp_mesh
+    REAL(KIND=8),                                   INTENT(IN) :: time
+    INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator
     INTEGER,      DIMENSION(:),                     INTENT(IN) :: list_mode
     TYPE(dyn_real_array_three), DIMENSION(:),       INTENT(IN) :: der_un
     TYPE(dyn_real_array_three), DIMENSION(:),       INTENT(IN) :: der_pn
@@ -360,7 +360,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:,:), OPTIONAL,     INTENT(IN) :: opt_level_set, opt_level_set_m1
     REAL(KIND=8),                     OPTIONAL,     INTENT(IN) :: opt_max_vel
     LOGICAL, OPTIONAL,                              INTENT(IN) :: opt_mono
-    CHARACTER(len=200),                             INTENT(IN) :: filename 
+    CHARACTER(len=200),                             INTENT(IN) :: filename
     INTEGER,                                        INTENT(IN) :: it, freq_restart
     INTEGER                           :: code, n, i, rang_S, rang_F, nb_procs_S, nb_procs_F
     INTEGER                           :: l, lblank, kp
@@ -401,7 +401,7 @@ CONTAINS
        IF ( (rang_F == n-1) .AND. (.NOT. skip) ) THEN
           IF (rang_F == 0) THEN
              OPEN(UNIT = 10, FILE = out_name, POSITION='append', &
-                  FORM = 'unformatted', STATUS = 'replace') 
+                  FORM = 'unformatted', STATUS = 'replace')
              IF (mono) THEN
                 WRITE(10) time, vv_mesh%np , pp_mesh%np , nb_procs_F, SIZE(list_mode), inputs%taylor_order
              ELSE
@@ -409,16 +409,16 @@ CONTAINS
              END IF
           ELSE
              OPEN(UNIT = 10, FILE = out_name, POSITION='append', &
-                  FORM = 'unformatted', STATUS = 'unknown') 
+                  FORM = 'unformatted', STATUS = 'unknown')
           END IF
           DO i= 1, SIZE(list_mode)
              WRITE(10) list_mode(i)
              WRITE(10) un(:,:,i)
-             DO kp = 1, inputs%taylor_order-1 
+             DO kp = 1, inputs%taylor_order-1
                 WRITE(10) der_un(kp)%DRT(:,:,i)
              END DO
              WRITE(10) pn(:,:,i)
-             DO kp = 1, inputs%taylor_order-1 
+             DO kp = 1, inputs%taylor_order-1
                 WRITE(10) der_pn(kp)%DRT(:,:,i)
              END DO
              IF (PRESENT(opt_level_set) .AND. PRESENT(opt_level_set_m1)) THEN
@@ -427,7 +427,7 @@ CONTAINS
                 WRITE(10) opt_max_vel
              END IF
           END DO
-          CLOSE(10)        
+          CLOSE(10)
        END IF
        CALL MPI_BARRIER(communicator(2),code)
     END DO
@@ -452,22 +452,22 @@ CONTAINS
     TYPE(dyn_real_array_three), DIMENSION(:),       INTENT(OUT):: der_pn
     REAL(KIND=8), DIMENSION(:,:,:,:), OPTIONAL,     INTENT(OUT):: opt_level_set, opt_level_set_m1
     REAL(KIND=8),                     OPTIONAL,     INTENT(OUT):: opt_max_vel
-    CHARACTER(len=200),                             INTENT(IN) :: filename 
+    CHARACTER(len=200),                             INTENT(IN) :: filename
     REAL(KIND=8), OPTIONAL,                         INTENT(IN) :: val_init
     LOGICAL     , OPTIONAL,                         INTENT(IN) :: interpol
     LOGICAL     , OPTIONAL,                         INTENT(IN) :: opt_mono
     INTEGER     , OPTIONAL,                         INTENT(IN) :: opt_it
-    REAL(KIND=8)                                               :: max_vel_loc       
+    REAL(KIND=8)                                               :: max_vel_loc
     INTEGER     :: code, n, i, mode, j, rang_S, nb_procs_S, rang_F, nb_procs_F, nlignes, rank
     INTEGER     :: m_max_cr, nb_procs_r, nb_procs_Sr
-    INTEGER     :: m_max_c, nb_mode_r, mode_cherche, taylor_order, taylor_order_min 
+    INTEGER     :: m_max_c, nb_mode_r, mode_cherche, taylor_order, taylor_order_min
     LOGICAL     :: trouve, okay
     INTEGER     :: npv, npp, kp
     INTEGER           :: l, lblank
     CHARACTER(len=3)  :: tit_S
-!===HF may 2020
+    !===HF may 2020
     CHARACTER(len=3)  :: tit
-!===HF may 2020
+    !===HF may 2020
     LOGICAL           :: mono=.FALSE.
     CHARACTER(len=250):: in_name
     CALL MPI_COMM_RANK(communicator(2),rang_F,code)
@@ -484,7 +484,7 @@ CONTAINS
        tit_S(l:l) = '0'
     END DO
 
-!=== HF may 2020
+    !=== HF may 2020
     IF (PRESENT(opt_it)) THEN
        WRITE(tit,'(i3)') opt_it
        lblank = eval_blank(3,tit)
@@ -492,14 +492,14 @@ CONTAINS
           tit(l:l) = '0'
        END DO
     END IF
-!=== HF may 2020
+    !=== HF may 2020
 
     IF (PRESENT(opt_mono)) THEN
        mono = opt_mono
     END IF
 
     IF (mono) THEN
-!===HF may 2020
+       !===HF may 2020
        IF (PRESENT(opt_it)) THEN
           in_name = 'suite_ns_I'//tit//'.'//filename
        ELSE
@@ -511,16 +511,16 @@ CONTAINS
        ELSE
           in_name = 'suite_ns_S'//tit_S//'.'//filename
        END IF
-!===HF may 2020
+       !===HF may 2020
     END IF
 
-!=== HF may 2020
+    !=== HF may 2020
     IF (PRESENT(opt_it)) THEN
        WRITE(*,*) 'restart Navier-Stokes for it', opt_it
     ELSE
        WRITE(*,*) 'restart Navier-Stokes'
     END IF
-!=== HF may 2020
+    !=== HF may 2020
 
     OPEN(UNIT = 10, FILE = in_name, FORM = 'unformatted', STATUS = 'unknown')
 
@@ -532,7 +532,7 @@ CONTAINS
     END IF
     CLOSE(10)
     taylor_order_min =  MIN(inputs%taylor_order,taylor_order)
-    
+
     nlignes = 2*taylor_order
     IF (PRESENT(opt_level_set) .AND. PRESENT(opt_level_set_m1)) THEN
        nlignes = nlignes + 3
@@ -550,7 +550,7 @@ CONTAINS
        WRITE(*,*) 'Number of modes per processor from restart file = ',m_max_cr
     ENDIF
 
-    m_max_c   = SIZE(list_mode)      !nombre de modes par proc pour le calcul 
+    m_max_c   = SIZE(list_mode)      !nombre de modes par proc pour le calcul
     nb_mode_r = nb_procs_r*m_max_cr  !nombre total de modes contenus dans le suite
 
     !June 7 2007, JLG
@@ -561,7 +561,7 @@ CONTAINS
     END IF
 
     okay = .FALSE.
-    IF (PRESENT(interpol)) THEN 
+    IF (PRESENT(interpol)) THEN
        IF (interpol) THEN
           okay =.TRUE.
        END IF
@@ -597,14 +597,14 @@ CONTAINS
           !June 7 2007, JLG
           IF (mode == mode_cherche) THEN   !on a trouve le bon mode
              READ(10) un(:,:,i)
-             DO kp = 1, taylor_order_min-1 
+             DO kp = 1, taylor_order_min-1
                 READ(10) der_un(kp)%DRT(:,:,i)
              END DO
              DO kp = taylor_order_min, taylor_order-1 !===inputs%taylor_order<taylor_order
                 READ(10) !===Read empty stuff
              END DO
              READ(10) pn(:,:,i)
-             DO kp = 1, taylor_order_min-1 
+             DO kp = 1, taylor_order_min-1
                 READ(10) der_pn(kp)%DRT(:,:,i)
              END DO
              DO kp = taylor_order_min, taylor_order-1!===inputs%taylor_order<taylor_order
@@ -653,7 +653,7 @@ CONTAINS
              WRITE(*,*) 'mode ns', mode_cherche, ' not found'
           ENDIF
        ENDIF
-       CLOSE(10)                          !fermeture du fichier suite 
+       CLOSE(10)                          !fermeture du fichier suite
     ENDDO
 
     IF (PRESENT(opt_max_vel)) THEN
@@ -669,13 +669,13 @@ CONTAINS
     USE def_type_mesh
     USE chaine_caractere
     IMPLICIT NONE
-    TYPE(mesh_type), TARGET                                    :: H_mesh,phi_mesh  
-    INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator 
-    REAL(KIND=8),                                   INTENT(IN) :: time 
+    TYPE(mesh_type), TARGET                                    :: H_mesh,phi_mesh
+    INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator
+    REAL(KIND=8),                                   INTENT(IN) :: time
     INTEGER,      DIMENSION(:),                     INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),                 INTENT(IN) :: Hn, Hn1, Bn, Bn1
     REAL(KIND=8), DIMENSION(:,:,:),                 INTENT(IN) :: phin, phin1
-    CHARACTER(len=200),                              INTENT(IN) :: filename 
+    CHARACTER(len=200),                              INTENT(IN) :: filename
     INTEGER,                                        INTENT(IN) :: it, freq_restart
     LOGICAL, OPTIONAL,                              INTENT(IN) :: opt_mono
     REAL(KIND=8),                     OPTIONAL,     INTENT(IN) :: opt_dt
@@ -718,7 +718,7 @@ CONTAINS
        IF ( (rang_F == n-1) .AND. (.NOT. skip) ) THEN
           IF (rang_F == 0) THEN
              OPEN(UNIT = 10, FILE = out_name, POSITION='append', &
-                  FORM = 'unformatted', STATUS = 'replace') 
+                  FORM = 'unformatted', STATUS = 'replace')
              IF (PRESENT(opt_dt)) THEN
                 IF (mono) THEN
                    WRITE(10) time, H_mesh%np , phi_mesh%np , nb_procs_F, SIZE(list_mode), opt_dt
@@ -734,7 +734,7 @@ CONTAINS
              END IF
           ELSE
              OPEN(UNIT = 10, FILE = out_name, POSITION='append', &
-                  FORM = 'unformatted', STATUS = 'unknown') 
+                  FORM = 'unformatted', STATUS = 'unknown')
           END IF
           DO i= 1, SIZE(list_mode)
              WRITE(10) list_mode(i)
@@ -757,7 +757,7 @@ CONTAINS
                 WRITE(10) 1
              END IF
           END DO
-          CLOSE(10)        
+          CLOSE(10)
        END IF
        CALL MPI_BARRIER(communicator(2),code)
     END DO
@@ -773,19 +773,19 @@ CONTAINS
     USE chaine_caractere
     USE my_util
     IMPLICIT NONE
-    TYPE(mesh_type), TARGET                                    :: H_mesh,phi_mesh     
+    TYPE(mesh_type), TARGET                                    :: H_mesh,phi_mesh
     INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator
     REAL(KIND=8),                                   INTENT(OUT):: time
     INTEGER,      DIMENSION(:)                                 :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),                 INTENT(OUT):: Hn, Hn1, Bn, Bn1
     REAL(KIND=8), DIMENSION(:,:,:),                 INTENT(OUT):: phin, phin1
-    CHARACTER(len=200),                              INTENT(IN):: filename 
+    CHARACTER(len=200),                              INTENT(IN):: filename
     REAL(KIND=8), OPTIONAL,                         INTENT(IN) :: val_init
     LOGICAL     , OPTIONAL,                         INTENT(IN) :: interpol
     LOGICAL     , OPTIONAL,                         INTENT(IN) :: opt_mono
-!===HF may 2020
+    !===HF may 2020
     INTEGER     , OPTIONAL,                         INTENT(IN) :: opt_it
-!===HF may 2020 
+    !===HF may 2020
     REAL(KIND=8),                     OPTIONAL,     INTENT(IN) :: opt_dt
     REAL(KIND=8)                                               :: dt_read, dt_ratio
 
@@ -796,9 +796,9 @@ CONTAINS
     INTEGER     :: nph, npp
     INTEGER           :: l, lblank
     CHARACTER(len=3)  :: tit_S
-!===HF may 2020
+    !===HF may 2020
     CHARACTER(len=3)  :: tit
-!===HF may 2020
+    !===HF may 2020
     CHARACTER(len=250):: in_name
     LOGICAL           :: mono=.FALSE.
 
@@ -808,7 +808,7 @@ CONTAINS
     CALL MPI_COMM_SIZE(communicator(1),nb_procs_S,code)
     CALL MPI_COMM_RANK(MPI_COMM_WORLD,rank,code)
 
-!=== HF may 2020
+    !=== HF may 2020
     IF (PRESENT(opt_it)) THEN
        WRITE(tit,'(i3)') opt_it
        lblank = eval_blank(3,tit)
@@ -816,7 +816,7 @@ CONTAINS
           tit(l:l) = '0'
        END DO
     END IF
-!=== HF may 2020
+    !=== HF may 2020
 
     WRITE(tit_S,'(i3)') rang_S
     lblank = eval_blank(3,tit_S)
@@ -828,7 +828,7 @@ CONTAINS
     END IF
 
     IF (mono) THEN
-!=== HF may 2020
+       !=== HF may 2020
        IF (PRESENT(opt_it)) THEN
           in_name = 'suite_maxwell_I'//tit//'.'//filename
        ELSE
@@ -840,16 +840,16 @@ CONTAINS
        ELSE
           in_name = 'suite_maxwell_S'//tit_S//'.'//filename
        END IF
-!=== HF may 2020
+       !=== HF may 2020
     END IF
 
-!=== HF may 2020
+    !=== HF may 2020
     IF (PRESENT(opt_it)) THEN
        WRITE(*,*) 'restart Maxwell for it', opt_it
     ELSE
        WRITE(*,*) 'restart Maxwell'
     END IF
-!=== HF may 2020
+    !=== HF may 2020
 
     OPEN(UNIT = 10, FILE = in_name, FORM = 'unformatted', STATUS = 'unknown')
     IF (PRESENT(opt_dt)) THEN
@@ -880,7 +880,7 @@ CONTAINS
        WRITE(*,*) 'nombre de modes par processeur = ',m_max_cr
     ENDIF
 
-    m_max_c   = SIZE(list_mode)      !nombre de modes par proc pour le calcul 
+    m_max_c   = SIZE(list_mode)      !nombre de modes par proc pour le calcul
     nb_mode_r = nb_procs_r*m_max_cr  !nombre total de modes contenus dans le suite
 
     !June 7 2007, JLG
@@ -890,7 +890,7 @@ CONTAINS
     END IF
 
     okay = .FALSE.
-    IF (PRESENT(interpol)) THEN 
+    IF (PRESENT(interpol)) THEN
        IF (interpol) THEN
           okay =.TRUE.
        END IF
@@ -953,9 +953,9 @@ CONTAINS
           ENDIF
        ENDDO
        IF (.NOT.trouve) THEN               !mode_cherche non trouve
-          IF (PRESENT(val_init)) THEN 
-             Hn(:,:,i)   = val_init ; Hn1(:,:,i)   = val_init 
-             Bn(:,:,i)   = val_init ; Bn1(:,:,i)   = val_init 
+          IF (PRESENT(val_init)) THEN
+             Hn(:,:,i)   = val_init ; Hn1(:,:,i)   = val_init
+             Bn(:,:,i)   = val_init ; Bn1(:,:,i)   = val_init
              phin(:,:,i) = val_init ; phin1(:,:,i) = val_init
              WRITE(*,*) 'mode maxwell',mode_cherche,' non trouve'
           ELSE
@@ -967,7 +967,7 @@ CONTAINS
        ENDIF
        CLOSE(10)                          !fermeture du fichier suite
     ENDDO
-!
+    !
     IF (PRESENT(opt_dt)) THEN
        IF (ABS((opt_dt - dt_read)/opt_dt).GT.1d-4) THEN
           dt_ratio = opt_dt/dt_read
@@ -989,12 +989,12 @@ CONTAINS
     USE chaine_caractere
     IMPLICIT NONE
     TYPE(mesh_type), TARGET                                    :: temp_mesh
-    REAL(KIND=8),                                   INTENT(IN) :: time 
-    INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator 
+    REAL(KIND=8),                                   INTENT(IN) :: time
+    INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator
     INTEGER,      DIMENSION(:),                     INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),                 INTENT(IN) :: tempn, tempn_m1
     LOGICAL, OPTIONAL,                              INTENT(IN) :: opt_mono
-    CHARACTER(len=200),                             INTENT(IN) :: filename 
+    CHARACTER(len=200),                             INTENT(IN) :: filename
     INTEGER,                                        INTENT(IN) :: it, freq_restart
     INTEGER                           :: code, n, i, rang_S, rang_F, nb_procs_S, nb_procs_F
     INTEGER                           :: l, lblank
@@ -1035,7 +1035,7 @@ CONTAINS
        IF ( (rang_F == n-1) .AND. (.NOT. skip) ) THEN
           IF (rang_F == 0) THEN
              OPEN(UNIT = 10, FILE = out_name, POSITION='append', &
-                  FORM = 'unformatted', STATUS = 'replace') 
+                  FORM = 'unformatted', STATUS = 'replace')
              IF (mono) THEN
                 WRITE(10) time, temp_mesh%np , nb_procs_F, SIZE(list_mode)
              ELSE
@@ -1043,7 +1043,7 @@ CONTAINS
              END IF
           ELSE
              OPEN(UNIT = 10, FILE = out_name, POSITION='append', &
-                  FORM = 'unformatted', STATUS = 'unknown') 
+                  FORM = 'unformatted', STATUS = 'unknown')
           END IF
 
           DO i= 1, SIZE(list_mode)
@@ -1051,7 +1051,7 @@ CONTAINS
              WRITE(10) tempn(:,:,i)
              WRITE(10) tempn_m1(:,:,i)
           END DO
-          CLOSE(10)        
+          CLOSE(10)
        END IF
        CALL MPI_BARRIER(communicator(2),code)
     END DO
@@ -1068,13 +1068,13 @@ CONTAINS
     INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator
     INTEGER,      DIMENSION(:)                                 :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),                 INTENT(OUT):: tempn, tempn_m1
-    CHARACTER(len=200),                             INTENT(IN) :: filename 
+    CHARACTER(len=200),                             INTENT(IN) :: filename
     REAL(KIND=8), OPTIONAL,                         INTENT(IN) :: val_init
     LOGICAL     , OPTIONAL,                         INTENT(IN) :: interpol
     LOGICAL     , OPTIONAL,                         INTENT(IN) :: opt_mono
     INTEGER     :: code, n, i, mode, j, rang_S, nb_procs_S, rang_F, nb_procs_F, nlignes, rank
     INTEGER     :: m_max_cr, nb_procs_r, nb_procs_Sr
-    INTEGER     :: m_max_c, nb_mode_r, mode_cherche   
+    INTEGER     :: m_max_c, nb_mode_r, mode_cherche
     LOGICAL     :: trouve, okay
     INTEGER     :: np
     INTEGER           :: l, lblank
@@ -1128,7 +1128,7 @@ CONTAINS
        WRITE(*,*) 'Number of modes per processor from restart file = ',m_max_cr
     ENDIF
 
-    m_max_c   = SIZE(list_mode)      !nombre de modes par proc pour le calcul 
+    m_max_c   = SIZE(list_mode)      !nombre de modes par proc pour le calcul
     nb_mode_r = nb_procs_r*m_max_cr  !nombre total de modes contenus dans le suite
 
     !June 7 2007, JLG
@@ -1139,7 +1139,7 @@ CONTAINS
     END IF
 
     okay = .FALSE.
-    IF (PRESENT(interpol)) THEN 
+    IF (PRESENT(interpol)) THEN
        IF (interpol) THEN
           okay =.TRUE.
        END IF
@@ -1188,18 +1188,17 @@ CONTAINS
 
        IF (.NOT.trouve) THEN               !mode_cherche non trouve
           IF (PRESENT(val_init)) THEN ! not implemented yet
-             tempn(:,:,i)    = val_init  ; tempn_m1(:,:,i)    = val_init 
+             tempn(:,:,i)    = val_init  ; tempn_m1(:,:,i)    = val_init
              WRITE(*,'(A,i4,A)') 'mode temp', mode_cherche,' not found'
           ELSE
              tempn(:,:,i)    = 0.d0 ; tempn_m1(:,:,i)    = 0.d0
              WRITE(*,*) 'mode ns', mode_cherche, ' not found'
           ENDIF
        ENDIF
-       CLOSE(10)                          !fermeture du fichier suite 
+       CLOSE(10)                          !fermeture du fichier suite
     ENDDO
 
   END SUBROUTINE read_restart_temp
 
 
 END MODULE restart
-

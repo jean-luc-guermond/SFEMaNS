@@ -12,16 +12,16 @@ PROGRAM mhd_prog
   USE petsc
   IMPLICIT NONE
   !===Navier-Stokes fields========================================================
-  TYPE(mesh_type), POINTER                        :: pp_mesh, vv_mesh    
+  TYPE(mesh_type), POINTER                        :: pp_mesh, vv_mesh
   REAL(KIND=8), POINTER, DIMENSION(:,:,:)         :: un, pn
   TYPE(dyn_real_array_three), POINTER, DIMENSION(:):: der_un
   !===Maxwell fields==============================================================
   TYPE(mesh_type), POINTER                        :: H_mesh, phi_mesh
   TYPE(interface_type), POINTER                   :: interface_H_mu, interface_H_phi
-  REAL(KIND=8), POINTER,      DIMENSION(:,:,:)    :: Hn, Bn, phin, vel 
+  REAL(KIND=8), POINTER,      DIMENSION(:,:,:)    :: Hn, Bn, phin, vel
   REAL(KIND=8), POINTER,      DIMENSION(:)        :: sigma_field, mu_H_field
   !===Temperature field===========================================================
-  TYPE(mesh_type), POINTER                        :: temp_mesh 
+  TYPE(mesh_type), POINTER                        :: temp_mesh
   REAL(KIND=8), POINTER, DIMENSION(:,:,:)         :: temperature
   REAL(KIND=8), POINTER,      DIMENSION(:)        :: vol_heat_capacity_field
   REAL(KIND=8), POINTER,      DIMENSION(:)        :: temperature_diffusivity_field
@@ -50,7 +50,7 @@ PROGRAM mhd_prog
   CALL read_user_data('data')
 
   !===Initialize SFEMANS (mandatory)==============================================
-  CALL initial(vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, & 
+  CALL initial(vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, &
        interface_H_phi, interface_H_mu, list_mode, &
        un, pn, Hn, Bn, phin, vel, &
        vol_heat_capacity_field, temperature_diffusivity_field, mu_H_field, sigma_field, &
@@ -75,9 +75,9 @@ PROGRAM mhd_prog
   !        inputs%dt,list_mode,mu_H_field)
   !   !===Postprocessing to check convergence
   !   IF (inputs%test_de_convergence) THEN
-  !      CALL post_proc_test(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, & 
+  !      CALL post_proc_test(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
   !           un, pn, Hn, Bn, phin, temperature, level_set, mu_H_field, &
-  !           time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp) ! MODIFICATION: comm_one_d_temp added 
+  !           time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp) ! MODIFICATION: comm_one_d_temp added
   !      CALL error_Petsc('End of convergence test')
   !      !IF (rank==0) WRITE(*,*) 'End of convergence test'
   !      !RETURN
@@ -86,7 +86,7 @@ PROGRAM mhd_prog
   !
   !   !===End of code for ARPACK problem
   !   CALL error_Petsc('END OF ARPACK, EXITING PRGM')
-      !IF (rank==0) WRITE(*,*) 'END OF ARPACK, EXITING PRGM'
+  !IF (rank==0) WRITE(*,*) 'END OF ARPACK, EXITING PRGM'
   !   !RETURN
   !END IF
 
@@ -113,7 +113,7 @@ PROGRAM mhd_prog
 
      !===Timing
      tploc = user_time() - tploc
-     IF (it>1) tploc_max = tploc_max + tploc 
+     IF (it>1) tploc_max = tploc_max + tploc
   ENDDO
 
   !===Timing======================================================================
@@ -123,7 +123,7 @@ PROGRAM mhd_prog
   !===Postprocessing to check convergence=========================================
   !IF (inputs%test_de_convergence) THEN
   IF (inputs%if_regression) THEN
-     CALL regression(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, & 
+     CALL regression(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
           un, pn, Hn, Bn, phin, temperature, level_set, mu_H_field, &
           time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp)
      CALL error_Petsc('End of convergence test')
@@ -146,7 +146,7 @@ CONTAINS
     REAL(KIND=8)                                    :: err, norm
     INTEGER                                         :: i, it_plot
     CHARACTER(LEN=3)                                :: what
-    INTEGER                                         :: rank_S, rank_F 
+    INTEGER                                         :: rank_S, rank_F
     INTEGER                                         :: rank_ns_S, rank_ns_F
     REAL(KIND=8), DIMENSION(vv_mesh%np, 2, SIZE(list_mode)) :: level_1_P2
     REAL(KIND=8), DIMENSION(pp_mesh%np, 2, SIZE(list_mode)) :: level_1_P1
@@ -172,7 +172,7 @@ CONTAINS
     IF (inputs%check_numerical_stability) THEN
        IF (inputs%type_pb=='nst' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd') THEN
           norm = norm_SF(comm_one_d_ns, 'L2', vv_mesh, list_mode, un)
-       ELSE 
+       ELSE
           norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn)
        END IF
        IF (norm>1.d2) THEN
@@ -204,7 +204,7 @@ CONTAINS
              norm = norm_S(comm_one_d, 'L2', vv_mesh, list_mode(i:i), un(:,:,i:i))
              IF (rank_ns_S == 0) THEN
                 !===L2 norm of Fourier mode list_mode(i) of velocity field un
-                WRITE(100+list_mode(i),*) time, norm 
+                WRITE(100+list_mode(i),*) time, norm
              END IF
           END DO
 
@@ -234,7 +234,7 @@ CONTAINS
           IF (inputs%if_temperature) THEN
              norm = norm_SF(comm_one_d_temp, 'L2', temp_mesh, list_mode, temperature)
              IF (rank == 0) THEN
-                WRITE(99,*) 'norm L2 of temperature', time, norm 
+                WRITE(99,*) 'norm L2 of temperature', time, norm
                 WRITE(*,*) 'norm L2 of temperature', time, norm
              END IF
           END IF
@@ -301,7 +301,7 @@ CONTAINS
                 IF (list_mode(i)==0) THEN
                    one_chi(:,1,i)=1.d0
                    one_chi(:,2,i)=0.d0
-                ELSE 
+                ELSE
                    one_chi(:,:,i)=0.d0
                 END IF
              END DO
@@ -346,13 +346,13 @@ CONTAINS
 !!$          !===2D plots for each mode of the first level set
 !!$          DO i = 1, m_max_c
 !!$             WRITE(st_mode,'(I3)') list_mode(i)
-!!$             header = 'Ln_'//'mode_'//trim(adjustl(st_mode)) 
+!!$             header = 'Ln_'//'mode_'//trim(adjustl(st_mode))
 !!$             name_of_field = 'Ln'
 !!$             IF (inputs%if_level_set_P2) THEN
 !!$                level_1_P2(:,:,i)=level_set(1,:,:,i)
 !!$                CALL make_vtu_file_2D(comm_one_d_ns(1), vv_mesh, header, level_1_P2(:,:,i), name_of_field, what, opt_it=it_plot)
 !!$             ELSE
-!!$                level_1_P1(:,:,i)=level_set(1,:,:,i)                
+!!$                level_1_P1(:,:,i)=level_set(1,:,:,i)
 !!$                CALL make_vtu_file_2D(comm_one_d_ns(1), pp_mesh, header, level_1_P1(:,:,i), name_of_field, what, opt_it=it_plot)
 !!$             END IF
 !!$             header = 'Dn_'//'mode_'//trim(adjustl(st_mode))
@@ -412,12 +412,12 @@ CONTAINS
     USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                                        INTENT(IN)          :: vv_mesh
-    INTEGER,      DIMENSION(:),                             INTENT(IN)          :: list_mode   
+    INTEGER,      DIMENSION(:),                             INTENT(IN)          :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),                         INTENT(IN)          :: un
     REAL(KIND=8),                                           INTENT(IN)          :: time
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: vel_gauss, vel_gauss_penal
     REAL(KIND=8), DIMENSION(2,vv_mesh%gauss%l_G*vv_mesh%dom_me)                 :: rr_gauss
-    INTEGER,      DIMENSION(vv_mesh%gauss%n_w)                                  :: j_loc    
+    INTEGER,      DIMENSION(vv_mesh%gauss%n_w)                                  :: j_loc
     REAL(KIND=8)                                                                :: vel_torque, vel_torque_tot
     INTEGER ::  m, l , i, mode, index, type, nb_procs, m_max_pad, bloc_size
     PetscErrorCode                   :: ierr
@@ -490,7 +490,7 @@ CONTAINS
     USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                                        INTENT(IN)          :: mesh
-    INTEGER,      DIMENSION(:),                             INTENT(IN)          :: list_mode   
+    INTEGER,      DIMENSION(:),                             INTENT(IN)          :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:,:),                       INTENT(IN)          :: level_set
     REAL(KIND=8),                                           INTENT(IN)          :: time
     LOGICAL,                                    SAVE        :: once_compute=.TRUE.
@@ -515,7 +515,7 @@ CONTAINS
 
        ALLOCATE(volum_init(SIZE(level_set,1)))
 
-       DO nb_inter=1, SIZE(level_set,1) 
+       DO nb_inter=1, SIZE(level_set,1)
           volum_init_loc = 0.d0
           DO i = 1, SIZE(list_mode)
              IF (list_mode(i)==0) THEN
@@ -542,7 +542,7 @@ CONTAINS
     END IF !end once_compute
 
     !===Computation of level set conservation relative error
-    DO nb_inter=1, SIZE(level_set,1) 
+    DO nb_inter=1, SIZE(level_set,1)
        level_posi_fft = level_set(nb_inter,:,:,:)
        inte_fft_loc = 0.d0
        DO i = 1, SIZE(list_mode)

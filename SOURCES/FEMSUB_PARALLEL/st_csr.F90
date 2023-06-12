@@ -22,7 +22,7 @@ CONTAINS
     nifrom = mesh%np-mesh%dom_np
     ALLOCATE(ifrom(kmax*nifrom))
     IF (nifrom/=0) THEN
-       DO k = 1, kmax 
+       DO k = 1, kmax
           start = (k-1)*nifrom+1
           fin = start + nifrom - 1
           ifrom(start:fin)= LA%loc_to_glob(k,mesh%dom_np+1:)-1
@@ -128,12 +128,12 @@ CONTAINS
     DO i = mesh%dom_np + 1, mesh%np
        iglob = mesh%loc_to_glob(i)
        DO p = 2, nb_procs+1
-          IF (disp(p) > iglob) THEN  
+          IF (disp(p) > iglob) THEN
              proc = p - 1
              EXIT
           END IF
        END DO
-       i_loc = iglob - disp(proc) + 1 
+       i_loc = iglob - disp(proc) + 1
        DO k = 1, kmax
           loc_to_glob_LA(k,i) = kmax*(disp(proc)-1)+(k-1)*dom_np(proc)+i_loc
        END DO
@@ -214,7 +214,7 @@ CONTAINS
 
     DO m = 1, mesh_glob%me
        jj_loc = mesh_glob%jj(:,m)
-       IF (MAXVAL(jj_loc)< mesh%loc_to_glob(1) .OR. MINVAL(jj_loc)> mesh%loc_to_glob(1) + mesh%np -1) CYCLE 
+       IF (MAXVAL(jj_loc)< mesh%loc_to_glob(1) .OR. MINVAL(jj_loc)> mesh%loc_to_glob(1) + mesh%np -1) CYCLE
        DO ni = 1, nw
           iloc = jj_loc(ni)-mesh%loc_to_glob(1)+1
           IF (iloc<1 .OR. iloc>np) CYCLE
@@ -224,7 +224,7 @@ CONTAINS
                 jglob = jj_loc(nj)
                 IF (jglob< mesh%loc_to_glob(1) .OR. jglob> mesh%loc_to_glob(2)) THEN
                    DO p = 2, nb_procs+1
-                      IF (mesh%disp(p) > jglob) THEN  
+                      IF (mesh%disp(p) > jglob) THEN
                          proc = p - 1
                          EXIT
                       END IF
@@ -235,16 +235,16 @@ CONTAINS
                    out = .FALSE.
                    jloc = jglob - mesh%loc_to_glob(1) + 1
                 END IF
-                DO kj = 1, kmax 
+                DO kj = 1, kmax
                    IF (out) THEN
                       j = kmax*(mesh%disp(proc)-1)+(kj-1)*mesh%domnp(proc)+jloc
                    ELSE
                       j = LA%loc_to_glob(kj,jloc)
                    END IF
 
-                   IF (MINVAL(ABS(ja_work(i,1:nja(i))-j)) /= 0) THEN 
+                   IF (MINVAL(ABS(ja_work(i,1:nja(i))-j)) /= 0) THEN
                       nja(i) = nja(i) + 1
-                      ja_work(i,nja(i)) = j 
+                      ja_work(i,nja(i)) = j
                    END IF
                 END DO
              END DO
@@ -272,7 +272,7 @@ CONTAINS
        END DO
     END IF
 
-    IF (MAXVAL(nja)>nparm) THEN 
+    IF (MAXVAL(nja)>nparm) THEN
        WRITE(*,*) 'ST_SPARSEKIT: dimension de ja doit etre >= ',nparm
        STOP
     END IF
@@ -287,7 +287,7 @@ CONTAINS
        CALL tri_jlg (ja_work(i,1:nja(i)), a_d, n_a_d)
        IF (n_a_d /= nja(i)) THEN
           WRITE(*,*) ' BUG : st_p1_CSR'
-          WRITE(*,*) 'n_a_d ', n_a_d, 'nja(i)', nja(i) 
+          WRITE(*,*) 'n_a_d ', n_a_d, 'nja(i)', nja(i)
           STOP
        END IF
        LA%ia(i) = LA%ia(i-1) + nja(i)
@@ -346,7 +346,7 @@ CONTAINS
 !!$
 !!$    DO m = 1, mesh_glob%me
 !!$       jj_loc = mesh_glob%jj(:,m)
-!!$       IF (MAXVAL(jj_loc)< mesh%loc_to_glob(1) .OR. MINVAL(jj_loc)> mesh%loc_to_glob(1) + mesh%np -1) CYCLE 
+!!$       IF (MAXVAL(jj_loc)< mesh%loc_to_glob(1) .OR. MINVAL(jj_loc)> mesh%loc_to_glob(1) + mesh%np -1) CYCLE
 !!$       DO ni = 1, nw
 !!$          iloc = jj_loc(ni)-mesh%loc_to_glob(1)+1
 !!$          IF (iloc<1 .OR. iloc>np) CYCLE
@@ -356,7 +356,7 @@ CONTAINS
 !!$                jglob = jj_loc(nj)
 !!$                IF (jglob< mesh%loc_to_glob(1) .OR. jglob> mesh%loc_to_glob(2)) THEN
 !!$                   DO p = 2, nb_procs+1
-!!$                      IF (mesh%disp(p) > jglob) THEN  
+!!$                      IF (mesh%disp(p) > jglob) THEN
 !!$                         proc = p - 1
 !!$                         EXIT
 !!$                      END IF
@@ -367,16 +367,16 @@ CONTAINS
 !!$                   out = .FALSE.
 !!$                   jloc = jglob - mesh%loc_to_glob(1) + 1
 !!$                END IF
-!!$                DO kj = 1, kmax 
+!!$                DO kj = 1, kmax
 !!$                   IF (out) THEN
 !!$                      j = kmax*(mesh%disp(proc)-1)+(kj-1)*mesh%domnp(proc)+jloc
 !!$                   ELSE
 !!$                      j = LA%loc_to_glob(kj,jloc)
 !!$                   END IF
 !!$
-!!$                   IF (MINVAL(ABS(ja_work(i,1:nja(i))-j)) /= 0) THEN 
+!!$                   IF (MINVAL(ABS(ja_work(i,1:nja(i))-j)) /= 0) THEN
 !!$                      nja(i) = nja(i) + 1
-!!$                      ja_work(i,nja(i)) = j 
+!!$                      ja_work(i,nja(i)) = j
 !!$                   END IF
 !!$                END DO
 !!$             END DO
@@ -384,7 +384,7 @@ CONTAINS
 !!$       END DO
 !!$    END DO
 !!$
-!!$    IF (MAXVAL(nja)>nparm) THEN 
+!!$    IF (MAXVAL(nja)>nparm) THEN
 !!$       WRITE(*,*) 'ST_SPARSEKIT: dimension de ja doit etre >= ',nparm
 !!$       STOP
 !!$    END IF
@@ -399,7 +399,7 @@ CONTAINS
 !!$       CALL tri_jlg (ja_work(i,1:nja(i)), a_d, n_a_d)
 !!$       IF (n_a_d /= nja(i)) THEN
 !!$          WRITE(*,*) ' BUG : st_p1_CSR'
-!!$          WRITE(*,*) 'n_a_d ', n_a_d, 'nja(i)', nja(i) 
+!!$          WRITE(*,*) 'n_a_d ', n_a_d, 'nja(i)', nja(i)
 !!$          STOP
 !!$       END IF
 !!$       LA%ia(i) = LA%ia(i-1) + nja(i)
@@ -445,15 +445,15 @@ CONTAINS
        j_loc = mesh%jj(:,m)
        DO ki = 1, kmax
           DO ni = 1, nw
-             iloc = j_loc(ni) 
+             iloc = j_loc(ni)
              IF (iloc>np) CYCLE
              i = iloc + (ki-1)*np
-             DO kj = 1, kmax 
+             DO kj = 1, kmax
                 DO nj = 1, nw
                    j = LA%loc_to_glob(kj,j_loc(nj))
-                   IF (MINVAL(ABS(ja_work(i,1:nja(i))-j)) /= 0) THEN 
+                   IF (MINVAL(ABS(ja_work(i,1:nja(i))-j)) /= 0) THEN
                       nja(i) = nja(i) + 1
-                      ja_work(i,nja(i)) = j 
+                      ja_work(i,nja(i)) = j
                    END IF
                 END DO
              END DO
@@ -461,7 +461,7 @@ CONTAINS
        END DO
     END DO
 
-    IF (MAXVAL(nja)>nparm) THEN 
+    IF (MAXVAL(nja)>nparm) THEN
        WRITE(*,*) 'ST_SPARSEKIT: dimension de ja doit etre >= ',nparm
        STOP
     END IF
@@ -476,7 +476,7 @@ CONTAINS
        CALL tri_jlg (ja_work(i,1:nja(i)), a_d, n_a_d)
        IF (n_a_d /= nja(i)) THEN
           WRITE(*,*) ' BUG : st_p1_CSR'
-          WRITE(*,*) 'n_a_d ', n_a_d, 'nja(i)', nja(i) 
+          WRITE(*,*) 'n_a_d ', n_a_d, 'nja(i)', nja(i)
           STOP
        END IF
        LA%ia(i) = LA%ia(i-1) + nja(i)
@@ -515,15 +515,15 @@ CONTAINS
           i = jj(ni,m)
           DO nj = 1, nw
              j = jj(nj,m)
-             IF (MINVAL(ABS(ja_work(i,1:nja(i))-j)) /= 0) THEN 
+             IF (MINVAL(ABS(ja_work(i,1:nja(i))-j)) /= 0) THEN
                 nja(i) = nja(i) + 1
-                ja_work(i,nja(i)) = j 
+                ja_work(i,nja(i)) = j
              END IF
           END DO
        END DO
     END DO
 
-    IF (MAXVAL(nja)>nparm) THEN 
+    IF (MAXVAL(nja)>nparm) THEN
        WRITE(*,*) 'ST_SPARSEKIT: dimension de ja doit etre >= ',nparm
        STOP
     END IF
@@ -538,7 +538,7 @@ CONTAINS
        CALL tri_jlg (ja_work(i,1:nja(i)), a_d, n_a_d)
        IF (n_a_d /= nja(i)) THEN
           WRITE(*,*) ' BUG : st_p1_CSR'
-          WRITE(*,*) 'n_a_d ', n_a_d, 'nja(i)', nja(i) 
+          WRITE(*,*) 'n_a_d ', n_a_d, 'nja(i)', nja(i)
           STOP
        END IF
        aij%ia(i+1) = aij%ia(i) + nja(i)
@@ -566,12 +566,12 @@ CONTAINS
 
     bloc_size = SIZE(in%ia) - 1
 
-    out%ia(1) = in%ia(1) 
+    out%ia(1) = in%ia(1)
 
     DO ki = 1, n_b
-       DO i = 2, bloc_size + 1 
-          ib = i + (ki-1)*bloc_size  
-          out%ia(ib) = out%ia(ib-1) + n_b*(in%ia(i) - in%ia(i-1)) 
+       DO i = 2, bloc_size + 1
+          ib = i + (ki-1)*bloc_size
+          out%ia(ib) = out%ia(ib-1) + n_b*(in%ia(i) - in%ia(i-1))
        END DO
     END DO
 
@@ -580,11 +580,11 @@ CONTAINS
           ib = i + (ki-1)*bloc_size
 
           DO kj = 1,  n_b
-             DO p = in%ia(i), in%ia(i+1) - 1          
-                jb = in%ja(p) + (kj-1)*bloc_size 
+             DO p = in%ia(i), in%ia(i+1) - 1
+                jb = in%ja(p) + (kj-1)*bloc_size
 
-                pb = out%ia(ib)  +  p - in%ia(i)  +  (kj-1)*(in%ia(i+1)-in%ia(i)) 
-                out%ja(pb) = jb 
+                pb = out%ia(ib)  +  p - in%ia(i)  +  (kj-1)*(in%ia(i+1)-in%ia(i))
+                out%ja(pb) = jb
 
              END DO
           END DO
@@ -610,12 +610,12 @@ CONTAINS
 
     bloc_size = SIZE(ia) - 1
 
-    ia_b(1) = ia(1) 
+    ia_b(1) = ia(1)
 
     DO ki = 1, n_b
-       DO i = 2, bloc_size + 1 
-          ib = i + (ki-1)*bloc_size  
-          ia_b(ib) = ia_b(ib-1) + n_b*(ia(i) - ia(i-1)) 
+       DO i = 2, bloc_size + 1
+          ib = i + (ki-1)*bloc_size
+          ia_b(ib) = ia_b(ib-1) + n_b*(ia(i) - ia(i-1))
        END DO
     END DO
 
@@ -624,11 +624,11 @@ CONTAINS
           ib = i + (ki-1)*bloc_size
 
           DO kj = 1,  n_b
-             DO p = ia(i), ia(i+1) - 1          
-                jb = ja(p) + (kj-1)*bloc_size 
+             DO p = ia(i), ia(i+1) - 1
+                jb = ja(p) + (kj-1)*bloc_size
 
-                pb = ia_b(ib)  +  p - ia(i)  +  (kj-1)*(ia(i+1)-ia(i)) 
-                ja_b(pb) = jb 
+                pb = ia_b(ib)  +  p - ia(i)  +  (kj-1)*(ia(i+1)-ia(i))
+                ja_b(pb) = jb
 
              END DO
           END DO
@@ -669,9 +669,9 @@ CONTAINS
 
           DO nj = 1, nw
              j = jj(nj,m)
-             IF (MINVAL(ABS(ja_work(i,1:nja(i))-j)) /= 0) THEN 
+             IF (MINVAL(ABS(ja_work(i,1:nja(i))-j)) /= 0) THEN
                 nja(i) = nja(i) + 1
-                ja_work(i,nja(i)) = j 
+                ja_work(i,nja(i)) = j
              END IF
           END DO
 
@@ -679,7 +679,7 @@ CONTAINS
        END DO
     END DO
 
-    IF (MAXVAL(nja)>nparm) THEN 
+    IF (MAXVAL(nja)>nparm) THEN
        WRITE(*,*) 'ST_SPARSEKIT: dimension de ja doit etre >= ',nparm
        STOP
     END IF
@@ -695,7 +695,7 @@ CONTAINS
        CALL tri_jlg (ja_work(i,1:nja(i)), a_d, n_a_d)
        IF (n_a_d /= nja(i)) THEN
           WRITE(*,*) ' BUG : st_p1_CSR'
-          WRITE(*,*) 'n_a_d ', n_a_d, 'nja(i)', nja(i) 
+          WRITE(*,*) 'n_a_d ', n_a_d, 'nja(i)', nja(i)
           STOP
        END IF
        ia(i+1) = ia(i) + nja(i)
@@ -740,9 +740,9 @@ CONTAINS
 !!$             DO cotej = 1, 2
 !!$                DO nj = 1, nw
 !!$                   j = jji(nj,cotej,ms)
-!!$                   IF (MINVAL(ABS(ja_work(i,1:nja(i))-j)) /= 0) THEN 
+!!$                   IF (MINVAL(ABS(ja_work(i,1:nja(i))-j)) /= 0) THEN
 !!$                      nja(i) = nja(i) + 1
-!!$                      ja_work(i,nja(i)) = j 
+!!$                      ja_work(i,nja(i)) = j
 !!$                   END IF
 !!$                END DO
 !!$             END DO
@@ -750,7 +750,7 @@ CONTAINS
 !!$       END DO
 !!$    END DO
 !!$
-!!$    IF (MAXVAL(nja)>nparm) THEN 
+!!$    IF (MAXVAL(nja)>nparm) THEN
 !!$       WRITE(*,*) 'ST_SPARSEKIT: dimension de ja doit etre >= ',nparm
 !!$       STOP
 !!$    END IF
@@ -766,7 +766,7 @@ CONTAINS
 !!$       CALL tri_jlg (ja_work(i,1:nja(i)), a_d, n_a_d)
 !!$       IF (n_a_d /= nja(i)) THEN
 !!$          WRITE(*,*) ' BUG : st_p1_CSR'
-!!$          WRITE(*,*) 'n_a_d ', n_a_d, 'nja(i)', nja(i) 
+!!$          WRITE(*,*) 'n_a_d ', n_a_d, 'nja(i)', nja(i)
 !!$          STOP
 !!$       END IF
 !!$       ia(i+1) = ia(i) + nja(i)
@@ -840,13 +840,3 @@ CONTAINS
   END SUBROUTINE tri_jlg
 
 END MODULE st_matrix
-
-
-
-
-
-
-
-
-
-

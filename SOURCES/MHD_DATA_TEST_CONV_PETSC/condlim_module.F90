@@ -1,6 +1,6 @@
 MODULE boundary_generic_module
   IMPLICIT NONE
-  INTERFACE 
+  INTERFACE
      MODULE SUBROUTINE init_velocity_pressure(mesh_f, mesh_c, time, &
           dt, list_mode, un_m1, un, pn_m1, pn, phin_m1, phin)
        USE def_type_mesh
@@ -22,10 +22,10 @@ MODULE boundary_generic_module
        INTEGER                                    :: mode, i, j
      END SUBROUTINE init_temperature
 
-    MODULE SUBROUTINE init_level_set(pp_mesh, time, &
+     MODULE SUBROUTINE init_level_set(pp_mesh, time, &
           dt, list_mode, level_set_m1, level_set)
        USE def_type_mesh
-       TYPE(mesh_type)                              :: pp_mesh 
+       TYPE(mesh_type)                              :: pp_mesh
        REAL(KIND=8),                     INTENT(OUT):: time
        REAL(KIND=8),                     INTENT(IN) :: dt
        INTEGER,      DIMENSION(:),       INTENT(IN) :: list_mode
@@ -37,11 +37,11 @@ MODULE boundary_generic_module
        INTEGER     ,                             INTENT(IN) :: TYPE
        REAL(KIND=8), DIMENSION(:,:),             INTENT(IN) :: rr
        INTEGER     ,                             INTENT(IN) :: mode, i
-       REAL(KIND=8),                             INTENT(IN) :: time 
+       REAL(KIND=8),                             INTENT(IN) :: time
        REAL(KIND=8),                             INTENT(IN) :: Re
        CHARACTER(LEN=2),                         INTENT(IN) :: ty
        REAL(KIND=8), DIMENSION(:,:,:), OPTIONAL, INTENT(IN) :: opt_density
-       REAL(KIND=8), DIMENSION(:,:,:), OPTIONAL, INTENT(IN) :: opt_tempn 
+       REAL(KIND=8), DIMENSION(:,:,:), OPTIONAL, INTENT(IN) :: opt_tempn
        REAL(KIND=8), DIMENSION(SIZE(rr,2))                  :: vv
      END FUNCTION source_in_NS_momentum
 
@@ -49,15 +49,15 @@ MODULE boundary_generic_module
        INTEGER     ,                        INTENT(IN)   :: TYPE
        REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
        INTEGER     ,                        INTENT(IN)   :: m
-       REAL(KIND=8),                        INTENT(IN)   :: t   
+       REAL(KIND=8),                        INTENT(IN)   :: t
        REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
      END FUNCTION source_in_temperature
 
-      MODULE FUNCTION source_in_level_set(interface_nb,TYPE, rr, m, t) RESULT(vv)
+     MODULE FUNCTION source_in_level_set(interface_nb,TYPE, rr, m, t) RESULT(vv)
        INTEGER     ,                        INTENT(IN)   :: TYPE
        REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
        INTEGER     ,                        INTENT(IN)   :: m, interface_nb
-       REAL(KIND=8),                        INTENT(IN)   :: t   
+       REAL(KIND=8),                        INTENT(IN)   :: t
        REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
      END FUNCTION source_in_level_set
 
@@ -69,7 +69,7 @@ MODULE boundary_generic_module
        REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
      END FUNCTION vv_exact
 
-      MODULE FUNCTION imposed_velocity_by_penalty(rr,t) RESULT(vv)
+     MODULE FUNCTION imposed_velocity_by_penalty(rr,t) RESULT(vv)
        REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
        REAL(KIND=8),                        INTENT(IN)   :: t
        REAL(KIND=8), DIMENSION(SIZE(rr,2),6)             :: vv
@@ -80,7 +80,7 @@ MODULE boundary_generic_module
        REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
        INTEGER     ,                        INTENT(IN)   :: m
        REAL(KIND=8),                        INTENT(IN)   :: t
-       REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv 
+       REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
      END FUNCTION pp_exact
 
      MODULE FUNCTION temperature_exact(TYPE,rr,m,t) RESULT (vv)
@@ -91,7 +91,7 @@ MODULE boundary_generic_module
        REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
      END FUNCTION temperature_exact
 
-      MODULE FUNCTION level_set_exact(interface_nb,TYPE,rr,m,t)  RESULT (vv)
+     MODULE FUNCTION level_set_exact(interface_nb,TYPE,rr,m,t)  RESULT (vv)
        INTEGER     ,                        INTENT(IN)   :: TYPE
        REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
        INTEGER     ,                        INTENT(IN)   :: m, interface_nb
@@ -112,54 +112,54 @@ MODULE boundary_generic_module
 
      MODULE FUNCTION extension_velocity(TYPE, H_mesh, mode, t, n_start) RESULT(vv)
        USE def_type_mesh
-       TYPE(mesh_type),                     INTENT(IN)   :: H_mesh     
+       TYPE(mesh_type),                     INTENT(IN)   :: H_mesh
        INTEGER     ,                        INTENT(IN)   :: TYPE, n_start
-       INTEGER,                             INTENT(IN)   :: mode 
+       INTEGER,                             INTENT(IN)   :: mode
        REAL(KIND=8),                        INTENT(IN)   :: t
        REAL(KIND=8), DIMENSION(H_Mesh%np)                :: vv
      END FUNCTION extension_velocity
 
      MODULE FUNCTION Vexact(m, H_mesh) RESULT(vv)  !Set uniquement a l'induction
        USE def_type_mesh
-       TYPE(mesh_type),                       INTENT(IN) :: H_mesh 
+       TYPE(mesh_type),                       INTENT(IN) :: H_mesh
        INTEGER,                               INTENT(IN) :: m
        REAL(KIND=8), DIMENSION(H_mesh%np,6)              :: vv
      END FUNCTION Vexact
 
-     MODULE FUNCTION H_B_quasi_static(char_h_b, rr, m) RESULT(vv) 
+     MODULE FUNCTION H_B_quasi_static(char_h_b, rr, m) RESULT(vv)
        CHARACTER(LEN=1),                    INTENT(IN)   :: char_h_b
        REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
        INTEGER,                             INTENT(IN)   :: m
        REAL(KIND=8), DIMENSION(SIZE(rr,2),6)             :: vv
      END FUNCTION H_B_quasi_static
 
-     MODULE FUNCTION Hexact(H_mesh, TYPE, rr, m, mu_H_field, t) RESULT(vv) 
+     MODULE FUNCTION Hexact(H_mesh, TYPE, rr, m, mu_H_field, t) RESULT(vv)
        USE def_type_mesh
-       TYPE(mesh_type),                     INTENT(IN)   :: H_mesh 
+       TYPE(mesh_type),                     INTENT(IN)   :: H_mesh
        INTEGER     ,                        INTENT(IN)   :: TYPE
        REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
        INTEGER     ,                        INTENT(IN)   :: m
-       REAL(KIND=8),                        INTENT(IN)   :: t 
+       REAL(KIND=8),                        INTENT(IN)   :: t
        REAL(KIND=8), DIMENSION(:),          INTENT(IN)   :: mu_H_field
        REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
      END FUNCTION Hexact
 
-     MODULE FUNCTION Phiexact(TYPE, rr, m, mu_phi,t) RESULT(vv) 
+     MODULE FUNCTION Phiexact(TYPE, rr, m, mu_phi,t) RESULT(vv)
        INTEGER     ,                        INTENT(IN)   :: TYPE
        REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
        INTEGER     ,                        INTENT(IN)   :: m
        REAL(KIND=8),                        INTENT(IN)   :: mu_phi, t
-       REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv   
+       REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
      END FUNCTION Phiexact
 
      MODULE FUNCTION Jexact_gauss(TYPE, rr, m, mu_phi, sigma, mu_H, t, &
-          mesh_id, opt_B_ext) RESULT(vv) 
+          mesh_id, opt_B_ext) RESULT(vv)
        INTEGER     ,                        INTENT(IN)   :: TYPE
        REAL(KIND=8), DIMENSION(:),          INTENT(IN)   :: rr
-       INTEGER     ,                        INTENT(IN)   :: m 
-       REAL(KIND=8),                        INTENT(IN)   :: mu_phi, sigma, mu_H, t 
+       INTEGER     ,                        INTENT(IN)   :: m
+       REAL(KIND=8),                        INTENT(IN)   :: mu_phi, sigma, mu_H, t
        INTEGER     ,                        INTENT(IN)   :: mesh_id
-       REAL(KIND=8), DIMENSION(6), OPTIONAL,INTENT(IN)   :: opt_B_ext 
+       REAL(KIND=8), DIMENSION(6), OPTIONAL,INTENT(IN)   :: opt_B_ext
        REAL(KIND=8)                                      :: vv
      END FUNCTION Jexact_gauss
 
@@ -168,18 +168,18 @@ MODULE boundary_generic_module
        REAL(KIND=8), DIMENSION(:),          INTENT(IN)   :: rr
        INTEGER,                             INTENT(IN)   :: m
        REAL(KIND=8),                        INTENT(IN)   :: mu_phi, sigma, mu_H, t
-       REAL(KIND=8)                                      :: vv 
+       REAL(KIND=8)                                      :: vv
      END FUNCTION Eexact_gauss
 
      MODULE SUBROUTINE init_maxwell(H_mesh, phi_mesh, time, dt, mu_H_field, mu_phi, &
           list_mode, Hn1, Hn, phin1, phin)
        USE def_type_mesh
-       TYPE(mesh_type)                            :: H_mesh, phi_mesh     
+       TYPE(mesh_type)                            :: H_mesh, phi_mesh
        REAL(KIND=8),                   INTENT(OUT):: time
        REAL(KIND=8),                   INTENT(IN) :: dt
        REAL(KIND=8), DIMENSION(:),     INTENT(IN) :: mu_H_field
        REAL(KIND=8),                   INTENT(IN) :: mu_phi
-       INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode    
+       INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
        REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: Hn, Hn1
        REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: phin, phin1
      END SUBROUTINE init_maxwell
@@ -199,7 +199,7 @@ MODULE boundary_generic_module
        REAL(KIND=8),DIMENSION(2)            :: vv
      END FUNCTION grad_mu_bar_in_fourier_space
 
-      MODULE FUNCTION mu_in_real_space(H_mesh,angles,nb_angles,nb,ne,time) RESULT(vv)
+     MODULE FUNCTION mu_in_real_space(H_mesh,angles,nb_angles,nb,ne,time) RESULT(vv)
        USE def_type_mesh
        TYPE(mesh_type), INTENT(IN)                :: H_mesh
        REAL(KIND=8), DIMENSION(:), INTENT(IN)     :: angles
@@ -219,17 +219,16 @@ MODULE boundary_generic_module
        REAL(KIND=8) :: temp
        REAL(KIND=8) :: vv
      END FUNCTION chi_coeff_law
-     
+
      MODULE FUNCTION T_dchi_dT_coeff_law(temp) RESULT(vv)
        REAL(KIND=8) :: temp
        REAL(KIND=8) :: vv
      END FUNCTION T_dchi_dT_coeff_law
-     
+
      MODULE FUNCTION nu_tilde_law(temp) RESULT(vv)
        REAL(KIND=8) :: temp
        REAL(KIND=8) :: vv
      END FUNCTION nu_tilde_law
-     
+
   END INTERFACE
 END MODULE boundary_generic_module
-  

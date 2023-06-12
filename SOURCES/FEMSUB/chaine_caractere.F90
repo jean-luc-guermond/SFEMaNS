@@ -92,7 +92,7 @@ CONTAINS
   END FUNCTION last_of_string
   !========================================================================
 
- SUBROUTINE read_until(unit, string, error)
+  SUBROUTINE read_until(unit, string, error)
     IMPLICIT NONE
     INTEGER, PARAMETER                 :: long_max=128
     INTEGER,                INTENT(IN) :: unit
@@ -137,6 +137,6 @@ CONTAINS
 22  okay = .FALSE.; RETURN
 
   END SUBROUTINE find_string
- !========================================================================
+  !========================================================================
 
 END MODULE chaine_caractere

@@ -37,7 +37,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(2,SIZE(rr,2)) :: uu
     REAL(KIND=8) :: pi
     pi = ACOS(-1.d0)
-    uu(1,:) = ((mu1*2*pi)**2+(mu2*2*pi)**2)*uexact(rr) + uexact(rr) + vexact(rr) 
+    uu(1,:) = ((mu1*2*pi)**2+(mu2*2*pi)**2)*uexact(rr) + uexact(rr) + vexact(rr)
     uu(2,:) = ((mu1*2*pi)**2+(mu2*2*pi)**2)*vexact(rr) + vexact(rr) + uexact(rr)
   END FUNCTION block_source
 

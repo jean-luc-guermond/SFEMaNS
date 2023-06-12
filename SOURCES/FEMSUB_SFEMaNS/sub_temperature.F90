@@ -14,7 +14,7 @@ CONTAINS
        temp_mesh, tempn_m1, tempn, chmp_vit, chmp_mag, chmp_pdt_H, vol_heat_capacity, &
        temp_diffusivity, my_par_cc, temp_list_dirichlet_sides, &
        temp_list_robin_sides, convection_coeff, exterior_temperature, temp_per) ! MODIFICATION: robin
-    !============================== 
+    !==============================
     USE def_type_mesh
     USE fem_M_axi
     USE fem_rhs_axi
@@ -30,16 +30,16 @@ CONTAINS
     USE sft_parallele
     USE input_data
 #include "petsc/finclude/petsc.h"
-    USE petsc  
+    USE petsc
     IMPLICIT NONE
     REAL(KIND=8)                                        :: time, dt
-    INTEGER,      DIMENSION(:),     INTENT(IN)          :: list_mode 
+    INTEGER,      DIMENSION(:),     INTENT(IN)          :: list_mode
     TYPE(mesh_type),                INTENT(IN)          :: temp_mesh
     type(petsc_csr_LA)                                  :: temp_1_LA
     TYPE(periodic_type),            INTENT(IN)          :: temp_per
     TYPE(solver_param),             INTENT(IN)          :: my_par_cc
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)       :: tempn_m1, tempn
-    INTEGER,      DIMENSION(:),     INTENT(IN)          :: temp_list_dirichlet_sides 
+    INTEGER,      DIMENSION(:),     INTENT(IN)          :: temp_list_dirichlet_sides
     INTEGER,      DIMENSION(:),     INTENT(IN)          :: temp_list_robin_sides  ! MODIFICATION: robin
     REAL(KIND=8), DIMENSION(:),     INTENT(IN)          :: vol_heat_capacity, temp_diffusivity
     REAL(KIND=8), DIMENSION(:),     INTENT(IN)          :: convection_coeff, exterior_temperature ! MODIFICATION: robin
@@ -83,7 +83,7 @@ CONTAINS
        !-----CREATE PETSC VECTORS AND GHOSTS-----------------------------------------
        CALL create_my_ghost(temp_mesh,temp_1_LA,temp_1_ifrom)
        n = temp_mesh%dom_np
-       CALL VecCreateGhost(comm_one_d(1), n, & 
+       CALL VecCreateGhost(comm_one_d(1), n, &
             PETSC_DETERMINE, SIZE(temp_1_ifrom), temp_1_ifrom, cx_1, ierr)
        CALL VecGhostGetLocalForm(cx_1, cx_1_ghost, ierr)
        CALL VecDuplicate(cx_1, cb_1, ierr)
@@ -112,7 +112,7 @@ CONTAINS
        mass0 = 0.d0
        DO i = 1, m_max_c
           mode = list_mode(i)
-          IF (mode == 0)  THEN  
+          IF (mode == 0)  THEN
              CALL mass_tot(comm_one_d(1),temp_mesh, tempn(:,1,i), mass0)
           ENDIF
        END DO
@@ -178,7 +178,7 @@ CONTAINS
 
        !===RHS Robins BCs
        IF (mode == 0) THEN ! exterior temperature = constant
-          CALL qs_00_gauss_surface(temp_mesh, temp_1_LA, temp_list_robin_sides, convection_coeff, exterior_temperature, cb_1) ! MODIFICATION: implementation of the term int_(partial Omega) h*Text*v, with h the convection coefficient 
+          CALL qs_00_gauss_surface(temp_mesh, temp_1_LA, temp_list_robin_sides, convection_coeff, exterior_temperature, cb_1) ! MODIFICATION: implementation of the term int_(partial Omega) h*Text*v, with h the convection coefficient
        END IF
 
        !===RHS periodicity
@@ -194,27 +194,27 @@ CONTAINS
        CALL dirichlet_rhs(temp_mode_global_js_D(i)%DIL-1,temp_global_D(i)%DRL,cb_1)
        temp_global_D(i)%DRL(1:n) = temperature_exact(2,temp_mesh%rr(:,temp_js_D), mode, time)
        CALL dirichlet_rhs(temp_mode_global_js_D(i)%DIL-1,temp_global_D(i)%DRL,cb_2)
-       
+
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
        !WRITE(*,*) ' Tps second membre vitesse', tps
-       !------------------------------------------------------------------------------------- 
+       !-------------------------------------------------------------------------------------
 
        !--------------------INVERSION DES OPERATEURS--------------
        tps = user_time()
        !Solve system temp_c
        CALL solver(temp_ksp(i),cb_1,cx_1,reinit=.FALSE.,verbose=my_par_cc%verbose)
-       CALL VecGhostUpdateBegin(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(cx_1_ghost,1,1,temp_1_LA,tempn_p1(:,1))
 
        !Solve system temp_s
        CALL solver(temp_ksp(i),cb_2,cx_1,reinit=.FALSE.,verbose=my_par_cc%verbose)
-       CALL VecGhostUpdateBegin(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(cx_1_ghost,1,1,temp_1_LA,tempn_p1(:,2))
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
        !WRITE(*,*) ' Tps solution des pb de vitesse', tps, 'for mode ', mode
-       !------------------------------------------------------------------------------------- 
+       !-------------------------------------------------------------------------------------
 
        !---------------UPDATES-----------------------
        tps = user_time()
@@ -226,7 +226,7 @@ CONTAINS
        !JLG AR, Dec 18 2008/JLG Bug corrige Jan 23 2010
 
 
-       tempn_m1(:,:,i) = tempn(:,:,i) 
+       tempn_m1(:,:,i) = tempn(:,:,i)
        tempn   (:,:,i) = tempn_p1
 
        ! Reconstruct dtempndt on Gauss points
@@ -256,12 +256,12 @@ CONTAINS
 
   SUBROUTINE smb_ugradc_gauss_fft_par(communicator,mesh,list_mode,heat_capa_in,V_in,c_in,c_out)
     !=================================
-    USE Gauss_points     
+    USE Gauss_points
     USE sft_parallele
     USE chaine_caractere
     USE boundary
 #include "petsc/finclude/petsc.h"
-    USE petsc  
+    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type), TARGET                     :: mesh
     INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
@@ -271,7 +271,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%me,6,SIZE(list_mode)) :: Gradc, W
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%me,2,SIZE(list_mode)) :: Div, Cgauss, cint
     INTEGER,      DIMENSION(mesh%gauss%n_w)                  :: j_loc
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc     
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc
     INTEGER                                                  ::  m, l , i, mode, index, k
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)   :: Vs
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,2)   :: cs
@@ -329,12 +329,12 @@ CONTAINS
              Gradc(index,6,i) = SUM(cs(:,2)*dw_loc(2,:))
 
              Gradc(index,:,i) = heat_capa_in(m) * Gradc(index,:,i)
-             
+
              Cgauss(index,1,i) = SUM(cs(:,1)*ww(:,l))
              Cgauss(index,2,i) = SUM(cs(:,2)*ww(:,l))
 
              Cgauss(index,:,i) = heat_capa_in(m) * Cgauss(index,:,i)
-             
+
           ENDDO
        ENDDO
     END DO
@@ -364,12 +364,12 @@ CONTAINS
     !moyenne
     USE def_type_mesh
 #include "petsc/finclude/petsc.h"
-    USE petsc  
+    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type)                             :: mesh
     REAL(KIND=8), DIMENSION(:)  ,   INTENT(IN)  :: tempn
     REAL(KIND=8)                ,   INTENT(OUT) :: RESLT
-    REAL(KIND=8)                                :: r_loc, r_out   
+    REAL(KIND=8)                                :: r_loc, r_out
     INTEGER ::  m, l , i , ni, code
     INTEGER,      DIMENSION(mesh%gauss%n_w)     :: j_loc
     REAL(KIND=8)   :: ray
@@ -390,12 +390,12 @@ CONTAINS
     ENDDO
 
     CALL MPI_ALLREDUCE(r_loc,r_out,1,MPI_DOUBLE_PRECISION, MPI_SUM, communicator, code)
-    RESLT = r_out 
+    RESLT = r_out
 
   END SUBROUTINE mass_tot
 
   SUBROUTINE smb_pyromag_gauss_fft_par(communicator,mesh,list_mode,scal_in,vect_1_in,vect_2_in,vect_3_in,scal_out)
-    USE Gauss_points     
+    USE Gauss_points
     USE sft_parallele
     USE def_type_mesh
     USE input_data
@@ -403,7 +403,7 @@ CONTAINS
     USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                INTENT(IN) :: mesh
-    INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode    
+    INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN) :: scal_in, vect_1_in, vect_2_in, vect_3_in
     REAL(KIND=8), DIMENSION(:,:,:)             :: scal_out
     REAL(KIND=8), DIMENSION(mesh%np,2,SIZE(list_mode)) :: T_dchi_dT_coeff, vect_2_in_square, v2_dot_v3
@@ -411,7 +411,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%me,6,SIZE(list_mode)) :: vect_1_in_gauss, grad_vect_2_in_square
     INTEGER                                                           :: i, mode, index, m, k, l
     INTEGER,      DIMENSION(:,:), POINTER                             :: jj
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)            :: dw_loc     
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)            :: dw_loc
     REAL(KIND=8)                                                      :: rad
     !===FOR FFT
     INTEGER                                     :: nb_procs, bloc_size, m_max_pad, code
@@ -524,7 +524,7 @@ CONTAINS
     !===T_dchi_dT_coeff(T) * 1/2 * D(H**2)/Dt
     bloc_size = SIZE(T_dchi_dT_coeff_gauss,1)/nb_procs+1
     CALL FFT_PAR_PROD_DCL(communicator, T_dchi_dT_coeff_gauss, 0.5*DH2_Dt, scal_out, nb_procs, bloc_size, m_max_pad)
-     
+
   END SUBROUTINE smb_pyromag_gauss_fft_par
 
 END MODULE subroutine_temperature

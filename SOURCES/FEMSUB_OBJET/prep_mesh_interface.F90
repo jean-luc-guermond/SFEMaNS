@@ -69,7 +69,7 @@ CONTAINS
 
           DO k = 0, dim-1 !dim=2
              DO ns = 1, dim !dim=2
-                list(ns) = MODULO(ns-1+k,dim) + 1 
+                list(ns) = MODULO(ns-1+k,dim) + 1
              END DO
 
              IF (MAXVAL(ABS(mesh_master%rr(:,mesh_master%jjs(list,ms1))&
@@ -85,7 +85,7 @@ CONTAINS
              r_norm = SUM(ABS(mesh_master%rr(:,mesh_master%jj(1:3,m1)) &
                   - mesh_slave%rr(:,mesh_slave%jj(1:3,m2))))
              IF ( r_norm .LE. 1d-9) THEN
-                CYCLE  ! two identical triangles 
+                CYCLE  ! two identical triangles
              END IF
 
              ms = ms + 1
@@ -118,8 +118,8 @@ CONTAINS
 
     mesh_interface%mesh1 = interface_mesh1(1:ms)
     mesh_interface%mesh2 = interface_mesh2(1:ms)
-    mesh_interface%jjs1 = interface_jjs1(1:nws_master,1:ms) 
-    mesh_interface%jjs2 = interface_jjs2(1:nws_slave,1:ms) 
+    mesh_interface%jjs1 = interface_jjs1(1:nws_master,1:ms)
+    mesh_interface%jjs2 = interface_jjs2(1:nws_slave,1:ms)
 
 
     DEALLOCATE(virgin_elem, list, interface_mesh1, interface_mesh2, &
@@ -138,9 +138,9 @@ CONTAINS
     TYPE(mesh_type_interface), INTENT(OUT) ::  mesh_INTERFACE
 
     INTEGER                              :: dim, ms1, ms2, ns, k, m, n, nn, &
-         nws_master, nws_slave, nw_slave, n_count 
+         nws_master, nws_slave, nw_slave, n_count
     INTEGER, DIMENSION(:),   ALLOCATABLE :: list, interface_slave_elem_temp, &
-         node_master 
+         node_master
     INTEGER, DIMENSION(:,:), ALLOCATABLE :: interface_master_node_temp
     REAL(KIND=8)                         :: eps_ref=1.d-7, r_norm, epsilon
     LOGICAL                              :: okay
@@ -165,7 +165,7 @@ CONTAINS
          node_master(mesh_slave%np), interface_slave_elem_temp(mesh_slave%me),&
          interface_master_node_temp(nw_slave,mesh_slave%me), virgin_node_inter(mesh_slave%nps))
 
-    !==List of slave nodes on interface 
+    !==List of slave nodes on interface
     virgin_node_inter = .TRUE.
     DO ms2 = 1, mesh_slave%mes
        IF(MINVAL(ABS(list_inter-mesh_slave%sides(ms2))) /= 0) CYCLE !not on interface
@@ -181,9 +181,9 @@ CONTAINS
     DO n = 1, mesh_slave%nps
        IF (virgin_node_inter(n)) CYCLE
        n_count = n_count + 1
-        mesh_interface%list_slave_node(n_count) = mesh_slave%j_s(n)
+       mesh_interface%list_slave_node(n_count) = mesh_slave%j_s(n)
     END DO
-    !==End list of slave nodes on interface 
+    !==End list of slave nodes on interface
 
     virgin_elem = .TRUE.
     virgin_node = .TRUE.
@@ -200,7 +200,7 @@ CONTAINS
 
           DO k = 0, dim-1 !dim=2
              DO ns = 1, dim !dim=2
-                list(ns) = MODULO(ns-1+k,dim) + 1 
+                list(ns) = MODULO(ns-1+k,dim) + 1
              END DO
 
              IF (MAXVAL(ABS(mesh_master%rr(:,mesh_master%jjs(list,ms1))&
@@ -225,7 +225,7 @@ CONTAINS
     END DO
 
     interface_master_node_temp = -1
-     mesh_interface%me = 0
+    mesh_interface%me = 0
     DO m = 1, mesh_slave%me
        nn = 0
        DO n = 1, nw_slave
@@ -234,7 +234,7 @@ CONTAINS
           interface_master_node_temp(n,m) = node_master(mesh_slave%jj(n,m))
        END DO
        IF (nn/=0) THEN
-           mesh_interface%me =  mesh_interface%me + 1
+          mesh_interface%me =  mesh_interface%me + 1
           interface_slave_elem_temp( mesh_interface%me) = m
 
        END IF
@@ -242,13 +242,13 @@ CONTAINS
 
     ALLOCATE( mesh_interface%slave_elem( mesh_interface%me))
     ALLOCATE( mesh_interface%master_node(nw_slave, mesh_interface%me), &
-          mesh_interface%slave_node (nw_slave, mesh_interface%me))
+         mesh_interface%slave_node (nw_slave, mesh_interface%me))
 
-     mesh_interface%slave_elem = interface_slave_elem_temp(1: mesh_interface%me)
+    mesh_interface%slave_elem = interface_slave_elem_temp(1: mesh_interface%me)
 
     mesh_interface%slave_node = mesh_slave%jj(:, mesh_interface%slave_elem)
 
-     mesh_interface%master_node = interface_master_node_temp(:, mesh_interface%slave_elem)
+    mesh_interface%master_node = interface_master_node_temp(:, mesh_interface%slave_elem)
 
     DEALLOCATE(virgin_elem, list, virgin_node, virgin_node_inter, &
          node_master, interface_slave_elem_temp,&
@@ -257,4 +257,3 @@ CONTAINS
   END SUBROUTINE load_mesh_interface
 
 END MODULE prep_mesh_interface
-

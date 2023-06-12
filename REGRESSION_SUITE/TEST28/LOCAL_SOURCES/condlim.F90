@@ -1,4 +1,4 @@
-SUBMODULE (boundary_generic_module) boundary_generic  
+SUBMODULE (boundary_generic_module) boundary_generic
   USE my_util
   USE def_type_mesh
   USE input_data
@@ -14,12 +14,12 @@ SUBMODULE (boundary_generic_module) boundary_generic
   !===TM73
   !Parameters for discontinuous blades
   !some offset to begin at the same vertical axis as the bottom propeller
-  REAL(KIND=8),  PARAMETER:: top_propeller_angle_offset =  0.d0  
+  REAL(KIND=8),  PARAMETER:: top_propeller_angle_offset =  0.d0
   INTEGER :: nblades = 8 !number of blades
   REAL(KIND=8),  PARAMETER::  lw = 0.0125 !lw= is the half thickness of the blades
   REAL(KIND=8),  PARAMETER::  disk_bot=-1.1d0, top_of_disk_bot=-0.9d0, top_of_blade_bot=-0.7d0
   REAL(KIND=8),  PARAMETER::  disk_top= 1.1d0, bot_of_disk_top= 0.9d0, bot_of_blade_top= 0.7d0
-  REAL(KIND=8),  PARAMETER:: disk_radius=0.75d0, hole_radius=0.1d0 
+  REAL(KIND=8),  PARAMETER:: disk_radius=0.75d0, hole_radius=0.1d0
   !For straight blades use two_rp=0.d0
   REAL(KIND=8),  PARAMETER::  two_rp = disk_radius/SIN(twopi*24.d0/360.d0)
   !Volume of the cylinder (all domain)
@@ -45,7 +45,7 @@ SUBMODULE (boundary_generic_module) boundary_generic
   !Parameters for  both smooth_blades
   REAL(KIND=8),  PARAMETER::   alpha=200.d0*(1.0), alpha_th = 80.d0*(1.0)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !Do we want both propellers? 
+  !Do we want both propellers?
   LOGICAL,PARAMETER::  if_bottom_prop=.TRUE.
   LOGICAL,PARAMETER::  if_top_prop=.TRUE.
   REAL(KIND=8), PARAMETER::  solid_vel=1.0;
@@ -65,15 +65,15 @@ CONTAINS
     INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: un_m1, un
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: pn_m1, pn, phin_m1, phin
-    INTEGER                                    :: mode, i, j 
+    INTEGER                                    :: mode, i, j
     REAL(KIND=8), DIMENSION(mesh_c%np)         :: pn_m2
 
     time = 0.d0
     DO i= 1, SIZE(list_mode)
-       mode = list_mode(i) 
-       DO j = 1, 6 
+       mode = list_mode(i)
+       DO j = 1, 6
           !===velocity
-          un_m1(:,j,i) = vv_exact(j,mesh_f%rr,mode,time-dt)  
+          un_m1(:,j,i) = vv_exact(j,mesh_f%rr,mode,time-dt)
           un   (:,j,i) = vv_exact(j,mesh_f%rr,mode,time)
        END DO
        DO j = 1, 2
@@ -95,12 +95,12 @@ CONTAINS
     REAL(KIND=8),                   INTENT(IN) :: dt
     INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: tempn_m1, tempn
-    INTEGER                                    :: mode, i, j 
+    INTEGER                                    :: mode, i, j
 
     time = 0.d0
     DO i= 1, SIZE(list_mode)
-       mode = list_mode(i) 
-       DO j = 1, 2 
+       mode = list_mode(i)
+       DO j = 1, 2
           tempn_m1(:,j,i) = temperature_exact(j, mesh%rr, mode, time-dt)
           tempn   (:,j,i) = temperature_exact(j, mesh%rr, mode, time)
        ENDDO
@@ -111,20 +111,20 @@ CONTAINS
   MODULE SUBROUTINE init_level_set(pp_mesh, time, &
        dt, list_mode, level_set_m1, level_set)
     IMPLICIT NONE
-    TYPE(mesh_type)                              :: pp_mesh 
+    TYPE(mesh_type)                              :: pp_mesh
     REAL(KIND=8),                     INTENT(OUT):: time
     REAL(KIND=8),                     INTENT(IN) :: dt
     INTEGER,      DIMENSION(:),       INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:,:), INTENT(OUT):: level_set, level_set_m1
-    INTEGER                                      :: mode, i, j, n 
-    
+    INTEGER                                      :: mode, i, j, n
+
     time = 0.d0
     DO i= 1, SIZE(list_mode)
-       mode = list_mode(i) 
+       mode = list_mode(i)
        DO j = 1, 2
           !===level_set
           DO n = 1, inputs%nb_fluid -1
-             level_set_m1(n,:,j,i) = level_set_exact(n,j,pp_mesh%rr,mode,time-dt)  
+             level_set_m1(n,:,j,i) = level_set_exact(n,j,pp_mesh%rr,mode,time-dt)
              level_set   (n,:,j,i) = level_set_exact(n,j,pp_mesh%rr,mode,time)
           END DO
        END DO
@@ -138,17 +138,17 @@ CONTAINS
     INTEGER     ,                             INTENT(IN) :: TYPE
     REAL(KIND=8), DIMENSION(:,:),             INTENT(IN) :: rr
     INTEGER     ,                             INTENT(IN) :: mode, i
-    REAL(KIND=8),                             INTENT(IN) :: time 
+    REAL(KIND=8),                             INTENT(IN) :: time
     REAL(KIND=8),                             INTENT(IN) :: Re
     CHARACTER(LEN=2),                         INTENT(IN) :: ty
     REAL(KIND=8), DIMENSION(:,:,:), OPTIONAL, INTENT(IN) :: opt_density
-    REAL(KIND=8), DIMENSION(:,:,:), OPTIONAL, INTENT(IN) :: opt_tempn 
+    REAL(KIND=8), DIMENSION(:,:,:), OPTIONAL, INTENT(IN) :: opt_tempn
     REAL(KIND=8), DIMENSION(SIZE(rr,2))                  :: vv
     REAL(KIND=8) :: r
     INTEGER      :: n
     CHARACTER(LEN=2)  :: np
 
-    IF (PRESENT(opt_density)) CALL error_petsc('density should not be present for test 28') 
+    IF (PRESENT(opt_density)) CALL error_petsc('density should not be present for test 28')
     IF (PRESENT(opt_tempn)) CALL error_petsc('temperature should not be present for test 28')
 
     vv = 0.d0
@@ -165,7 +165,7 @@ CONTAINS
     INTEGER     ,                        INTENT(IN)   :: TYPE
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m
-    REAL(KIND=8),                        INTENT(IN)   :: t   
+    REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
 
     vv = 0.d0
@@ -179,7 +179,7 @@ CONTAINS
     INTEGER     ,                        INTENT(IN)   :: TYPE
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m, interface_nb
-    REAL(KIND=8),                        INTENT(IN)   :: t   
+    REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
 
     vv=0.d0
@@ -187,7 +187,7 @@ CONTAINS
   END FUNCTION source_in_level_set
 
   !===Velocity for boundary conditions in Navier-Stokes.
-  !===Can be used also to initialize velocity in: init_velocity_pressure_temperature 
+  !===Can be used also to initialize velocity in: init_velocity_pressure_temperature
   MODULE FUNCTION vv_exact(TYPE,rr,m,t) RESULT(vv)
     IMPLICIT NONE
     INTEGER     ,                        INTENT(IN)   :: TYPE
@@ -205,12 +205,12 @@ CONTAINS
           r= rr(1,n)
           z= rr(2,n)
           ! Are we in the Bottom propeller?
-          IF ( if_bottom_prop .AND. r <disk_radius .AND. z <  top_of_blade_bot ) then 
+          IF ( if_bottom_prop .AND. r <disk_radius .AND. z <  top_of_blade_bot ) then
              vv(n)=solid_vel*r
           END IF
 
           !are we in the top Propeller?
-          IF ( if_top_prop  .AND. r <disk_radius .AND. z  >   bot_of_blade_top) then 
+          IF ( if_top_prop  .AND. r <disk_radius .AND. z  >   bot_of_blade_top) then
              vv(n)=-solid_vel*r
 
           END IF
@@ -226,12 +226,12 @@ CONTAINS
   !===Solid velocity imposed when using penalty technique
   !===Defined in Fourier space on mode 0 only.
   MODULE FUNCTION imposed_velocity_by_penalty(rr,t) RESULT(vv)
-    IMPLICIT NONE 
+    IMPLICIT NONE
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(SIZE(rr,2),6)             :: vv
     REAL(KIND=8)                                      :: r, z
-    INTEGER                                           :: n 
+    INTEGER                                           :: n
 
     vv=0.d0
     DO n = 1, SIZE(rr,2)
@@ -253,7 +253,7 @@ CONTAINS
   !===Pressure for boundary conditions in Navier-Stokes.
   !===Can be used also to initialize pressure in the subroutine init_velocity_pressure.
   !===Use this routine for outflow BCs only.
-  !===CAUTION: Do not enfore BCs on pressure where normal component 
+  !===CAUTION: Do not enfore BCs on pressure where normal component
   !            of velocity is prescribed.
   MODULE FUNCTION pp_exact(TYPE,rr,m,t) RESULT (vv)
     IMPLICIT NONE
@@ -261,7 +261,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: t
-    REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv 
+    REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
     REAL(KIND=8) :: r
     INTEGER      :: n
 
@@ -295,11 +295,11 @@ CONTAINS
     INTEGER     ,                        INTENT(IN)   :: m, interface_nb
     REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
-    
+
     vv = 0.d0
     CALL error_petsc('level_set_exact: should not be called for this test')
     RETURN
-   
+
   END FUNCTION level_set_exact
 
   !===Penalty coefficient (if needed)
@@ -315,7 +315,7 @@ CONTAINS
     REAL(KIND=8),               INTENT(IN)     :: time
     REAL(KIND=8), DIMENSION(nb_angles,ne-nb+1) :: vv
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!    
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     !1) USE Smooth Blades
     vv=smooth_penal_in_real_space(mesh,rr_gauss,angles,nb_angles,nb,ne,time)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -330,9 +330,9 @@ CONTAINS
   !===is set to true in data (type problem denoted mxx in the code).
   MODULE FUNCTION extension_velocity(TYPE, H_mesh, mode, t, n_start) RESULT(vv)
     IMPLICIT NONE
-    TYPE(mesh_type),                     INTENT(IN)   :: H_mesh     
+    TYPE(mesh_type),                     INTENT(IN)   :: H_mesh
     INTEGER     ,                        INTENT(IN)   :: TYPE, n_start
-    INTEGER,                             INTENT(IN)   :: mode 
+    INTEGER,                             INTENT(IN)   :: mode
     REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(H_Mesh%np)                :: vv
 
@@ -348,7 +348,7 @@ CONTAINS
   !===Used only if problem type is mxw and restart velocity is false
   MODULE FUNCTION Vexact(m, H_mesh) RESULT(vv)  !Set uniquement a l'induction
     IMPLICIT NONE
-    TYPE(mesh_type),                       INTENT(IN) :: H_mesh 
+    TYPE(mesh_type),                       INTENT(IN) :: H_mesh
     INTEGER,                               INTENT(IN) :: m
     REAL(KIND=8), DIMENSION(H_mesh%np,6)              :: vv
 
@@ -357,7 +357,7 @@ CONTAINS
 
   !===Magnetic field and magnetic induction for quasi-static approximation
   !===if needed
-  MODULE FUNCTION H_B_quasi_static(char_h_b, rr, m) RESULT(vv) 
+  MODULE FUNCTION H_B_quasi_static(char_h_b, rr, m) RESULT(vv)
     IMPLICIT NONE
     CHARACTER(LEN=1),                    INTENT(IN)   :: char_h_b
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
@@ -369,13 +369,13 @@ CONTAINS
   END FUNCTION H_B_quasi_static
 
   !===Magnetic field for boundary conditions in the Maxwell equations.
-  MODULE FUNCTION Hexact(H_mesh,TYPE, rr, m, mu_H_field, t) RESULT(vv) 
+  MODULE FUNCTION Hexact(H_mesh,TYPE, rr, m, mu_H_field, t) RESULT(vv)
     IMPLICIT NONE
     TYPE(mesh_type),                     INTENT(IN)   :: H_mesh
     INTEGER     ,                        INTENT(IN)   :: TYPE
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m
-    REAL(KIND=8),                        INTENT(IN)   :: t 
+    REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(:),          INTENT(IN)   :: mu_H_field
     REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
 
@@ -384,32 +384,32 @@ CONTAINS
   END FUNCTION Hexact
 
   !===Scalar potential for boundary conditions in the Maxwell equations.
- MODULE FUNCTION Phiexact(TYPE, rr, m, mu_phi,t) RESULT(vv) 
-   IMPLICIT NONE
-   INTEGER     ,                        INTENT(IN)   :: TYPE
-   REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
-   INTEGER     ,                        INTENT(IN)   :: m
-   REAL(KIND=8),                        INTENT(IN)   :: mu_phi, t
-   REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv   
+  MODULE FUNCTION Phiexact(TYPE, rr, m, mu_phi,t) RESULT(vv)
+    IMPLICIT NONE
+    INTEGER     ,                        INTENT(IN)   :: TYPE
+    REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
+    INTEGER     ,                        INTENT(IN)   :: m
+    REAL(KIND=8),                        INTENT(IN)   :: mu_phi, t
+    REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
 
     vv = 0.d0
     RETURN
- END FUNCTION Phiexact
+  END FUNCTION Phiexact
 
   !===Current in Ohm's law. Curl(H) = sigma(E + uxB) + current
- MODULE FUNCTION Jexact_gauss(TYPE, rr, m, mu_phi, sigma, mu_H, t, mesh_id, opt_B_ext) RESULT(vv) 
-   IMPLICIT NONE
-   INTEGER     ,                        INTENT(IN)   :: TYPE
-   REAL(KIND=8), DIMENSION(:),          INTENT(IN)   :: rr
-   INTEGER     ,                        INTENT(IN)   :: m 
-   REAL(KIND=8),                        INTENT(IN)   :: mu_phi, sigma, mu_H, t 
-   INTEGER     ,                        INTENT(IN)   :: mesh_id
-   REAL(KIND=8), DIMENSION(6), OPTIONAL,INTENT(IN)   :: opt_B_ext 
-   REAL(KIND=8)                                      :: vv
+  MODULE FUNCTION Jexact_gauss(TYPE, rr, m, mu_phi, sigma, mu_H, t, mesh_id, opt_B_ext) RESULT(vv)
+    IMPLICIT NONE
+    INTEGER     ,                        INTENT(IN)   :: TYPE
+    REAL(KIND=8), DIMENSION(:),          INTENT(IN)   :: rr
+    INTEGER     ,                        INTENT(IN)   :: m
+    REAL(KIND=8),                        INTENT(IN)   :: mu_phi, sigma, mu_H, t
+    INTEGER     ,                        INTENT(IN)   :: mesh_id
+    REAL(KIND=8), DIMENSION(6), OPTIONAL,INTENT(IN)   :: opt_B_ext
+    REAL(KIND=8)                                      :: vv
 
-   vv = 0.d0
-   RETURN
- END FUNCTION Jexact_gauss
+    vv = 0.d0
+    RETURN
+  END FUNCTION Jexact_gauss
 
   !===Electric field for Neumann BC (cf. doc)
   MODULE FUNCTION Eexact_gauss(TYPE, rr, m, mu_phi, sigma, mu_H, t) RESULT(vv)
@@ -418,7 +418,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:),          INTENT(IN)   :: rr
     INTEGER,                             INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: mu_phi, sigma, mu_H, t
-    REAL(KIND=8)                                      :: vv 
+    REAL(KIND=8)                                      :: vv
 
     vv = 0.d0
     CALL error_petsc('Eexact: should not be called for this test')
@@ -428,15 +428,15 @@ CONTAINS
   MODULE SUBROUTINE init_maxwell(H_mesh, phi_mesh, time, dt, mu_H_field, mu_phi, &
        list_mode, Hn1, Hn, phin1, phin)
     IMPLICIT NONE
-    TYPE(mesh_type)                            :: H_mesh, phi_mesh     
+    TYPE(mesh_type)                            :: H_mesh, phi_mesh
     REAL(KIND=8),                   INTENT(OUT):: time
     REAL(KIND=8),                   INTENT(IN) :: dt
     REAL(KIND=8), DIMENSION(:),     INTENT(IN) :: mu_H_field
     REAL(KIND=8),                   INTENT(IN) :: mu_phi
-    INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode    
+    INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: Hn, Hn1
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: phin, phin1
-    
+
     Hn1 = 0.d0
     Hn = 0.d0
     phin1 = 0.d0
@@ -579,7 +579,7 @@ CONTAINS
 
     psi=0.d0
     IF ( z .GE.  z1  .AND. r .GE. r3 )  THEN
-       psi = 0.d0 ;          
+       psi = 0.d0 ;
     ELSE IF (r.LE.r2) THEN
        IF(z.LE.z0) THEN
           psi=1.0;
@@ -601,7 +601,7 @@ CONTAINS
     vv = psi
     RETURN
   END FUNCTION bottom_mu_bar_func
-!
+  !
   FUNCTION top_mu_bar_func(r,z) RESULT(vv)
     USE def_type_mesh
     USE input_data
@@ -620,7 +620,7 @@ CONTAINS
 
     psi=0.d0
     IF ( z .LE.  z3 .AND. r .GE. r3)  THEN
-       psi = 0.d0 ;             
+       psi = 0.d0 ;
     ELSE IF(r.LE.r2) THEN
        IF(z.GE.z2) THEN
           psi=1.0;
@@ -655,11 +655,11 @@ CONTAINS
     !mu bar for Blades , a disks with no hole
 
     IF ( if_bottom_prop .AND.  if_top_prop) THEN
-       vv=( grad_top_mu_bar_func(r,z) + grad_bottom_mu_bar_func(r,z) )*(mu_disk-1.0) 
+       vv=( grad_top_mu_bar_func(r,z) + grad_bottom_mu_bar_func(r,z) )*(mu_disk-1.0)
     ELSE IF (if_bottom_prop) THEN
-       vv= grad_bottom_mu_bar_func(r,z)*(mu_disk-1.0) 
+       vv= grad_bottom_mu_bar_func(r,z)*(mu_disk-1.0)
     ELSE
-       vv= grad_top_mu_bar_func(r,z)*(mu_disk-1.0) 
+       vv= grad_top_mu_bar_func(r,z)*(mu_disk-1.0)
     END IF
     RETURN
   END FUNCTION grad_mu_bar_func
@@ -746,7 +746,7 @@ CONTAINS
           DFz=0.d0
        ELSE IF (z.LE.z3) THEN
           DFr=0.d0
-          DFz=0.d0         
+          DFz=0.d0
        ELSE
           DFr=0.d0
           DFz=Dsmooth_jump_up(z,z3,z2);
@@ -754,10 +754,10 @@ CONTAINS
     ELSE IF (r.GE.r2 .AND. r.LE.r3) THEN
        IF(z.LE.z3) THEN
           DFr=0.d0
-          DFz=0.d0         
+          DFz=0.d0
        ELSE IF(z.GE.z2) THEN
           DFr=Dsmooth_jump_down(r,r2,r3);
-          DFz=0.d0         
+          DFz=0.d0
        ELSE
           DFr=Dsmooth_jump_down(r,r2,r3)*smooth_jump_up(z,z3,z2);
           DFz=smooth_jump_down(r,r2,r3)*Dsmooth_jump_up(z,z3,z2);
@@ -831,34 +831,34 @@ CONTAINS
 
     !If we are outside of the supporting disk (respect to r)
     IF(ABS(psi) .LE. 1.d-8) THEN
-       DO na = 1, nb_angles   
+       DO na = 1, nb_angles
           vv(na) = 1-psi
        END DO
        RETURN
     END IF
 
-    !Do Blades stuff     
+    !Do Blades stuff
     r0=hole_rp
     r1=hole_r
     r2=disk_rp
     r3=disk_r
 
-    z0=ztop_p - wjump 
+    z0=ztop_p - wjump
     z1=ztop   - wjump
     z2=Tdisk_z_p
     z3=Tdisk_z
 
     ! Parabolic jump
     IF (z .LE. z1 )  THEN
-       alphaz = 1.d0;          
+       alphaz = 1.d0;
     ELSE IF(z .LE. z0 .AND. z .GE. z1) THEN
        alphaz= smooth_jump_down(z,z1,z0);
     ELSE
        alphaz=0.0;
     END IF
 
-    If ( r .LE. r0 )  THEN 
-       alphar = 0.d0;          
+    If ( r .LE. r0 )  THEN
+       alphar = 0.d0;
     ELSE IF(r .GE. r0 .AND. r .LE. r1) THEN
        alphar= smooth_jump_up(r,r0,r1);
     ELSE
@@ -868,9 +868,9 @@ CONTAINS
 
     r_theta = ASIN(r/two_rp)
 
-    DO na = 1, nb_angles   
+    DO na = 1, nb_angles
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       !DCQ go backwards and do the test 
+       !DCQ go backwards and do the test
        !These blades  rotate the other way (-lbd), (+user%solid_vel*time) and they begin at the same angle,
 
        theta=   angles(na) + solid_vel*time
@@ -886,8 +886,8 @@ CONTAINS
        tanhp = tanh(alphaz*(r*a+lw+lw*r))
        tanhm = tanh(alphaz*(r*a-lw-lw*r))
        tanhd = tanh(alphaz*(lw+lw*r))
-       g=(1+tanhp)*(1-tanhm)/(1+tanhd)**2 
-       vv(na) = 1-g*psi 
+       g=(1+tanhp)*(1-tanhm)/(1+tanhd)**2
+       vv(na) = 1-g*psi
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     END DO
     RETURN
@@ -908,7 +908,7 @@ CONTAINS
     INTEGER                                    :: na
     REAL(KIND=8)                               :: g, a,alphaz,alphar
     REAL(KIND=8)                               :: r0,r1,r2,r3,z0,z1,z2,z3
-    REAL(KIND=8)                               :: psi, tanhp,tanhm, tanhd, r_theta 
+    REAL(KIND=8)                               :: psi, tanhp,tanhm, tanhd, r_theta
 
     !Supporting disk stuff
     !Get characteristic function of the supporting disk-cylinder
@@ -916,35 +916,35 @@ CONTAINS
 
     !If we are outside of the supporting disk (respect to r)
     IF(ABS(psi) .LE. 1.d-8) THEN
-       DO na = 1, nb_angles   
+       DO na = 1, nb_angles
           vv(na) = 1-psi
        END DO
        RETURN
     END IF
 
-    ! Do blades stuff     
+    ! Do blades stuff
     !! Blades with no hole in the disk
     r0=hole_rp
     r1=hole_r
     r2=disk_rp
     r3=disk_r
 
-    z0=zbot_p + wjump 
+    z0=zbot_p + wjump
     z1=zbot   + wjump
     z2=Bdisk_z_p
     z3=Bdisk_z
 
     ! Parabolic jump
     IF (z .LE. z0 )  THEN
-       alphaz = 0.d0;          
+       alphaz = 0.d0;
     ELSE IF(z .GE. z0 .AND. z .LE. z1) THEN
        alphaz= smooth_jump_up(z,z0,z1);
     ELSE
        alphaz=1.0;
     END IF
 
-    IF ( r .LE. r0 )  THEN 
-       alphar = 0.d0;          
+    IF ( r .LE. r0 )  THEN
+       alphar = 0.d0;
     ELSE IF(r .GE. r0 .AND. r .LE. r1) THEN
        alphar= smooth_jump_up(r,r0,r1);
     ELSE
@@ -954,9 +954,9 @@ CONTAINS
 
     r_theta = ASIN(r/two_rp)
 
-    DO na = 1, nb_angles   
+    DO na = 1, nb_angles
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       !DCQ go backwards and do the test 
+       !DCQ go backwards and do the test
        theta=   angles(na) - solid_vel*time
        !a = theta + lbd*r - FLOOR(( theta +  lbd*r)/(twopi/nblades))*twopi/nblades &
        !     - twopi/(2*nblades)
@@ -968,8 +968,8 @@ CONTAINS
        tanhp = tanh(alphaz*(r*a+lw+lw*r))
        tanhm = tanh(alphaz*(r*a-lw-lw*r))
        tanhd = tanh(alphaz*(lw+lw*r))
-       g=(1+tanhp)*(1-tanhm)/(1+tanhd)**2 
-       vv(na) = 1-g*psi 
+       g=(1+tanhp)*(1-tanhm)/(1+tanhd)**2
+       vv(na) = 1-g*psi
     END DO
     RETURN
   END FUNCTION smooth_bottom_propeller
@@ -994,14 +994,14 @@ CONTAINS
     r2=disk_rp
     r3=disk_r
 
-    z0=ztop_p - wjump 
+    z0=ztop_p - wjump
     z1=ztop   - wjump
     z2=Tdisk_z_p
     z3=Tdisk_z
 
     psi=0.d0
     IF ( z .LE.  z3 .AND. r .GE. r3)  THEN
-       psi = 0.d0 ;             
+       psi = 0.d0 ;
     ELSE IF (r.LE.r0) THEN
        IF(z.GE.z0) THEN
           psi=1.0;
@@ -1013,7 +1013,7 @@ CONTAINS
     ELSE IF(r.GE.r0 .AND. r.LE.r1) THEN
        curve_2= smooth_jump_up(r,r0,r1)*(z3-z1)+z1;
        curve_1= smooth_jump_up(r,r0,r1)*(z2-z0)+z0;
-       IF(z.LE.curve_2) THEN 
+       IF(z.LE.curve_2) THEN
           psi=0.0;
        ELSE IF(z.GE.curve_1) THEN
           psi=1.0;
@@ -1063,14 +1063,14 @@ CONTAINS
     r2=disk_rp
     r3=disk_r
 
-    z0=zbot_p + wjump 
+    z0=zbot_p + wjump
     z1=zbot   + wjump
     z2=Bdisk_z_p
     z3=Bdisk_z
 
     psi=0.d0
     IF ( z .GE.  z3 .AND. r .GE. r3)  THEN
-       psi = 0.d0 ;             
+       psi = 0.d0 ;
     ELSE IF (r.LE.r0) THEN
        IF(z.LE.z0) THEN
           psi=1.0;
@@ -1082,7 +1082,7 @@ CONTAINS
     ELSE IF(r.GE.r0 .AND. r.LE.r1) THEN
        curve_2= smooth_jump_up(r,r0,r1)*(z3-z1)+z1;
        curve_1= smooth_jump_up(r,r0,r1)*(z2-z0)+z0;
-       IF(z.GE.curve_2) THEN 
+       IF(z.GE.curve_2) THEN
           psi=0.0;
        ELSE IF(z.LE.curve_1) THEN
           psi=1.0;
@@ -1119,8 +1119,8 @@ CONTAINS
     REAL(KIND=8)                               :: a0,a1,a2,a3
 
     !Cubic
-    a0 = x1**2*(3*x0-x1)/(x0-x1)**3; 
-    a1 = -6.0*x0*x1/(x0-x1)**3; 
+    a0 = x1**2*(3*x0-x1)/(x0-x1)**3;
+    a1 = -6.0*x0*x1/(x0-x1)**3;
     a2 = (3.0*(x0+x1))/(x0-x1)**3;
     a3 = -2.0/(x0-x1)**3;
     vv = a0+a1*x+a2*x*x + a3*x*x*x
@@ -1145,12 +1145,12 @@ CONTAINS
     REAL(KIND=8)                               :: a0,a1,a2,a3
 
     !Cubic Factorized
-    a0 = x1**2*(3*x0-x1)/(x0-x1)**3; 
-    a1 = -6.0*x0*x1/(x0-x1)**3; 
+    a0 = x1**2*(3*x0-x1)/(x0-x1)**3;
+    a1 = -6.0*x0*x1/(x0-x1)**3;
     a2 = (3.0*(x0+x1))/(x0-x1)**3;
     a3 = -2.0/(x0-x1)**3;
 
-    vv = a1+2.d0*a2*x + 3.d0*a3*x*x 
+    vv = a1+2.d0*a2*x + 3.d0*a3*x*x
     RETURN
   END FUNCTION Dsmooth_jump_down
 

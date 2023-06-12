@@ -16,21 +16,21 @@ CONTAINS
     !USE sub_plot
     IMPLICIT NONE
     TYPE(petsc_csr_LA)                                     :: vv_1_LA,vv_2_LA
-    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: ff, rotv_v, dudt, nlhalf 
+    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: ff, rotv_v, dudt, nlhalf
     REAL(KIND=8), DIMENSION(:),                 INTENT(IN) :: vel_tot      !(noeud)
-    TYPE(mesh_type), TARGET                                :: mesh  
-    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: V1m, vit     !V(noeud, type) 
+    TYPE(mesh_type), TARGET                                :: mesh
+    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: V1m, vit     !V(noeud, type)
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: P, phalf
-    REAL(KIND=8),                               INTENT(IN) :: dt 
-    INTEGER,                                    INTENT(IN) :: mode  
-!TEST LES LC October 28, 2014
+    REAL(KIND=8),                               INTENT(IN) :: dt
+    INTEGER,                                    INTENT(IN) :: mode
+    !TEST LES LC October 28, 2014
     REAL(KIND=8)                 :: vel_tot_max
-!TEST LES LC October 28, 2014
+    !TEST LES LC October 28, 2014
     REAL(KIND=8), DIMENSION(6)                             :: fs , ft , fp, smb, fv, mult
     REAL(KIND=8), DIMENSION(2,6,mesh%gauss%l_G)            :: grad
     REAL(KIND=8), DIMENSION(6,mesh%gauss%l_G)              :: vitloc
     INTEGER, DIMENSION(mesh%gauss%n_w)                     :: j_loc
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w) :: dw_loc  
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w) :: dw_loc
     REAL(KIND=8), DIMENSION(mesh%dom_me)                   :: visc_plot
     REAL(KIND=8), DIMENSION(2*mesh%gauss%n_w)              :: v14_loc, v23_loc
     INTEGER,      DIMENSION(2*mesh%gauss%n_w)              :: idxm_2
@@ -54,7 +54,7 @@ CONTAINS
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,2) :: u0loci, uloci
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%l_Gs, 2) :: dwni_loc
 !!$ WARNING FL Variables removed (used for edge_stab)
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     Vec            :: vb_2_14,vb_2_23,vb_1_5,vb_1_6
     PetscErrorCode :: ierr
 
@@ -77,14 +77,14 @@ CONTAINS
        DO m = 1, mesh%dom_me
           DO l = 1, mesh%gauss%l_G
              ray = SUM(mesh%rr(1,mesh%jj(:,m))*mesh%gauss%ww(:,l))
-             surf = surf + mesh%gauss%rj(l,m)*ray    
+             surf = surf + mesh%gauss%rj(l,m)*ray
           END DO
        END DO
 
        IF (mesh%gauss%n_w==3) THEN
           type_fe = 1
-       ELSE 
-          type_fe = 2 
+       ELSE
+          type_fe = 2
        END IF
        coeff_ed_st         = inputs%LES_coeff3*0.02d0/type_fe
        coeff_visc_ordre_un = inputs%LES_coeff4
@@ -100,9 +100,9 @@ CONTAINS
     !ATTENTION: inputs%LES_coeff1 is assumed to be of the order of the convective velocity
     !that simplifies the semi-implicit treatment of the LES viscosity
 !!$    normal_vit = MAXVAL(vel_tot)
-!TEST LES LC October 28, 2014
+    !TEST LES LC October 28, 2014
     normal_vit = vel_tot_max
-!TEST LES LC October 28, 2014
+    !TEST LES LC October 28, 2014
     DO TYPE = 1, 6
        norm_vit(TYPE) = SUM(ABS(vit(:,TYPE)))/mesh%np + 1.d-14
     END DO
@@ -111,7 +111,7 @@ CONTAINS
     cfl = 0
     index = 0
     index2 = 0
-    IF (inputs%LES) THEN 
+    IF (inputs%LES) THEN
        DO m = 1, mesh%dom_me
           j_loc = mesh%jj(:,m)
           vloc = MAXVAL(vel_tot(j_loc))
@@ -127,28 +127,28 @@ CONTAINS
              !fs Source term
              !ft Time derivative
              !fp Pressure gradient
-             !--------calcul de la premiere composante 
+             !--------calcul de la premiere composante
              ft(1) = SUM(dudt(j_loc,1) *mesh%gauss%ww(:,l))
              fp(1) = SUM(phalf(j_loc,1)*dw_loc(1,:))
-             !--------calcul de la seconde composante 
-             ft(2) = SUM(dudt(j_loc,2) * mesh%gauss%ww(:,l)) 
-             fp(2) = SUM(phalf(j_loc,2)*dw_loc(1,:)) 
-             !--------calcul de la troisieme composante 
-             ft(3) = SUM(dudt(j_loc,3) *mesh%gauss%ww(:,l)) 
-             fp(3) = SUM(phalf(j_loc,2)*mesh%gauss%ww(:,l))*mode/ray 
-             !--------calcul de la quatrieme composante 
-             ft(4) = SUM(dudt(j_loc,4) *mesh%gauss%ww(:,l)) 
-             fp(4) = -SUM(phalf(j_loc,1)*mesh%gauss%ww(:,l))*mode/ray 
-             !--------calcul de la cinquieme composante 
-             ft(5) = SUM(dudt(j_loc,5) *mesh%gauss%ww(:,l)) 
-             fp(5) = SUM(phalf(j_loc,1)*dw_loc(2,:)) 
-             !--------calcul de la sixieme composante 
-             ft(6) = SUM(dudt(j_loc,6) *mesh%gauss%ww(:,l)) 
-             fp(6) = SUM(phalf(j_loc,2)*dw_loc(2,:)) 
+             !--------calcul de la seconde composante
+             ft(2) = SUM(dudt(j_loc,2) * mesh%gauss%ww(:,l))
+             fp(2) = SUM(phalf(j_loc,2)*dw_loc(1,:))
+             !--------calcul de la troisieme composante
+             ft(3) = SUM(dudt(j_loc,3) *mesh%gauss%ww(:,l))
+             fp(3) = SUM(phalf(j_loc,2)*mesh%gauss%ww(:,l))*mode/ray
+             !--------calcul de la quatrieme composante
+             ft(4) = SUM(dudt(j_loc,4) *mesh%gauss%ww(:,l))
+             fp(4) = -SUM(phalf(j_loc,1)*mesh%gauss%ww(:,l))*mode/ray
+             !--------calcul de la cinquieme composante
+             ft(5) = SUM(dudt(j_loc,5) *mesh%gauss%ww(:,l))
+             fp(5) = SUM(phalf(j_loc,1)*dw_loc(2,:))
+             !--------calcul de la sixieme composante
+             ft(6) = SUM(dudt(j_loc,6) *mesh%gauss%ww(:,l))
+             fp(6) = SUM(phalf(j_loc,2)*dw_loc(2,:))
              !-------calcul du second membre pour le terme nonlineaire------------------------
 
              visc1 = MAX(visc1,ABS(ft+fp+nlhalf(index2,:)))
-             
+
              !--------Calcul du gradient de la vitesse
              DO TYPE = 1, 6
                 DO k = 1 ,2
@@ -163,7 +163,7 @@ CONTAINS
              visc2(1) = MAX(visc2(1),div1)
              visc2(2) = MAX(visc2(2),div2)
           END DO
-          visc2(4) = visc2(1); visc2(5) = visc2(1) 
+          visc2(4) = visc2(1); visc2(5) = visc2(1)
           visc2(3) = visc2(2); visc2(6) = visc2(2)
 
           nu_loc = 0.d0
@@ -177,7 +177,7 @@ CONTAINS
              viscosity(TYPE,m) = inputs%LES_coeff1*mesh%hloc(m) - visc_eff
              !======Semi-implicit version==========
           END DO
-          R_eff = R_eff + (nu_loc + dt**2*mesh%hloc(m))*mesh%hloc(m)**2*ray 
+          R_eff = R_eff + (nu_loc + dt**2*mesh%hloc(m))*mesh%hloc(m)**2*ray
           visc_plot(m) = (nu_loc/6)/(coeff_visc_ordre_un*mesh%hloc(m)*normal_vit)
        END DO
     ELSE
@@ -232,36 +232,36 @@ CONTAINS
           !===Compute radius of Gauss point
           ray = SUM(mesh%rr(1,j_loc)*mesh%gauss%ww(:,l))
 
-          !-calcul des seconds membres pr les termes de forçage, temporels et de gradP 
+          !-calcul des seconds membres pr les termes de forçage, temporels et de gradP
           !--------calcul de la premiere composante : u0(1,:) <--> f(r,m,c)
           fs(1) = SUM(ff(j_loc,1) * mesh%gauss%ww(:,l))
-          ft(1) = SUM(V1m(j_loc,1) * mesh%gauss%ww(:,l)) 
+          ft(1) = SUM(V1m(j_loc,1) * mesh%gauss%ww(:,l))
           fp(1) = -SUM(P(j_loc,1)*dw_loc(1,:))
           fv(1) = ((mode*vitloc(1,l)+vitloc(4,l))*mode +mode*vitloc(4,l)+vitloc(1,l))/ray**2
           !--------calcul de la seconde composante : u0(2,:) <--> f(r,m,s)
-          fs(2) = SUM(ff(j_loc,2) * mesh%gauss%ww(:,l)) 
-          ft(2) = SUM(V1m(j_loc,2) * mesh%gauss%ww(:,l)) 
-          fp(2) = -SUM(P(j_loc,2)*dw_loc(1,:)) 
+          fs(2) = SUM(ff(j_loc,2) * mesh%gauss%ww(:,l))
+          ft(2) = SUM(V1m(j_loc,2) * mesh%gauss%ww(:,l))
+          fp(2) = -SUM(P(j_loc,2)*dw_loc(1,:))
           fv(2) = ((mode*vitloc(2,l)-vitloc(3,l))*mode -mode*vitloc(3,l)+vitloc(2,l))/ray**2
           !--------calcul de la troisieme composante : u0(3,:) <--> f(th,m,c)
-          fs(3) = SUM(ff(j_loc,3) * mesh%gauss%ww(:,l)) 
-          ft(3) = SUM(V1m(j_loc,3) * mesh%gauss%ww(:,l)) 
-          fp(3) = -SUM(P(j_loc,2)*mesh%gauss%ww(:,l))/ray*mode 
+          fs(3) = SUM(ff(j_loc,3) * mesh%gauss%ww(:,l))
+          ft(3) = SUM(V1m(j_loc,3) * mesh%gauss%ww(:,l))
+          fp(3) = -SUM(P(j_loc,2)*mesh%gauss%ww(:,l))/ray*mode
           fv(3) = (-mode*vitloc(2,l)+vitloc(3,l) +(mode*vitloc(3,l)-vitloc(2,l))*mode)/ray**2
           !--------calcul de la quatrieme composante : u0(4,:) <--> f(th,m,s)
-          fs(4) = SUM(ff(j_loc,4) * mesh%gauss%ww(:,l)) 
-          ft(4) = SUM(V1m(j_loc,4) * mesh%gauss%ww(:,l)) 
-          fp(4) = SUM(P(j_loc,1)*mesh%gauss%ww(:,l))/ray *mode 
+          fs(4) = SUM(ff(j_loc,4) * mesh%gauss%ww(:,l))
+          ft(4) = SUM(V1m(j_loc,4) * mesh%gauss%ww(:,l))
+          fp(4) = SUM(P(j_loc,1)*mesh%gauss%ww(:,l))/ray *mode
           fv(4) =  (mode*vitloc(1,l)+vitloc(4,l) +(mode*vitloc(4,l)+vitloc(1,l))*mode)/ray**2
           !--------calcul de la cinquieme composante : u0(5,:) <--> f(z,m,c)
-          fs(5) = SUM(ff(j_loc,5) * mesh%gauss%ww(:,l)) 
-          ft(5) = SUM(V1m(j_loc,5) * mesh%gauss%ww(:,l)) 
-          fp(5) = -SUM(P(j_loc,1)*dw_loc(2,:)) 
+          fs(5) = SUM(ff(j_loc,5) * mesh%gauss%ww(:,l))
+          ft(5) = SUM(V1m(j_loc,5) * mesh%gauss%ww(:,l))
+          fp(5) = -SUM(P(j_loc,1)*dw_loc(2,:))
           fv(5) =  vitloc(5,l)*(mode/ray)**2
           !--------calcul de la sixieme composante : u0(6,:) <--> f(z,m,s)
-          fs(6) = SUM(ff(j_loc,6) * mesh%gauss%ww(:,l)) 
-          ft(6) = SUM(V1m(j_loc,6) * mesh%gauss%ww(:,l)) 
-          fp(6) = -SUM(P(j_loc,2)*dw_loc(2,:)) 
+          fs(6) = SUM(ff(j_loc,6) * mesh%gauss%ww(:,l))
+          ft(6) = SUM(V1m(j_loc,6) * mesh%gauss%ww(:,l))
+          fp(6) = -SUM(P(j_loc,2)*dw_loc(2,:))
           fv(6) = vitloc(6,l)*(mode/ray)**2
           !-------calcul du second membre pour le terme nonlineaire------------------------
           !-------------------------------------------------------------------------------
@@ -274,7 +274,7 @@ CONTAINS
           END DO
 
 !!$        DO j=1,6
-!!$           DO ni = 1, mesh%gauss%n_w 
+!!$           DO ni = 1, mesh%gauss%n_w
 !!$              u0(j_loc(ni),j) = u0(j_loc(ni),j) +  mesh%gauss%ww(ni,l)*smb(j) + SUM(dw_loc(:,ni)*grad(:,j,l))
 !!$           ENDDO
 !!$        ENDDO
@@ -304,11 +304,11 @@ CONTAINS
     ENDDO
 
     !WRITE(*,*) ' CFL = ', cfl, ' R_eff for mode', mode, normal_vit*6*surf/R_eff
-    !IF (mode==0) THEN 
+    !IF (mode==0) THEN
     !CALL plot_const_p1_label(mesh%jj, mesh%rr, visc_plot, 'tttt_0.plt')
     !END IF
 
-    IF (inputs%LES) THEN 
+    IF (inputs%LES) THEN
        IF (mesh%edge_stab) THEN
           CALL error_Petsc('BUG in qs_ns_stab_new: terms with edge_stab not yet assembled')
 !!$     ed_st = normal_vit*coeff_ed_st
@@ -339,7 +339,7 @@ CONTAINS
 !!$
 !!$           DO cotei = 1, 2
 !!$              DO ni = 1, mesh%gauss%n_w
-!!$                 u0(jji_loc(ni,cotei),TYPE) = u0(jji_loc(ni,cotei),TYPE) + u0loci(ni,cotei) 
+!!$                 u0(jji_loc(ni,cotei),TYPE) = u0(jji_loc(ni,cotei),TYPE) + u0loci(ni,cotei)
 !!$              END DO
 !!$           END DO
 !!$        END DO
@@ -370,21 +370,21 @@ CONTAINS
     !USE sub_plot
     IMPLICIT NONE
     TYPE(petsc_csr_LA)                                     :: vv_3_LA
-    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: ff, rotv_v, dudt, nlhalf 
+    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: ff, rotv_v, dudt, nlhalf
     REAL(KIND=8), DIMENSION(:),                 INTENT(IN) :: vel_tot      !(noeud)
-    TYPE(mesh_type), TARGET                                :: mesh  
-    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: V1m, vit     !V(noeud, type) 
+    TYPE(mesh_type), TARGET                                :: mesh
+    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: V1m, vit     !V(noeud, type)
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: P, phalf
-    REAL(KIND=8),                               INTENT(IN) :: dt 
-    INTEGER,                                    INTENT(IN) :: mode  
-!TEST LES LC October 28, 2014
+    REAL(KIND=8),                               INTENT(IN) :: dt
+    INTEGER,                                    INTENT(IN) :: mode
+    !TEST LES LC October 28, 2014
     REAL(KIND=8)                 :: vel_tot_max
-!TEST LES LC October 28, 2014
+    !TEST LES LC October 28, 2014
     REAL(KIND=8), DIMENSION(6)                             :: fs , ft , fp, fv, mult
     REAL(KIND=8), DIMENSION(2,6,mesh%gauss%l_G)            :: grad
     REAL(KIND=8), DIMENSION(6,mesh%gauss%l_G)              :: vitloc
     INTEGER, DIMENSION(mesh%gauss%n_w)                     :: j_loc
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w) :: dw_loc  
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w) :: dw_loc
     REAL(KIND=8), DIMENSION(mesh%dom_me)                   :: visc_plot
     REAL(KIND=8), DIMENSION(2*mesh%gauss%n_w)              :: v14_loc, v23_loc
     INTEGER,      DIMENSION(2*mesh%gauss%n_w)              :: idxm_2
@@ -410,7 +410,7 @@ CONTAINS
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,2) :: u0loci, uloci
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%l_Gs, 2) :: dwni_loc
 !!$ WARNING FL Variables removed (used for edge_stab)
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     Vec            :: vb_145, vb_236
     !PetscErrorCode :: ierr
 
@@ -431,14 +431,14 @@ CONTAINS
        DO m = 1, mesh%dom_me
           DO l = 1, mesh%gauss%l_G
              ray = SUM(mesh%rr(1,mesh%jj(:,m))*mesh%gauss%ww(:,l))
-             surf = surf + mesh%gauss%rj(l,m)*ray    
+             surf = surf + mesh%gauss%rj(l,m)*ray
           END DO
        END DO
 
        IF (mesh%gauss%n_w==3) THEN
           type_fe = 1
-       ELSE 
-          type_fe = 2 
+       ELSE
+          type_fe = 2
        END IF
        coeff_ed_st         = inputs%LES_coeff3*0.02d0/type_fe
        coeff_visc_ordre_un = inputs%LES_coeff4
@@ -454,9 +454,9 @@ CONTAINS
     !ATTENTION: inputs%LES_coeff1 is assumed to be of the order of the convective velocity
     !that simplifies the semi-implicit treatment of the LES viscosity
 !!$    normal_vit = MAXVAL(vel_tot)
-!TEST LES LC October 28, 2014
+    !TEST LES LC October 28, 2014
     normal_vit = vel_tot_max
-!TEST LES LC October 28, 2014
+    !TEST LES LC October 28, 2014
     DO TYPE = 1, 6
        norm_vit(TYPE) = SUM(ABS(vit(:,TYPE)))/mesh%np + 1.d-14
     END DO
@@ -465,7 +465,7 @@ CONTAINS
     cfl = 0
     index = 0
     index2 = 0
-    IF (inputs%LES) THEN 
+    IF (inputs%LES) THEN
        DO m = 1, mesh%dom_me
           j_loc = mesh%jj(:,m)
           vloc = MAXVAL(vel_tot(j_loc))
@@ -481,24 +481,24 @@ CONTAINS
              !fs Source term
              !ft Time derivative
              !fp Pressure gradient
-             !--------calcul de la premiere composante 
+             !--------calcul de la premiere composante
              ft(1) = SUM(dudt(j_loc,1) *mesh%gauss%ww(:,l))
              fp(1) = SUM(phalf(j_loc,1)*dw_loc(1,:))
-             !--------calcul de la seconde composante 
-             ft(2) = SUM(dudt(j_loc,2) * mesh%gauss%ww(:,l)) 
-             fp(2) = SUM(phalf(j_loc,2)*dw_loc(1,:)) 
-             !--------calcul de la troisieme composante 
-             ft(3) = SUM(dudt(j_loc,3) *mesh%gauss%ww(:,l)) 
-             fp(3) = SUM(phalf(j_loc,2)*mesh%gauss%ww(:,l))*mode/ray 
-             !--------calcul de la quatrieme composante 
-             ft(4) = SUM(dudt(j_loc,4) *mesh%gauss%ww(:,l)) 
-             fp(4) = -SUM(phalf(j_loc,1)*mesh%gauss%ww(:,l))*mode/ray 
-             !--------calcul de la cinquieme composante 
-             ft(5) = SUM(dudt(j_loc,5) *mesh%gauss%ww(:,l)) 
-             fp(5) = SUM(phalf(j_loc,1)*dw_loc(2,:)) 
-             !--------calcul de la sixieme composante 
-             ft(6) = SUM(dudt(j_loc,6) *mesh%gauss%ww(:,l)) 
-             fp(6) = SUM(phalf(j_loc,2)*dw_loc(2,:)) 
+             !--------calcul de la seconde composante
+             ft(2) = SUM(dudt(j_loc,2) * mesh%gauss%ww(:,l))
+             fp(2) = SUM(phalf(j_loc,2)*dw_loc(1,:))
+             !--------calcul de la troisieme composante
+             ft(3) = SUM(dudt(j_loc,3) *mesh%gauss%ww(:,l))
+             fp(3) = SUM(phalf(j_loc,2)*mesh%gauss%ww(:,l))*mode/ray
+             !--------calcul de la quatrieme composante
+             ft(4) = SUM(dudt(j_loc,4) *mesh%gauss%ww(:,l))
+             fp(4) = -SUM(phalf(j_loc,1)*mesh%gauss%ww(:,l))*mode/ray
+             !--------calcul de la cinquieme composante
+             ft(5) = SUM(dudt(j_loc,5) *mesh%gauss%ww(:,l))
+             fp(5) = SUM(phalf(j_loc,1)*dw_loc(2,:))
+             !--------calcul de la sixieme composante
+             ft(6) = SUM(dudt(j_loc,6) *mesh%gauss%ww(:,l))
+             fp(6) = SUM(phalf(j_loc,2)*dw_loc(2,:))
              !-------calcul du second membre pour le terme nonlineaire------------------------
 
              visc1= MAX(visc1,ABS(ft+fp+nlhalf(index2,:)))
@@ -517,7 +517,7 @@ CONTAINS
              visc2(1) = MAX(visc2(1),div1)
              visc2(2) = MAX(visc2(2),div2)
           END DO
-          visc2(4) = visc2(1); visc2(5) = visc2(1) 
+          visc2(4) = visc2(1); visc2(5) = visc2(1)
           visc2(3) = visc2(2); visc2(6) = visc2(2)
 
           nu_loc = 0.d0
@@ -531,7 +531,7 @@ CONTAINS
              viscosity(TYPE,m) = inputs%LES_coeff1*mesh%hloc(m) - visc_eff
              !======Semi-implicit version==========
           END DO
-          R_eff = R_eff + (nu_loc + dt**2*mesh%hloc(m))*mesh%hloc(m)**2*ray 
+          R_eff = R_eff + (nu_loc + dt**2*mesh%hloc(m))*mesh%hloc(m)**2*ray
           visc_plot(m) = (nu_loc/6)/(coeff_visc_ordre_un*mesh%hloc(m)*normal_vit)
        END DO
     ELSE
@@ -567,7 +567,7 @@ CONTAINS
              ix = (ki-1)*nw+ni
              idxm_2(ix) = iglob-1
           END DO
-       END DO   
+       END DO
 
        v14_loc = 0.d0
        v23_loc = 0.d0
@@ -586,36 +586,36 @@ CONTAINS
           !===Compute radius of Gauss point
           ray = SUM(mesh%rr(1,j_loc)*mesh%gauss%ww(:,l))
 
-          !-calcul des seconds membres pr les termes de forçage, temporels et de gradP 
+          !-calcul des seconds membres pr les termes de forçage, temporels et de gradP
           !--------calcul de la premiere composante : u0(1,:) <--> f(r,m,c)
           fs(1) = SUM(ff(j_loc,1) * mesh%gauss%ww(:,l))
-          ft(1) = SUM(V1m(j_loc,1) * mesh%gauss%ww(:,l)) 
+          ft(1) = SUM(V1m(j_loc,1) * mesh%gauss%ww(:,l))
           fp(1) = -SUM(P(j_loc,1)*dw_loc(1,:))
           fv(1) = ((mode*vitloc(1,l)+vitloc(4,l))*mode +mode*vitloc(4,l)+vitloc(1,l))/ray**2
           !--------calcul de la seconde composante : u0(2,:) <--> f(r,m,s)
-          fs(2) = SUM(ff(j_loc,2) * mesh%gauss%ww(:,l)) 
-          ft(2) = SUM(V1m(j_loc,2) * mesh%gauss%ww(:,l)) 
-          fp(2) = -SUM(P(j_loc,2)*dw_loc(1,:)) 
+          fs(2) = SUM(ff(j_loc,2) * mesh%gauss%ww(:,l))
+          ft(2) = SUM(V1m(j_loc,2) * mesh%gauss%ww(:,l))
+          fp(2) = -SUM(P(j_loc,2)*dw_loc(1,:))
           fv(2) = ((mode*vitloc(2,l)-vitloc(3,l))*mode -mode*vitloc(3,l)+vitloc(2,l))/ray**2
           !--------calcul de la troisieme composante : u0(3,:) <--> f(th,m,c)
-          fs(3) = SUM(ff(j_loc,3) * mesh%gauss%ww(:,l)) 
-          ft(3) = SUM(V1m(j_loc,3) * mesh%gauss%ww(:,l)) 
-          fp(3) = -SUM(P(j_loc,2)*mesh%gauss%ww(:,l))/ray*mode 
+          fs(3) = SUM(ff(j_loc,3) * mesh%gauss%ww(:,l))
+          ft(3) = SUM(V1m(j_loc,3) * mesh%gauss%ww(:,l))
+          fp(3) = -SUM(P(j_loc,2)*mesh%gauss%ww(:,l))/ray*mode
           fv(3) = (-mode*vitloc(2,l)+vitloc(3,l) +(mode*vitloc(3,l)-vitloc(2,l))*mode)/ray**2
           !--------calcul de la quatrieme composante : u0(4,:) <--> f(th,m,s)
-          fs(4) = SUM(ff(j_loc,4) * mesh%gauss%ww(:,l)) 
-          ft(4) = SUM(V1m(j_loc,4) * mesh%gauss%ww(:,l)) 
-          fp(4) = SUM(P(j_loc,1)*mesh%gauss%ww(:,l))/ray *mode 
+          fs(4) = SUM(ff(j_loc,4) * mesh%gauss%ww(:,l))
+          ft(4) = SUM(V1m(j_loc,4) * mesh%gauss%ww(:,l))
+          fp(4) = SUM(P(j_loc,1)*mesh%gauss%ww(:,l))/ray *mode
           fv(4) =  (mode*vitloc(1,l)+vitloc(4,l) +(mode*vitloc(4,l)+vitloc(1,l))*mode)/ray**2
           !--------calcul de la cinquieme composante : u0(5,:) <--> f(z,m,c)
-          fs(5) = SUM(ff(j_loc,5) * mesh%gauss%ww(:,l)) 
-          ft(5) = SUM(V1m(j_loc,5) * mesh%gauss%ww(:,l)) 
-          fp(5) = -SUM(P(j_loc,1)*dw_loc(2,:)) 
+          fs(5) = SUM(ff(j_loc,5) * mesh%gauss%ww(:,l))
+          ft(5) = SUM(V1m(j_loc,5) * mesh%gauss%ww(:,l))
+          fp(5) = -SUM(P(j_loc,1)*dw_loc(2,:))
           fv(5) =  vitloc(5,l)*(mode/ray)**2
           !--------calcul de la sixieme composante : u0(6,:) <--> f(z,m,s)
-          fs(6) = SUM(ff(j_loc,6) * mesh%gauss%ww(:,l)) 
-          ft(6) = SUM(V1m(j_loc,6) * mesh%gauss%ww(:,l)) 
-          fp(6) = -SUM(P(j_loc,2)*dw_loc(2,:)) 
+          fs(6) = SUM(ff(j_loc,6) * mesh%gauss%ww(:,l))
+          ft(6) = SUM(V1m(j_loc,6) * mesh%gauss%ww(:,l))
+          fp(6) = -SUM(P(j_loc,2)*dw_loc(2,:))
           fv(6) = vitloc(6,l)*(mode/ray)**2
           !-------calcul du second membre pour le terme nonlineaire------------------------
           !-------------------------------------------------------------------------------
@@ -647,7 +647,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(pp_mesh%gauss%n_w)  :: v1_loc, v2_loc
     INTEGER,      DIMENSION(pp_mesh%gauss%n_w)  :: idxm
     INTEGER :: m, l, n, i, nw, nwc, ni, iglob
-    REAL(KIND=8), DIMENSION(3,2) :: f   
+    REAL(KIND=8), DIMENSION(3,2) :: f
     REAL(KIND=8)   :: ray
     INTEGER, DIMENSION(vv_mesh%gauss%n_w) :: j_loc
     INTEGER, DIMENSION(pp_mesh%gauss%n_w) :: jc_loc
@@ -715,13 +715,13 @@ CONTAINS
 
           !===Compute divergence on cosines
           f(1,1) = (ray*SUM(gg(j_loc,1)*vv_mesh%gauss%dw(1,:,l,m)) &
-               + SUM(gg(j_loc,1)*vv_mesh%gauss%ww(:,l))) 
-          f(2,1) = mode*SUM(gg(j_loc,4)*vv_mesh%gauss%ww(:,l)) 
+               + SUM(gg(j_loc,1)*vv_mesh%gauss%ww(:,l)))
+          f(2,1) = mode*SUM(gg(j_loc,4)*vv_mesh%gauss%ww(:,l))
           f(3,1) =      SUM(gg(j_loc,5)*vv_mesh%gauss%dw(2,:,l,m)) * ray
 
           !===Compute divergence on sines
           f(1,2)  = (ray*SUM(gg(j_loc,2)*vv_mesh%gauss%dw(1,:,l,m)) &
-               + SUM(gg(j_loc,2)*vv_mesh%gauss%ww(:,l))) 
+               + SUM(gg(j_loc,2)*vv_mesh%gauss%ww(:,l)))
           f(2,2)  =-mode*SUM(gg(j_loc,3)*vv_mesh%gauss%ww(:,l))
           f(3,2)  =      SUM(gg(j_loc,6)*vv_mesh%gauss%dw(2,:,l,m)) * ray
 
@@ -749,7 +749,7 @@ CONTAINS
 
   END SUBROUTINE qs_01_div_hybrid_generic
 
-    SUBROUTINE inject_generic(type_fe_velocity, jj_c, jj_f, pp_c, pp_f)
+  SUBROUTINE inject_generic(type_fe_velocity, jj_c, jj_f, pp_c, pp_f)
     USE basis_change
     IMPLICIT NONE
     INTEGER,                      INTENT(IN)  :: type_fe_velocity
@@ -786,7 +786,7 @@ CONTAINS
           pp_f(jj_f(n,m)) = SUM(aij(:,n)*pp_c(jj_c(:,m)))
        END DO
     END DO
-    
+
   END SUBROUTINE inject_generic
 
   SUBROUTINE qs_01_div_hybrid_2006 (vv_mesh, pp_mesh, pp_LA, mode, gg, pb_1, pb_2)
@@ -802,11 +802,11 @@ CONTAINS
     REAL(KIND=8), DIMENSION(pp_mesh%gauss%n_w)  :: v1_loc, v2_loc
     INTEGER,      DIMENSION(pp_mesh%gauss%n_w)  :: idxm
     INTEGER :: m, l, n, i, nw, nwc, ni, iglob
-    REAL(KIND=8), DIMENSION(3,2) :: f   
+    REAL(KIND=8), DIMENSION(3,2) :: f
     REAL(KIND=8)   :: ray
     INTEGER, DIMENSION(vv_mesh%gauss%n_w) :: j_loc
-    INTEGER, DIMENSION(pp_mesh%gauss%n_w) :: jc_loc      
-!#include "petsc/finclude/petsc.h"
+    INTEGER, DIMENSION(pp_mesh%gauss%n_w) :: jc_loc
+    !#include "petsc/finclude/petsc.h"
     Vec            :: pb_1, pb_2
     PetscErrorCode :: ierr
 
@@ -819,11 +819,11 @@ CONTAINS
     CALL VecSet(pb_2, 0.d0, ierr)
 
     nw = vv_mesh%gauss%n_w
-    DO l = 1, vv_mesh%gauss%l_G 
+    DO l = 1, vv_mesh%gauss%l_G
        !P1/P2
-       w_c(1,l) = vv_mesh%gauss%ww(1,l) + 0.5*(vv_mesh%gauss%ww(nw-1,l) + vv_mesh%gauss%ww(nw,l)) 
-       w_c(2,l) = vv_mesh%gauss%ww(2,l) + 0.5*(vv_mesh%gauss%ww(nw,l) + vv_mesh%gauss%ww(4,l)) 
-       w_c(3,l) = vv_mesh%gauss%ww(3,l) + 0.5*(vv_mesh%gauss%ww(4,l) + vv_mesh%gauss%ww(nw-1,l)) 
+       w_c(1,l) = vv_mesh%gauss%ww(1,l) + 0.5*(vv_mesh%gauss%ww(nw-1,l) + vv_mesh%gauss%ww(nw,l))
+       w_c(2,l) = vv_mesh%gauss%ww(2,l) + 0.5*(vv_mesh%gauss%ww(nw,l) + vv_mesh%gauss%ww(4,l))
+       w_c(3,l) = vv_mesh%gauss%ww(3,l) + 0.5*(vv_mesh%gauss%ww(4,l) + vv_mesh%gauss%ww(nw-1,l))
     END DO
 
     nwc = pp_mesh%gauss%n_w
@@ -850,13 +850,13 @@ CONTAINS
 
           !calcul de la divergence sur les cos
           f(1,1) = (ray*SUM(gg(j_loc,1)*vv_mesh%gauss%dw(1,:,l,m)) &
-               + SUM(gg(j_loc,1)*vv_mesh%gauss%ww(:,l))) 
-          f(2,1) = mode*SUM(gg(j_loc,4)*vv_mesh%gauss%ww(:,l)) 
+               + SUM(gg(j_loc,1)*vv_mesh%gauss%ww(:,l)))
+          f(2,1) = mode*SUM(gg(j_loc,4)*vv_mesh%gauss%ww(:,l))
           f(3,1) =      SUM(gg(j_loc,5)*vv_mesh%gauss%dw(2,:,l,m)) * ray
 
           !calcul de la divergence sur les sin
           f(1,2)  = (ray*SUM(gg(j_loc,2)*vv_mesh%gauss%dw(1,:,l,m)) &
-               + SUM(gg(j_loc,2)*vv_mesh%gauss%ww(:,l))) 
+               + SUM(gg(j_loc,2)*vv_mesh%gauss%ww(:,l)))
           f(2,2)  =-mode*SUM(gg(j_loc,3)*vv_mesh%gauss%ww(:,l))
           f(3,2)  =      SUM(gg(j_loc,6)*vv_mesh%gauss%dw(2,:,l,m)) * ray
 
@@ -904,7 +904,7 @@ CONTAINS
     INTEGER,      DIMENSION(mesh%gauss%n_w)     :: idxm
     INTEGER ::  i, m, l, ni, iglob
     REAL(KIND=8) :: fl, ray
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     Vec                                         :: vect
     PetscErrorCode                              :: ierr
 
@@ -922,7 +922,7 @@ CONTAINS
        v_loc = 0.d0
        DO l = 1, mesh%gauss%l_G
           ray = 0
-          DO ni = 1, mesh%gauss%n_w  
+          DO ni = 1, mesh%gauss%n_w
              i = jj_loc(ni)
              ray = ray + mesh%rr(1,i)*mesh%gauss%ww(ni,l)
           END DO
@@ -943,7 +943,7 @@ CONTAINS
     IMPLICIT NONE
     TYPE(mesh_type), TARGET                     :: mesh
     type(petsc_csr_LA)                          :: LA
-    REAL(KIND=8), DIMENSION(:), INTENT(IN)      :: heat_capa    
+    REAL(KIND=8), DIMENSION(:), INTENT(IN)      :: heat_capa
     REAL(KIND=8), DIMENSION(:), INTENT(IN)      :: ff, ff_gauss
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w)     :: ff_loc
     INTEGER,      DIMENSION(mesh%gauss%n_w)     :: jj_loc
@@ -951,7 +951,7 @@ CONTAINS
     INTEGER,      DIMENSION(mesh%gauss%n_w)     :: idxm
     INTEGER ::  i, m, l, ni, iglob, index
     REAL(KIND=8) :: fl, ray
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     Vec                                         :: vect
     PetscErrorCode                              :: ierr
 
@@ -969,9 +969,9 @@ CONTAINS
 
        v_loc = 0.d0
        DO l = 1, mesh%gauss%l_G
-          index  =index + 1 
+          index  =index + 1
           ray = 0
-          DO ni = 1, mesh%gauss%n_w  
+          DO ni = 1, mesh%gauss%n_w
              i = jj_loc(ni)
              ray = ray + mesh%rr(1,i)*mesh%gauss%ww(ni,l)
           END DO
@@ -998,15 +998,15 @@ CONTAINS
     !USE sub_plot
     IMPLICIT NONE
     TYPE(petsc_csr_LA)                                     :: vv_1_LA,vv_2_LA
-    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: ff, rotb_b 
+    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: ff, rotb_b
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: tensor               !(node)
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: tensor_surface_gauss !(gauss)
-    TYPE(mesh_type), TARGET                                :: mesh  
-    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: V1m, momentum, momentum_LES   !V(node, type) 
+    TYPE(mesh_type), TARGET                                :: mesh
+    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: V1m, momentum, momentum_LES   !V(node, type)
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: P
     REAL(KIND=8),                               INTENT(IN) :: stab
     INTEGER,                                    INTENT(IN) :: mode
-    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: visc_grad_vel        !V(r/th/z, gauss, type) 
+    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: visc_grad_vel        !V(r/th/z, gauss, type)
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: visc_entro
     REAL(KIND=8), DIMENSION(6)                             :: fs , ft , fp, smb, mult
     REAL(KIND=8), DIMENSION(6)                             :: fnl, fvgm, fvgm_LES, fvgu
@@ -1014,18 +1014,18 @@ CONTAINS
     REAL(KIND=8), DIMENSION(6,mesh%gauss%l_G)              :: momloc, momloc_LES
     REAL(KIND=8), DIMENSION(3,6,mesh%gauss%l_G)            :: tensor_loc
     INTEGER, DIMENSION(mesh%gauss%n_w)                     :: j_loc
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w) :: dw_loc  
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w) :: dw_loc
     REAL(KIND=8), DIMENSION(2*mesh%gauss%n_w)              :: v14_loc, v23_loc
     INTEGER,      DIMENSION(2*mesh%gauss%n_w)              :: idxm_2
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w)                :: v5_loc, v6_loc
     INTEGER,      DIMENSION(mesh%gauss%n_w)                :: idxm_1
     REAL(KIND=8)   :: ray
-    REAL(KIND=8), DIMENSION(mesh%dom_me)                   :: stab_loc  
+    REAL(KIND=8), DIMENSION(mesh%dom_me)                   :: stab_loc
     LOGICAL,                                 SAVE :: once = .TRUE.
     REAL(KIND=8),                            SAVE :: type_fe
     INTEGER :: m, l , i , ni , index, TYPE, k
     INTEGER :: nw, ix, ki, iglob
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     Vec            :: vb_2_14,vb_2_23,vb_1_5,vb_1_6
     PetscErrorCode :: ierr
 
@@ -1043,12 +1043,12 @@ CONTAINS
 
        IF (mesh%gauss%n_w==3) THEN
           type_fe = 1
-       ELSE 
-          type_fe = 2 
+       ELSE
+          type_fe = 2
        END IF
     END IF ! end once
 
-    IF (inputs%LES) THEN 
+    IF (inputs%LES) THEN
        DO m = 1, mesh%dom_me
           stab_loc(m) = stab + inputs%LES_coeff1*mesh%hloc(m)
        END DO
@@ -1089,47 +1089,47 @@ CONTAINS
           DO TYPE = 1, 6
              DO k = 1, 3
                 tensor_loc(k,TYPE,l) = SUM(tensor(k,j_loc,TYPE)*mesh%gauss%ww(:,l)) &
-                     + tensor_surface_gauss(k,index,TYPE) 
+                     + tensor_surface_gauss(k,index,TYPE)
              END DO
           END DO
 
           !===Compute radius of Gauss point
           ray = SUM(mesh%rr(1,j_loc)*mesh%gauss%ww(:,l))
-          
-          !-calcul des seconds membres pr les termes de forçage, temporels et de gradP 
+
+          !-calcul des seconds membres pr les termes de forçage, temporels et de gradP
           !--------calcul de la premiere composante : u0(1,:) <--> f(r,m,c)
           fs(1)  = SUM(ff(j_loc,1) * mesh%gauss%ww(:,l))
-          ft(1)  = SUM(V1m(j_loc,1) * mesh%gauss%ww(:,l)) 
+          ft(1)  = SUM(V1m(j_loc,1) * mesh%gauss%ww(:,l))
           fp(1)  = -SUM(P(j_loc,1)*dw_loc(1,:))
           fnl(1) = (-mode*tensor_loc(1,4,l) + tensor_loc(2,3,l))/ray
           !--------calcul de la seconde composante : u0(2,:) <--> f(r,m,s)
-          fs(2)  = SUM(ff(j_loc,2) * mesh%gauss%ww(:,l)) 
-          ft(2)  = SUM(V1m(j_loc,2) * mesh%gauss%ww(:,l)) 
-          fp(2)  = -SUM(P(j_loc,2)*dw_loc(1,:)) 
+          fs(2)  = SUM(ff(j_loc,2) * mesh%gauss%ww(:,l))
+          ft(2)  = SUM(V1m(j_loc,2) * mesh%gauss%ww(:,l))
+          fp(2)  = -SUM(P(j_loc,2)*dw_loc(1,:))
           fnl(2) = (mode*tensor_loc(1,3,l) + tensor_loc(2,4,l))/ray
           !--------calcul de la troisieme composante : u0(3,:) <--> f(th,m,c)
-          fs(3)  = SUM(ff(j_loc,3) * mesh%gauss%ww(:,l)) 
-          ft(3)  = SUM(V1m(j_loc,3) * mesh%gauss%ww(:,l)) 
-          fp(3)  = -SUM(P(j_loc,2)*mesh%gauss%ww(:,l))/ray*mode 
+          fs(3)  = SUM(ff(j_loc,3) * mesh%gauss%ww(:,l))
+          ft(3)  = SUM(V1m(j_loc,3) * mesh%gauss%ww(:,l))
+          fp(3)  = -SUM(P(j_loc,2)*mesh%gauss%ww(:,l))/ray*mode
           fnl(3) = (-tensor_loc(1,3,l) - mode*tensor_loc(2,4,l))/ray
           !--------calcul de la quatrieme composante : u0(4,:) <--> f(th,m,s)
-          fs(4)  = SUM(ff(j_loc,4) * mesh%gauss%ww(:,l)) 
-          ft(4)  = SUM(V1m(j_loc,4) * mesh%gauss%ww(:,l)) 
-          fp(4)  = SUM(P(j_loc,1)*mesh%gauss%ww(:,l))/ray *mode 
+          fs(4)  = SUM(ff(j_loc,4) * mesh%gauss%ww(:,l))
+          ft(4)  = SUM(V1m(j_loc,4) * mesh%gauss%ww(:,l))
+          fp(4)  = SUM(P(j_loc,1)*mesh%gauss%ww(:,l))/ray *mode
           fnl(4) = (-tensor_loc(1,4,l) + mode*tensor_loc(2,3,l))/ray
           !--------calcul de la cinquieme composante : u0(5,:) <--> f(z,m,c)
-          fs(5)  = SUM(ff(j_loc,5) * mesh%gauss%ww(:,l)) 
-          ft(5)  = SUM(V1m(j_loc,5) * mesh%gauss%ww(:,l)) 
-          fp(5)  = -SUM(P(j_loc,1)*dw_loc(2,:)) 
+          fs(5)  = SUM(ff(j_loc,5) * mesh%gauss%ww(:,l))
+          ft(5)  = SUM(V1m(j_loc,5) * mesh%gauss%ww(:,l))
+          fp(5)  = -SUM(P(j_loc,1)*dw_loc(2,:))
           fnl(5) = -tensor_loc(3,4,l)*mode/ray
           !--------calcul de la sixieme composante : u0(6,:) <--> f(z,m,s)
-          fs(6)  = SUM(ff(j_loc,6) * mesh%gauss%ww(:,l)) 
-          ft(6)  = SUM(V1m(j_loc,6) * mesh%gauss%ww(:,l)) 
-          fp(6)  = -SUM(P(j_loc,2)*dw_loc(2,:)) 
+          fs(6)  = SUM(ff(j_loc,6) * mesh%gauss%ww(:,l))
+          ft(6)  = SUM(V1m(j_loc,6) * mesh%gauss%ww(:,l))
+          fp(6)  = -SUM(P(j_loc,2)*dw_loc(2,:))
           fnl(6) = tensor_loc(3,3,l)*mode/ray
           !-------calcul du second membre pour le terme nonlineaire------------------------
           !-------------------------------------------------------------------------------
-                    
+
           IF (inputs%if_level_set) THEN
              DO TYPE = 1, 6
 
@@ -1177,13 +1177,13 @@ CONTAINS
           END IF
 
           ! if NOT level_set then :
-          ! rhs = (BDF2(n&n_m1 terms) - Grad_pressure + source_in_ns + precession + lorentz)*test_function 
+          ! rhs = (BDF2(n&n_m1 terms) - Grad_pressure + source_in_ns + precession + lorentz)*test_function
           !      + tensor_explicit:Grad(test_function)   (tensor by FFT)
 
           ! if level_set then :
-          !rhs = (BDF2(n&n_m1 terms) - Grad_pressure + source_in_ns + precession + lorentz)*test_function 
+          !rhs = (BDF2(n&n_m1 terms) - Grad_pressure + source_in_ns + precession + lorentz)*test_function
           !      + (tensor_explicit + visc_grad_vel):Grad(test_function)   (tensor and visc_grad_vel by FFT)
-          !      + (LES + stab*grad_mom):GRAD(test_function)                       
+          !      + (LES + stab*grad_mom):GRAD(test_function)
 
           smb =  (ft+fp+fs+rotb_b(index,:)+fnl+fvgm+fvgu)*ray*mesh%gauss%rj(l,m)
 
@@ -1216,7 +1216,7 @@ CONTAINS
        CALL VecSetValues(vb_1_6,    nw, idxm_1,  v6_loc, ADD_VALUES, ierr)
     ENDDO
 
-    IF (inputs%LES) THEN 
+    IF (inputs%LES) THEN
        IF (mesh%edge_stab) THEN
           CALL error_Petsc('BUG in qs_ns_stab_new: terms with edge_stab not yet assembled')
        END IF
@@ -1248,30 +1248,30 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: ff, rotb_b
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: tensor               !(node)
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: tensor_surface_gauss !(gauss)
-    TYPE(mesh_type), TARGET                                :: mesh  
-    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: V1m, momentum    !V(noeud, type) 
+    TYPE(mesh_type), TARGET                                :: mesh
+    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: V1m, momentum    !V(noeud, type)
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: P
     REAL(KIND=8),                               INTENT(IN) :: stab
-    INTEGER,                                    INTENT(IN) :: mode  
-    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: visc_grad_vel        !V(r/th/z, gauss, type) 
+    INTEGER,                                    INTENT(IN) :: mode
+    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: visc_grad_vel        !V(r/th/z, gauss, type)
     REAL(KIND=8), DIMENSION(6)                             :: fs , ft , fp, smb, fnl
     REAL(KIND=8), DIMENSION(6)                             :: fvgm, fvgu, fvgmT
     REAL(KIND=8), DIMENSION(2,6,mesh%gauss%l_G)            :: grad_mom, grad_T_mom
     REAL(KIND=8), DIMENSION(6,mesh%gauss%l_G)              :: momloc
     REAL(KIND=8), DIMENSION(3,6,mesh%gauss%l_G)            :: tensor_loc
     INTEGER, DIMENSION(mesh%gauss%n_w)                     :: j_loc
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w) :: dw_loc  
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w) :: dw_loc
     REAL(KIND=8), DIMENSION(2*mesh%gauss%n_w)              :: v14_loc, v23_loc
     INTEGER,      DIMENSION(2*mesh%gauss%n_w)              :: idxm_2
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w)                :: v5_loc, v6_loc
     INTEGER,      DIMENSION(mesh%gauss%n_w)                :: idxm_1
     REAL(KIND=8)   :: ray
-    REAL(KIND=8), DIMENSION(mesh%dom_me)                   :: stab_loc  
+    REAL(KIND=8), DIMENSION(mesh%dom_me)                   :: stab_loc
     LOGICAL,                                 SAVE :: once = .TRUE.
     REAL(KIND=8),                            SAVE :: type_fe
     INTEGER :: m, l , i , ni , index, TYPE, k
     INTEGER :: nw, ix, ki, iglob
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     Vec            :: vb_3_145, vb_3_236
     PetscErrorCode :: ierr
 
@@ -1287,8 +1287,8 @@ CONTAINS
 
        IF (mesh%gauss%n_w==3) THEN
           type_fe = 1
-       ELSE 
-          type_fe = 2 
+       ELSE
+          type_fe = 2
        END IF
     END IF !end once
 
@@ -1326,43 +1326,43 @@ CONTAINS
           DO TYPE = 1, 6
              DO k = 1, 3
                 tensor_loc(k,TYPE,l) = SUM(tensor(k,j_loc,TYPE)*mesh%gauss%ww(:,l)) &
-                     + tensor_surface_gauss(k,index,TYPE) 
+                     + tensor_surface_gauss(k,index,TYPE)
              END DO
           END DO
 
           !===Compute radius of Gauss point
           ray = SUM(mesh%rr(1,j_loc)*mesh%gauss%ww(:,l))
 
-          !-calcul des seconds membres pr les termes de forçage, temporels et de gradP 
+          !-calcul des seconds membres pr les termes de forçage, temporels et de gradP
           !--------calcul de la premiere composante : u0(1,:) <--> f(r,m,c)
           fs(1) = SUM(ff(j_loc,1) * mesh%gauss%ww(:,l))
-          ft(1) = SUM(V1m(j_loc,1) * mesh%gauss%ww(:,l)) 
+          ft(1) = SUM(V1m(j_loc,1) * mesh%gauss%ww(:,l))
           fp(1) = -SUM(P(j_loc,1)*dw_loc(1,:))
           fnl(1) = (-mode*tensor_loc(1,4,l) + tensor_loc(2,3,l))/ray
           !--------calcul de la seconde composante : u0(2,:) <--> f(r,m,s)
-          fs(2) = SUM(ff(j_loc,2) * mesh%gauss%ww(:,l)) 
-          ft(2) = SUM(V1m(j_loc,2) * mesh%gauss%ww(:,l)) 
-          fp(2) = -SUM(P(j_loc,2)*dw_loc(1,:)) 
+          fs(2) = SUM(ff(j_loc,2) * mesh%gauss%ww(:,l))
+          ft(2) = SUM(V1m(j_loc,2) * mesh%gauss%ww(:,l))
+          fp(2) = -SUM(P(j_loc,2)*dw_loc(1,:))
           fnl(2) = (mode*tensor_loc(1,3,l) + tensor_loc(2,4,l))/ray
           !--------calcul de la troisieme composante : u0(3,:) <--> f(th,m,c)
-          fs(3) = SUM(ff(j_loc,3) * mesh%gauss%ww(:,l)) 
-          ft(3) = SUM(V1m(j_loc,3) * mesh%gauss%ww(:,l)) 
-          fp(3) = -SUM(P(j_loc,2)*mesh%gauss%ww(:,l))/ray*mode 
+          fs(3) = SUM(ff(j_loc,3) * mesh%gauss%ww(:,l))
+          ft(3) = SUM(V1m(j_loc,3) * mesh%gauss%ww(:,l))
+          fp(3) = -SUM(P(j_loc,2)*mesh%gauss%ww(:,l))/ray*mode
           fnl(3) = (-tensor_loc(1,3,l) - mode*tensor_loc(2,4,l))/ray
           !--------calcul de la quatrieme composante : u0(4,:) <--> f(th,m,s)
-          fs(4) = SUM(ff(j_loc,4) * mesh%gauss%ww(:,l)) 
-          ft(4) = SUM(V1m(j_loc,4) * mesh%gauss%ww(:,l)) 
-          fp(4) = SUM(P(j_loc,1)*mesh%gauss%ww(:,l))/ray *mode 
+          fs(4) = SUM(ff(j_loc,4) * mesh%gauss%ww(:,l))
+          ft(4) = SUM(V1m(j_loc,4) * mesh%gauss%ww(:,l))
+          fp(4) = SUM(P(j_loc,1)*mesh%gauss%ww(:,l))/ray *mode
           fnl(4) = (-tensor_loc(1,4,l) + mode*tensor_loc(2,3,l))/ray
           !--------calcul de la cinquieme composante : u0(5,:) <--> f(z,m,c)
-          fs(5) = SUM(ff(j_loc,5) * mesh%gauss%ww(:,l)) 
-          ft(5) = SUM(V1m(j_loc,5) * mesh%gauss%ww(:,l)) 
-          fp(5) = -SUM(P(j_loc,1)*dw_loc(2,:)) 
+          fs(5) = SUM(ff(j_loc,5) * mesh%gauss%ww(:,l))
+          ft(5) = SUM(V1m(j_loc,5) * mesh%gauss%ww(:,l))
+          fp(5) = -SUM(P(j_loc,1)*dw_loc(2,:))
           fnl(5) = -tensor_loc(3,4,l)*mode/ray
           !--------calcul de la sixieme composante : u0(6,:) <--> f(z,m,s)
-          fs(6) = SUM(ff(j_loc,6) * mesh%gauss%ww(:,l)) 
-          ft(6) = SUM(V1m(j_loc,6) * mesh%gauss%ww(:,l)) 
-          fp(6) = -SUM(P(j_loc,2)*dw_loc(2,:)) 
+          fs(6) = SUM(ff(j_loc,6) * mesh%gauss%ww(:,l))
+          ft(6) = SUM(V1m(j_loc,6) * mesh%gauss%ww(:,l))
+          fp(6) = -SUM(P(j_loc,2)*dw_loc(2,:))
           fnl(6) = tensor_loc(3,3,l)*mode/ray
           !-------calcul du second membre pour le terme nonlineaire------------------------
           !-------------------------------------------------------------------------------
@@ -1370,7 +1370,7 @@ CONTAINS
           IF (inputs%if_level_set) THEN
              DO TYPE = 1, 6
                 DO k = 1 ,2
-                   grad_mom(k,TYPE,l) = stab_loc(m)*SUM(momentum(j_loc,TYPE)*dw_loc(k,:)) 
+                   grad_mom(k,TYPE,l) = stab_loc(m)*SUM(momentum(j_loc,TYPE)*dw_loc(k,:))
                 END DO
 
                 momloc(TYPE,l) = SUM(momentum(j_loc,TYPE)*mesh%gauss%ww(:,l))
@@ -1383,7 +1383,7 @@ CONTAINS
              fvgm(5) = momloc(5,l)*(mode/ray)**2
              fvgm(6) = momloc(6,l)*(mode/ray)**2
 
-             !===Compute Grad_T_mom . r or z derivative of test function 
+             !===Compute Grad_T_mom . r or z derivative of test function
              grad_T_mom(1,1,l) = SUM(momentum(j_loc,1)*dw_loc(1,:))
              grad_T_mom(2,1,l) = SUM(momentum(j_loc,5)*dw_loc(1,:))
              grad_T_mom(1,2,l) = SUM(momentum(j_loc,2)*dw_loc(1,:))
@@ -1397,7 +1397,7 @@ CONTAINS
              grad_T_mom(1,6,l) = SUM(momentum(j_loc,2)*dw_loc(2,:))
              grad_T_mom(2,6,l) = SUM(momentum(j_loc,6)*dw_loc(2,:))
 
-             !===Compute Grad_T_mom . NO (r or z derivative) of test function 
+             !===Compute Grad_T_mom . NO (r or z derivative) of test function
              fvgmT(1) = -mode*SUM(momentum(j_loc,4)*dw_loc(1,:))/ray &
                   + (mode*momloc(4,l)+momloc(1,l))/ray**2
              fvgmT(2) = mode*SUM(momentum(j_loc,3)*dw_loc(1,:))/ray &
@@ -1432,11 +1432,11 @@ CONTAINS
           END IF
 
           ! if NOT level_set then :
-          ! rhs = (BDF2(n&n_m1 terms) - Grad_pressure + source_in_ns + precession + lorentz)*test_function 
+          ! rhs = (BDF2(n&n_m1 terms) - Grad_pressure + source_in_ns + precession + lorentz)*test_function
           !      + tensor_explicit:Grad(test_function)   (tensor by FFT)
 
           ! if level_set then :
-          !rhs = (BDF2(n&n_m1 terms) - Grad_pressure + source_in_ns + precession + lorentz)*test_function 
+          !rhs = (BDF2(n&n_m1 terms) - Grad_pressure + source_in_ns + precession + lorentz)*test_function
           !      + (tensor_explicit + visc_grad_vel):Grad(test_function)   (tensor and visc_grad_vel by FFT)
           !      + (LES + stab*grad_mom):GRAD(test_function)
 
@@ -1472,7 +1472,7 @@ CONTAINS
        CALL VecSetValues(vb_3_236,   nw, idxm_1,  v6_loc, ADD_VALUES, ierr)
     ENDDO
 
-    IF (inputs%LES) THEN 
+    IF (inputs%LES) THEN
        IF (mesh%edge_stab) THEN
           CALL error_Petsc('BUG in qs_ns_stab_new: terms with edge_stab not yet assembled')
        END IF
@@ -1495,7 +1495,7 @@ CONTAINS
     IMPLICIT NONE
     TYPE(petsc_csr_LA)                                     :: vv_1_LA,vv_2_LA
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: ff
-    TYPE(mesh_type), TARGET                                :: mesh  
+    TYPE(mesh_type), TARGET                                :: mesh
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: V1m   !V(noeud, type)
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: tensor, tensor_gauss
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: P
@@ -1512,7 +1512,7 @@ CONTAINS
     REAL(KIND=8)   :: ray
     INTEGER        :: m, l , i , ni , index, TYPE, k
     INTEGER        :: nw, ix, ki, iglob
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     Vec            :: vb_2_14,vb_2_23,vb_1_5,vb_1_6
     PetscErrorCode :: ierr
 
@@ -1563,33 +1563,33 @@ CONTAINS
           !===Compute residual part of source term, time derivative, pressure gradient without r&z derivatives
           !--------calcul de la premiere composante : u0(1,:) <--> f(r,m,c)
           fs(1) = SUM(ff(j_loc,1) * mesh%gauss%ww(:,l))
-          ft(1) = SUM(V1m(j_loc,1) * mesh%gauss%ww(:,l)) 
+          ft(1) = SUM(V1m(j_loc,1) * mesh%gauss%ww(:,l))
           fp(1) = SUM(P(j_loc,1)*dw_loc(1,:))
           ftensor(1) = -mode/ray*tensor_loc(1,4,l) + tensor_loc(2,3,l)/ray
           !--------calcul de la seconde composante : u0(2,:) <--> f(r,m,s)
-          fs(2) = SUM(ff(j_loc,2) * mesh%gauss%ww(:,l)) 
-          ft(2) = SUM(V1m(j_loc,2) * mesh%gauss%ww(:,l)) 
+          fs(2) = SUM(ff(j_loc,2) * mesh%gauss%ww(:,l))
+          ft(2) = SUM(V1m(j_loc,2) * mesh%gauss%ww(:,l))
           fp(2) = SUM(P(j_loc,2)*dw_loc(1,:))
           ftensor(2) = mode/ray*tensor_loc(1,3,l) + tensor_loc(2,4,l)/ray
           !--------calcul de la troisieme composante : u0(3,:) <--> f(th,m,c)
-          fs(3) = SUM(ff(j_loc,3) * mesh%gauss%ww(:,l)) 
-          ft(3) = SUM(V1m(j_loc,3) * mesh%gauss%ww(:,l)) 
-          fp(3) = SUM(P(j_loc,2)*mesh%gauss%ww(:,l))/ray*mode 
+          fs(3) = SUM(ff(j_loc,3) * mesh%gauss%ww(:,l))
+          ft(3) = SUM(V1m(j_loc,3) * mesh%gauss%ww(:,l))
+          fp(3) = SUM(P(j_loc,2)*mesh%gauss%ww(:,l))/ray*mode
           ftensor(3) = -mode/ray*tensor_loc(2,4,l) - tensor_loc(1,3,l)/ray
           !--------calcul de la quatrieme composante : u0(4,:) <--> f(th,m,s)
-          fs(4) = SUM(ff(j_loc,4) * mesh%gauss%ww(:,l)) 
-          ft(4) = SUM(V1m(j_loc,4) * mesh%gauss%ww(:,l)) 
-          fp(4) = -SUM(P(j_loc,1)*mesh%gauss%ww(:,l))/ray *mode 
+          fs(4) = SUM(ff(j_loc,4) * mesh%gauss%ww(:,l))
+          ft(4) = SUM(V1m(j_loc,4) * mesh%gauss%ww(:,l))
+          fp(4) = -SUM(P(j_loc,1)*mesh%gauss%ww(:,l))/ray *mode
           ftensor(4) = mode/ray*tensor_loc(2,3,l) - tensor_loc(1,4,l)/ray
           !--------calcul de la cinquieme composante : u0(5,:) <--> f(z,m,c)
-          fs(5) = SUM(ff(j_loc,5) * mesh%gauss%ww(:,l)) 
-          ft(5) = SUM(V1m(j_loc,5) * mesh%gauss%ww(:,l)) 
-          fp(5) = SUM(P(j_loc,1)*dw_loc(2,:)) 
+          fs(5) = SUM(ff(j_loc,5) * mesh%gauss%ww(:,l))
+          ft(5) = SUM(V1m(j_loc,5) * mesh%gauss%ww(:,l))
+          fp(5) = SUM(P(j_loc,1)*dw_loc(2,:))
           ftensor(5) = -mode/ray*tensor_loc(3,4,l)
           !--------calcul de la sixieme composante : u0(6,:) <--> f(z,m,s)
-          fs(6) = SUM(ff(j_loc,6) * mesh%gauss%ww(:,l)) 
-          ft(6) = SUM(V1m(j_loc,6) * mesh%gauss%ww(:,l)) 
-          fp(6) = SUM(P(j_loc,2)*dw_loc(2,:)) 
+          fs(6) = SUM(ff(j_loc,6) * mesh%gauss%ww(:,l))
+          ft(6) = SUM(V1m(j_loc,6) * mesh%gauss%ww(:,l))
+          fp(6) = SUM(P(j_loc,2)*dw_loc(2,:))
           ftensor(6) = mode/ray*tensor_loc(3,3,l)
           !-------calcul du second membre pour le terme nonlineaire------------------------
           !-------------------------------------------------------------------------------
@@ -1646,7 +1646,7 @@ CONTAINS
     IMPLICIT NONE
     TYPE(petsc_csr_LA)                                     :: vv_3_LA
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: ff
-    TYPE(mesh_type), TARGET                                :: mesh  
+    TYPE(mesh_type), TARGET                                :: mesh
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: V1m   !V(noeud, type)
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: tensor, tensor_gauss
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: P
@@ -1663,7 +1663,7 @@ CONTAINS
     REAL(KIND=8)   :: ray
     INTEGER        :: m, l , i , ni , index, TYPE, k
     INTEGER        :: nw, ix, ki, iglob
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     Vec            :: vb_3_145,vb_3_236
     PetscErrorCode :: ierr
 
@@ -1712,33 +1712,33 @@ CONTAINS
           !===Compute residual part of source term, time derivative, pressure gradient without r&z derivatives
           !--------calcul de la premiere composante : u0(1,:) <--> f(r,m,c)
           fs(1) = SUM(ff(j_loc,1) * mesh%gauss%ww(:,l))
-          ft(1) = SUM(V1m(j_loc,1) * mesh%gauss%ww(:,l)) 
+          ft(1) = SUM(V1m(j_loc,1) * mesh%gauss%ww(:,l))
           fp(1) = SUM(P(j_loc,1)*dw_loc(1,:))
           ftensor(1) = -mode/ray*tensor_loc(1,4,l) + tensor_loc(2,3,l)/ray
           !--------calcul de la seconde composante : u0(2,:) <--> f(r,m,s)
-          fs(2) = SUM(ff(j_loc,2) * mesh%gauss%ww(:,l)) 
-          ft(2) = SUM(V1m(j_loc,2) * mesh%gauss%ww(:,l)) 
+          fs(2) = SUM(ff(j_loc,2) * mesh%gauss%ww(:,l))
+          ft(2) = SUM(V1m(j_loc,2) * mesh%gauss%ww(:,l))
           fp(2) = SUM(P(j_loc,2)*dw_loc(1,:))
           ftensor(2) = mode/ray*tensor_loc(1,3,l) + tensor_loc(2,4,l)/ray
           !--------calcul de la troisieme composante : u0(3,:) <--> f(th,m,c)
-          fs(3) = SUM(ff(j_loc,3) * mesh%gauss%ww(:,l)) 
-          ft(3) = SUM(V1m(j_loc,3) * mesh%gauss%ww(:,l)) 
-          fp(3) = SUM(P(j_loc,2)*mesh%gauss%ww(:,l))/ray*mode 
+          fs(3) = SUM(ff(j_loc,3) * mesh%gauss%ww(:,l))
+          ft(3) = SUM(V1m(j_loc,3) * mesh%gauss%ww(:,l))
+          fp(3) = SUM(P(j_loc,2)*mesh%gauss%ww(:,l))/ray*mode
           ftensor(3) = -mode/ray*tensor_loc(2,4,l) - tensor_loc(1,3,l)/ray
           !--------calcul de la quatrieme composante : u0(4,:) <--> f(th,m,s)
-          fs(4) = SUM(ff(j_loc,4) * mesh%gauss%ww(:,l)) 
-          ft(4) = SUM(V1m(j_loc,4) * mesh%gauss%ww(:,l)) 
-          fp(4) = -SUM(P(j_loc,1)*mesh%gauss%ww(:,l))/ray *mode 
+          fs(4) = SUM(ff(j_loc,4) * mesh%gauss%ww(:,l))
+          ft(4) = SUM(V1m(j_loc,4) * mesh%gauss%ww(:,l))
+          fp(4) = -SUM(P(j_loc,1)*mesh%gauss%ww(:,l))/ray *mode
           ftensor(4) = mode/ray*tensor_loc(2,3,l) - tensor_loc(1,4,l)/ray
           !--------calcul de la cinquieme composante : u0(5,:) <--> f(z,m,c)
-          fs(5) = SUM(ff(j_loc,5) * mesh%gauss%ww(:,l)) 
-          ft(5) = SUM(V1m(j_loc,5) * mesh%gauss%ww(:,l)) 
-          fp(5) = SUM(P(j_loc,1)*dw_loc(2,:)) 
+          fs(5) = SUM(ff(j_loc,5) * mesh%gauss%ww(:,l))
+          ft(5) = SUM(V1m(j_loc,5) * mesh%gauss%ww(:,l))
+          fp(5) = SUM(P(j_loc,1)*dw_loc(2,:))
           ftensor(5) = -mode/ray*tensor_loc(3,4,l)
           !--------calcul de la sixieme composante : u0(6,:) <--> f(z,m,s)
-          fs(6) = SUM(ff(j_loc,6) * mesh%gauss%ww(:,l)) 
-          ft(6) = SUM(V1m(j_loc,6) * mesh%gauss%ww(:,l)) 
-          fp(6) = SUM(P(j_loc,2)*dw_loc(2,:)) 
+          fs(6) = SUM(ff(j_loc,6) * mesh%gauss%ww(:,l))
+          ft(6) = SUM(V1m(j_loc,6) * mesh%gauss%ww(:,l))
+          fp(6) = SUM(P(j_loc,2)*dw_loc(2,:))
           ftensor(6) = mode/ray*tensor_loc(3,3,l)
           !-------calcul du second membre pour le terme nonlineaire------------------------
           !-------------------------------------------------------------------------------
@@ -1782,11 +1782,11 @@ CONTAINS
   END SUBROUTINE qs_ns_mom_compute_residual_LES_3x3
 
   SUBROUTINE qs_00_gauss_surface(mesh, vv_1_LA, temp_list_robin_sides, convection_coeff, &
-       exterior_temperature, cb) ! MODIFICATION: implementation of the term int_(partial Omega) h*Text*v, with h the convection coefficient 
+       exterior_temperature, cb) ! MODIFICATION: implementation of the term int_(partial Omega) h*Text*v, with h the convection coefficient
     USE def_type_mesh
     USE my_util
     IMPLICIT NONE
-    TYPE(mesh_type)                          :: mesh 
+    TYPE(mesh_type)                          :: mesh
     TYPE(petsc_csr_LA)                       :: vv_1_LA
     INTEGER     , DIMENSION(:), INTENT(IN)   :: temp_list_robin_sides
     REAL(KIND=8), DIMENSION(:), INTENT(IN)   :: convection_coeff, exterior_temperature
@@ -1794,13 +1794,13 @@ CONTAINS
     INTEGER,      DIMENSION(mesh%gauss%n_ws) :: idxm
     INTEGER                                  :: nws, ms, ls, ni, i, iglob
     REAL(KIND=8)                             :: ray, x
-    INTEGER, DIMENSION(1:1)                  :: coeff_index 
-!#include "petsc/finclude/petsc.h"
+    INTEGER, DIMENSION(1:1)                  :: coeff_index
+    !#include "petsc/finclude/petsc.h"
     Vec                                      :: cb
     PetscErrorCode                           :: ierr
-    
+
     nws = mesh%gauss%n_ws
-    
+
     DO ms = 1, mesh%mes
        IF (MINVAL(ABS(temp_list_robin_sides - mesh%sides(ms))) > 0) CYCLE
        c_loc = 0d0

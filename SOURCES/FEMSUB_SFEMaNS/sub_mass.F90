@@ -17,7 +17,7 @@ CONTAINS
     USE petsc
     IMPLICIT NONE
     REAL(KIND=8)                                            :: time
-    INTEGER,      DIMENSION(:),       INTENT(IN)            :: list_mode 
+    INTEGER,      DIMENSION(:),       INTENT(IN)            :: list_mode
     type(petsc_csr_LA)                                      :: level_set_LA_P1
     type(petsc_csr_LA)                                      :: level_set_LA_P2
     TYPE(periodic_type),              INTENT(IN)            :: level_set_per
@@ -90,14 +90,14 @@ CONTAINS
   END SUBROUTINE three_level_mass
 
   SUBROUTINE reconstruct_variable(comm_one_d, list_mode, mesh_P1, mesh_P2, level_set, values, variable)
-    !============================== 
+    !==============================
     USE def_type_mesh
     USE sft_parallele
     USE input_data
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
-    INTEGER,      DIMENSION(:),                 INTENT(IN)    :: list_mode 
+    INTEGER,      DIMENSION(:),                 INTENT(IN)    :: list_mode
     TYPE(mesh_type),                            INTENT(IN)    :: mesh_P1
     TYPE(mesh_type),                            INTENT(IN)    :: mesh_P2
     REAL(KIND=8), DIMENSION(:,:,:,:),           INTENT(IN)    :: level_set
@@ -167,7 +167,7 @@ CONTAINS
           END DO
           variable = variable + (values(2)-values(1))*level_set_P2(1,:,:,:)
           IF (inputs%nb_fluid.GE.3) THEN
-             DO i = 1, inputs%nb_fluid-2                
+             DO i = 1, inputs%nb_fluid-2
                 CALL FFT_PAR_PROD_DCL(comm_one_d(2), variable, level_set_P2(i+1,:,:,:), rho_phi, &
                      nb_procs, bloc_size, m_max_pad)
                 variable = variable -rho_phi + values(i+2)*level_set_P2(i+1,:,:,:)
@@ -186,14 +186,14 @@ CONTAINS
   END SUBROUTINE reconstruct_variable
 
   SUBROUTINE total_mass(comm_one_d, list_mode, mass_mesh, level_set, mass_tot)
-    !============================== 
+    !==============================
     USE def_type_mesh
     USE sft_parallele
     USE input_data
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
-    INTEGER,      DIMENSION(:),                 INTENT(IN)    :: list_mode 
+    INTEGER,      DIMENSION(:),                 INTENT(IN)    :: list_mode
     TYPE(mesh_type),                            INTENT(IN)    :: mass_mesh
     REAL(KIND=8), DIMENSION(:,:,:,:),           INTENT(IN)    :: level_set
     REAL(KIND=8),                               INTENT(OUT)   :: mass_tot
@@ -227,7 +227,7 @@ CONTAINS
           bloc_size = SIZE(level_set,2)/nb_procs+1
           m_max_pad = 3*SIZE(list_mode)*nb_procs/2
           IF (inputs%nb_fluid.GE.3) THEN
-             DO i = 1, inputs%nb_fluid-2                
+             DO i = 1, inputs%nb_fluid-2
                 CALL FFT_PAR_PROD_DCL(comm_one_d(2), density_loc, level_set(i+1,:,:,:), rho_phi, &
                      nb_procs, bloc_size, m_max_pad)
                 density_loc = density_loc -rho_phi + inputs%density_fluid(i+2)*level_set(i+1,:,:,:)
@@ -279,7 +279,7 @@ CONTAINS
           pp_f(jj_f(6,m)) = (pp_c(jj_c(1,m)) + pp_c(jj_c(2,m)))*half
        END DO
     ELSE
-       CALL error_petsc('BUG in inject_P1_P2: finite element not yet programmed') 
+       CALL error_petsc('BUG in inject_P1_P2: finite element not yet programmed')
     END IF
 
   END SUBROUTINE inject_P1_P2
@@ -297,7 +297,7 @@ CONTAINS
           pp_P1(jj_P1(:,m)) =  pp_P2(jj_P2(1:3,m))
        END DO
     ELSE
-       CALL error_petsc('BUG in inject_P2_P1: finite element not yet programmed') 
+       CALL error_petsc('BUG in inject_P2_P1: finite element not yet programmed')
     END IF
 
   END SUBROUTINE project_P2_P1

@@ -12,9 +12,9 @@ MODULE user_data
   IMPLICIT NONE
   PUBLIC :: read_user_data
   TYPE(personalized_data), PUBLIC  :: user
-  PRIVATE 
-  
-CONTAINS  
+  PRIVATE
+
+CONTAINS
 
   SUBROUTINE read_user_data(data_file)
     USE my_util

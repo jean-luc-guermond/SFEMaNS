@@ -1,5 +1,5 @@
 MODULE solve_petsc
-USE my_util
+  USE my_util
   TYPE solver_param
      INTEGER:: it_max
      REAL(KIND=8) :: rel_tol, abs_tol
@@ -51,15 +51,15 @@ CONTAINS
     IF (PRESENT(solver)) THEN
        deb = start_of_string (solver)
        fin = last_of_string (solver)
-       IF (solver(deb:fin)=='BCGS') THEN   
+       IF (solver(deb:fin)=='BCGS') THEN
           CALL KSPSetType(my_ksp, KSPBCGS, ierr)
-       ELSE IF (solver(deb:fin)=='GMRES') THEN 
+       ELSE IF (solver(deb:fin)=='GMRES') THEN
           CALL KSPSetType(my_ksp, KSPGMRES, ierr)
-       ELSE IF (solver(deb:fin)=='FGMRES') THEN 
+       ELSE IF (solver(deb:fin)=='FGMRES') THEN
           CALL KSPSetType(my_ksp, KSPFGMRES, ierr)
-       ELSE IF (solver(deb:fin)=='PCR') THEN 
+       ELSE IF (solver(deb:fin)=='PCR') THEN
           CALL KSPSetType(my_ksp, KSPCR, ierr)
-       ELSE IF (solver(deb:fin)=='CHEBYCHEV') THEN 
+       ELSE IF (solver(deb:fin)=='CHEBYCHEV') THEN
           CALL KSPSetType(my_ksp, KSPCHEBYSHEV, ierr)
        ELSE IF (solver(deb:fin)=='CG') THEN
           CALL KSPSetType(my_ksp, KSPCG, ierr)
@@ -114,27 +114,27 @@ CONTAINS
        CALL KSPGetIterationNumber(my_ksp, its, ierr)
        CALL KSPGetConvergedReason(my_ksp, reason, ierr)
        SELECT CASE(reason)
-       CASE(2) 
+       CASE(2)
           WRITE(*,*) "KSP_CONVERGED_RTOL, Nb of iterations", its
-       CASE(3) 
+       CASE(3)
           WRITE(*,*) "KSP_CONVERGED_ATOL, Nb of iterations", its
-       CASE(4) 
+       CASE(4)
           WRITE(*,*) "Converged after one single iteration of the preconditioner is applied"
-       CASE(5,6,7,8) 
+       CASE(5,6,7,8)
           WRITE(*,*) "Converge for strange reason:", reason
-       CASE(-2) 
-          WRITE(*,*) "KSP_DIVERGED_NULL" 
-       CASE(-3) 
+       CASE(-2)
+          WRITE(*,*) "KSP_DIVERGED_NULL"
+       CASE(-3)
           WRITE(*,*) "Not converged after it_max", its
-       CASE(-4) 
+       CASE(-4)
           WRITE(*,*) "Not converged: explosion"
-       CASE(-5,-6,-7) 
+       CASE(-5,-6,-7)
           WRITE(*,*) "Not converged for strange reasons", reason
-       CASE(-8) 
+       CASE(-8)
           WRITE(*,*) "Not converged: Indefinite preconditioner"
-       CASE(-9) 
+       CASE(-9)
           WRITE(*,*) "Not converged: NAN"
-       CASE(-10) 
+       CASE(-10)
           WRITE(*,*) "Not converged: Indefinite matrix"
        CASE DEFAULT
           WRITE(*,*) "Something strange happened", reason
@@ -148,11 +148,11 @@ CONTAINS
 #include "petsc/finclude/petsc.h"
     use petsc
     IMPLICIT NONE
-    TYPE(petsc_csr_LA)                 :: LA 
+    TYPE(petsc_csr_LA)                 :: LA
     LOGICAL, OPTIONAL                  :: clean
     REAL(KIND=8),DIMENSION(:), POINTER :: aa
     INTEGER :: nnzm1, dom_np
-    LOGICAL :: test_clean 
+    LOGICAL :: test_clean
 !!$  INTEGER, DIMENSION(:), POINTER :: ia, ja
     MPI_Comm       :: communicator
     Mat            :: matrix

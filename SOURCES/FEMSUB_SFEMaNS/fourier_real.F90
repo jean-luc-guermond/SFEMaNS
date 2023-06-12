@@ -34,7 +34,7 @@ MODULE fourier_to_real_for_vtu
   INTEGER,            DIMENSION(:), POINTER :: fourier_list_mode
   INTEGER                                   :: fourier_nb_angle
   INTEGER                                   :: fourier_width
-  INTEGER                                   :: fourier_rank 
+  INTEGER                                   :: fourier_rank
   INTEGER                                   :: fourier_nb_procs
   LOGICAL,  SAVE                            :: if_first_grad_phi=.TRUE.
   LOGICAL,  SAVE                            :: if_first_rot_h=.TRUE.
@@ -78,7 +78,7 @@ CONTAINS
     fourier_list_mode = list_mode_in
     !===JLG HF July 25 2019
     IF ((.NOT.inputs%if_just_processing) .AND. (inputs%freq_plot .GT. inputs%nb_iteration)) THEN
-       !===Not preparation of vizu meshes 
+       !===Not preparation of vizu meshes
        RETURN
     END IF
     IF (inputs%type_fe_velocity .GE. 3) THEN
@@ -108,7 +108,7 @@ CONTAINS
 
   SUBROUTINE prepare_3d_grids(mesh, local_mesh, mesh_3d, rank, opt_nb_plane)
     USE dyn_line
-    USE def_type_mesh 
+    USE def_type_mesh
     USE input_data
     USE my_util
     IMPLICIT NONE
@@ -122,7 +122,7 @@ CONTAINS
     REAL(KIND=8)                               :: pi, dtheta, theta
     INTEGER                                    :: i, k, m, n, nb_angle, count, dim, np1, &
          gap, m_max, m_max_pad
- 
+
     !===Deal with empty mesh
     IF (mesh%me==0) THEN
        mesh_3d%me = 0
@@ -173,7 +173,7 @@ CONTAINS
           DO i = 1, local_mesh%np
              count = count + 1
              mesh_3d%rr(1,count) = local_mesh%rr(1,i)*COS(theta)
-             mesh_3d%rr(2,count) = local_mesh%rr(1,i)*SIN(theta) 
+             mesh_3d%rr(2,count) = local_mesh%rr(1,i)*SIN(theta)
              mesh_3d%rr(3,count) = local_mesh%rr(2,i)
           ENDDO
        END DO
@@ -183,13 +183,13 @@ CONTAINS
        DO k = 1, nb_angle-1
           DO m = 1, local_mesh%me
              count = count + 1
-             mesh_3d%jj(1:3,count) = local_mesh%jj(1:3,m)+(k-1)*local_mesh%np  
+             mesh_3d%jj(1:3,count) = local_mesh%jj(1:3,m)+(k-1)*local_mesh%np
              mesh_3d%jj(4:6,count) = local_mesh%jj(1:3,m)+k*local_mesh%np
           END DO
        END DO
        DO m = 1, local_mesh%me
           count = count + 1
-          mesh_3d%jj(1:3,count) = local_mesh%jj(1:3,m)+(k-1)*local_mesh%np  
+          mesh_3d%jj(1:3,count) = local_mesh%jj(1:3,m)+(k-1)*local_mesh%np
           mesh_3d%jj(4:6,count) = local_mesh%jj(1:3,m)
        END DO
     ELSE IF (mesh%gauss%n_w==6) THEN
@@ -219,9 +219,9 @@ CONTAINS
              mesh_3d%jj(1:3,count) = local_mesh%jj(1:3,m) + (k-1)*(local_mesh%np+np1)
              mesh_3d%jj(4:6,count) = local_mesh%jj(1:3,m) + k*(local_mesh%np+np1)
              mesh_3d%jj(7,count)   = local_mesh%jj(6,m)   + (k-1)*(local_mesh%np+np1)
-             mesh_3d%jj(8,count)   = local_mesh%jj(4,m)   + (k-1)*(local_mesh%np+np1) 
-             mesh_3d%jj(9,count)   = local_mesh%jj(5,m)   + (k-1)*(local_mesh%np+np1) 
-             mesh_3d%jj(10,count)  = local_mesh%jj(6,m)   + k*(local_mesh%np+np1) 
+             mesh_3d%jj(8,count)   = local_mesh%jj(4,m)   + (k-1)*(local_mesh%np+np1)
+             mesh_3d%jj(9,count)   = local_mesh%jj(5,m)   + (k-1)*(local_mesh%np+np1)
+             mesh_3d%jj(10,count)  = local_mesh%jj(6,m)   + k*(local_mesh%np+np1)
              mesh_3d%jj(11,count)  = local_mesh%jj(4,m)   + k*(local_mesh%np+np1)
              mesh_3d%jj(12,count)  = local_mesh%jj(5,m)   + k*(local_mesh%np+np1)
              mesh_3d%jj(13:15,count) = renumber(local_mesh%jj(1:3,m)) &
@@ -233,12 +233,12 @@ CONTAINS
           count = count + 1
           mesh_3d%jj(1:3,count) = local_mesh%jj(1:3,m) + (k-1)*(local_mesh%np+np1)
           mesh_3d%jj(4:6,count) = local_mesh%jj(1:3,m)
-          mesh_3d%jj(7,count)   = local_mesh%jj(6,m)   + (k-1)*(local_mesh%np+np1) 
-          mesh_3d%jj(8,count)   = local_mesh%jj(4,m)   + (k-1)*(local_mesh%np+np1) 
-          mesh_3d%jj(9,count)   = local_mesh%jj(5,m)   + (k-1)*(local_mesh%np+np1) 
-          mesh_3d%jj(10,count)  = local_mesh%jj(6,m)  
-          mesh_3d%jj(11,count)  = local_mesh%jj(4,m)  
-          mesh_3d%jj(12,count)  = local_mesh%jj(5,m)  
+          mesh_3d%jj(7,count)   = local_mesh%jj(6,m)   + (k-1)*(local_mesh%np+np1)
+          mesh_3d%jj(8,count)   = local_mesh%jj(4,m)   + (k-1)*(local_mesh%np+np1)
+          mesh_3d%jj(9,count)   = local_mesh%jj(5,m)   + (k-1)*(local_mesh%np+np1)
+          mesh_3d%jj(10,count)  = local_mesh%jj(6,m)
+          mesh_3d%jj(11,count)  = local_mesh%jj(4,m)
+          mesh_3d%jj(12,count)  = local_mesh%jj(5,m)
           mesh_3d%jj(13:15,count) = renumber(local_mesh%jj(1:3,m)) &
                + (k-1)*(local_mesh%np+np1) + local_mesh%np
        END DO
@@ -248,7 +248,7 @@ CONTAINS
           DO i = 1, local_mesh%np
              n = (k-1)*(local_mesh%np+np1) + i
              mesh_3d%rr(1,n) = local_mesh%rr(1,i)*COS(theta)
-             mesh_3d%rr(2,n) = local_mesh%rr(1,i)*SIN(theta) 
+             mesh_3d%rr(2,n) = local_mesh%rr(1,i)*SIN(theta)
              mesh_3d%rr(3,n) = local_mesh%rr(2,i)
              IF (virgin(i)) CYCLE !===This is a vertex
              n = (k-1)*(local_mesh%np+np1) + local_mesh%np + renumber(i)
@@ -270,7 +270,7 @@ CONTAINS
 
   SUBROUTINE vtu_3d(field, name_of_mesh, header, name_of_field, what, opt_it, opt_grad_curl, opt_2D, opt_mesh_in)
     USE dyn_line
-    USE def_type_mesh 
+    USE def_type_mesh
     USE vtk_viz
     USE sft_parallele
     USE input_data
@@ -301,7 +301,7 @@ CONTAINS
        END IF
     END IF
     !===HF-CN 20/01/2020
-    
+
     !===JLG HF July 26, 2019
     IF (PRESENT(opt_mesh_in)) THEN
        IF (opt_mesh_in%gauss%n_w==10 .AND. inputs%type_fe_velocity==3) THEN
@@ -323,7 +323,7 @@ CONTAINS
     ELSE
        IF (name_of_mesh == 'vv_mesh' .AND. inputs%type_fe_velocity==3) THEN
           CALL error_Petsc('Bug in vtu_3d: P3 for velocity BUT opt_mesh_in not present')
-         ELSE
+       ELSE
           field_in => field !=== not present (opt_mesh_in)
        ENDIF
     END IF
@@ -342,7 +342,7 @@ CONTAINS
              field_viz = field_in  !===field_in = curl u
           ELSE
              ALLOCATE(field_viz(SIZE(field_in,1), SIZE(field_in,2), SIZE(field_in,3)))
-             CALL compute_rot_u(field_in, field_viz, opt_mesh_in)  !===field_in = u 
+             CALL compute_rot_u(field_in, field_viz, opt_mesh_in)  !===field_in = u
           END IF
        ELSE
           CALL error_petsc('Bug in vtu_3d: name_of_opt_grad_curl is not correct')
@@ -381,7 +381,7 @@ CONTAINS
 
   SUBROUTINE vtu_3d_base(field_in, name_of_mesh, header, name_of_field, what, opt_it)
     USE dyn_line
-    USE def_type_mesh 
+    USE def_type_mesh
     USE vtk_viz
     USE sft_parallele
     USE input_data
@@ -454,7 +454,7 @@ CONTAINS
     END DO
     ALLOCATE(dist_field(nb_procs*np_loc_max,SIZE(field_in,2),width))
 
-    !===Navier subdomain is divided into fourier_rank parts 
+    !===Navier subdomain is divided into fourier_rank parts
     !===This loop ditributes fourier modes to the sub-meshes (1 to fourier_rank)
     dist_field = 0.d0
     mode_min = rank*width
@@ -462,10 +462,10 @@ CONTAINS
        IF (MINVAL(ABS(list_mode - (mode_min+i-1)))/=0) CYCLE
        loc = MINLOC(ABS(list_mode - (mode_min+i-1)))
        DO type = 1, SIZE(field_in,2)
-          DO n = 1, nb_procs 
+          DO n = 1, nb_procs
              np_b = (n-1)*np_loc_max + 1
              np_loc = SIZE(loc_to_glob(n)%DIL)
-             np_e = np_b + np_loc - 1 
+             np_e = np_b + np_loc - 1
              dist_field(np_b:np_e,type,i) = field_in(loc_to_glob(n)%DIL,type,loc(1))
           END DO
        END DO
@@ -477,7 +477,7 @@ CONTAINS
     ALLOCATE(field_out_xyz_FFT(SIZE(field_out_FFT,1), SIZE(field_out_FFT,2), SIZE(field_out_FFT,3)))
     IF (SIZE(field_in,2)==2) THEN
        field_out_xyz_FFT=field_out_FFT
-    ELSE  
+    ELSE
        pi = ACOS(-1.d0)
        dtheta = 2*pi/nb_angle
        DO k = 1, nb_angle
@@ -539,10 +539,10 @@ CONTAINS
 
        DO i = 1, local_mesh%np
           IF (virgin(i)) CYCLE !===This is a vertex
-          DO k = 1, nb_angle - 2 
+          DO k = 1, nb_angle - 2
              n = (k-1)*(local_mesh%np+np1) + local_mesh%np + renumber(i)
              field_out(:,n) = (3.d0/8)*field_out_xyz_FFT(k,:,i) &
-                  + (3.d0/4)*field_out_xyz_FFT(k+1,:,i) - (1.d0/8)*field_out_xyz_FFT(k+2,:,i) 
+                  + (3.d0/4)*field_out_xyz_FFT(k+1,:,i) - (1.d0/8)*field_out_xyz_FFT(k+2,:,i)
           END DO
        END DO
        k = nb_angle - 1
@@ -550,14 +550,14 @@ CONTAINS
           IF (virgin(i)) CYCLE !===This is a vertex
           n = (k-1)*(local_mesh%np+np1) + local_mesh%np + renumber(i)
           field_out(:,n) = (3.d0/8)*field_out_xyz_FFT(k,:,i) &
-               + (3.d0/4)*field_out_xyz_FFT(k+1,:,i) - (1.d0/8)*field_out_xyz_FFT(1,:,i) 
+               + (3.d0/4)*field_out_xyz_FFT(k+1,:,i) - (1.d0/8)*field_out_xyz_FFT(1,:,i)
        END DO
        k = nb_angle
        DO i = 1, local_mesh%np
           IF (virgin(i)) CYCLE !===This is a vertex
           n = (k-1)*(local_mesh%np+np1) + local_mesh%np + renumber(i)
           field_out(:,n) = (3.d0/8)*field_out_xyz_FFT(k,:,i) &
-               + (3.d0/4)*field_out_xyz_FFT(1,:,i) - (1.d0/8)*field_out_xyz_FFT(2,:,i) 
+               + (3.d0/4)*field_out_xyz_FFT(1,:,i) - (1.d0/8)*field_out_xyz_FFT(2,:,i)
        END DO
        DEALLOCATE(virgin, renumber)
     ELSE
@@ -581,7 +581,7 @@ CONTAINS
   SUBROUTINE transfer_fourier_to_real(communicator, mesh, field_in, &
        header, name_of_field, what, list_mode, opt_it)
     USE dyn_line
-    USE def_type_mesh 
+    USE def_type_mesh
     USE vtk_viz
     USE sft_parallele
     USE input_data
@@ -637,7 +637,7 @@ CONTAINS
           DO n = 1, nb_procs
              np_b = (n-1)*np_loc_max + 1
              np_loc = SIZE(loc_to_glob(n)%DIL)
-             np_e = np_b + np_loc - 1 
+             np_e = np_b + np_loc - 1
              dist_field(np_b:np_e,type,i) = field_in(loc_to_glob(n)%DIL,type,loc(1))
           END DO
        END DO
@@ -674,7 +674,7 @@ CONTAINS
           DO i = 1, local_mesh%np
              count = count + 1
              mesh_3d%rr(1,count) = local_mesh%rr(1,i)*COS(theta)
-             mesh_3d%rr(2,count) = local_mesh%rr(1,i)*SIN(theta) 
+             mesh_3d%rr(2,count) = local_mesh%rr(1,i)*SIN(theta)
              mesh_3d%rr(3,count) = local_mesh%rr(2,i)
           ENDDO
        END DO
@@ -684,13 +684,13 @@ CONTAINS
        DO k = 1, nb_angle-1
           DO m = 1, local_mesh%me
              count = count + 1
-             mesh_3d%jj(1:3,count) = local_mesh%jj(1:3,m)+(k-1)*local_mesh%np  
+             mesh_3d%jj(1:3,count) = local_mesh%jj(1:3,m)+(k-1)*local_mesh%np
              mesh_3d%jj(4:6,count) = local_mesh%jj(1:3,m)+k*local_mesh%np
           END DO
        END DO
        DO m = 1, local_mesh%me
           count = count + 1
-          mesh_3d%jj(1:3,count) = local_mesh%jj(1:3,m)+(k-1)*local_mesh%np  
+          mesh_3d%jj(1:3,count) = local_mesh%jj(1:3,m)+(k-1)*local_mesh%np
           mesh_3d%jj(4:6,count) = local_mesh%jj(1:3,m)
        END DO
     ELSE IF (mesh%gauss%n_w==6) THEN
@@ -720,9 +720,9 @@ CONTAINS
              mesh_3d%jj(1:3,count) = local_mesh%jj(1:3,m) + (k-1)*(local_mesh%np+np1)
              mesh_3d%jj(4:6,count) = local_mesh%jj(1:3,m) + k*(local_mesh%np+np1)
              mesh_3d%jj(7,count)   = local_mesh%jj(6,m)   + (k-1)*(local_mesh%np+np1)
-             mesh_3d%jj(8,count)   = local_mesh%jj(4,m)   + (k-1)*(local_mesh%np+np1) 
-             mesh_3d%jj(9,count)   = local_mesh%jj(5,m)   + (k-1)*(local_mesh%np+np1) 
-             mesh_3d%jj(10,count)  = local_mesh%jj(6,m)   + k*(local_mesh%np+np1) 
+             mesh_3d%jj(8,count)   = local_mesh%jj(4,m)   + (k-1)*(local_mesh%np+np1)
+             mesh_3d%jj(9,count)   = local_mesh%jj(5,m)   + (k-1)*(local_mesh%np+np1)
+             mesh_3d%jj(10,count)  = local_mesh%jj(6,m)   + k*(local_mesh%np+np1)
              mesh_3d%jj(11,count)  = local_mesh%jj(4,m)   + k*(local_mesh%np+np1)
              mesh_3d%jj(12,count)  = local_mesh%jj(5,m)   + k*(local_mesh%np+np1)
              mesh_3d%jj(13:15,count) = renumber(local_mesh%jj(1:3,m)) &
@@ -734,12 +734,12 @@ CONTAINS
           count = count + 1
           mesh_3d%jj(1:3,count) = local_mesh%jj(1:3,m) + (k-1)*(local_mesh%np+np1)
           mesh_3d%jj(4:6,count) = local_mesh%jj(1:3,m)
-          mesh_3d%jj(7,count)   = local_mesh%jj(6,m)   + (k-1)*(local_mesh%np+np1) 
-          mesh_3d%jj(8,count)   = local_mesh%jj(4,m)   + (k-1)*(local_mesh%np+np1) 
-          mesh_3d%jj(9,count)   = local_mesh%jj(5,m)   + (k-1)*(local_mesh%np+np1) 
-          mesh_3d%jj(10,count)  = local_mesh%jj(6,m)  
-          mesh_3d%jj(11,count)  = local_mesh%jj(4,m)  
-          mesh_3d%jj(12,count)  = local_mesh%jj(5,m)  
+          mesh_3d%jj(7,count)   = local_mesh%jj(6,m)   + (k-1)*(local_mesh%np+np1)
+          mesh_3d%jj(8,count)   = local_mesh%jj(4,m)   + (k-1)*(local_mesh%np+np1)
+          mesh_3d%jj(9,count)   = local_mesh%jj(5,m)   + (k-1)*(local_mesh%np+np1)
+          mesh_3d%jj(10,count)  = local_mesh%jj(6,m)
+          mesh_3d%jj(11,count)  = local_mesh%jj(4,m)
+          mesh_3d%jj(12,count)  = local_mesh%jj(5,m)
           mesh_3d%jj(13:15,count) = renumber(local_mesh%jj(1:3,m)) &
                + (k-1)*(local_mesh%np+np1) + local_mesh%np
        END DO
@@ -749,7 +749,7 @@ CONTAINS
           DO i = 1, local_mesh%np
              n = (k-1)*(local_mesh%np+np1) + i
              mesh_3d%rr(1,n) = local_mesh%rr(1,i)*COS(theta)
-             mesh_3d%rr(2,n) = local_mesh%rr(1,i)*SIN(theta) 
+             mesh_3d%rr(2,n) = local_mesh%rr(1,i)*SIN(theta)
              mesh_3d%rr(3,n) = local_mesh%rr(2,i)
              IF (virgin(i)) CYCLE !===This is a vertex
              n = (k-1)*(local_mesh%np+np1) + local_mesh%np + renumber(i)
@@ -769,10 +769,10 @@ CONTAINS
 
        DO i = 1, local_mesh%np
           IF (virgin(i)) CYCLE !===This is a vertex
-          DO k = 1, nb_angle - 2 
+          DO k = 1, nb_angle - 2
              n = (k-1)*(local_mesh%np+np1) + local_mesh%np + renumber(i)
              field_out(:,n) = (3.d0/8)*field_out_FFT(k,:,i) &
-                  + (3.d0/4)*field_out_FFT(k+1,:,i) - (1.d0/8)*field_out_FFT(k+2,:,i) 
+                  + (3.d0/4)*field_out_FFT(k+1,:,i) - (1.d0/8)*field_out_FFT(k+2,:,i)
           END DO
        END DO
        k = nb_angle - 1
@@ -780,14 +780,14 @@ CONTAINS
           IF (virgin(i)) CYCLE !===This is a vertex
           n = (k-1)*(local_mesh%np+np1) + local_mesh%np + renumber(i)
           field_out(:,n) = (3.d0/8)*field_out_FFT(k,:,i) &
-               + (3.d0/4)*field_out_FFT(k+1,:,i) - (1.d0/8)*field_out_FFT(1,:,i) 
+               + (3.d0/4)*field_out_FFT(k+1,:,i) - (1.d0/8)*field_out_FFT(1,:,i)
        END DO
        k = nb_angle
        DO i = 1, local_mesh%np
           IF (virgin(i)) CYCLE !===This is a vertex
           n = (k-1)*(local_mesh%np+np1) + local_mesh%np + renumber(i)
           field_out(:,n) = (3.d0/8)*field_out_FFT(k,:,i) &
-               + (3.d0/4)*field_out_FFT(1,:,i) - (1.d0/8)*field_out_FFT(2,:,i) 
+               + (3.d0/4)*field_out_FFT(1,:,i) - (1.d0/8)*field_out_FFT(2,:,i)
        END DO
        DEALLOCATE(virgin, renumber)
 
@@ -815,7 +815,7 @@ CONTAINS
   END SUBROUTINE transfer_fourier_to_real
 
   SUBROUTINE divide_mesh(communicator, mesh, local_mesh, loc_to_glob)
-    USE def_type_mesh  
+    USE def_type_mesh
     USE vtk_viz
     IMPLICIT NONE
     TYPE(mesh_type),              INTENT(IN)  :: mesh
@@ -935,7 +935,7 @@ CONTAINS
        if_first_grad_phi=.FALSE.
 
        CALL create_my_ghost(mesh_grad_phi, vizu_grad_phi_LA,ifrom)
-       CALL VecCreateGhost(vizu_grad_curl_comm(1), mesh_grad_phi%dom_np, & 
+       CALL VecCreateGhost(vizu_grad_curl_comm(1), mesh_grad_phi%dom_np, &
             PETSC_DETERMINE, SIZE(ifrom), ifrom, vx_phi, ierr)
        CALL VecGhostGetLocalForm(vx_phi, vx_phi_ghost, ierr)
        CALL VecDuplicate(vx_phi, vb_phi, ierr)
@@ -984,7 +984,7 @@ CONTAINS
 
           CALL solver(ksp_grad_phi,vb_phi,vx_phi,reinit=.FALSE.,verbose=.FALSE.)
 
-          CALL VecGhostUpdateBegin(vx_phi,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+          CALL VecGhostUpdateBegin(vx_phi,INSERT_VALUES,SCATTER_FORWARD,ierr)
           CALL VecGhostUpdateEnd(vx_phi,INSERT_VALUES,SCATTER_FORWARD,ierr)
           IF (mesh_grad_phi%me/=0) THEN
              CALL extract(vx_phi_ghost,1,1,vizu_grad_phi_LA,field_out(:,k,i))
@@ -1031,7 +1031,7 @@ CONTAINS
        if_first_rot_h=.FALSE.
 
        CALL create_my_ghost(mesh_rot_h, vizu_rot_h_LA, ifrom)
-       CALL VecCreateGhost(vizu_grad_curl_comm(1), mesh_rot_h%dom_np, & 
+       CALL VecCreateGhost(vizu_grad_curl_comm(1), mesh_rot_h%dom_np, &
             PETSC_DETERMINE, SIZE(ifrom), ifrom, vx_phi, ierr)
        CALL VecGhostGetLocalForm(vx_phi, vx_phi_ghost, ierr)
        CALL VecDuplicate(vx_phi, vb_phi, ierr)
@@ -1089,7 +1089,7 @@ CONTAINS
 
           CALL solver(ksp_rot_h,vb_phi,vx_phi,reinit=.FALSE.,verbose=.FALSE.)
 
-          CALL VecGhostUpdateBegin(vx_phi,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+          CALL VecGhostUpdateBegin(vx_phi,INSERT_VALUES,SCATTER_FORWARD,ierr)
           CALL VecGhostUpdateEnd(vx_phi,INSERT_VALUES,SCATTER_FORWARD,ierr)
           IF (mesh_rot_h%me/=0) THEN
              CALL extract(vx_phi_ghost,1,1,vizu_rot_h_LA,field_out(:,k,i))
@@ -1137,11 +1137,11 @@ CONTAINS
        if_first_rot_u=.FALSE.
 
        CALL create_my_ghost(mesh_in, vizu_rot_u_LA, ifrom)
-       CALL VecCreateGhost(vizu_grad_curl_comm(1), mesh_in%dom_np, & 
+       CALL VecCreateGhost(vizu_grad_curl_comm(1), mesh_in%dom_np, &
             PETSC_DETERMINE, SIZE(ifrom), ifrom, vx_phi, ierr)
        CALL VecGhostGetLocalForm(vx_phi, vx_phi_ghost, ierr)
        CALL VecDuplicate(vx_phi, vb_phi, ierr)
-       
+
        CALL create_local_petsc_matrix(vizu_grad_curl_comm(1),vizu_rot_u_LA , mat_rot_u, clean=.TRUE.)
        CALL qs_diff_mass_scal_M (mesh_in, vizu_rot_u_LA, 0.d0, 1.d0, 0.d0, 0, mat_rot_u)
        CALL init_solver(param_rot_u,ksp_rot_u,mat_rot_u,vizu_grad_curl_comm(1),&
@@ -1196,7 +1196,7 @@ CONTAINS
 
           CALL solver(ksp_rot_u,vb_phi,vx_phi,reinit=.FALSE.,verbose=.FALSE.)
 
-          CALL VecGhostUpdateBegin(vx_phi,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+          CALL VecGhostUpdateBegin(vx_phi,INSERT_VALUES,SCATTER_FORWARD,ierr)
           CALL VecGhostUpdateEnd(vx_phi,INSERT_VALUES,SCATTER_FORWARD,ierr)
           IF (mesh_in%me/=0) THEN
              CALL extract(vx_phi_ghost,1,1,vizu_rot_u_LA,field_out(:,k,i))
@@ -1216,7 +1216,7 @@ CONTAINS
   SUBROUTINE divide_mesh_into_four_subcells(mesh_in,mesh_out)
     !  JLG + HF july 25, 2019
     !  Scheme of the sub_mesh partition
-    !     n                                  
+    !     n
     !     |\
     !     |n \
     !     |    \
@@ -1237,32 +1237,32 @@ CONTAINS
     !     |             \   |                \
     !     | 4*(m-1)+n1    \n|   4*(m-1)+n2     \
     !     |n1            n2\|n1                n2\
-    !     --------|--------------------|----------- 
+    !     --------|--------------------|-----------
     !   n1       n+3                  n+3         n2
     !      same edge touching (separed for clarity)
-    !   n1op     nop+3               nop+3            n2op 
-    !     ---------|--------------------|---------- 
+    !   n1op     nop+3               nop+3            n2op
+    !     ---------|--------------------|----------
     !     |n1op       n2op /|n1op           n2op /
     !     | 4(mop-1)+n1op / |   4(mop-1)+n2op  /
-    !     |             /nop|                / 
-    !     |           /     |              / 
-    !     |         /       |            / 
-    !     |       /         |          / 
-    !     |     /           |        / 
-    !     |   /   4mop      |      / 
-    !     | /               |    / 
+    !     |             /nop|                /
+    !     |           /     |              /
+    !     |         /       |            /
+    !     |       /         |          /
+    !     |     /           |        /
+    !     |   /   4mop      |      /
+    !     | /               |    /
     !     |/                |  /          this is the neigh element mop (large mesh)
-    !     |-----------------|/              divided in 4*(mop-1)+1, 4*(mop-1)+2, 
-    !     |                /                 4*(mop-1)+3, 4*mop in small mesh  
-    !     |              /             
-    !     |            / 
-    !     |          / 
-    !     |        /   
-    !     |      / 
+    !     |-----------------|/              divided in 4*(mop-1)+1, 4*(mop-1)+2,
+    !     |                /                 4*(mop-1)+3, 4*mop in small mesh
+    !     |              /
+    !     |            /
+    !     |          /
+    !     |        /
+    !     |      /
     !     |    /
     !     |  /
     !     |/
-    !     nop                                                          
+    !     nop
     IMPLICIT NONE
     TYPE(mesh_type), INTENT(IN)      :: mesh_in
     TYPE(mesh_type), INTENT(OUT)     :: mesh_out
@@ -1284,7 +1284,7 @@ CONTAINS
           edge = edge + 1
        END DO
     END DO
-    edge = edge/2 
+    edge = edge/2
     DO m = 1, mesh_in%me
        DO n = 1, 3
           IF (mesh_in%neigh(n,m).GE.0) CYCLE  !===ATTENTION, no dg mesh allowed here
@@ -1407,7 +1407,7 @@ CONTAINS
           n_dof = n_dof + 1
           mesh_out%rr(:,n_dof) = mesh_in%rr(:,j)/2 + mesh_in%rr(:,j1)/4 + mesh_in%rr(:,j2)/4
 
-          m_out    = 4*m 
+          m_out    = 4*m
           mesh_out%jj(n+3,m_out) = n_dof
           m_out    = 4*(m-1) + n
           mesh_out%jj(n+3,m_out) = n_dof
@@ -1447,7 +1447,7 @@ CONTAINS
        rr(:,1:3) = mesh_in%rr(:,mesh_in%jj(1:3,m_in))
        a = rr(:,2)-rr(:,1)
        b = rr(:,3)-rr(:,1)
-       mesK = mesureK(a,b) 
+       mesK = mesureK(a,b)
        DO nout = 1, 6
           rout = mesh_out%rr(:,mesh_out%jj(nout,m_out))
           DO nin = 1, 3
@@ -1471,7 +1471,7 @@ CONTAINS
                + field_in(j10(7),:)*f7(lambda(2),lambda(3)) &
                + field_in(j10(8),:)*f8(lambda(2),lambda(3)) &
                + field_in(j10(9),:)*f9(lambda(2),lambda(3)) &
-              + field_in(j10(10),:)*f10(lambda(2),lambda(3)) 
+               + field_in(j10(10),:)*f10(lambda(2),lambda(3))
        END DO
     END DO
   CONTAINS
@@ -1480,10 +1480,10 @@ CONTAINS
       REAL(KIND=8)                           :: mes
       mes = ABS(a(1)*b(2)-a(2)*b(1))
     END FUNCTION mesureK
-    
+
   END SUBROUTINE interpolate
 
- SUBROUTINE make_vtu_file_2D(communicator, mesh_in, header, field_in, field_name, what, opt_it)
+  SUBROUTINE make_vtu_file_2D(communicator, mesh_in, header, field_in, field_name, what, opt_it)
     USE def_type_mesh
     USE my_util
     USE vtk_viz

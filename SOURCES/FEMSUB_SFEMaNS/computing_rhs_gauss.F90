@@ -19,14 +19,14 @@ CONTAINS
     REAL(KIND=8),                               INTENT(IN) :: time
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: rotv_v
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: V1m
-    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: pn, pn_inc 
-    INTEGER,      DIMENSION(:),                 INTENT(IN) :: list_mode  
+    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: pn, pn_inc
+    INTEGER,      DIMENSION(:),                 INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN), OPTIONAL   :: opt_tempn
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)), INTENT(OUT) :: rhs_gauss
     REAL(KIND=8), DIMENSION(6)                                   :: fs, ft, fp_inc
     INTEGER,      DIMENSION(vv_mesh%gauss%n_w)                   :: j_loc
     REAL(KIND=8), DIMENSION(vv_mesh%np,6)                        :: ff, imposed_vel
-    REAL(KIND=8), DIMENSION(vv_mesh%np,2)                        :: P, P_inc 
+    REAL(KIND=8), DIMENSION(vv_mesh%np,2)                        :: P, P_inc
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%k_d,vv_mesh%gauss%n_w) :: dw_loc
     REAL(KIND=8), DIMENSION(vv_mesh%dom_me*vv_mesh%gauss%l_G,6)  :: imposed_vel_gauss
     REAL(KIND=8), DIMENSION(vv_mesh%dom_me*vv_mesh%gauss%l_G,6,SIZE(list_mode)) :: fp, rhs_gauss_penal
@@ -73,34 +73,34 @@ CONTAINS
 
              !--------calcul de la premiere composante : u0(1,:) <--> f(r,m,c)
              fs(1) = SUM(ff(j_loc,1) * vv_mesh%gauss%ww(:,l))
-             ft(1) = SUM(V1m(j_loc,1,i) * vv_mesh%gauss%ww(:,l)) 
+             ft(1) = SUM(V1m(j_loc,1,i) * vv_mesh%gauss%ww(:,l))
              fp(index,1,i) = -SUM(P(j_loc,1)*dw_loc(1,:))
              fp_inc(1) = -SUM(P_inc(j_loc,1)*dw_loc(1,:))
              !--------calcul de la seconde composante : u0(2,:) <--> f(r,m,s)
-             fs(2) = SUM(ff(j_loc,2) * vv_mesh%gauss%ww(:,l)) 
-             ft(2) = SUM(V1m(j_loc,2,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(index,2,i) = -SUM(P(j_loc,2)*dw_loc(1,:)) 
-             fp_inc(2) = -SUM(P_inc(j_loc,2)*dw_loc(1,:)) 
+             fs(2) = SUM(ff(j_loc,2) * vv_mesh%gauss%ww(:,l))
+             ft(2) = SUM(V1m(j_loc,2,i) * vv_mesh%gauss%ww(:,l))
+             fp(index,2,i) = -SUM(P(j_loc,2)*dw_loc(1,:))
+             fp_inc(2) = -SUM(P_inc(j_loc,2)*dw_loc(1,:))
              !--------calcul de la troisieme composante : u0(3,:) <--> f(th,m,c)
-             fs(3) = SUM(ff(j_loc,3) * vv_mesh%gauss%ww(:,l)) 
-             ft(3) = SUM(V1m(j_loc,3,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(index,3,i) = -SUM(P(j_loc,2)*vv_mesh%gauss%ww(:,l))/ray*list_mode(i) 
-             fp_inc(3) = -SUM(P_inc(j_loc,2)*vv_mesh%gauss%ww(:,l))/ray*list_mode(i) 
+             fs(3) = SUM(ff(j_loc,3) * vv_mesh%gauss%ww(:,l))
+             ft(3) = SUM(V1m(j_loc,3,i) * vv_mesh%gauss%ww(:,l))
+             fp(index,3,i) = -SUM(P(j_loc,2)*vv_mesh%gauss%ww(:,l))/ray*list_mode(i)
+             fp_inc(3) = -SUM(P_inc(j_loc,2)*vv_mesh%gauss%ww(:,l))/ray*list_mode(i)
              !--------calcul de la quatrieme composante : u0(4,:) <--> f(th,m,s)
-             fs(4) = SUM(ff(j_loc,4) * vv_mesh%gauss%ww(:,l)) 
-             ft(4) = SUM(V1m(j_loc,4,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(index,4,i) = SUM(P(j_loc,1)*vv_mesh%gauss%ww(:,l))/ray*list_mode(i) 
-             fp_inc(4) = SUM(P_inc(j_loc,1)*vv_mesh%gauss%ww(:,l))/ray*list_mode(i) 
+             fs(4) = SUM(ff(j_loc,4) * vv_mesh%gauss%ww(:,l))
+             ft(4) = SUM(V1m(j_loc,4,i) * vv_mesh%gauss%ww(:,l))
+             fp(index,4,i) = SUM(P(j_loc,1)*vv_mesh%gauss%ww(:,l))/ray*list_mode(i)
+             fp_inc(4) = SUM(P_inc(j_loc,1)*vv_mesh%gauss%ww(:,l))/ray*list_mode(i)
              !--------calcul de la cinquieme composante : u0(5,:) <--> f(z,m,c)
-             fs(5) = SUM(ff(j_loc,5) * vv_mesh%gauss%ww(:,l)) 
-             ft(5) = SUM(V1m(j_loc,5,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(index,5,i) = -SUM(P(j_loc,1)*dw_loc(2,:)) 
-             fp_inc(5) = -SUM(P_inc(j_loc,1)*dw_loc(2,:)) 
+             fs(5) = SUM(ff(j_loc,5) * vv_mesh%gauss%ww(:,l))
+             ft(5) = SUM(V1m(j_loc,5,i) * vv_mesh%gauss%ww(:,l))
+             fp(index,5,i) = -SUM(P(j_loc,1)*dw_loc(2,:))
+             fp_inc(5) = -SUM(P_inc(j_loc,1)*dw_loc(2,:))
              !--------calcul de la sixieme composante : u0(6,:) <--> f(z,m,s)
-             fs(6) = SUM(ff(j_loc,6) * vv_mesh%gauss%ww(:,l)) 
-             ft(6) = SUM(V1m(j_loc,6,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(index,6,i) = -SUM(P(j_loc,2)*dw_loc(2,:)) 
-             fp_inc(6) = -SUM(P_inc(j_loc,2)*dw_loc(2,:)) 
+             fs(6) = SUM(ff(j_loc,6) * vv_mesh%gauss%ww(:,l))
+             ft(6) = SUM(V1m(j_loc,6,i) * vv_mesh%gauss%ww(:,l))
+             fp(index,6,i) = -SUM(P(j_loc,2)*dw_loc(2,:))
+             fp_inc(6) = -SUM(P_inc(j_loc,2)*dw_loc(2,:))
 
              rhs_gauss(index,:,i) =  (ft+fp_inc+fs-rotv_v(index,:,i))
 
@@ -109,7 +109,7 @@ CONTAINS
        IF (inputs%if_ns_penalty) THEN
           IF(inputs%if_impose_vel_in_solids) THEN
              IF (list_mode(i)==0) THEN
-                !Velocity imposed by penalty in solids (using BDF2). 
+                !Velocity imposed by penalty in solids (using BDF2).
                 imposed_vel(:,:) = 3.d0*imposed_velocity_by_penalty(vv_mesh%rr,time)/(2*inputs%dt)
                 index = 0
                 DO m = 1, vv_mesh%dom_me
@@ -118,11 +118,11 @@ CONTAINS
                       index  = index +1
                       DO TYPE = 1, 6
                          imposed_vel_gauss(index,TYPE) = SUM(imposed_vel(j_loc,TYPE) &
-                              * vv_mesh%gauss%ww(:,l)) 
+                              * vv_mesh%gauss%ww(:,l))
                       END DO
                    END DO
                 END DO
-                rhs_gauss(:,:,i) = rhs_gauss(:,:,i) - imposed_vel_gauss(:,:) 
+                rhs_gauss(:,:,i) = rhs_gauss(:,:,i) - imposed_vel_gauss(:,:)
              ENDIF
           END IF
        END IF
@@ -135,7 +135,7 @@ CONTAINS
        CALL FFT_PAR_VAR_ETA_PROD_GAUSS_DCL(communicator, penal_in_real_space, vv_mesh, &
             rhs_gauss, rhs_gauss_penal, nb_procs, bloc_size, m_max_pad, rr_gauss, time)
 
-       rhs_gauss = rhs_gauss_penal 
+       rhs_gauss = rhs_gauss_penal
 
        IF(inputs%if_impose_vel_in_solids) THEN
           DO i = 1, SIZE(list_mode)
@@ -146,7 +146,7 @@ CONTAINS
        END IF
     END IF
 
-    rhs_gauss = rhs_gauss + fp 
+    rhs_gauss = rhs_gauss + fp
 
   END SUBROUTINE rhs_ns_gauss_3x3
 
@@ -162,7 +162,7 @@ CONTAINS
     USE boundary
     IMPLICIT NONE
     TYPE(mesh_type)                                        :: vv_mesh, pp_mesh
-    INTEGER,      DIMENSION(:),                 INTENT(IN) :: list_mode  
+    INTEGER,      DIMENSION(:),                 INTENT(IN) :: list_mode
     REAL(KIND=8),                               INTENT(IN) :: time
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: du_dt
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: pn
@@ -172,7 +172,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(6)                                   :: fs
     INTEGER,      DIMENSION(vv_mesh%gauss%n_w)                   :: j_loc
     REAL(KIND=8), DIMENSION(vv_mesh%np,6)                        :: ff
-    REAL(KIND=8), DIMENSION(vv_mesh%np,2)                        :: P 
+    REAL(KIND=8), DIMENSION(vv_mesh%np,2)                        :: P
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%k_d,vv_mesh%gauss%n_w) :: dw_loc
     REAL(KIND=8), DIMENSION(vv_mesh%dom_me*vv_mesh%gauss%l_G,6,SIZE(list_mode)) :: rhs_gauss_penal, fp, ft
     REAL(KIND=8), DIMENSION(2,vv_mesh%gauss%l_G*vv_mesh%dom_me)                 :: rr_gauss
@@ -213,28 +213,28 @@ CONTAINS
 
              !--------calcul de la premiere composante : u0(1,:) <--> f(r,m,c)
              fs(1) = SUM(ff(j_loc,1) * vv_mesh%gauss%ww(:,l))
-             ft(index,1,i) = SUM(du_dt(j_loc,1,i) * vv_mesh%gauss%ww(:,l)) 
+             ft(index,1,i) = SUM(du_dt(j_loc,1,i) * vv_mesh%gauss%ww(:,l))
              fp(index,1,i)    = SUM(P(j_loc,1)*dw_loc(1,:))
              !--------calcul de la seconde composante : u0(2,:) <--> f(r,m,s)
-             fs(2) = SUM(ff(j_loc,2) * vv_mesh%gauss%ww(:,l)) 
-             ft(index,2,i) = SUM(du_dt(j_loc,2,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(index,2,i)    = SUM(P(j_loc,2)*dw_loc(1,:)) 
+             fs(2) = SUM(ff(j_loc,2) * vv_mesh%gauss%ww(:,l))
+             ft(index,2,i) = SUM(du_dt(j_loc,2,i) * vv_mesh%gauss%ww(:,l))
+             fp(index,2,i)    = SUM(P(j_loc,2)*dw_loc(1,:))
              !--------calcul de la troisieme composante : u0(3,:) <--> f(th,m,c)
-             fs(3) = SUM(ff(j_loc,3) * vv_mesh%gauss%ww(:,l)) 
-             ft(index,3,i) = SUM(du_dt(j_loc,3,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(index,3,i)    = SUM(P(j_loc,2)*vv_mesh%gauss%ww(:,l))/ray*list_mode(i) 
+             fs(3) = SUM(ff(j_loc,3) * vv_mesh%gauss%ww(:,l))
+             ft(index,3,i) = SUM(du_dt(j_loc,3,i) * vv_mesh%gauss%ww(:,l))
+             fp(index,3,i)    = SUM(P(j_loc,2)*vv_mesh%gauss%ww(:,l))/ray*list_mode(i)
              !--------calcul de la quatrieme composante : u0(4,:) <--> f(th,m,s)
-             fs(4) = SUM(ff(j_loc,4) * vv_mesh%gauss%ww(:,l)) 
-             ft(index,4,i) = SUM(du_dt(j_loc,4,i) * vv_mesh%gauss%ww(:,l)) 
+             fs(4) = SUM(ff(j_loc,4) * vv_mesh%gauss%ww(:,l))
+             ft(index,4,i) = SUM(du_dt(j_loc,4,i) * vv_mesh%gauss%ww(:,l))
              fp(index,4,i)    = -SUM(P(j_loc,1)*vv_mesh%gauss%ww(:,l))/ray*list_mode(i)
              !--------calcul de la cinquieme composante : u0(5,:) <--> f(z,m,c)
-             fs(5) = SUM(ff(j_loc,5) * vv_mesh%gauss%ww(:,l)) 
-             ft(index,5,i) = SUM(du_dt(j_loc,5,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(index,5,i)    = SUM(P(j_loc,1)*dw_loc(2,:)) 
+             fs(5) = SUM(ff(j_loc,5) * vv_mesh%gauss%ww(:,l))
+             ft(index,5,i) = SUM(du_dt(j_loc,5,i) * vv_mesh%gauss%ww(:,l))
+             fp(index,5,i)    = SUM(P(j_loc,1)*dw_loc(2,:))
              !--------calcul de la sixieme composante : u0(6,:) <--> f(z,m,s)
-             fs(6) = SUM(ff(j_loc,6) * vv_mesh%gauss%ww(:,l)) 
-             ft(index,6,i) = SUM(du_dt(j_loc,6,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(index,6,i)    = SUM(P(j_loc,2)*dw_loc(2,:)) 
+             fs(6) = SUM(ff(j_loc,6) * vv_mesh%gauss%ww(:,l))
+             ft(index,6,i) = SUM(du_dt(j_loc,6,i) * vv_mesh%gauss%ww(:,l))
+             fp(index,6,i)    = SUM(P(j_loc,2)*dw_loc(2,:))
 
              rhs_gauss(index,:,i) =  -fs+rotv_v(index,:,i)
           ENDDO
@@ -247,7 +247,7 @@ CONTAINS
        bloc_size = SIZE(rhs_gauss,1)/nb_procs+1
        CALL FFT_PAR_VAR_ETA_PROD_GAUSS_DCL(communicator, penal_in_real_space, vv_mesh, &
             rhs_gauss, rhs_gauss_penal, nb_procs, bloc_size, m_max_pad, rr_gauss, time)
-       rhs_gauss = rhs_gauss_penal 
+       rhs_gauss = rhs_gauss_penal
     END IF
 
     !===Add term time derivative and grad pressure
@@ -267,7 +267,7 @@ CONTAINS
     USE boundary
     IMPLICIT NONE
     TYPE(mesh_type)                                        :: vv_mesh, pp_mesh
-    INTEGER,      DIMENSION(:),                 INTENT(IN) :: list_mode  
+    INTEGER,      DIMENSION(:),                 INTENT(IN) :: list_mode
     REAL(KIND=8),                               INTENT(IN) :: time
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: du_dt
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: pn
@@ -278,7 +278,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(6)                                   :: fs, ft, fp
     INTEGER,      DIMENSION(vv_mesh%gauss%n_w)                   :: j_loc
     REAL(KIND=8), DIMENSION(vv_mesh%np,6)                        :: ff
-    REAL(KIND=8), DIMENSION(vv_mesh%np,2)                        :: P 
+    REAL(KIND=8), DIMENSION(vv_mesh%np,2)                        :: P
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%k_d,vv_mesh%gauss%n_w) :: dw_loc
     REAL(KIND=8), DIMENSION(2,vv_mesh%gauss%l_G*vv_mesh%dom_me)  :: rr_gauss
     REAL(KIND=8) :: ray
@@ -315,28 +315,28 @@ CONTAINS
 
              !--------calcul de la premiere composante : u0(1,:) <--> f(r,m,c)
              fs(1) = SUM(ff(j_loc,1) * vv_mesh%gauss%ww(:,l))
-             ft(1) = SUM(du_dt(j_loc,1,i) * vv_mesh%gauss%ww(:,l)) 
+             ft(1) = SUM(du_dt(j_loc,1,i) * vv_mesh%gauss%ww(:,l))
              fp(1) = SUM(P(j_loc,1)*dw_loc(1,:))
              !--------calcul de la seconde composante : u0(2,:) <--> f(r,m,s)
-             fs(2) = SUM(ff(j_loc,2) * vv_mesh%gauss%ww(:,l)) 
-             ft(2) = SUM(du_dt(j_loc,2,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(2) = SUM(P(j_loc,2)*dw_loc(1,:)) 
+             fs(2) = SUM(ff(j_loc,2) * vv_mesh%gauss%ww(:,l))
+             ft(2) = SUM(du_dt(j_loc,2,i) * vv_mesh%gauss%ww(:,l))
+             fp(2) = SUM(P(j_loc,2)*dw_loc(1,:))
              !--------calcul de la troisieme composante : u0(3,:) <--> f(th,m,c)
-             fs(3) = SUM(ff(j_loc,3) * vv_mesh%gauss%ww(:,l)) 
-             ft(3) = SUM(du_dt(j_loc,3,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(3) = SUM(P(j_loc,2)*vv_mesh%gauss%ww(:,l))/ray*list_mode(i) 
+             fs(3) = SUM(ff(j_loc,3) * vv_mesh%gauss%ww(:,l))
+             ft(3) = SUM(du_dt(j_loc,3,i) * vv_mesh%gauss%ww(:,l))
+             fp(3) = SUM(P(j_loc,2)*vv_mesh%gauss%ww(:,l))/ray*list_mode(i)
              !--------calcul de la quatrieme composante : u0(4,:) <--> f(th,m,s)
-             fs(4) = SUM(ff(j_loc,4) * vv_mesh%gauss%ww(:,l)) 
-             ft(4) = SUM(du_dt(j_loc,4,i) * vv_mesh%gauss%ww(:,l)) 
+             fs(4) = SUM(ff(j_loc,4) * vv_mesh%gauss%ww(:,l))
+             ft(4) = SUM(du_dt(j_loc,4,i) * vv_mesh%gauss%ww(:,l))
              fp(4) = -SUM(P(j_loc,1)*vv_mesh%gauss%ww(:,l))/ray*list_mode(i)
              !--------calcul de la cinquieme composante : u0(5,:) <--> f(z,m,c)
-             fs(5) = SUM(ff(j_loc,5) * vv_mesh%gauss%ww(:,l)) 
-             ft(5) = SUM(du_dt(j_loc,5,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(5) = SUM(P(j_loc,1)*dw_loc(2,:)) 
+             fs(5) = SUM(ff(j_loc,5) * vv_mesh%gauss%ww(:,l))
+             ft(5) = SUM(du_dt(j_loc,5,i) * vv_mesh%gauss%ww(:,l))
+             fp(5) = SUM(P(j_loc,1)*dw_loc(2,:))
              !--------calcul de la sixieme composante : u0(6,:) <--> f(z,m,s)
-             fs(6) = SUM(ff(j_loc,6) * vv_mesh%gauss%ww(:,l)) 
-             ft(6) = SUM(du_dt(j_loc,6,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(6) = SUM(P(j_loc,2)*dw_loc(2,:)) 
+             fs(6) = SUM(ff(j_loc,6) * vv_mesh%gauss%ww(:,l))
+             ft(6) = SUM(du_dt(j_loc,6,i) * vv_mesh%gauss%ww(:,l))
+             fp(6) = SUM(P(j_loc,2)*dw_loc(2,:))
 
              rhs_gauss(index,:,i) =  ft+fp-fs-rotb_b(index,:,i)
           ENDDO
@@ -360,15 +360,15 @@ CONTAINS
     REAL(KIND=8),                               INTENT(IN) :: time
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: rotv_v
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: V1m
-    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: pn 
-    INTEGER,      DIMENSION(:),                 INTENT(IN) :: list_mode  
+    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: pn
+    INTEGER,      DIMENSION(:),                 INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: tempn
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: density
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)), INTENT(OUT) :: rhs_gauss
     REAL(KIND=8), DIMENSION(6)                                   :: fs, ft
     INTEGER,      DIMENSION(vv_mesh%gauss%n_w)                   :: j_loc
     REAL(KIND=8), DIMENSION(vv_mesh%np,6)                        :: ff
-    REAL(KIND=8), DIMENSION(vv_mesh%np,2)                        :: P 
+    REAL(KIND=8), DIMENSION(vv_mesh%np,2)                        :: P
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%k_d,vv_mesh%gauss%n_w) :: dw_loc
     REAL(KIND=8), DIMENSION(vv_mesh%dom_me*vv_mesh%gauss%l_G,6,SIZE(list_mode)) :: fp
     REAL(KIND=8), DIMENSION(2,vv_mesh%gauss%l_G*vv_mesh%dom_me)  :: rr_gauss
@@ -409,28 +409,28 @@ CONTAINS
 
              !--------calcul de la premiere composante : u0(1,:) <--> f(r,m,c)
              fs(1) = SUM(ff(j_loc,1) * vv_mesh%gauss%ww(:,l))
-             ft(1) = SUM(V1m(j_loc,1,i) * vv_mesh%gauss%ww(:,l)) 
+             ft(1) = SUM(V1m(j_loc,1,i) * vv_mesh%gauss%ww(:,l))
              fp(index,1,i) = -SUM(P(j_loc,1)*dw_loc(1,:))
              !--------calcul de la seconde composante : u0(2,:) <--> f(r,m,s)
-             fs(2) = SUM(ff(j_loc,2) * vv_mesh%gauss%ww(:,l)) 
-             ft(2) = SUM(V1m(j_loc,2,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(index,2,i) = -SUM(P(j_loc,2)*dw_loc(1,:)) 
+             fs(2) = SUM(ff(j_loc,2) * vv_mesh%gauss%ww(:,l))
+             ft(2) = SUM(V1m(j_loc,2,i) * vv_mesh%gauss%ww(:,l))
+             fp(index,2,i) = -SUM(P(j_loc,2)*dw_loc(1,:))
              !--------calcul de la troisieme composante : u0(3,:) <--> f(th,m,c)
-             fs(3) = SUM(ff(j_loc,3) * vv_mesh%gauss%ww(:,l)) 
-             ft(3) = SUM(V1m(j_loc,3,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(index,3,i) = -SUM(P(j_loc,2)*vv_mesh%gauss%ww(:,l))/ray*list_mode(i) 
+             fs(3) = SUM(ff(j_loc,3) * vv_mesh%gauss%ww(:,l))
+             ft(3) = SUM(V1m(j_loc,3,i) * vv_mesh%gauss%ww(:,l))
+             fp(index,3,i) = -SUM(P(j_loc,2)*vv_mesh%gauss%ww(:,l))/ray*list_mode(i)
              !--------calcul de la quatrieme composante : u0(4,:) <--> f(th,m,s)
-             fs(4) = SUM(ff(j_loc,4) * vv_mesh%gauss%ww(:,l)) 
-             ft(4) = SUM(V1m(j_loc,4,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(index,4,i) = SUM(P(j_loc,1)*vv_mesh%gauss%ww(:,l))/ray*list_mode(i) 
+             fs(4) = SUM(ff(j_loc,4) * vv_mesh%gauss%ww(:,l))
+             ft(4) = SUM(V1m(j_loc,4,i) * vv_mesh%gauss%ww(:,l))
+             fp(index,4,i) = SUM(P(j_loc,1)*vv_mesh%gauss%ww(:,l))/ray*list_mode(i)
              !--------calcul de la cinquieme composante : u0(5,:) <--> f(z,m,c)
-             fs(5) = SUM(ff(j_loc,5) * vv_mesh%gauss%ww(:,l)) 
-             ft(5) = SUM(V1m(j_loc,5,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(index,5,i) = -SUM(P(j_loc,1)*dw_loc(2,:)) 
+             fs(5) = SUM(ff(j_loc,5) * vv_mesh%gauss%ww(:,l))
+             ft(5) = SUM(V1m(j_loc,5,i) * vv_mesh%gauss%ww(:,l))
+             fp(index,5,i) = -SUM(P(j_loc,1)*dw_loc(2,:))
              !--------calcul de la sixieme composante : u0(6,:) <--> f(z,m,s)
-             fs(6) = SUM(ff(j_loc,6) * vv_mesh%gauss%ww(:,l)) 
-             ft(6) = SUM(V1m(j_loc,6,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(index,6,i) = -SUM(P(j_loc,2)*dw_loc(2,:)) 
+             fs(6) = SUM(ff(j_loc,6) * vv_mesh%gauss%ww(:,l))
+             ft(6) = SUM(V1m(j_loc,6,i) * vv_mesh%gauss%ww(:,l))
+             fp(index,6,i) = -SUM(P(j_loc,2)*dw_loc(2,:))
 
              rhs_gauss(index,:,i) =  (ft+fs-rotv_v(index,:,i))
 
@@ -438,7 +438,7 @@ CONTAINS
        ENDDO
     END DO
 
-    rhs_gauss = rhs_gauss + fp 
+    rhs_gauss = rhs_gauss + fp
 
   END SUBROUTINE rhs_ns_gauss_3x3_art_comp_mom
 
@@ -455,18 +455,18 @@ CONTAINS
 !!$          pp_f(jj_f(1:3,m)) =  pp_c(jj_c(:,m))
 !!$          pp_f(jj_f(4,m)) = (pp_c(jj_c(2,m)) + pp_c(jj_c(3,m)))*half
 !!$          pp_f(jj_f(5,m)) = (pp_c(jj_c(3,m)) + pp_c(jj_c(1,m)))*half
-!!$          pp_f(jj_f(6,m)) = (pp_c(jj_c(1,m)) + pp_c(jj_c(2,m)))*half 
+!!$          pp_f(jj_f(6,m)) = (pp_c(jj_c(1,m)) + pp_c(jj_c(2,m)))*half
 !!$       END DO
 !!$
-!!$    ELSE         
+!!$    ELSE
 !!$       DO m = 1, SIZE(jj_f,2)
 !!$          pp_f(jj_f(1:4,m)) =  pp_c(jj_c(:,m))
 !!$       END DO
 !!$       pp_f(jj_f(5,:)) = (pp_c(jj_c(3,:)) + pp_c(jj_c(4,:)))*half
-!!$       pp_f(jj_f(6,:)) = (pp_c(jj_c(4,:)) + pp_c(jj_c(2,:)))*half 
-!!$       pp_f(jj_f(7,:)) = (pp_c(jj_c(2,:)) + pp_c(jj_c(3,:)))*half 
-!!$       pp_f(jj_f(8,:)) = (pp_c(jj_c(1,:)) + pp_c(jj_c(4,:)))*half 
-!!$       pp_f(jj_f(9,:)) = (pp_c(jj_c(3,:)) + pp_c(jj_c(1,:)))*half 
+!!$       pp_f(jj_f(6,:)) = (pp_c(jj_c(4,:)) + pp_c(jj_c(2,:)))*half
+!!$       pp_f(jj_f(7,:)) = (pp_c(jj_c(2,:)) + pp_c(jj_c(3,:)))*half
+!!$       pp_f(jj_f(8,:)) = (pp_c(jj_c(1,:)) + pp_c(jj_c(4,:)))*half
+!!$       pp_f(jj_f(9,:)) = (pp_c(jj_c(3,:)) + pp_c(jj_c(1,:)))*half
 !!$       pp_f(jj_f(10,:)) = (pp_c(jj_c(1,:)) + pp_c(jj_c(2,:)))*half
 !!$
 !!$    END IF

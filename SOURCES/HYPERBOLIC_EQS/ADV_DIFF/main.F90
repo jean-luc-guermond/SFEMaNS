@@ -32,6 +32,6 @@ PROGRAM scal_cons
   t1 = user_time()
   CALL euler
   IF (rank==0) WRITE(*,*) ' Time for solution', (user_time()-t1)
-  
+
   CALL PetscFinalize(ierr)
 END PROGRAM scal_cons

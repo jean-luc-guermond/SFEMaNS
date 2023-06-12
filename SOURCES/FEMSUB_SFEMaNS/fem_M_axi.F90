@@ -22,11 +22,11 @@ CONTAINS
     INTEGER,      DIMENSION(:),   ALLOCATABLE              :: idxm, idxn
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w,mesh%gauss%l_G) :: wwprod
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w) :: a_loc, b_loc
-    REAL(KIND=8), DIMENSION(:,:), ALLOCATABLE              :: mat_loc 
+    REAL(KIND=8), DIMENSION(:,:), ALLOCATABLE              :: mat_loc
     REAL(KIND=8)                                           :: ray, eps1, eps2
     INTEGER      :: m, l, ni, nj, i, j, iglob, jglob, k_max, n_w, ix, jx, ki, kj
     REAL(KIND=8) :: viscolm, xij
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     Mat                                         :: matrix
     PetscErrorCode                              :: ierr
     CALL MatZeroEntries (matrix, ierr)
@@ -41,10 +41,10 @@ CONTAINS
        eps1 = 1.d0
        eps2 = -1.d0
        k_max = 2 !2x2 Structure
-    ELSEIF (type_op == 3) THEN  
+    ELSEIF (type_op == 3) THEN
        eps1 = 0.d0
        eps2 = 0.d0
-       k_max = 1 ! Scalar Structure 
+       k_max = 1 ! Scalar Structure
     ELSE
        eps1 = 0.d0
        eps2 = 0.d0
@@ -57,9 +57,9 @@ CONTAINS
     END IF
 
     n_w = mesh%gauss%n_w
-    DO l = 1, mesh%gauss%l_G 
-       DO ni = 1, n_w 
-          DO nj = 1, n_w 
+    DO l = 1, mesh%gauss%l_G
+       DO ni = 1, n_w
+          DO nj = 1, n_w
              wwprod(ni,nj,l) = mesh%gauss%ww(ni,l)*mesh%gauss%ww(nj,l)
           END DO
        END DO
@@ -78,8 +78,8 @@ CONTAINS
              ray = ray + mesh%rr(1,i)*mesh%gauss%ww(ni,l)
           END DO
           viscolm  = (visco + stab*mesh%hloc(m))*mesh%gauss%rj(l,m)
-          DO nj = 1, n_w  
-             DO ni = 1, n_w  
+          DO nj = 1, n_w
+             DO ni = 1, n_w
 
                 !grad(u).grad(v) w.r.t. r and z
                 xij = SUM(mesh%gauss%dw(:,nj,l,m)*mesh%gauss%dw(:,ni,l,m))
@@ -89,7 +89,7 @@ CONTAINS
                      + viscolm*eps1*wwprod(ni,nj,l)/ray &
                      + mass*ray*wwprod(ni,nj,l)*mesh%gauss%rj(l,m) &
                      + viscolm*mode**2*wwprod(ni,nj,l)/ray
-                !end diagonal block             
+                !end diagonal block
                 b_loc(ni,nj) = b_loc(ni,nj) + eps2*viscolm*2*mode*wwprod(ni,nj,l)/ray
              END DO
           END DO
@@ -97,7 +97,7 @@ CONTAINS
 
        mat_loc = 0.d0
        DO ki= 1, k_max
-          DO ni = 1, n_w 
+          DO ni = 1, n_w
              i = jj_loc(ni)
              iglob = LA%loc_to_glob(ki,i)
              ix = (ki-1)*n_w+ni
@@ -140,15 +140,15 @@ CONTAINS
     REAL(KIND=8)                                           :: ray
     INTEGER      :: m, l, ni, nj, i, j, iglob, jglob, n_w
     REAL(KIND=8) :: viscolm, xij
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     Mat                                         :: matrix
     PetscErrorCode                              :: ierr
     CALL MatZeroEntries (matrix, ierr)
     CALL MatSetOption (matrix, MAT_ROW_ORIENTED, PETSC_FALSE, ierr)
 
-    DO l = 1, mesh%gauss%l_G 
-       DO ni = 1, mesh%gauss%n_w 
-          DO nj = 1, mesh%gauss%n_w 
+    DO l = 1, mesh%gauss%l_G
+       DO ni = 1, mesh%gauss%n_w
+          DO nj = 1, mesh%gauss%n_w
              wwprod(ni,nj,l) = mesh%gauss%ww(ni,l)*mesh%gauss%ww(nj,l)
           END DO
        END DO
@@ -159,11 +159,11 @@ CONTAINS
        jj_loc = mesh%jj(:,m)
        a_loc = 0.d0
 
-       DO nj = 1, mesh%gauss%n_w;  
+       DO nj = 1, mesh%gauss%n_w;
           j = jj_loc(nj)
           jglob = LA%loc_to_glob(1,j)
           idxn(nj) = jglob-1
-          DO ni = 1, mesh%gauss%n_w;  
+          DO ni = 1, mesh%gauss%n_w;
              i = jj_loc(ni)
              iglob = LA%loc_to_glob(1,i)
              idxm(ni) = iglob-1
@@ -178,15 +178,15 @@ CONTAINS
           END DO
           viscolm  = (visco + stab*mesh%hloc(m))*mesh%gauss%rj(l,m)
 
-          DO nj = 1, n_w  
-             DO ni = 1, n_w  
+          DO nj = 1, n_w
+             DO ni = 1, n_w
                 !grad(u).grad(v) w.r.t. r and z
                 xij = SUM(mesh%gauss%dw(:,nj,l,m)*mesh%gauss%dw(:,ni,l,m))
                 !start diagonal block
                 a_loc(ni,nj) =  a_loc(ni,nj) + ray * viscolm* xij  &
                      + mass*ray*wwprod(ni,nj,l)*mesh%gauss%rj(l,m) &
                      + viscolm*mode**2*wwprod(ni,nj,l)/ray
-                !end diagonal block             
+                !end diagonal block
              END DO
           END DO
        END DO
@@ -216,17 +216,17 @@ CONTAINS
     INTEGER      :: m, l, ni, nj, i, j, iglob, jglob, n_w, n_ws, ms, ls, ib ! MODIFICATION: for Robin
     REAL(KIND=8) :: viscolm, xij, x ! MODIFICATION: for Robin
     REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,mesh%gauss%n_ws) :: h_phii_phij ! MODIFICATION: terms for Robin
-    INTEGER, DIMENSION(1:1)                                  :: coeff_index ! MODIFICATION: index of robin coefficient in the list   
+    INTEGER, DIMENSION(1:1)                                  :: coeff_index ! MODIFICATION: index of robin coefficient in the list
 
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     Mat                                         :: matrix
     PetscErrorCode                              :: ierr
     CALL MatZeroEntries (matrix, ierr)
     CALL MatSetOption (matrix, MAT_ROW_ORIENTED, PETSC_FALSE, ierr)
 
-    DO l = 1, mesh%gauss%l_G 
-       DO ni = 1, mesh%gauss%n_w 
-          DO nj = 1, mesh%gauss%n_w 
+    DO l = 1, mesh%gauss%l_G
+       DO ni = 1, mesh%gauss%n_w
+          DO nj = 1, mesh%gauss%n_w
              wwprod(ni,nj,l) = mesh%gauss%ww(ni,l)*mesh%gauss%ww(nj,l)
           END DO
        END DO
@@ -237,11 +237,11 @@ CONTAINS
        jj_loc = mesh%jj(:,m)
        a_loc = 0.d0
 
-       DO nj = 1, mesh%gauss%n_w;  
+       DO nj = 1, mesh%gauss%n_w;
           j = jj_loc(nj)
           jglob = LA%loc_to_glob(1,j)
           idxn(nj) = jglob-1
-          DO ni = 1, mesh%gauss%n_w;  
+          DO ni = 1, mesh%gauss%n_w;
              i = jj_loc(ni)
              iglob = LA%loc_to_glob(1,i)
              idxm(ni) = iglob-1
@@ -255,15 +255,15 @@ CONTAINS
              ray = ray + mesh%rr(1,i)*mesh%gauss%ww(ni,l)
           END DO
           viscolm  = (visco(m) + stab*mesh%hloc(m))*mesh%gauss%rj(l,m)
-          DO nj = 1, n_w  
-             DO ni = 1, n_w  
+          DO nj = 1, n_w
+             DO ni = 1, n_w
                 !grad(u).grad(v) w.r.t. r and z
                 xij = SUM(mesh%gauss%dw(:,nj,l,m)*mesh%gauss%dw(:,ni,l,m))
                 !start diagonal block
                 a_loc(ni,nj) =  a_loc(ni,nj) + ray * viscolm* xij  &
                      + heat_capa(m) * mass*ray*wwprod(ni,nj,l)*mesh%gauss%rj(l,m) &
                      + viscolm*mode**2*wwprod(ni,nj,l)/ray
-                !end diagonal block             
+                !end diagonal block
              END DO
           END DO
        END DO
@@ -286,7 +286,7 @@ CONTAINS
              DO ni=1, n_ws
                 DO nj=1, n_ws
                    h_phii_phij(ni,nj) = h_phii_phij(ni,nj) + &
-                        x * mesh%gauss%wws(ni,ls) * mesh%gauss%wws(nj,ls) 
+                        x * mesh%gauss%wws(ni,ls) * mesh%gauss%wws(nj,ls)
                 ENDDO
              ENDDO
           ENDDO
@@ -311,7 +311,7 @@ CONTAINS
   SUBROUTINE qs_mass_vect_3x3(LA, mesh, mass, matrix)
     !========================================================================
     ! laplacien vectoriel qui renvoie une matrice 3np * 3np, pour trois composantes
-    ! (V1,V4,V5), (V2,V3,V6) 
+    ! (V1,V4,V5), (V2,V3,V6)
     ! calcul de l'operateur mass-visco(lap-eps1*1/r^2) et eps2*2m*visco/r^2
     ! eps1 et eps2 sont des parametres qui definissent le type d'operateur
     ! type de l'operateur : 1 pour les composantes 1, 4 et 5
@@ -328,11 +328,11 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w,mesh%gauss%l_G) :: wwprod
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w) :: aij
     REAL(KIND=8) :: ray
-    REAL(KIND=8), DIMENSION(3*mesh%gauss%n_w,3*mesh%gauss%n_w)   :: mat_loc 
+    REAL(KIND=8), DIMENSION(3*mesh%gauss%n_w,3*mesh%gauss%n_w)   :: mat_loc
     INTEGER,      DIMENSION(3*mesh%gauss%n_w)                    :: idxn, jdxn
     INTEGER                                                      :: ix, jx, iglob, jglob
     INTEGER,      DIMENSION(mesh%gauss%n_w)                      :: jj_loc
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     Mat                                         :: matrix
     PetscErrorCode                              :: ierr
 
@@ -342,9 +342,9 @@ CONTAINS
     n_w  = mesh%gauss%n_w
 
 
-    DO l = 1, mesh%gauss%l_G 
-       DO ni = 1, mesh%gauss%n_w 
-          DO nj = 1, mesh%gauss%n_w 
+    DO l = 1, mesh%gauss%l_G
+       DO ni = 1, mesh%gauss%n_w
+          DO nj = 1, mesh%gauss%n_w
              wwprod(ni,nj,l) = mesh%gauss%ww(ni,l)*mesh%gauss%ww(nj,l)
           END DO
        END DO
@@ -361,14 +361,14 @@ CONTAINS
           END DO
           DO nj = 1, mesh%gauss%n_w; j = jj_loc(nj)
              DO ni = 1, mesh%gauss%n_w;  i = jj_loc(ni)
-                aij(ni,nj) =  aij(ni,nj) + mass*ray*wwprod(ni,nj,l)*mesh%gauss%rj(l,m) 
+                aij(ni,nj) =  aij(ni,nj) + mass*ray*wwprod(ni,nj,l)*mesh%gauss%rj(l,m)
              ENDDO
           ENDDO
        ENDDO
 
        mat_loc = 0.d0
        DO ki= 1, 3
-          DO ni = 1, n_w 
+          DO ni = 1, n_w
              i = jj_loc(ni)
              iglob = LA%loc_to_glob(ki,i)
              ix = (ki-1)*n_w+ni
@@ -398,7 +398,7 @@ CONTAINS
   SUBROUTINE qs_diff_mass_vect_3x3(type_op, LA, mesh, visco, mass, stab, stab_bdy_ns, i_mode, mode, matrix)
     !========================================================================
     ! laplacien vectoriel qui renvoie une matrice 3np * 3np, pour trois composantes
-    ! (V1,V4,V5), (V2,V3,V6) 
+    ! (V1,V4,V5), (V2,V3,V6)
     ! calcul de l'operateur mass-visco(lap-eps1*1/r^2) et eps2*2m*visco/r^2
     ! eps1 et eps2 sont des parametres qui definissent le type d'operateur
     ! type de l'operateur : 1 pour les composantes 1, 4 et 5
@@ -407,7 +407,7 @@ CONTAINS
     USE my_util
     USE input_data
     IMPLICIT NONE
-    INTEGER     ,                 INTENT(IN)    :: type_op, mode, i_mode 
+    INTEGER     ,                 INTENT(IN)    :: type_op, mode, i_mode
     REAL(KIND=8),                 INTENT(IN)    :: visco, mass, stab, stab_bdy_ns
     TYPE(petsc_csr_la)                          :: LA
     TYPE(mesh_type), TARGET                     :: mesh
@@ -417,15 +417,15 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w) :: aij, bij, cij, dij, eij, fij
     REAL(KIND=8) :: ray, eps1, eps2, z, hm1, y, x, stab_normal
     REAL(KIND=8) :: two = 2.d0, coeff_stab_normal=10.d0
-    REAL(KIND=8), DIMENSION(3*mesh%gauss%n_w,3*mesh%gauss%n_w)   :: mat_loc 
+    REAL(KIND=8), DIMENSION(3*mesh%gauss%n_w,3*mesh%gauss%n_w)   :: mat_loc
     INTEGER,      DIMENSION(3*mesh%gauss%n_w)                    :: idxn, jdxn
-    REAL(KIND=8), DIMENSION(2*mesh%gauss%n_ws,2*mesh%gauss%n_ws) :: mat_loc_s 
+    REAL(KIND=8), DIMENSION(2*mesh%gauss%n_ws,2*mesh%gauss%n_ws) :: mat_loc_s
     INTEGER,      DIMENSION(2*mesh%gauss%n_ws)                   :: idxn_s, jdxn_s
     INTEGER                                                      :: ix, jx, iglob, jglob
     INTEGER,      DIMENSION(mesh%gauss%n_w)                      :: jj_loc
     REAL(KIND=8) ::  hm, viscomode, hh
     !=====DEUX INSERTIONS VALEURS A FAIRE....
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     Mat                                         :: matrix
     PetscErrorCode                              :: ierr
 
@@ -444,8 +444,8 @@ CONTAINS
        eps1 = 1.d0
        eps2 = -1.d0
        k_max = 2 !Structure vectorielle
-    ELSEIF (type_op == 3) THEN  
-       !cas du laplacien scalaire   
+    ELSEIF (type_op == 3) THEN
+       !cas du laplacien scalaire
        eps1 = 0.d0
        eps2 = 0.d0
        k_max = 1 !Structure scalaire
@@ -457,9 +457,9 @@ CONTAINS
     ENDIF
 
 
-    DO l = 1, mesh%gauss%l_G 
-       DO ni = 1, mesh%gauss%n_w 
-          DO nj = 1, mesh%gauss%n_w 
+    DO l = 1, mesh%gauss%l_G
+       DO ni = 1, mesh%gauss%n_w
+          DO nj = 1, mesh%gauss%n_w
              wwprod(ni,nj,l) = mesh%gauss%ww(ni,l)*mesh%gauss%ww(nj,l)
           END DO
        END DO
@@ -501,7 +501,7 @@ CONTAINS
                      + viscomode*mode**2*wwprod(ni,nj,l)/ray
                 cij(ni,nj) =  cij(ni,nj) + z
                 aij(ni,nj) =  aij(ni,nj) + z + viscomode*eps1*wwprod(ni,nj,l)/ray
-                !blocs couplant              
+                !blocs couplant
                 bij(ni,nj) = bij(ni,nj) + eps2*viscomode*2*mode*wwprod(ni,nj,l)/ray
              ENDDO
           ENDDO
@@ -510,7 +510,7 @@ CONTAINS
 
        mat_loc = 0.d0
        DO ki= 1, 3
-          DO ni = 1, n_w 
+          DO ni = 1, n_w
              i = jj_loc(ni)
              iglob = LA%loc_to_glob(ki,i)
              ix = (ki-1)*n_w+ni
@@ -573,7 +573,7 @@ CONTAINS
              END DO
           END DO
        END DO
- 
+
        mat_loc=0.d0
        idxn=0
        jdxn=0
@@ -636,7 +636,7 @@ CONTAINS
        !===Normalization is not done properly: (1.d0+visco)
        !===To be revisited some day.
        DO ms = 1, mesh%mes
-          IF (MINVAL(ABS(mesh%sides(ms)- inputs%vv_list_dirichlet_normal_velocity_sides)).NE.0) CYCLE 
+          IF (MINVAL(ABS(mesh%sides(ms)- inputs%vv_list_dirichlet_normal_velocity_sides)).NE.0) CYCLE
           aij = 0.d0
           bij = 0.d0
           cij = 0.d0
@@ -715,7 +715,7 @@ CONTAINS
   SUBROUTINE qs_diff_mass_vect_3x3_divpenal(type_op, LA, mesh, visco, mass, stab, stab_bdy_ns, i_mode, mode, matrix)
     !========================================================================
     ! laplacien vectoriel qui renvoie une matrice 3np * 3np, pour trois composantes
-    ! (V1,V4,V5), (V2,V3,V6) 
+    ! (V1,V4,V5), (V2,V3,V6)
     ! calcul de l'operateur mass-visco(lap-eps1*1/r^2) et eps2*2m*visco/r^2
     ! eps1 et eps2 sont des parametres qui definissent le type d'operateur
     ! type de l'operateur : 1 pour les composantes 1, 4 et 5
@@ -726,7 +726,7 @@ CONTAINS
     IMPLICIT NONE
 
 
-    INTEGER     ,                 INTENT(IN)    :: type_op, mode, i_mode  
+    INTEGER     ,                 INTENT(IN)    :: type_op, mode, i_mode
     REAL(KIND=8),                 INTENT(IN)    :: visco, mass, stab, stab_bdy_ns
     TYPE(petsc_csr_la)                          :: LA
     TYPE(mesh_type), TARGET                     :: mesh
@@ -741,15 +741,15 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w) :: aij, bij, cij, dij, eij, fij
     REAL(KIND=8) :: ray, eps1, eps2, z, hm1, y, x, stab_normal
     REAL(KIND=8) :: two = 2.d0, coeff_stab_normal=10.d0
-    REAL(KIND=8), DIMENSION(3*mesh%gauss%n_w,3*mesh%gauss%n_w)   :: mat_loc 
+    REAL(KIND=8), DIMENSION(3*mesh%gauss%n_w,3*mesh%gauss%n_w)   :: mat_loc
     INTEGER,      DIMENSION(3*mesh%gauss%n_w)                    :: idxn, jdxn
-    REAL(KIND=8), DIMENSION(2*mesh%gauss%n_ws,2*mesh%gauss%n_ws) :: mat_loc_s 
+    REAL(KIND=8), DIMENSION(2*mesh%gauss%n_ws,2*mesh%gauss%n_ws) :: mat_loc_s
     INTEGER,      DIMENSION(2*mesh%gauss%n_ws)                   :: idxn_s, jdxn_s
     INTEGER                                                      :: ix, jx, iglob, jglob
     INTEGER,      DIMENSION(mesh%gauss%n_w)                      :: jj_loc
     REAL(KIND=8) :: viscomode, hm
     !=====DEUX INSERTIONS VALEURS A FAIRE....
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     Mat                                         :: matrix
     PetscErrorCode                              :: ierr
 
@@ -768,8 +768,8 @@ CONTAINS
        eps1 = 1.d0
        eps2 = -1.d0
        k_max = 2 !Structure vectorielle
-    ELSEIF (type_op == 3) THEN  
-       !cas du laplacien scalaire   
+    ELSEIF (type_op == 3) THEN
+       !cas du laplacien scalaire
        eps1 = 0.d0
        eps2 = 0.d0
        k_max = 1 !Structure scalaire
@@ -781,9 +781,9 @@ CONTAINS
     ENDIF
 
 
-    DO l = 1, mesh%gauss%l_G 
-       DO ni = 1, mesh%gauss%n_w 
-          DO nj = 1, mesh%gauss%n_w 
+    DO l = 1, mesh%gauss%l_G
+       DO ni = 1, mesh%gauss%n_w
+          DO nj = 1, mesh%gauss%n_w
              wwprod(ni,nj,l) = mesh%gauss%ww(ni,l)*mesh%gauss%ww(nj,l)
           END DO
        END DO
@@ -825,7 +825,7 @@ CONTAINS
                      + viscomode*mode**2*wwprod(ni,nj,l)/ray
                 cij(ni,nj) =  cij(ni,nj) + z
                 aij(ni,nj) =  aij(ni,nj) + z + viscomode*eps1*wwprod(ni,nj,l)/ray
-                !blocs couplant              
+                !blocs couplant
                 bij(ni,nj) = bij(ni,nj) + eps2*viscomode*2*mode*wwprod(ni,nj,l)/ray
              ENDDO
           ENDDO
@@ -836,13 +836,13 @@ CONTAINS
 
        !++++++++++++++++
 !!$       DO ki= 1, k_max
-!!$          DO ni = 1, mesh%gauss%n_w 
+!!$          DO ni = 1, mesh%gauss%n_w
 !!$             i = mesh%jj(ni, m)
-!!$             ib = i + (ki-1)*np 
+!!$             ib = i + (ki-1)*np
 !!$             DO kj = 1, k_max
 !!$                DO nj = 1, mesh%gauss%n_w
 !!$                   j = mesh%jj(nj, m)
-!!$                   jb = j + (kj-1)*np 
+!!$                   jb = j + (kj-1)*np
 !!$                   DO p = ia(ib),  ia(ib+1) - 1
 !!$                      IF (ja(p) == jb) THEN
 !!$                         IF (ki==kj) THEN
@@ -860,13 +860,13 @@ CONTAINS
 !!$
 !!$       IF (type_op /= 3) THEN
 !!$          ki= 3
-!!$          DO ni = 1, mesh%gauss%n_w 
+!!$          DO ni = 1, mesh%gauss%n_w
 !!$             i = mesh%jj(ni, m)
-!!$             ib = i + (ki-1)*np 
+!!$             ib = i + (ki-1)*np
 !!$             kj = 3
 !!$             DO nj = 1, mesh%gauss%n_w
 !!$                j = mesh%jj(nj, m)
-!!$                jb = j + (kj-1)*np 
+!!$                jb = j + (kj-1)*np
 !!$                DO p = ia(ib),  ia(ib+1) - 1
 !!$                   IF (ja(p) == jb) THEN
 !!$                      a0(p) = a0(p) + cij(ni,nj)
@@ -879,7 +879,7 @@ CONTAINS
 
        mat_loc = 0.d0
        DO ki= 1, 3
-          DO ni = 1, n_w 
+          DO ni = 1, n_w
              i = jj_loc(ni)
              iglob = LA%loc_to_glob(ki,i)
              ix = (ki-1)*n_w+ni
@@ -925,7 +925,7 @@ CONTAINS
           END DO
 
           viscolm  = visco*mesh%gauss%rj(l,m)*ray
-!LC 2017/01/27
+          !LC 2017/01/27
           !div_penal = inputs%div_stab_in_ns*mesh%gauss%rj(l,m)*ray
           div_penal = inputs%div_stab_in_ns/inputs%Re*mesh%gauss%rj(l,m)*ray
 
@@ -1025,7 +1025,7 @@ CONTAINS
 !!$                   EXIT
 !!$                ENDIF
 !!$             END DO
-!!$             jb= j + np 
+!!$             jb= j + np
 !!$             DO p = ia(ib),  ia(ib+1) - 1
 !!$                IF (ja(p) == jb) THEN
 !!$                   a0(p) = a0(p) + bij(ni,nj)
@@ -1093,7 +1093,7 @@ CONTAINS
        !===Surface terms
        stab_normal = coeff_stab_normal*(1.d0+visco)
        DO ms = 1, mesh%mes
-          IF (MINVAL(ABS(mesh%sides(ms)- inputs%vv_list_dirichlet_normal_velocity_sides)).NE.0) CYCLE 
+          IF (MINVAL(ABS(mesh%sides(ms)- inputs%vv_list_dirichlet_normal_velocity_sides)).NE.0) CYCLE
           aij = 0.d0
           bij = 0.d0
           cij = 0.d0
@@ -1163,13 +1163,13 @@ CONTAINS
           CALL MatSetValues(matrix, 2*n_ws, idxn_s, 2*n_ws, jdxn_s, mat_loc_s, ADD_VALUES, ierr)
 
 !!$       DO ki= 1, 3, 2
-!!$          DO ni = 1, mesh%gauss%n_ws 
+!!$          DO ni = 1, mesh%gauss%n_ws
 !!$             i = mesh%jjs(ni, ms)
 !!$             ib = i + (ki-1)*np
 !!$             DO kj = 1, 3, 2
 !!$                DO nj = 1, mesh%gauss%n_ws
 !!$                   j = mesh%jjs(nj, ms)
-!!$                   jb = j + (kj-1)*np 
+!!$                   jb = j + (kj-1)*np
 !!$                   DO p = ia(ib),  ia(ib+1) - 1
 !!$                      IF (ja(p) == jb) THEN
 !!$                         IF      (ki == 1 .AND. kj == 1) THEN
@@ -1178,7 +1178,7 @@ CONTAINS
 !!$                            a0(p) = a0(p) + bij(ni,nj) + cij(nj,ni)
 !!$                         ELSE IF (ki == 3 .AND. kj == 1) THEN
 !!$                            a0(p) = a0(p) + cij(ni,nj) + bij(nj,ni)
-!!$                         ELSE 
+!!$                         ELSE
 !!$                            a0(p) = a0(p) + dij(ni,nj) + dij(nj,ni)
 !!$                         END IF
 !!$                         EXIT
@@ -1204,7 +1204,7 @@ CONTAINS
        stab_art_comp, i_mode, mode, matrix)
     !========================================================================
     ! laplacien vectoriel qui renvoie une matrice 3np * 3np, pour trois composantes
-    ! (V1,V4,V5), (V2,V3,V6) 
+    ! (V1,V4,V5), (V2,V3,V6)
     ! calcul de l'operateur mass-visco(lap-eps1*1/r^2) et eps2*2m*visco/r^2
     ! eps1 et eps2 sont des parametres qui definissent le type d'operateur
     ! type de l'operateur : 1 pour les composantes 1, 4 et 5
@@ -1215,7 +1215,7 @@ CONTAINS
     IMPLICIT NONE
 
 
-    INTEGER     ,                 INTENT(IN)    :: type_op, mode, i_mode  
+    INTEGER     ,                 INTENT(IN)    :: type_op, mode, i_mode
     REAL(KIND=8),                 INTENT(IN)    :: visco, mass, stab, stab_bdy_ns, stab_art_comp
     TYPE(petsc_csr_la)                          :: LA
     TYPE(mesh_type), TARGET                     :: mesh
@@ -1225,15 +1225,15 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w) :: aij, bij, cij, dij, eij, fij
     REAL(KIND=8) :: ray, eps1, eps2, z, hm1, y, x, stab_normal
     REAL(KIND=8) :: two = 2.d0, coeff_stab_normal=10.d0
-    REAL(KIND=8), DIMENSION(3*mesh%gauss%n_w,3*mesh%gauss%n_w)   :: mat_loc 
+    REAL(KIND=8), DIMENSION(3*mesh%gauss%n_w,3*mesh%gauss%n_w)   :: mat_loc
     INTEGER,      DIMENSION(3*mesh%gauss%n_w)                    :: idxn, jdxn
-    REAL(KIND=8), DIMENSION(2*mesh%gauss%n_ws,2*mesh%gauss%n_ws) :: mat_loc_s 
+    REAL(KIND=8), DIMENSION(2*mesh%gauss%n_ws,2*mesh%gauss%n_ws) :: mat_loc_s
     INTEGER,      DIMENSION(2*mesh%gauss%n_ws)                   :: idxn_s, jdxn_s
     INTEGER                                                      :: ix, jx, iglob, jglob
     INTEGER,      DIMENSION(mesh%gauss%n_w)                      :: jj_loc
     REAL(KIND=8) :: viscomode, hh, hm
     !=====DEUX INSERTIONS VALEURS A FAIRE....
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     Mat                                         :: matrix
     PetscErrorCode                              :: ierr
 
@@ -1252,8 +1252,8 @@ CONTAINS
        eps1 = 1.d0
        eps2 = -1.d0
        k_max = 2 !Structure vectorielle
-    ELSEIF (type_op == 3) THEN  
-       !cas du laplacien scalaire   
+    ELSEIF (type_op == 3) THEN
+       !cas du laplacien scalaire
        eps1 = 0.d0
        eps2 = 0.d0
        k_max = 1 !Structure scalaire
@@ -1265,9 +1265,9 @@ CONTAINS
     ENDIF
 
 
-    DO l = 1, mesh%gauss%l_G 
-       DO ni = 1, mesh%gauss%n_w 
-          DO nj = 1, mesh%gauss%n_w 
+    DO l = 1, mesh%gauss%l_G
+       DO ni = 1, mesh%gauss%n_w
+          DO nj = 1, mesh%gauss%n_w
              wwprod(ni,nj,l) = mesh%gauss%ww(ni,l)*mesh%gauss%ww(nj,l)
           END DO
        END DO
@@ -1310,7 +1310,7 @@ CONTAINS
                      + viscomode*mode**2*wwprod(ni,nj,l)/ray
                 cij(ni,nj) =  cij(ni,nj) + z
                 aij(ni,nj) =  aij(ni,nj) + z + viscomode*eps1*wwprod(ni,nj,l)/ray
-                !blocs couplant              
+                !blocs couplant
                 bij(ni,nj) = bij(ni,nj) + eps2*viscomode*2*mode*wwprod(ni,nj,l)/ray
              ENDDO
           ENDDO
@@ -1319,7 +1319,7 @@ CONTAINS
 
        mat_loc = 0.d0
        DO ki= 1, 3
-          DO ni = 1, n_w 
+          DO ni = 1, n_w
              i = jj_loc(ni)
              iglob = LA%loc_to_glob(ki,i)
              ix = (ki-1)*n_w+ni
@@ -1452,7 +1452,7 @@ CONTAINS
        !===Surface terms
        stab_normal = coeff_stab_normal*(1.d0+visco)
        DO ms = 1, mesh%mes
-          IF (MINVAL(ABS(mesh%sides(ms)- inputs%vv_list_dirichlet_normal_velocity_sides)).NE.0) CYCLE 
+          IF (MINVAL(ABS(mesh%sides(ms)- inputs%vv_list_dirichlet_normal_velocity_sides)).NE.0) CYCLE
           aij = 0.d0
           bij = 0.d0
           cij = 0.d0
@@ -1540,7 +1540,7 @@ CONTAINS
     INTEGER,      DIMENSION(mesh%gauss%n_w)                :: idxm, idxn
     INTEGER :: m, l, ni, nj, i, j, iglob, jglob
     REAL(KIND=8) :: al, x, ray
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     Mat                                         :: matrix
     PetscErrorCode                              :: ierr
     CALL MatZeroEntries (matrix, ierr)
@@ -1556,11 +1556,11 @@ CONTAINS
           END DO
 
           al = alpha *mesh%gauss%rj(l,m)*ray
-          DO nj = 1, mesh%gauss%n_w;  
+          DO nj = 1, mesh%gauss%n_w;
              j = jj_loc(nj)
              jglob = LA%loc_to_glob(1,j)
              idxn(nj) = jglob-1
-             DO ni = 1, mesh%gauss%n_w;  
+             DO ni = 1, mesh%gauss%n_w;
                 i = jj_loc(ni)
                 iglob = LA%loc_to_glob(1,i)
                 idxm(ni) = iglob-1
@@ -1575,47 +1575,47 @@ CONTAINS
     CALL MatAssemblyEnd(matrix,MAT_FINAL_ASSEMBLY,ierr)
   END SUBROUTINE qs_00_M
 
-SUBROUTINE qs_11_M (mesh, visco, LA, matrix)
-  !=================================================
-  USE def_type_mesh
-  IMPLICIT NONE
-  TYPE(mesh_type), TARGET                     :: mesh
-  REAL(KIND=8),                 INTENT(IN)    :: visco
-  TYPE(petsc_csr_LA)                          :: LA
-  REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w) :: mat_loc
-  INTEGER,      DIMENSION(mesh%gauss%n_w)     :: idxm, idxn
-  INTEGER,      DIMENSION(mesh%gauss%n_w)     :: jj_loc
-  INTEGER :: m, l, ni, nj, i, j, iglob, jglob
-  REAL(KIND=8) :: al, x, ray
-!#include "petsc/finclude/petsc.h"
-  Mat            :: matrix
-  PetscErrorCode :: ierr
-  CALL MatZeroEntries (matrix, ierr)
+  SUBROUTINE qs_11_M (mesh, visco, LA, matrix)
+    !=================================================
+    USE def_type_mesh
+    IMPLICIT NONE
+    TYPE(mesh_type), TARGET                     :: mesh
+    REAL(KIND=8),                 INTENT(IN)    :: visco
+    TYPE(petsc_csr_LA)                          :: LA
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w) :: mat_loc
+    INTEGER,      DIMENSION(mesh%gauss%n_w)     :: idxm, idxn
+    INTEGER,      DIMENSION(mesh%gauss%n_w)     :: jj_loc
+    INTEGER :: m, l, ni, nj, i, j, iglob, jglob
+    REAL(KIND=8) :: al, x, ray
+    !#include "petsc/finclude/petsc.h"
+    Mat            :: matrix
+    PetscErrorCode :: ierr
+    CALL MatZeroEntries (matrix, ierr)
 
-  DO m = 1, mesh%dom_me
-     jj_loc = mesh%jj(:,m)
-     mat_loc = 0.d0
+    DO m = 1, mesh%dom_me
+       jj_loc = mesh%jj(:,m)
+       mat_loc = 0.d0
 
-     DO nj = 1, mesh%gauss%n_w;  
-        j = jj_loc(nj)
-        jglob = LA%loc_to_glob(1,j)
-        idxn(nj) = jglob-1
-        DO ni = 1, mesh%gauss%n_w;  
-           i = jj_loc(ni)
-           iglob = LA%loc_to_glob(1,i)
-           idxm(ni) = iglob-1
-        END DO
-     END DO
+       DO nj = 1, mesh%gauss%n_w;
+          j = jj_loc(nj)
+          jglob = LA%loc_to_glob(1,j)
+          idxn(nj) = jglob-1
+          DO ni = 1, mesh%gauss%n_w;
+             i = jj_loc(ni)
+             iglob = LA%loc_to_glob(1,i)
+             idxm(ni) = iglob-1
+          END DO
+       END DO
 
-     DO l = 1, mesh%gauss%l_G 
-        !Compute radius of Gauss point
-        ray = 0
-        DO ni = 1, mesh%gauss%n_w;  i = jj_loc(ni)
-           ray = ray + mesh%rr(1,i)*mesh%gauss%ww(ni,l)
-        END DO
+       DO l = 1, mesh%gauss%l_G
+          !Compute radius of Gauss point
+          ray = 0
+          DO ni = 1, mesh%gauss%n_w;  i = jj_loc(ni)
+             ray = ray + mesh%rr(1,i)*mesh%gauss%ww(ni,l)
+          END DO
           al = visco * mesh%gauss%rj(l,m)
-          DO nj = 1, mesh%gauss%n_w;  
-             DO ni = 1, mesh%gauss%n_w;  
+          DO nj = 1, mesh%gauss%n_w;
+             DO ni = 1, mesh%gauss%n_w;
                 x =al*SUM(mesh%gauss%dw(:,nj,l,m)*mesh%gauss%dw(:,ni,l,m))
                 mat_loc(ni,nj) = mat_loc(ni,nj) + x
              ENDDO
@@ -1642,15 +1642,15 @@ SUBROUTINE qs_11_M (mesh, visco, LA, matrix)
     REAL(KIND=8)                                           :: ray
     INTEGER      :: m, l, ni, nj, i, j, iglob, jglob, n_w
     REAL(KIND=8) :: viscolm, xij, hm, viscomode, hh
-!#include "petsc/finclude/petsc.h"
+    !#include "petsc/finclude/petsc.h"
     Mat                                         :: matrix
     PetscErrorCode                              :: ierr
     CALL MatZeroEntries (matrix, ierr)
     CALL MatSetOption (matrix, MAT_ROW_ORIENTED, PETSC_FALSE, ierr)
 
-    DO l = 1, mesh%gauss%l_G 
-       DO ni = 1, mesh%gauss%n_w 
-          DO nj = 1, mesh%gauss%n_w 
+    DO l = 1, mesh%gauss%l_G
+       DO ni = 1, mesh%gauss%n_w
+          DO nj = 1, mesh%gauss%n_w
              wwprod(ni,nj,l) = mesh%gauss%ww(ni,l)*mesh%gauss%ww(nj,l)
           END DO
        END DO
@@ -1661,11 +1661,11 @@ SUBROUTINE qs_11_M (mesh, visco, LA, matrix)
        jj_loc = mesh%jj(:,m)
        a_loc = 0.d0
 
-       DO nj = 1, mesh%gauss%n_w;  
+       DO nj = 1, mesh%gauss%n_w;
           j = jj_loc(nj)
           jglob = LA%loc_to_glob(1,j)
           idxn(nj) = jglob-1
-          DO ni = 1, mesh%gauss%n_w;  
+          DO ni = 1, mesh%gauss%n_w;
              i = jj_loc(ni)
              iglob = LA%loc_to_glob(1,i)
              idxm(ni) = iglob-1
@@ -1684,15 +1684,15 @@ SUBROUTINE qs_11_M (mesh, visco, LA, matrix)
           !hm=mesh%hm(i_mode) !(JLG April 7 2017)
           viscolm  = (visco + stab*hh)*mesh%gauss%rj(l,m)
           viscomode = (visco + stab*hm)*mesh%gauss%rj(l,m)
-          DO nj = 1, n_w  
-             DO ni = 1, n_w  
+          DO nj = 1, n_w
+             DO ni = 1, n_w
                 !grad(u).grad(v) w.r.t. r and z
                 xij = SUM(mesh%gauss%dw(:,nj,l,m)*mesh%gauss%dw(:,ni,l,m))
                 !start diagonal block
                 a_loc(ni,nj) =  a_loc(ni,nj) + ray * viscolm* xij  &
                      + mass*ray*wwprod(ni,nj,l)*mesh%gauss%rj(l,m) &
                      + viscomode*mode**2*wwprod(ni,nj,l)/ray
-                !end diagonal block             
+                !end diagonal block
              END DO
           END DO
        END DO
@@ -1704,17 +1704,3 @@ SUBROUTINE qs_11_M (mesh, visco, LA, matrix)
   END SUBROUTINE qs_diff_mass_scal_M_level
 
 END MODULE fem_M_axi
-
-
-
-
-
-
-
-
-
-
-
-
-
-

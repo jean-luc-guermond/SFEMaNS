@@ -13,7 +13,7 @@ CONTAINS
   SUBROUTINE BDF1_art_comp_with_m(comm_one_d, time, vv_3_LA, pp_1_LA, vvz_per, pp_per, &
        dt, Re, list_mode, pp_mesh, vv_mesh, pn_m1, pn, un_m1, un, Hn_p2, Bn_p2, tempn, &
        density_m1, density, density_p1, visco_dyn, level_set_p1, visc_entro_level)
-    !============================== 
+    !==============================
     USE def_type_mesh
     USE fem_M_axi
     USE fem_rhs_axi
@@ -38,7 +38,7 @@ CONTAINS
     USE my_util
     IMPLICIT NONE
     REAL(KIND=8)                                           :: time, dt, Re
-    INTEGER,      DIMENSION(:),              INTENT(IN)    :: list_mode   
+    INTEGER,      DIMENSION(:),              INTENT(IN)    :: list_mode
     TYPE(mesh_type),                         INTENT(IN)    :: pp_mesh, vv_mesh
     TYPE(petsc_csr_LA)                                     :: vv_3_LA, pp_1_LA
     TYPE(periodic_type),                     INTENT(IN)    :: vvz_per, pp_per
@@ -51,7 +51,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:),          INTENT(IN)    :: visco_dyn
     REAL(KIND=8), DIMENSION(:,:),            INTENT(OUT)   :: visc_entro_level
     REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode))  :: Hn_p2_aux
-    !===Saved variables 
+    !===Saved variables
     INTEGER,                                       SAVE :: m_max_c
     TYPE(dyn_real_line),DIMENSION(:), ALLOCATABLE, SAVE :: pp_global_D
     TYPE(dyn_int_line), DIMENSION(:), POINTER,     SAVE :: pp_mode_global_js_D
@@ -109,7 +109,7 @@ CONTAINS
     Vec,                        SAVE :: vb_3_145, vb_3_236, vx_3, vx_3_ghost
     Vec,                        SAVE :: pb_1,    pb_2,    px_1, px_1_ghost
     KSP, DIMENSION(:), POINTER, SAVE :: vel_ksp
-    KSP,                        SAVE :: mass_ksp, mass_ksp0 
+    KSP,                        SAVE :: mass_ksp, mass_ksp0
     !------------------------------END OF DECLARATION--------------------------------------
 
     IF (once) THEN
@@ -119,7 +119,7 @@ CONTAINS
        !===CREATE PETSC VECTORS AND GHOSTS
        CALL create_my_ghost(vv_mesh,vv_3_LA,vv_3_ifrom)
        n = 3*vv_mesh%dom_np
-       CALL VecCreateGhost(comm_one_d(1), n, & 
+       CALL VecCreateGhost(comm_one_d(1), n, &
             PETSC_DETERMINE, SIZE(vv_3_ifrom), vv_3_ifrom, vx_3, ierr)
        CALL VecGhostGetLocalForm(vx_3, vx_3_ghost, ierr)
        CALL VecDuplicate(vx_3, vb_3_145, ierr)
@@ -127,7 +127,7 @@ CONTAINS
 
        CALL create_my_ghost(pp_mesh,pp_1_LA,pp_1_ifrom)
        n = pp_mesh%dom_np
-       CALL VecCreateGhost(comm_one_d(1), n, & 
+       CALL VecCreateGhost(comm_one_d(1), n, &
             PETSC_DETERMINE, SIZE(pp_1_ifrom), pp_1_ifrom, px_1, ierr)
        CALL VecGhostGetLocalForm(px_1, px_1_ghost, ierr)
        CALL VecDuplicate(px_1, pb_1, ierr)
@@ -158,10 +158,10 @@ CONTAINS
        !===End Momentum Initialization
 
        !===Tensors_m1 allocation and intialization
-       ALLOCATE(tensor_m1_gauss(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)))       
+       ALLOCATE(tensor_m1_gauss(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)))
        CALL smb_compute_tensor_gauss(comm_one_d(2), vv_mesh, list_mode, un_m1, momentum_m1, &
             nb_procs, bloc_size, m_max_pad, tensor, tensor_m1_gauss)
-    
+
        ALLOCATE(visc_grad_vel_m1(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)))
        CALL smb_explicit_diffu_sym(comm_one_d(2), vv_mesh, list_mode, nb_procs, &
             visco_dyn/Re, un_m1, visc_grad_vel_m1)
@@ -234,7 +234,7 @@ CONTAINS
           !nu_bar    = 2.0d0*nu_bar
           nu_bar    = 1.1d0*nu_bar
           stab_bar  = 1.1d0*stab_bar
-          
+
           ! Normalization penal_coeff_art_comp
           inputs%penal_coeff_art_comp=inputs%penal_coeff_art_comp*MAX(1.d0,nu_bar/stab_bar)
        ELSE
@@ -251,13 +251,13 @@ CONTAINS
              CALL qs_diff_mass_vect_3x3_divpenal_art_comp (1, vv_3_LA, vv_mesh, nu_bar/Re, three/(2*dt), &
                   inputs%LES_coeff1_mom, inputs%stab_bdy_ns, stab_bar*inputs%penal_coeff_art_comp, &
                   i, mode, vel_mat(nu_mat))
-          ELSE           
+          ELSE
              CALL qs_diff_mass_vect_3x3_divpenal_art_comp (1, vv_3_LA, vv_mesh, nu_bar/Re, one/(dt), &
                   inputs%LES_coeff1_mom, inputs%stab_bdy_ns, stab_bar*inputs%penal_coeff_art_comp, &
                   i, mode, vel_mat(nu_mat))
           END IF
           IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
-             CALL periodic_matrix_petsc(vvz_per%n_bord, vvz_per%list,vvz_per%perlist, & 
+             CALL periodic_matrix_petsc(vvz_per%n_bord, vvz_per%list,vvz_per%perlist, &
                   vel_mat(nu_mat), vv_3_LA)
           END IF
           CALL Dirichlet_M_parallel(vel_mat(nu_mat),vv_mode_global_js_D(i)%DIL)
@@ -275,7 +275,7 @@ CONTAINS
                   i, mode, vel_mat(nu_mat))
           END IF
           IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
-             CALL periodic_matrix_petsc(vvz_per%n_bord, vvz_per%list,vvz_per%perlist, & 
+             CALL periodic_matrix_petsc(vvz_per%n_bord, vvz_per%list,vvz_per%perlist, &
                   vel_mat(nu_mat), vv_3_LA)
           END IF
           CALL Dirichlet_M_parallel(vel_mat(nu_mat),vv_mode_global_js_D(i)%DIL)
@@ -287,7 +287,7 @@ CONTAINS
     ENDIF !===End of once
 
     !===Compute rhs by FFT at Gauss points
-    
+
     !===Compute extrapolation velocity and momentum
     IF (inputs%if_moment_bdf2) THEN
        uext = 2*un-un_m1
@@ -359,7 +359,7 @@ CONTAINS
        CALL smb_explicit_div_correction(comm_one_d(2), vv_mesh, list_mode, stab_bar, un, momentumext_div, stab_div_vel)
        stab_div_vel=inputs%penal_coeff_art_comp*stab_div_vel
        !===End Compute Div(un) - stab_bar*Div(momentum)
-       
+
        IF (inputs%if_surface_tension) THEN
           !===Compute coeff_surface*Grad(level_set):Grad(level_set)
           IF (inputs%if_level_set_P2) THEN
@@ -443,13 +443,13 @@ CONTAINS
                -visc_grad_vel(:,:,:,i)+stab_grad_mom(:,:,:,i)-visc_entro_grad_mom(:,:,:,i), &
                opt_grad_div=-stab_div_vel(:,:,i))
        END IF
-       
+
        !===Periodic boundary conditions
        IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
           CALL periodic_rhs_petsc(vvz_per%n_bord, vvz_per%list, vvz_per%perlist, vb_3_236, vv_3_LA)
           CALL periodic_rhs_petsc(vvz_per%n_bord, vvz_per%list, vvz_per%perlist, vb_3_145, vv_3_LA)
        END IF
-       
+
        !===Axis boundary conditions
        n1 = SIZE(vv_js_D(1)%DIL)
        n2 = SIZE(vv_js_D(2)%DIL)
@@ -470,7 +470,7 @@ CONTAINS
        !===Solve system 1, ur_c, ut_s, uz_c
        nu_mat  =2*i-1
        CALL solver(vel_ksp(nu_mat),vb_3_145,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
-       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,un_p1(:,1))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,un_p1(:,4))
@@ -478,7 +478,7 @@ CONTAINS
        !===Solve system 2, ur_s, ut_c, uz_s
        nu_mat = nu_mat + 1
        CALL solver(vel_ksp(nu_mat),vb_3_236,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
-       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,un_p1(:,2))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,un_p1(:,3))
@@ -494,7 +494,7 @@ CONTAINS
        !===End Correction of zero mode
 
        !===Update momentum
-       momentum_m2(:,:,i) = momentum_m1 (:,:,i)      
+       momentum_m2(:,:,i) = momentum_m1 (:,:,i)
        momentum_m1(:,:,i) = momentum (:,:,i)
        momentum (:,:,i) = un_p1
        !===End Update momentum
@@ -517,7 +517,7 @@ CONTAINS
 
        !===Assemble divergence of velocity in arrays pb_1, pb_2
        CALL qs_01_div_hybrid_2006(vv_mesh, pp_mesh, pp_1_LA, mode, un(:,:,i), pb_1, pb_2)
-       !===End assembling; pb_1, and pb_2 are petsc vectors for the rhs divergence 
+       !===End assembling; pb_1, and pb_2 are petsc vectors for the rhs divergence
 
        IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
           CALL periodic_rhs_petsc(pp_per%n_bord, pp_per%list, pp_per%perlist, pb_1, pp_1_LA)
@@ -537,7 +537,7 @@ CONTAINS
        ELSE
           CALL solver(mass_ksp,pb_1,px_1,reinit=.FALSE.,verbose=inputs%my_par_mass%verbose)
        END IF
-       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(px_1_ghost,1,1,pp_1_LA,div(:,1,i))
        IF (mode==0) THEN
@@ -545,7 +545,7 @@ CONTAINS
        ELSE
           CALL solver(mass_ksp,pb_2,px_1,reinit=.FALSE.,verbose=inputs%my_par_mass%verbose)
        END IF
-       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(px_1_ghost,1,1,pp_1_LA,div(:,2,i))
        !===End solve mass matrix for pressure correction
@@ -554,7 +554,7 @@ CONTAINS
 
 !!$    !===Compute visco_dyn*div on P1 elements
 !!$    DO i = 1, m_max_c
-!!$       DO k=1, 2  
+!!$       DO k=1, 2
 !!$          CALL project_P2_P1(vv_mesh%jj, pp_mesh%jj, visco_dyn(:,k,i), visco_dyn_P1(:,k,i))
 !!$       END DO
 !!$    END DO
@@ -567,13 +567,13 @@ CONTAINS
        mode = list_mode(i)
        !===Pressure computation
        pn_p1(:,:) = pn(:,:,i)
-       DO k=1, 2  
+       DO k=1, 2
           pn_p1(:,k) = pn_p1(:,k) - inputs%penal_coeff_art_comp*div(:,k,i)
        END DO
        !===End Pressure computation
 
        !===Handling of mean pressure
-       IF (mode == 0)  THEN  
+       IF (mode == 0)  THEN
           CALL Moy(comm_one_d(1),pp_mesh, pn_p1(:,1),moyenne)
           pn_p1(:,1) = pn_p1(:,1)-moyenne
        ENDIF
@@ -586,7 +586,7 @@ CONTAINS
        !===Correction of zero mode
 
        !===Update pressures
-       pn_m1(:,:,i)    = pn(:,:,i) 
+       pn_m1(:,:,i)    = pn(:,:,i)
        pn   (:,:,i)    = pn_p1
        !===End Update pressures
     ENDDO
@@ -604,8 +604,8 @@ CONTAINS
     IF (inputs%verbose_CFL) THEN
        vel_loc = 0.d0
        DO i = 1, m_max_c
-          IF (list_mode(i)==0) THEN 
-             coeff = 1.d0  
+          IF (list_mode(i)==0) THEN
+             coeff = 1.d0
           ELSE
              coeff = .5d0
           END IF
@@ -615,7 +615,7 @@ CONTAINS
        CALL MPI_COMM_SIZE(comm_one_d(2),nb_procs,code)
        CALL MPI_ALLREDUCE(vel_loc,vel_tot,vv_mesh%np,MPI_DOUBLE_PRECISION, MPI_SUM, comm_one_d(2), code)
        vel_tot = sqrt(vel_tot)
-       cfl = 0.d0 
+       cfl = 0.d0
        DO m = 1, vv_mesh%dom_me
           vloc = MAXVAL(vel_tot(vv_mesh%jj(:,m)))
           cfl = MAX(vloc*dt/MIN(vv_mesh%hloc(m),MAXVAL(vv_mesh%hm)),cfl)
@@ -641,7 +641,7 @@ CONTAINS
           CALL compute_entropy_viscosity_mom_no_level_set(comm_one_d, vv_3_LA, vv_mesh, pp_mesh, time, list_mode, &
                momentum, momentum_m1, momentum_m2, pn_m1, un_m1, tensor, rotb_b, tempn, visc_entro_real)
        ELSE
-          visc_entro_real=0.d0     
+          visc_entro_real=0.d0
        END IF
        !visc_entro_level not allocated so nothing to do
     END IF
@@ -658,12 +658,12 @@ CONTAINS
     USE def_type_mesh
     IMPLICIT NONE
     TYPE(mesh_type),                INTENT(IN)  :: mesh
-    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode    
+    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: V_in, W_in
     REAL(KIND=8), DIMENSION(:,:,:) :: V_out
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%me,6,SIZE(list_mode)) :: RotV, V, W
     INTEGER,      DIMENSION(mesh%gauss%n_w)                  :: j_loc
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc     
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc
     INTEGER                                                  ::  m, l , i, mode, index, k
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)   :: Vs, Ws
     REAL(KIND=8)   :: ray
@@ -707,7 +707,7 @@ CONTAINS
              V(index,4,i) = SUM(Vs(:,4)*mesh%gauss%ww(:,l))
              V(index,6,i) = SUM(Vs(:,6)*mesh%gauss%ww(:,l))
              !-----------------rotational sur les points de Gauss---------------------------
-             !coeff sur les cosinus 
+             !coeff sur les cosinus
              RotV(index,1,i) = mode/ray*V(index,6,i) &
                   -SUM(Vs(:,3)*dw_loc(2,:))
              RotV(index,4,i) =          SUM(Vs(:,2)*dw_loc(2,:)) &
@@ -715,7 +715,7 @@ CONTAINS
              RotV(index,5,i) =    1/ray*V(index,3,i) &
                   +SUM(Vs(:,3)*dw_loc(1,:)) &
                   -mode/ray*V(index,2,i)
-             !coeff sur les sinus       
+             !coeff sur les sinus
              RotV(index,2,i) =-mode/ray*V(index,5,i) &
                   -SUM(Vs(:,4)*dw_loc(2,:))
              RotV(index,3,i) =         SUM(Vs(:,1)*dw_loc(2,:)) &
@@ -732,14 +732,14 @@ CONTAINS
     bloc_size = SIZE(RotV,1)/nb_procs+1
     m_max_pad = 3*SIZE(list_mode)*nb_procs/2
 
-    CALL FFT_PAR_CROSS_PROD_DCL(communicator, RotV, W, V_out, nb_procs, bloc_size, m_max_pad, temps) 
+    CALL FFT_PAR_CROSS_PROD_DCL(communicator, RotV, W, V_out, nb_procs, bloc_size, m_max_pad, temps)
     tps = user_time() - tps
 
   END SUBROUTINE smb_CurlH_cross_B_gauss_sft_par
 
   SUBROUTINE smb_explicit_diffu_correction(communicator, mesh, list_mode, nb_procs, visc_dyn, stab_mom, &
        vel, mom, V_out, V2_out)
-    USE Gauss_points     
+    USE Gauss_points
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -747,7 +747,7 @@ CONTAINS
     IMPLICIT NONE
     TYPE(mesh_type), TARGET                     :: mesh
     INTEGER,                        INTENT(IN)  :: nb_procs
-    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode   
+    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: visc_dyn
     REAL(KIND=8)                                :: stab_mom
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: vel
@@ -763,7 +763,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,6,SIZE(list_mode))   :: part_visc_sym_grad_2
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,2,SIZE(list_mode))   :: visc_dyn_gauss
     INTEGER,      DIMENSION(mesh%gauss%n_w)                  :: j_loc
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc     
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)                :: vel_loc, mom_loc
     REAL(KIND=8)                                :: ray
     INTEGER                                     :: m, l , i, mode, index, k
@@ -846,14 +846,14 @@ CONTAINS
     gradT1_vel(:,2,:) = grad1_vel(:,2,:)
     gradT1_vel(:,3,:) = grad2_vel(:,1,:)
     gradT1_vel(:,4,:) = grad2_vel(:,2,:)
-    gradT1_vel(:,5,:) = grad3_vel(:,1,:) 
+    gradT1_vel(:,5,:) = grad3_vel(:,1,:)
     gradT1_vel(:,6,:) = grad3_vel(:,2,:)
     !-----------------GradT mom_r on Gauss points----------------------------------
     gradT1_mom(:,1,:) = grad1_mom(:,1,:)
     gradT1_mom(:,2,:) = grad1_mom(:,2,:)
     gradT1_mom(:,3,:) = grad2_mom(:,1,:)
     gradT1_mom(:,4,:) = grad2_mom(:,2,:)
-    gradT1_mom(:,5,:) = grad3_mom(:,1,:) 
+    gradT1_mom(:,5,:) = grad3_mom(:,1,:)
     gradT1_mom(:,6,:) = grad3_mom(:,2,:)
 
     !-----------------GradT u_th on Gauss points-----------------------------------
@@ -916,18 +916,18 @@ CONTAINS
     V2_out(1,:,:,:) = grad1_mom
     V2_out(2,:,:,:) = grad2_mom
     V2_out(3,:,:,:) = grad3_mom
-    
+
   END SUBROUTINE smb_explicit_diffu_correction
 
   SUBROUTINE smb_explicit_div_correction(communicator, mesh, list_mode, stab, vel, mom, c_out)
-    USE Gauss_points     
+    USE Gauss_points
     USE sft_parallele
     USE chaine_caractere
     USE boundary
     USE input_data
     IMPLICIT NONE
     TYPE(mesh_type), TARGET                     :: mesh
-    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode   
+    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
     REAL(KIND=8),                   INTENT(IN)  :: stab
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: vel
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: mom
@@ -935,7 +935,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,2,SIZE(list_mode))   :: div_vel
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,2,SIZE(list_mode))   :: div_mom
     INTEGER,      DIMENSION(mesh%gauss%n_w)                  :: j_loc
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc     
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)                :: vel_loc
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)                :: mom_loc
     REAL(KIND=8)                                :: ray
@@ -991,7 +991,7 @@ CONTAINS
   END SUBROUTINE smb_explicit_div_correction
 
 !!$  SUBROUTINE smb_explicit_div_correction_new(communicator, mesh, list_mode, nb_procs, visc_dyn, stab, vel, mom, c_out)
-!!$    USE Gauss_points     
+!!$    USE Gauss_points
 !!$    USE sft_parallele
 !!$    USE chaine_caractere
 !!$    USE boundary
@@ -999,7 +999,7 @@ CONTAINS
 !!$    IMPLICIT NONE
 !!$    TYPE(mesh_type), TARGET                     :: mesh
 !!$    INTEGER,                        INTENT(IN)  :: nb_procs
-!!$    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode   
+!!$    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
 !!$    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: visc_dyn
 !!$    REAL(KIND=8),                   INTENT(IN)  :: stab
 !!$    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: vel
@@ -1010,7 +1010,7 @@ CONTAINS
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,2,SIZE(list_mode))   :: visc_div_vel
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,2,SIZE(list_mode))   :: visc_dyn_gauss
 !!$    INTEGER,      DIMENSION(mesh%gauss%n_w)                  :: j_loc
-!!$    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc     
+!!$    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)                :: vel_loc
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)                :: mom_loc
 !!$    REAL(KIND=8)                                :: ray
@@ -1065,11 +1065,11 @@ CONTAINS
 !!$          ENDDO
 !!$       ENDDO
 !!$    END DO
-!!$    
+!!$
 !!$    m_max_pad = 3*SIZE(list_mode)*nb_procs/2
 !!$    bloc_size = SIZE(div_vel,1)/nb_procs+1
 !!$    CALL FFT_PAR_PROD_DCL(communicator, visc_dyn_gauss, div_vel, visc_div_vel, nb_procs, bloc_size, m_max_pad)
-!!$    
+!!$
 !!$    !===Compute c_out
 !!$    c_out = visc_div_vel - stab*div_mom
 !!$
@@ -1077,7 +1077,7 @@ CONTAINS
 
   SUBROUTINE smb_compute_tensor_gauss(communicator, mesh, list_mode, vel, mom, nb_procs, &
        bloc_size, m_max_pad, tensor, tensor_gauss)
-    USE Gauss_points     
+    USE Gauss_points
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -1087,7 +1087,7 @@ CONTAINS
     INTEGER,                          INTENT(IN)  :: nb_procs
     INTEGER,                          INTENT(IN)  :: bloc_size
     INTEGER,                          INTENT(IN)  :: m_max_pad
-    INTEGER,      DIMENSION(:),       INTENT(IN)  :: list_mode   
+    INTEGER,      DIMENSION(:),       INTENT(IN)  :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)  :: vel
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)  :: mom
     REAL(KIND=8), DIMENSION(3,mesh%gauss%l_G*mesh%dom_me,6,SIZE(list_mode)), INTENT(OUT) :: tensor_gauss
@@ -1100,7 +1100,7 @@ CONTAINS
     CALL gauss(mesh)
 
     CALL FFT_TENSOR_DCL(communicator, mom, vel, tensor, nb_procs, bloc_size, m_max_pad)
-    
+
     DO n = 1, 3
        DO i = 1, SIZE(list_mode)
           mode = list_mode(i)
@@ -1125,7 +1125,7 @@ CONTAINS
     END DO
 
   END SUBROUTINE smb_compute_tensor_gauss
-  
+
   SUBROUTINE Moy(communicator,mesh,p,RESLT)
     !===========================
     !moyenne
@@ -1134,13 +1134,13 @@ CONTAINS
     TYPE(mesh_type)                             :: mesh
     REAL(KIND=8), DIMENSION(:)  ,   INTENT(IN)  :: p
     REAL(KIND=8)                ,   INTENT(OUT) :: RESLT
-    REAL(KIND=8)                                :: vol_loc, vol_out, r_loc, r_out   
+    REAL(KIND=8)                                :: vol_loc, vol_out, r_loc, r_out
     INTEGER ::  m, l , i , ni, code
     INTEGER,      DIMENSION(mesh%gauss%n_w)     :: j_loc
     REAL(KIND=8)   :: ray
     MPI_Comm                                    :: communicator
     r_loc = 0.d0
-    vol_loc = 0.d0   
+    vol_loc = 0.d0
 
     DO m = 1, mesh%dom_me
        j_loc = mesh%jj(:,m)

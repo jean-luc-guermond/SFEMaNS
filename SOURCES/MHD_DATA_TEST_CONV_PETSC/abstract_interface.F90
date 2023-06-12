@@ -21,10 +21,10 @@ MODULE abstract_interface
        INTEGER                                    :: mode, i, j
      END SUBROUTINE sub_init_temperature
 
-    SUBROUTINE sub_init_level_set(pp_mesh, time, &
+     SUBROUTINE sub_init_level_set(pp_mesh, time, &
           dt, list_mode, level_set_m1, level_set)
        USE def_type_mesh
-       TYPE(mesh_type)                              :: pp_mesh 
+       TYPE(mesh_type)                              :: pp_mesh
        REAL(KIND=8),                     INTENT(OUT):: time
        REAL(KIND=8),                     INTENT(IN) :: dt
        INTEGER,      DIMENSION(:),       INTENT(IN) :: list_mode
@@ -36,11 +36,11 @@ MODULE abstract_interface
        INTEGER     ,                             INTENT(IN) :: TYPE
        REAL(KIND=8), DIMENSION(:,:),             INTENT(IN) :: rr
        INTEGER     ,                             INTENT(IN) :: mode, i
-       REAL(KIND=8),                             INTENT(IN) :: time 
+       REAL(KIND=8),                             INTENT(IN) :: time
        REAL(KIND=8),                             INTENT(IN) :: Re
        CHARACTER(LEN=2),                         INTENT(IN) :: ty
        REAL(KIND=8), DIMENSION(:,:,:), OPTIONAL, INTENT(IN) :: opt_density
-       REAL(KIND=8), DIMENSION(:,:,:), OPTIONAL, INTENT(IN) :: opt_tempn 
+       REAL(KIND=8), DIMENSION(:,:,:), OPTIONAL, INTENT(IN) :: opt_tempn
        REAL(KIND=8), DIMENSION(SIZE(rr,2))                  :: vv
      END FUNCTION sub_source_in_NS_momentum
 
@@ -48,7 +48,7 @@ MODULE abstract_interface
        INTEGER     ,                        INTENT(IN)   :: TYPE
        REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
        INTEGER     ,                        INTENT(IN)   :: m
-       REAL(KIND=8),                        INTENT(IN)   :: t   
+       REAL(KIND=8),                        INTENT(IN)   :: t
        REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
      END FUNCTION sub_source_in_temperature
 
@@ -56,7 +56,7 @@ MODULE abstract_interface
        INTEGER     ,                        INTENT(IN)   :: TYPE
        REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
        INTEGER     ,                        INTENT(IN)   :: m, interface_nb
-       REAL(KIND=8),                        INTENT(IN)   :: t   
+       REAL(KIND=8),                        INTENT(IN)   :: t
        REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
      END FUNCTION sub_source_in_level_set
 
@@ -79,7 +79,7 @@ MODULE abstract_interface
        REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
        INTEGER     ,                        INTENT(IN)   :: m
        REAL(KIND=8),                        INTENT(IN)   :: t
-       REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv 
+       REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
      END FUNCTION sub_pp_exact
 
      FUNCTION sub_temperature_exact(TYPE,rr,m,t) RESULT (vv)
@@ -111,54 +111,54 @@ MODULE abstract_interface
 
      FUNCTION sub_extension_velocity(TYPE, H_mesh, mode, t, n_start) RESULT(vv)
        USE def_type_mesh
-       TYPE(mesh_type),                     INTENT(IN)   :: H_mesh     
+       TYPE(mesh_type),                     INTENT(IN)   :: H_mesh
        INTEGER     ,                        INTENT(IN)   :: TYPE, n_start
-       INTEGER,                             INTENT(IN)   :: mode 
+       INTEGER,                             INTENT(IN)   :: mode
        REAL(KIND=8),                        INTENT(IN)   :: t
        REAL(KIND=8), DIMENSION(H_Mesh%np)                :: vv
      END FUNCTION sub_extension_velocity
 
      FUNCTION sub_Vexact(m, H_mesh) RESULT(vv)  !Set uniquement a l'induction
        USE def_type_mesh
-       TYPE(mesh_type),                       INTENT(IN) :: H_mesh 
+       TYPE(mesh_type),                       INTENT(IN) :: H_mesh
        INTEGER,                               INTENT(IN) :: m
        REAL(KIND=8), DIMENSION(H_mesh%np,6)              :: vv
      END FUNCTION sub_Vexact
 
-     FUNCTION sub_H_B_quasi_static(char_h_b, rr, m) RESULT(vv) 
+     FUNCTION sub_H_B_quasi_static(char_h_b, rr, m) RESULT(vv)
        CHARACTER(LEN=1),                    INTENT(IN)   :: char_h_b
        REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
        INTEGER,                             INTENT(IN)   :: m
        REAL(KIND=8), DIMENSION(SIZE(rr,2),6)             :: vv
      END FUNCTION sub_H_B_quasi_static
 
-     FUNCTION sub_Hexact(H_mesh, TYPE, rr, m, mu_H_field, t) RESULT(vv) 
+     FUNCTION sub_Hexact(H_mesh, TYPE, rr, m, mu_H_field, t) RESULT(vv)
        USE def_type_mesh
-       TYPE(mesh_type),                     INTENT(IN)   :: H_mesh 
+       TYPE(mesh_type),                     INTENT(IN)   :: H_mesh
        INTEGER     ,                        INTENT(IN)   :: TYPE
        REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
        INTEGER     ,                        INTENT(IN)   :: m
-       REAL(KIND=8),                        INTENT(IN)   :: t 
+       REAL(KIND=8),                        INTENT(IN)   :: t
        REAL(KIND=8), DIMENSION(:),          INTENT(IN)   :: mu_H_field
        REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
      END FUNCTION sub_Hexact
 
-     FUNCTION sub_Phiexact(TYPE, rr, m, mu_phi,t) RESULT(vv) 
+     FUNCTION sub_Phiexact(TYPE, rr, m, mu_phi,t) RESULT(vv)
        INTEGER     ,                        INTENT(IN)   :: TYPE
        REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
        INTEGER     ,                        INTENT(IN)   :: m
        REAL(KIND=8),                        INTENT(IN)   :: mu_phi, t
-       REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv   
+       REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
      END FUNCTION sub_Phiexact
 
      FUNCTION sub_Jexact_gauss(TYPE, rr, m, mu_phi, sigma, mu_H, t, &
-          mesh_id, opt_B_ext) RESULT(vv) 
+          mesh_id, opt_B_ext) RESULT(vv)
        INTEGER     ,                        INTENT(IN)   :: TYPE
        REAL(KIND=8), DIMENSION(:),          INTENT(IN)   :: rr
-       INTEGER     ,                        INTENT(IN)   :: m 
-       REAL(KIND=8),                        INTENT(IN)   :: mu_phi, sigma, mu_H, t 
+       INTEGER     ,                        INTENT(IN)   :: m
+       REAL(KIND=8),                        INTENT(IN)   :: mu_phi, sigma, mu_H, t
        INTEGER     ,                        INTENT(IN)   :: mesh_id
-       REAL(KIND=8), DIMENSION(6), OPTIONAL,INTENT(IN)   :: opt_B_ext 
+       REAL(KIND=8), DIMENSION(6), OPTIONAL,INTENT(IN)   :: opt_B_ext
        REAL(KIND=8)                                      :: vv
      END FUNCTION sub_Jexact_gauss
 
@@ -167,18 +167,18 @@ MODULE abstract_interface
        REAL(KIND=8), DIMENSION(:),          INTENT(IN)   :: rr
        INTEGER,                             INTENT(IN)   :: m
        REAL(KIND=8),                        INTENT(IN)   :: mu_phi, sigma, mu_H, t
-       REAL(KIND=8)                                      :: vv 
+       REAL(KIND=8)                                      :: vv
      END FUNCTION sub_Eexact_gauss
 
      SUBROUTINE sub_init_maxwell(H_mesh, phi_mesh, time, dt, mu_H_field, mu_phi, &
           list_mode, Hn1, Hn, phin1, phin)
        USE def_type_mesh
-       TYPE(mesh_type)                            :: H_mesh, phi_mesh     
+       TYPE(mesh_type)                            :: H_mesh, phi_mesh
        REAL(KIND=8),                   INTENT(OUT):: time
        REAL(KIND=8),                   INTENT(IN) :: dt
        REAL(KIND=8), DIMENSION(:),     INTENT(IN) :: mu_H_field
        REAL(KIND=8),                   INTENT(IN) :: mu_phi
-       INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode    
+       INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
        REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: Hn, Hn1
        REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: phin, phin1
      END SUBROUTINE sub_init_maxwell
@@ -218,16 +218,16 @@ MODULE abstract_interface
        REAL(KIND=8) :: temp
        REAL(KIND=8) :: vv
      END FUNCTION sub_chi_coeff_law
-     
+
      FUNCTION sub_T_dchi_dT_coeff_law(temp) RESULT(vv)
        REAL(KIND=8) :: temp
        REAL(KIND=8) :: vv
      END FUNCTION sub_T_dchi_dT_coeff_law
-     
+
      FUNCTION sub_nu_tilde_law(temp) RESULT(vv)
        REAL(KIND=8) :: temp
        REAL(KIND=8) :: vv
      END FUNCTION sub_nu_tilde_law
-     
+
   END INTERFACE
 END MODULE abstract_interface

@@ -447,8 +447,8 @@ CONTAINS
           indicator(mesh%jjs(:,msop)) = proc
        END DO
     END IF
-    !===Fix the partition so that all the cells having one vertex on an 
-    !===interface belong to the same processor as those sharing this vertices and 
+    !===Fix the partition so that all the cells having one vertex on an
+    !===interface belong to the same processor as those sharing this vertices and
     !===having two vertices on the interface (JLG + DCQ July 22 2015)
     DO m = 1, mesh%me
        j_loc = mesh%jj(:,m)
@@ -1143,7 +1143,7 @@ CONTAINS
        vwgt   = 1
        adjwgt = 1
        CALL METIS_PartGraphRecursive(me_phi, 1, xind_phi,xadj_phi,vwgt, vwgt, adjwgt, nb_proc,tpwgts, &
-          ubvec, metis_opt, edge, part_phi)
+            ubvec, metis_opt, edge, part_phi)
 !!$       CALL METIS_PartGraphRecursive(me_phi,xind_phi,xadj_phi,vwgt,adjwgt,wgtflag, numflag, nb_proc, opts, edge, part_phi)
     END IF
 !!$!TESTTT
@@ -1220,8 +1220,8 @@ CONTAINS
           indicator(mesh%jjs(:,msop)) = proc
        END DO
     END IF
-    !===Fix the partition so that all the cells having one vertex on an 
-    !===interface belong to the same processor as those sharing this vertices and 
+    !===Fix the partition so that all the cells having one vertex on an
+    !===interface belong to the same processor as those sharing this vertices and
     !===having two vertices on the interface (JLG + DCL July 22 2015)
     DO m = 1, mesh%me
        j_loc = mesh%jj(:,m)
@@ -1349,7 +1349,7 @@ CONTAINS
     i = 0
     DO m = 1, mesh_glob%me
        IF (MINVAL(ABS(list_dom-mesh_glob%i_d(m)))/=0) CYCLE
-       i = i + 1 
+       i = i + 1
     END DO
     mesh%me = i
     ALLOCATE (list_m(mesh%me))
@@ -1362,10 +1362,10 @@ CONTAINS
     !End create list_m
 
     ! Count elements on processors
-    nblmt_per_proc = 0 
+    nblmt_per_proc = 0
     DO i = 1, mesh%me
        m = list_m(i)
-       nblmt_per_proc(part(m)) = nblmt_per_proc(part(m)) + 1 
+       nblmt_per_proc(part(m)) = nblmt_per_proc(part(m)) + 1
     END DO
     start(1) = 0
     DO n = 2, nb_proc
@@ -1477,7 +1477,7 @@ CONTAINS
     ! Create neighs
     ALLOCATE(mesh%neighs(mesh%mes))
     mesh%neighs = bat(mesh_glob%neighs(tabs))
-    ! End create neighs   
+    ! End create neighs
 
     ! Re-order sides
     ALLOCATE(mesh%sides(mesh%mes))
@@ -1614,7 +1614,7 @@ CONTAINS
           END IF
        END DO
        m_loc_to_glob(m-me_loc(1)+1) = m
-       m_glob_to_loc(m) = m-me_loc(1)+1 
+       m_glob_to_loc(m) = m-me_loc(1)+1
     END DO
 
     DO n = 1, nw
@@ -1622,7 +1622,7 @@ CONTAINS
     END DO
     !==End re-order jj
 
-    !==Create mesh%loc_to_glob    
+    !==Create mesh%loc_to_glob
     IF (MAXVAL(mesh_loc%jj)/=dof) THEN
        CALL error_Petsc('BUG in create_local_mesh, mesh_loc%jj)/=dof')
     END IF
@@ -1645,7 +1645,7 @@ CONTAINS
     DO m = 1, mesh_loc%me
        DO n = 1, nwc
           mop = mesh%neigh(n,m_loc_to_glob(m))
-          IF (mop==0) THEN  
+          IF (mop==0) THEN
              mesh_loc%neigh(n,m) = 0
           ELSE IF(mop<minf .OR. mop>msup) THEN
              !mesh_loc%neigh(n,m) = mop
@@ -1719,7 +1719,7 @@ CONTAINS
     DEALLOCATE(mesh%i_d)
 
     NULLIFY(mesh%loc_to_glob)
-    NULLIFY(mesh%disp) 
+    NULLIFY(mesh%disp)
     NULLIFY(mesh%domnp)
     NULLIFY(mesh%j_s)
 
@@ -1733,7 +1733,7 @@ CONTAINS
     mesh%dom_me = 0
     mesh%dom_np = 0
     mesh%dom_mes = 0
-    mesh%me = 0 
+    mesh%me = 0
     mesh%mes = 0
     mesh%np = 0
     mesh%nps = 0

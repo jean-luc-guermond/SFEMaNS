@@ -1,12 +1,12 @@
 MODULE post_processing_debug
 
-PUBLIC :: post_proc_test, regression
+  PUBLIC :: post_proc_test, regression
 
-PRIVATE
+  PRIVATE
 CONTAINS
   !---------------------------------------------------------------------------
 
-  SUBROUTINE regression(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, & 
+  SUBROUTINE regression(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
        un, pn, Hn, Bn, phin, tempn, level_setn, mu_H_field, &
        time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp) ! MODIFICATION: comm_one_d_temp added
     USE boundary
@@ -20,7 +20,7 @@ CONTAINS
     USE petsc
     IMPLICIT NONE
     TYPE(mesh_type), POINTER                    :: pp_mesh, vv_mesh
-    TYPE(mesh_type), POINTER                    :: temp_mesh 
+    TYPE(mesh_type), POINTER                    :: temp_mesh
     TYPE(mesh_type), POINTER                    :: H_mesh, phi_mesh
     INTEGER,      POINTER,  DIMENSION(:)        :: list_mode
     REAL(KIND=8), POINTER,  DIMENSION(:,:,:)    :: un, pn, Hn, Bn, phin, tempn
@@ -33,13 +33,13 @@ CONTAINS
     MPI_Comm, DIMENSION(:), POINTER         :: comm_one_d, comm_one_d_ns, comm_one_d_temp
 
     !inputs%numero_du_test_debug = 40
-    !CALL post_proc_test(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, & 
+    !CALL post_proc_test(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
     !   un, pn, Hn, Bn, phin, tempn, level_setn, mu_H_field, &
     !   time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp)
 
     error_cumul=0.d0
     norm=0.d0
-    
+
     OPEN(UNIT = 21, FILE =  'regression_reference', FORM = 'formatted', STATUS = 'unknown')
     OPEN(UNIT = 22, FILE =  'current_regression_reference', FORM = 'formatted', STATUS = 'unknown')
 
@@ -93,9 +93,9 @@ CONTAINS
        norm = norm + ABS(error_ref)
     END IF
 
- 
+
     IF (isnan(error_cumul)) THEN
-       error_out = 1 !===Test Failed   
+       error_out = 1 !===Test Failed
     ELSE IF (error_cumul/norm .GT. 1.d-7) THEN
        error_out = 2 !===Test Failed
     ELSE
@@ -109,7 +109,7 @@ CONTAINS
 
   END SUBROUTINE regression
 
-  SUBROUTINE post_proc_test(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, & 
+  SUBROUTINE post_proc_test(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
        un, pn, Hn, Bn, phin, tempn, level_setn, mu_H_field, &
        time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp) ! MODIFICATION: comm_one_d_temp added
     USE boundary
@@ -123,7 +123,7 @@ CONTAINS
     USE petsc
     IMPLICIT NONE
     TYPE(mesh_type), POINTER                    :: pp_mesh, vv_mesh
-    TYPE(mesh_type), POINTER                    :: temp_mesh 
+    TYPE(mesh_type), POINTER                    :: temp_mesh
     TYPE(mesh_type), POINTER                    :: H_mesh, phi_mesh
     INTEGER,      POINTER,  DIMENSION(:)        :: list_mode
     REAL(KIND=8), POINTER,  DIMENSION(:,:,:)    :: un, pn, Hn, Bn, phin, tempn
@@ -131,8 +131,8 @@ CONTAINS
     REAL(KIND=8), POINTER,  DIMENSION(:)        :: mu_H_field
     REAL(KIND=8)                                :: time
     INTEGER                                     :: m_max_c
-    REAL(KIND=8), DIMENSION(SIZE(un,1),  SIZE(un,2),  SIZE(un,3))   :: un_m1, un_ex, un_error 
-    REAL(KIND=8), DIMENSION(SIZE(pn,1),  SIZE(pn,2),  SIZE(pn,3))   :: pn_m1, pn_ex, pn_error 
+    REAL(KIND=8), DIMENSION(SIZE(un,1),  SIZE(un,2),  SIZE(un,3))   :: un_m1, un_ex, un_error
+    REAL(KIND=8), DIMENSION(SIZE(pn,1),  SIZE(pn,2),  SIZE(pn,3))   :: pn_m1, pn_ex, pn_error
     REAL(KIND=8), DIMENSION(SIZE(Hn,1),  SIZE(Hn,2),  SIZE(Hn,3))   :: Hn1, Hn_ex, Hn_error
     REAL(KIND=8), DIMENSION(SIZE(phin,1),SIZE(phin,2),SIZE(phin,3)) :: phin1
     REAL(KIND=8), DIMENSION(SIZE(tempn,1),  SIZE(tempn,2),  SIZE(tempn,3))   :: tempn_m1, tempn_ex, tempn_error
@@ -155,17 +155,17 @@ CONTAINS
           DO k= 1, 2
              pn_m1(:,k,i) = pn(:,k,i) - pp_exact(k,pp_mesh%rr,list_mode(i),time)
           END DO
-          IF (list_mode(i) == 0)  THEN  
+          IF (list_mode(i) == 0)  THEN
              CALL Moy(comm_one_d(1),pp_mesh, pn_m1(:,1,i),moyenne)
              pn_m1(:,1,i) = pn_m1(:,1,i) - moyenne
           ENDIF
        END DO
 
-       !norm_err(1) = norm_SF(comm_one_d_NS, 'L2', vv_mesh, list_mode, un_m1) 
+       !norm_err(1) = norm_SF(comm_one_d_NS, 'L2', vv_mesh, list_mode, un_m1)
        norm_err(1) = SQRT(dot_product_SF(comm_one_d_NS,vv_mesh, list_mode, un_m1, un_m1))
-       norm_err(2) = norm_SF(comm_one_d_NS, 'sH1', vv_mesh, list_mode, un_m1) 
-       norm_err(3) = norm_SF(comm_one_d_NS, 'div', vv_mesh, list_mode, un) 
-       norm_err(4) = norm_SF(comm_one_d_NS, 'L2', pp_mesh, list_mode, pn_m1) 
+       norm_err(2) = norm_SF(comm_one_d_NS, 'sH1', vv_mesh, list_mode, un_m1)
+       norm_err(3) = norm_SF(comm_one_d_NS, 'div', vv_mesh, list_mode, un)
+       norm_err(4) = norm_SF(comm_one_d_NS, 'L2', pp_mesh, list_mode, pn_m1)
        IF (rank==0) THEN
           WRITE(10,*) 'Velocity field   #####################'
           WRITE(10,*) 'L2 error on velocity  = ', norm_err(1)
@@ -313,7 +313,7 @@ CONTAINS
     CASE(11)
        norm_err(1) = norm_SF(comm_one_d_NS, 'sH1', vv_mesh, list_mode, un)
        norm_err(2) = norm_SF(comm_one_d,    'L2', H_mesh, list_mode, Hn)
-       norm_err(3) = norm_SF(comm_one_d_NS, 'L2', pp_mesh, list_mode, pn) 
+       norm_err(3) = norm_SF(comm_one_d_NS, 'L2', pp_mesh, list_mode, pn)
        norm_err(4) = norm_SF(comm_one_d_temp, 'L2', temp_mesh, list_mode, tempn) ! MODIFICATION: comm_one_d_temp instead of ns
        IF (rank==0) THEN
           WRITE(10,*) '######################################'
@@ -328,7 +328,7 @@ CONTAINS
        norm_err(1) = norm_SF(comm_one_d_NS, 'sH1', vv_mesh, list_mode, un)
        norm_err(2) = norm_SF(comm_one_d,    'div', H_mesh,  list_mode, Hn)
        norm_err(3) = norm_SF(comm_one_d,    'L2',  H_mesh,  list_mode, Hn)
-       norm_err(4) = norm_SF(comm_one_d_NS, 'L2',  pp_mesh, list_mode, pn) 
+       norm_err(4) = norm_SF(comm_one_d_NS, 'L2',  pp_mesh, list_mode, pn)
        IF (rank==0) THEN
           WRITE(10,*) '######################################'
           WRITE(10,*) 'H1 norm on velocity     = ', norm_err(1)
@@ -449,12 +449,12 @@ CONTAINS
                      - level_set_exact(int_nb,k,pp_mesh%rr,list_mode(i),time)
              END DO
           END DO
-          IF (list_mode(i) == 0)  THEN  
+          IF (list_mode(i) == 0)  THEN
              CALL Moy(comm_one_d(1),pp_mesh, pn_m1(:,1,i),moyenne)
              pn_m1(:,1,i) = pn_m1(:,1,i) - moyenne
           ENDIF
        END DO
-       norm_err(1) = norm_SF(comm_one_d_NS, 'L2', vv_mesh, list_mode, un_m1) 
+       norm_err(1) = norm_SF(comm_one_d_NS, 'L2', vv_mesh, list_mode, un_m1)
        norm_err(2) = norm_SF(comm_one_d_NS, 'L2', pp_mesh, list_mode, pn_m1)
        norm_err(3) = norm_SF(comm_one_d_ns, 'L2', pp_mesh, list_mode, level_setn_m1(1,:,:,:))
        err = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn1)
@@ -499,7 +499,7 @@ CONTAINS
        err = norm_SF(comm_one_d, 'div', H_mesh, list_mode, Bn)
        norm_err(2) = err/norm
        norm_err(3) = norm
-       err=  dot_product_SF(comm_one_d, H_mesh, list_mode, Hn, Bn) 
+       err=  dot_product_SF(comm_one_d, H_mesh, list_mode, Hn, Bn)
        norm_err(4) = 0.5*err
        IF (rank==0) THEN
           WRITE(10,*) '########################################################'

@@ -24,8 +24,8 @@ CONTAINS
     INTEGER, DIMENSION(:,:),   POINTER    :: ja_work
     INTEGER, DIMENSION(:),     POINTER    :: nja_glob
     INTEGER                               :: np_glob, np_H, np_pmag, np_phi, np_m, code, rank, dp, n_a_d, &
-                                             iglob, jglob, iloc, jloc, ni, nj, ci, m, mi, mj, m1, m2, i ,j, k, ki, kj, &
-                                             jmin, jmax, p, nnz, p_i, p_f, ms, nb_procs, proc
+         iglob, jglob, iloc, jloc, ni, nj, ci, m, mi, mj, m1, m2, i ,j, k, ki, kj, &
+         jmin, jmax, p, nnz, p_i, p_f, ms, nb_procs, proc
     LOGICAL                               :: out
     INTEGER, DIMENSION(:), ALLOCATABLE    :: per_loc
     INTEGER                               :: njt, i1, i2
@@ -44,14 +44,14 @@ CONTAINS
     np_phi = phi_mesh%dom_np
     np_glob = np_H + np_pmag + np_phi
     np_m = H_mesh%dom_np
-     
+
 
     ! Modify LA_H, LA_pmag, LA_phi
     dp = 3*(H_mesh%disp(rank+1)-1)+(pmag_mesh%disp(rank+1)-1)+(phi_mesh%disp(rank+1)-1)
 
-!!$    WRITE(*,*) rank, 'H deb', MINVAL(LA_H%loc_to_glob(1,1:H_mesh%dom_np)), MAXVAL(LA_H%loc_to_glob(3,1:H_mesh%dom_np)) 
-!!$    WRITE(*,*) rank, 'pmag deb', MINVAL(LA_pmag%loc_to_glob(1,1:pmag_mesh%dom_np)), MAXVAL(LA_pmag%loc_to_glob(1,1:pmag_mesh%dom_np)) 
-!!$    WRITE(*,*) rank, 'phi deb', MINVAL(LA_phi%loc_to_glob(1,1:phi_mesh%dom_np)), MAXVAL(LA_phi%loc_to_glob(1,1:phi_mesh%dom_np)) 
+!!$    WRITE(*,*) rank, 'H deb', MINVAL(LA_H%loc_to_glob(1,1:H_mesh%dom_np)), MAXVAL(LA_H%loc_to_glob(3,1:H_mesh%dom_np))
+!!$    WRITE(*,*) rank, 'pmag deb', MINVAL(LA_pmag%loc_to_glob(1,1:pmag_mesh%dom_np)), MAXVAL(LA_pmag%loc_to_glob(1,1:pmag_mesh%dom_np))
+!!$    WRITE(*,*) rank, 'phi deb', MINVAL(LA_phi%loc_to_glob(1,1:phi_mesh%dom_np)), MAXVAL(LA_phi%loc_to_glob(1,1:phi_mesh%dom_np))
 
 !!$    DO i = 1, H_mesh%dom_np
 !!$       DO k = 1, 3
@@ -59,29 +59,29 @@ CONTAINS
 !!$       END DO
 !!$    END DO
 !!$    DO i = 1, pmag_mesh%dom_np
-!!$       LA_pmag%loc_to_glob(1,i) = LA_pmag%loc_to_glob(1,i) - (pmag_mesh%disp(rank+1)-1) +dp + np_H 
+!!$       LA_pmag%loc_to_glob(1,i) = LA_pmag%loc_to_glob(1,i) - (pmag_mesh%disp(rank+1)-1) +dp + np_H
 !!$    END DO
 !!$    DO i = 1, phi_mesh%dom_np
-!!$       LA_phi%loc_to_glob(1,i) = LA_phi%loc_to_glob(1,i) - (phi_mesh%disp(rank+1)-1) + dp + np_H + np_pmag 
+!!$       LA_phi%loc_to_glob(1,i) = LA_phi%loc_to_glob(1,i) - (phi_mesh%disp(rank+1)-1) + dp + np_H + np_pmag
 !!$    END DO
 
 
     DO i = 1, H_mesh%np
        DO k = 1, 3
-          CALL search_index_block(H_mesh, LA_H%loc_to_glob(k,i),rank, 3,  nb_procs, iloc, proc, out) 
+          CALL search_index_block(H_mesh, LA_H%loc_to_glob(k,i),rank, 3,  nb_procs, iloc, proc, out)
           LA_H%loc_to_glob(k,i) = 3*(H_mesh%disp(proc)-1)+(pmag_mesh%disp(proc)-1)+(phi_mesh%disp(proc)-1)+ iloc
        END DO
     END DO
 
     DO i = 1, pmag_mesh%np
-       CALL search_index_block(pmag_mesh, LA_pmag%loc_to_glob(1,i),rank, 1, nb_procs, iloc, proc, out) 
+       CALL search_index_block(pmag_mesh, LA_pmag%loc_to_glob(1,i),rank, 1, nb_procs, iloc, proc, out)
        LA_pmag%loc_to_glob(1,i) =3*(H_mesh%disp(proc)-1)+(pmag_mesh%disp(proc)-1)+(phi_mesh%disp(proc)-1) &
-            + 3*H_mesh%domnp(proc) + iloc  
+            + 3*H_mesh%domnp(proc) + iloc
     END DO
     DO i = 1, phi_mesh%np
-       CALL search_index_block(phi_mesh, LA_phi%loc_to_glob(1,i), rank, 1,  nb_procs, iloc, proc, out) 
+       CALL search_index_block(phi_mesh, LA_phi%loc_to_glob(1,i), rank, 1,  nb_procs, iloc, proc, out)
        LA_phi%loc_to_glob(1,i) =3*(H_mesh%disp(proc)-1)+(pmag_mesh%disp(proc)-1)+(phi_mesh%disp(proc)-1)  &
-            + 3*H_mesh%domnp(proc) +pmag_mesh%domnp(proc) + iloc  
+            + 3*H_mesh%domnp(proc) +pmag_mesh%domnp(proc) + iloc
     END DO
 
     ! End Modify LA_H, LA_pmag, LA_phi
@@ -95,7 +95,7 @@ CONTAINS
        DO m = 1, H_mesh_glob%me
           DO ni = 1, SIZE(H_mesh%jj,1)
              iglob = H_mesh_glob%jj(ni,m)
-             IF (iglob<H_mesh%loc_to_glob(1) .OR. iglob>H_mesh%loc_to_glob(1) + H_mesh%dom_np -1) CYCLE 
+             IF (iglob<H_mesh%loc_to_glob(1) .OR. iglob>H_mesh%loc_to_glob(1) + H_mesh%dom_np -1) CYCLE
              DO nj = 1, SIZE(H_mesh%jj,1)
                 jglob = H_mesh_glob%jj(nj,m)
                 CALL search_index(H_mesh,jglob,nb_procs,jloc,proc,out)
@@ -108,7 +108,7 @@ CONTAINS
                    END IF
                    DO ki = 1, 3
                       i = iglob - H_mesh%loc_to_glob(1)+1 + (ki-1)*np_m
-                      IF (MINVAL(ABS(ja_work(i,1:nja_glob(i))-j)) /= 0) THEN 
+                      IF (MINVAL(ABS(ja_work(i,1:nja_glob(i))-j)) /= 0) THEN
                          nja_glob(i) = nja_glob(i) + 1
                          ja_work(i,nja_glob(i)) = j
                       END IF
@@ -170,7 +170,7 @@ CONTAINS
     IF (H_mesh%me /=0) THEN
        DO m = 1, H_mesh_glob%me
           jj_loc = H_mesh_glob%jj(:,m)
-          IF (MAXVAL(jj_loc)<H_mesh%loc_to_glob(1) .OR. MINVAL(jj_loc)>H_mesh%loc_to_glob(1) + H_mesh%dom_np -1) CYCLE 
+          IF (MAXVAL(jj_loc)<H_mesh%loc_to_glob(1) .OR. MINVAL(jj_loc)>H_mesh%loc_to_glob(1) + H_mesh%dom_np -1) CYCLE
           DO ni = 1, SIZE(H_mesh%jj,1)
              iglob = jj_loc(ni)
 
@@ -185,7 +185,7 @@ CONTAINS
 
                 IF (iglob.GE.H_mesh%loc_to_glob(1) .AND. iglob.LE.H_mesh%loc_to_glob(1) + H_mesh%dom_np -1) THEN
                    i = iglob - H_mesh%loc_to_glob(1)+1
-                   IF (MINVAL(ABS(ja_work(i,1:nja_glob(i))-j)) /= 0) THEN 
+                   IF (MINVAL(ABS(ja_work(i,1:nja_glob(i))-j)) /= 0) THEN
                       nja_glob(i) = nja_glob(i) + 1
                       nja_glob(i+np_m) = nja_glob(i+np_m) + 1
                       nja_glob(i+2*np_m) = nja_glob(i+2*np_m) + 1
@@ -205,7 +205,7 @@ CONTAINS
                       ELSE
                          j = LA_H%loc_to_glob(k,iloc)
                       END IF
-                      IF (MINVAL(ABS(ja_work(i,1:nja_glob(i))-j)) /= 0) THEN 
+                      IF (MINVAL(ABS(ja_work(i,1:nja_glob(i))-j)) /= 0) THEN
                          nja_glob(i) = nja_glob(i) + 1
                          ja_work(i,nja_glob(i)) = j
                       END IF
@@ -218,7 +218,7 @@ CONTAINS
     END IF
     ! End Block Hxp and pxH
 
-    ! Interface_H_mu    
+    ! Interface_H_mu
     IF (H_mesh%me /=0) THEN
        DO ms = 1, interface_H_mu_glob%mes
           m1 = H_mesh_glob%neighs(interface_H_mu_glob%mesh1(ms))
@@ -229,7 +229,7 @@ CONTAINS
           jmin = MIN(MINVAL(jj_loc1),MINVAL(jj_loc2))
           jmax = MAX(MAXVAL(jj_loc1),MAXVAL(jj_loc2))
 
-          IF (jmax<H_mesh%loc_to_glob(1) .OR. jmin>H_mesh%loc_to_glob(1) + H_mesh%dom_np -1) CYCLE 
+          IF (jmax<H_mesh%loc_to_glob(1) .OR. jmin>H_mesh%loc_to_glob(1) + H_mesh%dom_np -1) CYCLE
 
           DO ci = 1, 2
              IF (ci==1) THEN
@@ -245,7 +245,7 @@ CONTAINS
                 IF (iglob < H_mesh%loc_to_glob(1) .OR. iglob > H_mesh%loc_to_glob(1) + H_mesh%dom_np -1) CYCLE
 
                 DO nj = 1, SIZE(H_mesh%jj,1)
-                   jglob = H_mesh_glob%jj(nj,mj) 
+                   jglob = H_mesh_glob%jj(nj,mj)
                    CALL search_index(H_mesh,jglob,nb_procs,jloc,proc,out)
                    DO kj = 1, 3
                       IF (out) THEN
@@ -256,7 +256,7 @@ CONTAINS
                       END IF
                       DO ki = 1, 3
                          i = iglob - H_mesh%loc_to_glob(1) + 1 + (ki-1)*np_m
-                         IF (MINVAL(ABS(ja_work(i,1:nja_glob(i))-j)) == 0) CYCLE 
+                         IF (MINVAL(ABS(ja_work(i,1:nja_glob(i))-j)) == 0) CYCLE
                          nja_glob(i) = nja_glob(i) + 1
                          ja_work(i,nja_glob(i)) = j
                       END DO
@@ -289,7 +289,7 @@ CONTAINS
                 END IF
                 DO ki = 1, 3
                    i = iglob - H_mesh%loc_to_glob(1) + 1 + (ki-1)*np_m
-                   IF (MINVAL(ABS(ja_work(i,1:nja_glob(i))-j)) == 0) CYCLE 
+                   IF (MINVAL(ABS(ja_work(i,1:nja_glob(i))-j)) == 0) CYCLE
                    nja_glob(i) = nja_glob(i) + 1
                    ja_work(i,nja_glob(i)) = j
                 END DO
@@ -310,7 +310,7 @@ CONTAINS
                    ELSE
                       j = LA_H%loc_to_glob(kj,jloc)
                    END IF
-                   IF (MINVAL(ABS(ja_work(i,1:nja_glob(i))-j)) == 0) CYCLE 
+                   IF (MINVAL(ABS(ja_work(i,1:nja_glob(i))-j)) == 0) CYCLE
                    nja_glob(i) = nja_glob(i) + 1
                    ja_work(i,nja_glob(i)) = j
                 END DO
@@ -342,10 +342,10 @@ CONTAINS
 
 
 
-    IF (MAXVAL(nja_glob)>param) THEN 
+    IF (MAXVAL(nja_glob)>param) THEN
        CALL error_Petsc('ST_SPARSEKIT: dimension of ja must be >= nparm')
     END IF
-  
+
 
     nnz = SUM(nja_glob)
     ALLOCATE(LA_mhd%ia(0:np_glob),LA_mhd%ja(0:nnz-1))
@@ -398,11 +398,11 @@ CONTAINS
 !!$    INTEGER ,                  INTENT(IN) :: jglob, nb_procs
 !!$    INTEGER ,                  INTENT(OUT):: jloc, proc
 !!$    LOGICAL,                   INTENT(OUT):: out
-!!$    INTEGER                               :: p 
+!!$    INTEGER                               :: p
 !!$
 !!$    IF (jglob< mesh%loc_to_glob(1) .OR. jglob> mesh%loc_to_glob(2)) THEN
 !!$       DO p = 2, nb_procs+1
-!!$          IF (mesh%disp(p) > jglob) THEN  
+!!$          IF (mesh%disp(p) > jglob) THEN
 !!$             proc = p - 1
 !!$             EXIT
 !!$          END IF
@@ -422,11 +422,11 @@ CONTAINS
     INTEGER ,                  INTENT(IN) :: jglob, nb_procs
     INTEGER ,                  INTENT(OUT):: jloc, proc
     LOGICAL,                   INTENT(OUT):: out
-    INTEGER                               :: p 
+    INTEGER                               :: p
 
     IF (mesh%dom_np == 0) THEN
        DO p = 2, nb_procs+1
-          IF (mesh%disp(p) > jglob) THEN  
+          IF (mesh%disp(p) > jglob) THEN
              proc = p - 1
              EXIT
           END IF
@@ -435,7 +435,7 @@ CONTAINS
        jloc = jglob - mesh%disp(proc) + 1
     ELSE IF (jglob< mesh%loc_to_glob(1) .OR. jglob> mesh%loc_to_glob(mesh%dom_np)) THEN
        DO p = 2, nb_procs+1
-          IF (mesh%disp(p) > jglob) THEN  
+          IF (mesh%disp(p) > jglob) THEN
              proc = p - 1
              EXIT
           END IF
@@ -467,11 +467,11 @@ CONTAINS
        END IF
     END DO
     IF (out) proc = nb_procs
-    
+
     jloc = jglob - kmax*(mesh%disp(proc)-1)
     out = (proc /= rank+1)
 
   END SUBROUTINE SEARCH_INDEX_BLOCK
-    
+
 
 END MODULE st_csr_mhd

@@ -57,12 +57,12 @@ CONTAINS
 
     IF(pt_id(1)==1) THEN !grad_mu_1
        vv(1)= 1.d0
-       vv(2)= 0.d0  
+       vv(2)= 0.d0
     ELSE                 !grad_mu_2
        vv(1)=1.d0 +  ( (3*r+2)*(2*lambda_mu_T18)  -  ( (2*lambda_mu_T18*(1+r)))*(3)  )  /( z*(3*r+2) )**2
-       vv(2)=  (2*lambda_mu_T18*(1+r))/(3*r+2)*(-2/z**3) 
+       vv(2)=  (2*lambda_mu_T18*(1+r))/(3*r+2)*(-2/z**3)
     END IF
-    RETURN  
+    RETURN
   END FUNCTION grad_mu_bar_in_fourier_space_anal_T18
 
 END MODULE test_18

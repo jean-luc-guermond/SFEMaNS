@@ -9,7 +9,7 @@ MODULE update_taylor_navier_stokes
   PRIVATE
 
 CONTAINS
-  
+
   SUBROUTINE navier_stokes_taylor(comm_one_d_ns,time, vv_3_LA, pp_1_LA, &
        list_mode, pp_mesh, vv_mesh, pn, der_pn, un, der_un, vvz_per, pp_per)
     USE def_type_mesh
@@ -23,7 +23,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(pp_mesh%np,2,SIZE(list_mode)), INTENT(INOUT)  :: pn
     TYPE(dyn_real_array_three), DIMENSION(:)       :: der_un
     TYPE(dyn_real_array_three), DIMENSION(:)       :: der_pn
-    REAL(KIND=8),                   INTENT(IN)     :: time  
+    REAL(KIND=8),                   INTENT(IN)     :: time
     TYPE(periodic_type),            INTENT(IN)     :: vvz_per, pp_per
     TYPE(petsc_csr_LA)                             :: vv_3_LA, pp_1_LA
     LOGICAL                                        :: if_navier_stokes_with_taylor = .TRUE. !HF We will nead a 'read_data'
@@ -50,7 +50,7 @@ CONTAINS
     USE boundary
     !JLG+MC 2022
     IMPLICIT NONE
-    INTEGER,      DIMENSION(:),                            INTENT(IN)    :: list_mode   
+    INTEGER,      DIMENSION(:),                            INTENT(IN)    :: list_mode
     TYPE(mesh_type),                                       INTENT(IN)    :: vv_mesh, pp_mesh
     REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode)), INTENT(INOUT) :: un
     REAL(KIND=8), DIMENSION(pp_mesh%np,2,SIZE(list_mode)), INTENT(INOUT) :: pn
@@ -59,7 +59,7 @@ CONTAINS
     REAL(KIND=8), INTENT(IN) :: time
     REAL(KIND=8) :: dt
     INTEGER :: i, mode, k, kp, m_max_c
-    
+
     dt = inputs%dt
     m_max_c = SIZE(list_mode)
     DO i= 1, m_max_c
@@ -83,29 +83,29 @@ CONTAINS
           pn(:,k,i) = pp_exact(k,pp_mesh%rr, mode,time)
           der_pn(1)%DRT(:,k,i)= &
                (-2*pp_exact(k,pp_mesh%rr, mode,time-3*dt)&
-                +9*pp_exact(k,pp_mesh%rr, mode,time-2*dt)&
+               +9*pp_exact(k,pp_mesh%rr, mode,time-2*dt)&
                -18*pp_exact(k,pp_mesh%rr, mode,time-dt)&
                +11*pp_exact(k,pp_mesh%rr, mode,time))/(6*dt)
           der_pn(2)%DRT(:,k,i)= &
                (-1*pp_exact(k,pp_mesh%rr, mode,time-3*dt)&
-                +4*pp_exact(k,pp_mesh%rr, mode,time-2*dt)&
+               +4*pp_exact(k,pp_mesh%rr, mode,time-2*dt)&
                -5*pp_exact(k,pp_mesh%rr, mode,time-dt)&
                +2*pp_exact(k,pp_mesh%rr, mode,time))/(dt**2)
        ENDDO
        IF (inputs%taylor_order==4) THEN
           DO k = 1, 6
              der_un(3)%DRT(:,k,i)= &
-              (-1*vv_exact(k,vv_mesh%rr, mode,time-3*dt)&
-               +3*vv_exact(k,vv_mesh%rr, mode,time-2*dt)&
-               -3*vv_exact(k,vv_mesh%rr, mode,time-dt)&
-               +1*vv_exact(k,vv_mesh%rr, mode,time))/(dt**3)
+                  (-1*vv_exact(k,vv_mesh%rr, mode,time-3*dt)&
+                  +3*vv_exact(k,vv_mesh%rr, mode,time-2*dt)&
+                  -3*vv_exact(k,vv_mesh%rr, mode,time-dt)&
+                  +1*vv_exact(k,vv_mesh%rr, mode,time))/(dt**3)
           END DO
           DO k = 1, 2
              der_pn(3)%DRT(:,k,i)= &
-              (-1*pp_exact(k,pp_mesh%rr, mode,time-3*dt)&
-               +3*pp_exact(k,pp_mesh%rr, mode,time-2*dt)&
-               -3*pp_exact(k,pp_mesh%rr, mode,time-dt)&
-               +1*pp_exact(k,pp_mesh%rr, mode,time))/(dt**3)
+                  (-1*pp_exact(k,pp_mesh%rr, mode,time-3*dt)&
+                  +3*pp_exact(k,pp_mesh%rr, mode,time-2*dt)&
+                  -3*pp_exact(k,pp_mesh%rr, mode,time-dt)&
+                  +1*pp_exact(k,pp_mesh%rr, mode,time))/(dt**3)
           END DO
        END IF
     ENDDO
@@ -127,7 +127,7 @@ CONTAINS
 
   SUBROUTINE update_ns_with_taylor(comm_one_d, time, vv_3_LA, pp_1_LA, vvz_per, pp_per, &
        dt, Re, lambda, list_mode, pp_mesh, vv_mesh, pn, der_pn, un, der_un)
-    !============================== 
+    !==============================
     USE def_type_mesh
     USE fem_M_axi
     USE fem_rhs_axi
@@ -144,7 +144,7 @@ CONTAINS
     USE my_util
     IMPLICIT NONE
     REAL(KIND=8)                                        :: time, dt, Re, lambda
-    INTEGER,      DIMENSION(:),     INTENT(IN)          :: list_mode   
+    INTEGER,      DIMENSION(:),     INTENT(IN)          :: list_mode
     TYPE(mesh_type),                INTENT(IN)          :: pp_mesh, vv_mesh
     TYPE(petsc_csr_LA)                                  :: vv_3_LA, pp_1_LA
     TYPE(periodic_type),            INTENT(IN)          :: vvz_per, pp_per
@@ -152,7 +152,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(pp_mesh%np,2,SIZE(list_mode)), INTENT(INOUT)  :: pn
     TYPE(dyn_real_array_three), DIMENSION(:)            :: der_un
     TYPE(dyn_real_array_three), DIMENSION(:)            :: der_pn
-    !===Saved variables 
+    !===Saved variables
     INTEGER,                                       SAVE :: m_max_c
     TYPE(dyn_real_line),DIMENSION(:), ALLOCATABLE, SAVE :: pp_global_D
     TYPE(dyn_int_line), DIMENSION(:), POINTER,     SAVE :: pp_mode_global_js_D
@@ -193,7 +193,7 @@ CONTAINS
        !===CREATE PETSC VECTORS AND GHOSTS
        CALL create_my_ghost(vv_mesh,vv_3_LA,vv_3_ifrom)
        n = 3*vv_mesh%dom_np
-       CALL VecCreateGhost(comm_one_d(1), n, & 
+       CALL VecCreateGhost(comm_one_d(1), n, &
             PETSC_DETERMINE, SIZE(vv_3_ifrom), vv_3_ifrom, vx_3, ierr)
        CALL VecGhostGetLocalForm(vx_3, vx_3_ghost, ierr)
        CALL VecDuplicate(vx_3, vb_3_145, ierr)
@@ -201,7 +201,7 @@ CONTAINS
 
        CALL create_my_ghost(pp_mesh,pp_1_LA,pp_1_ifrom)
        n = pp_mesh%dom_np
-       CALL VecCreateGhost(comm_one_d(1), n, & 
+       CALL VecCreateGhost(comm_one_d(1), n, &
             PETSC_DETERMINE, SIZE(pp_1_ifrom), pp_1_ifrom, px_1, ierr)
        CALL VecGhostGetLocalForm(px_1, px_1_ghost, ierr)
        CALL VecDuplicate(px_1, pb_1, ierr)
@@ -253,9 +253,9 @@ CONTAINS
           CALL create_local_petsc_matrix(comm_one_d(1), vv_3_LA, vel_mat(nu_mat), clean=.FALSE.)
           CALL qs_diff_mass_vect_3x3_taylor (1, vv_3_LA, vv_mesh, one/Re, one/dt, & !HF new coeffs
                lambda, i, mode, vel_mat(nu_mat))
-  
+
           IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
-             CALL periodic_matrix_petsc(vvz_per%n_bord, vvz_per%list,vvz_per%perlist, & 
+             CALL periodic_matrix_petsc(vvz_per%n_bord, vvz_per%list,vvz_per%perlist, &
                   vel_mat(nu_mat), vv_3_LA)
           END IF
           CALL Dirichlet_M_parallel(vel_mat(nu_mat),vv_mode_global_js_D(i)%DIL)
@@ -263,11 +263,11 @@ CONTAINS
                solver=inputs%my_par_vv%solver,precond=inputs%my_par_vv%precond)
           nu_mat = nu_mat+1
           CALL create_local_petsc_matrix(comm_one_d(1), vv_3_LA, vel_mat(nu_mat), clean=.FALSE.)
-          CALL qs_diff_mass_vect_3x3_taylor (2, vv_3_LA, vv_mesh, one/Re, one/dt, & !HF new coeffs 
+          CALL qs_diff_mass_vect_3x3_taylor (2, vv_3_LA, vv_mesh, one/Re, one/dt, & !HF new coeffs
                lambda, i, mode, vel_mat(nu_mat))
- 
+
           IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
-             CALL periodic_matrix_petsc(vvz_per%n_bord, vvz_per%list,vvz_per%perlist, & 
+             CALL periodic_matrix_petsc(vvz_per%n_bord, vvz_per%list,vvz_per%perlist, &
                   vel_mat(nu_mat), vv_3_LA)
           END IF
           CALL Dirichlet_M_parallel(vel_mat(nu_mat),vv_mode_global_js_D(i)%DIL)
@@ -298,8 +298,8 @@ CONTAINS
     IF (inputs%verbose_CFL) THEN
        vel_loc = 0.d0
        DO i = 1, m_max_c
-          IF (list_mode(i)==0) THEN 
-             coeff = 1.d0  
+          IF (list_mode(i)==0) THEN
+             coeff = 1.d0
           ELSE
              coeff = .5d0
           END IF
@@ -309,7 +309,7 @@ CONTAINS
        CALL MPI_COMM_SIZE(comm_one_d(2),nb_procs,code)
        CALL MPI_ALLREDUCE(vel_loc,vel_tot,vv_mesh%np,MPI_DOUBLE_PRECISION, MPI_SUM, comm_one_d(2), code)
        vel_tot = sqrt(vel_tot)
-       cfl = 0.d0 
+       cfl = 0.d0
        DO m = 1, vv_mesh%dom_me
           vloc = MAXVAL(vel_tot(vv_mesh%jj(:,m)))
           cfl = MAX(vloc*dt/MIN(vv_mesh%hloc(m),MAXVAL(vv_mesh%hm)),cfl)
@@ -363,7 +363,7 @@ CONTAINS
        vel_global_D(i)%DRL(n1+n2+1:n123)=(vv_exact(6,vv_mesh%rr(:,vv_js_D(3)%DIL), mode,time+dt)&
             -2.d0*vv_exact(6,vv_mesh%rr(:,vv_js_D(3)%DIL), mode,time)   &
             +vv_exact(6,vv_mesh%rr(:,vv_js_D(3)%DIL), mode,time-dt))/(dt**2)
-       vel_global_D(i)%DRL(n123+1:)     = 0.d0 
+       vel_global_D(i)%DRL(n123+1:)     = 0.d0
        CALL dirichlet_rhs(vv_mode_global_js_D(i)%DIL-1,vel_global_D(i)%DRL,vb_3_236)
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
        !===End Assemble vb_3_145, vb_3_236 using rhs_gauss
@@ -373,7 +373,7 @@ CONTAINS
        !===Solve system 1, dtt_ur_c, dtt_ut_s, dtt_uz_c
        nu_mat  =2*i-1
        CALL solver(vel_ksp(nu_mat),vb_3_145,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
-       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,un_p1(:,1))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,un_p1(:,4))
@@ -382,7 +382,7 @@ CONTAINS
        !===Solve system 2, dtt_ur_s, dtt_ut_c, dtt_uz_s
        nu_mat = nu_mat + 1
        CALL solver(vel_ksp(nu_mat),vb_3_236,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
-       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,un_p1(:,2))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,un_p1(:,3))
@@ -393,7 +393,7 @@ CONTAINS
        !===Assemble divergence of dtt_velocity in arrays pb_1, pb_2
        tps = user_time()
        CALL qs_01_div_hybrid_generic(inputs%type_fe_velocity,vv_mesh, pp_mesh, pp_1_LA, mode, un_p1, pb_1, pb_2)
-       !===End assembling; pb_1, and pb_2 are petsc vectors for the rhs divergence 
+       !===End assembling; pb_1, and pb_2 are petsc vectors for the rhs divergence
 
        IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
           CALL periodic_rhs_petsc(pp_per%n_bord, pp_per%list, pp_per%perlist, pb_1, pp_1_LA)
@@ -409,11 +409,11 @@ CONTAINS
        !===Solve mass matrix for dtt_pressure correction
        tps = user_time()
        CALL solver(mass_ksp,pb_1,px_1,reinit=.FALSE.,verbose=inputs%my_par_mass%verbose)
-       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(px_1_ghost,1,1,pp_1_LA,div(:,1,i))
        CALL solver(mass_ksp,pb_2,px_1,reinit=.FALSE.,verbose=inputs%my_par_mass%verbose)
-       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(px_1_ghost,1,1,pp_1_LA,div(:,2,i))
        !===End solve mass matrix for dtt_pressure correction
@@ -426,7 +426,7 @@ CONTAINS
        !===UPDATES
        tps = user_time()
        !===Handling 2nd order derrivative of mean pressure
-       IF (mode == 0)  THEN  
+       IF (mode == 0)  THEN
           CALL Moy(comm_one_d(1),pp_mesh, der_pn(2)%DRT(:,1,i),moyenne)
           der_pn(2)%DRT(:,1,i) = der_pn(2)%DRT(:,1,i)-moyenne
        ENDIF
@@ -442,7 +442,7 @@ CONTAINS
        !===Correction of zero mode
 
        !===UPDATES 2nd order derrivative
-       dtt_un_p1(:,:,i)  = un_p1 
+       dtt_un_p1(:,:,i)  = un_p1
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
        !===End UPDATES 2nd order derrivative
 
@@ -496,7 +496,7 @@ CONTAINS
        !===Solve system 1, dt_ur_c, dt_ut_s, dt_uz_c
        nu_mat  =2*i-1
        CALL solver(vel_ksp(nu_mat),vb_3_145,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
-       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,un_p1(:,1))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,un_p1(:,4))
@@ -505,7 +505,7 @@ CONTAINS
        !===Solve system 2, dt_ur_s, dt_ut_c, dt_uz_s
        nu_mat = nu_mat + 1
        CALL solver(vel_ksp(nu_mat),vb_3_236,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
-       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,un_p1(:,2))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,un_p1(:,3))
@@ -516,7 +516,7 @@ CONTAINS
        !===Assemble divergence of dt_velocity in arrays pb_1, pb_2
        tps = user_time()
        CALL qs_01_div_hybrid_generic(inputs%type_fe_velocity,vv_mesh, pp_mesh, pp_1_LA, mode, un_p1, pb_1, pb_2)
-       !===End assembling; pb_1, and pb_2 are petsc vectors for the rhs divergence 
+       !===End assembling; pb_1, and pb_2 are petsc vectors for the rhs divergence
 
        IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
           CALL periodic_rhs_petsc(pp_per%n_bord, pp_per%list, pp_per%perlist, pb_1, pp_1_LA)
@@ -532,11 +532,11 @@ CONTAINS
        !===Solve mass matrix for dt_pressure correction
        tps = user_time()
        CALL solver(mass_ksp,pb_1,px_1,reinit=.FALSE.,verbose=inputs%my_par_mass%verbose)
-       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(px_1_ghost,1,1,pp_1_LA,div(:,1,i))
        CALL solver(mass_ksp,pb_2,px_1,reinit=.FALSE.,verbose=inputs%my_par_mass%verbose)
-       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(px_1_ghost,1,1,pp_1_LA,div(:,2,i))
        !===End solve mass matrix for dt_pressure correction
@@ -550,7 +550,7 @@ CONTAINS
        !===UPDATES
        tps = user_time()
        !===Handling of mean first order derrivative pressure
-       IF (mode == 0)  THEN  
+       IF (mode == 0)  THEN
           CALL Moy(comm_one_d(1),pp_mesh, der_pn(1)%DRT(:,1,i),moyenne)
           der_pn(1)%DRT(:,1,i) = der_pn(1)%DRT(:,1,i)-moyenne
        ENDIF
@@ -566,7 +566,7 @@ CONTAINS
        !===Correction of zero mode
 
        !===UPDATE Velocity first order derrivative
-       dt_un_p1(:,:,i)  = un_p1 
+       dt_un_p1(:,:,i)  = un_p1
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
        !===End UPDATE Velocity first order derrivative
 
@@ -614,7 +614,7 @@ CONTAINS
        !===Solve system 1, ur_c, ut_s, uz_c
        nu_mat  =2*i-1
        CALL solver(vel_ksp(nu_mat),vb_3_145,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
-       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,un_p1(:,1))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,un_p1(:,4))
@@ -623,7 +623,7 @@ CONTAINS
        !===Solve system 2, ur_s, ut_c, uz_s
        nu_mat = nu_mat + 1
        CALL solver(vel_ksp(nu_mat),vb_3_236,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
-       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,un_p1(:,2))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,un_p1(:,3))
@@ -635,7 +635,7 @@ CONTAINS
        !===Assemble divergence of velocity in arrays pb_1, pb_2
        tps = user_time()
        CALL qs_01_div_hybrid_generic(inputs%type_fe_velocity,vv_mesh, pp_mesh, pp_1_LA, mode, un_p1, pb_1, pb_2)
-       !===End assembling; pb_1, and pb_2 are petsc vectors for the rhs divergence 
+       !===End assembling; pb_1, and pb_2 are petsc vectors for the rhs divergence
 
        IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
           CALL periodic_rhs_petsc(pp_per%n_bord, pp_per%list, pp_per%perlist, pb_1, pp_1_LA)
@@ -651,11 +651,11 @@ CONTAINS
        !===Solve mass matrix for pressure correction
        tps = user_time()
        CALL solver(mass_ksp,pb_1,px_1,reinit=.FALSE.,verbose=inputs%my_par_mass%verbose)
-       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(px_1_ghost,1,1,pp_1_LA,div(:,1,i))
        CALL solver(mass_ksp,pb_2,px_1,reinit=.FALSE.,verbose=inputs%my_par_mass%verbose)
-       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(px_1_ghost,1,1,pp_1_LA,div(:,2,i))
        !===End solve mass matrix for pressure correction
@@ -668,7 +668,7 @@ CONTAINS
        !===UPDATES
        tps = user_time()
        !===Handling of mean pressure
-       IF (mode == 0)  THEN  
+       IF (mode == 0)  THEN
           CALL Moy(comm_one_d(1),pp_mesh, pn(:,1,i),moyenne)
           pn(:,1,i) = pn(:,1,i)-moyenne
        ENDIF
@@ -684,7 +684,7 @@ CONTAINS
        !===Correction of zero mode
 
        !===UPDATES Velocity 0th order derrivative
-       un(:,:,i)  = un_p1 
+       un(:,:,i)  = un_p1
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
        !===End UPDATES Velocity 0th order derrivative
 
@@ -709,7 +709,7 @@ CONTAINS
 
   SUBROUTINE update_ns_with_taylor_fourth(comm_one_d, time, vv_3_LA, pp_1_LA, vvz_per, pp_per, &
        dt, Re, lambda, list_mode, pp_mesh, vv_mesh, pn, der_pn, un, der_un)
-    !============================== 
+    !==============================
     USE def_type_mesh
     USE fem_M_axi
     USE fem_rhs_axi
@@ -726,7 +726,7 @@ CONTAINS
     USE my_util
     IMPLICIT NONE
     REAL(KIND=8)                                        :: time, dt, Re, lambda
-    INTEGER,      DIMENSION(:),     INTENT(IN)          :: list_mode   
+    INTEGER,      DIMENSION(:),     INTENT(IN)          :: list_mode
     TYPE(mesh_type),                INTENT(IN)          :: pp_mesh, vv_mesh
     TYPE(petsc_csr_LA)                                  :: vv_3_LA, pp_1_LA
     TYPE(periodic_type),            INTENT(IN)          :: vvz_per, pp_per
@@ -734,7 +734,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(pp_mesh%np,2,SIZE(list_mode)), INTENT(INOUT) :: pn
     TYPE(dyn_real_array_three), DIMENSION(inputs%taylor_order-1)         :: der_un
     TYPE(dyn_real_array_three), DIMENSION(inputs%taylor_order-1)         :: der_pn
-    !===Saved variables 
+    !===Saved variables
     INTEGER,                                       SAVE :: m_max_c
     TYPE(dyn_real_line),DIMENSION(:), ALLOCATABLE, SAVE :: pp_global_D
     TYPE(dyn_int_line), DIMENSION(:), POINTER,     SAVE :: pp_mode_global_js_D
@@ -775,7 +775,7 @@ CONTAINS
        !===CREATE PETSC VECTORS AND GHOSTS
        CALL create_my_ghost(vv_mesh,vv_3_LA,vv_3_ifrom)
        n = 3*vv_mesh%dom_np
-       CALL VecCreateGhost(comm_one_d(1), n, & 
+       CALL VecCreateGhost(comm_one_d(1), n, &
             PETSC_DETERMINE, SIZE(vv_3_ifrom), vv_3_ifrom, vx_3, ierr)
        CALL VecGhostGetLocalForm(vx_3, vx_3_ghost, ierr)
        CALL VecDuplicate(vx_3, vb_3_145, ierr)
@@ -783,7 +783,7 @@ CONTAINS
 
        CALL create_my_ghost(pp_mesh,pp_1_LA,pp_1_ifrom)
        n = pp_mesh%dom_np
-       CALL VecCreateGhost(comm_one_d(1), n, & 
+       CALL VecCreateGhost(comm_one_d(1), n, &
             PETSC_DETERMINE, SIZE(pp_1_ifrom), pp_1_ifrom, px_1, ierr)
        CALL VecGhostGetLocalForm(px_1, px_1_ghost, ierr)
        CALL VecDuplicate(px_1, pb_1, ierr)
@@ -835,7 +835,7 @@ CONTAINS
           CALL qs_diff_mass_vect_3x3_taylor (1, vv_3_LA, vv_mesh, one/Re, one/dt, & !HF new coeffs
                lambda, i, mode, vel_mat(nu_mat))
           IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
-             CALL periodic_matrix_petsc(vvz_per%n_bord, vvz_per%list,vvz_per%perlist, & 
+             CALL periodic_matrix_petsc(vvz_per%n_bord, vvz_per%list,vvz_per%perlist, &
                   vel_mat(nu_mat), vv_3_LA)
           END IF
           CALL Dirichlet_M_parallel(vel_mat(nu_mat),vv_mode_global_js_D(i)%DIL)
@@ -843,10 +843,10 @@ CONTAINS
                solver=inputs%my_par_vv%solver,precond=inputs%my_par_vv%precond)
           nu_mat = nu_mat+1
           CALL create_local_petsc_matrix(comm_one_d(1), vv_3_LA, vel_mat(nu_mat), clean=.FALSE.)
-          CALL qs_diff_mass_vect_3x3_taylor (2, vv_3_LA, vv_mesh, one/Re, one/dt, & !HF new coeffs 
+          CALL qs_diff_mass_vect_3x3_taylor (2, vv_3_LA, vv_mesh, one/Re, one/dt, & !HF new coeffs
                lambda, i, mode, vel_mat(nu_mat))
           IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
-             CALL periodic_matrix_petsc(vvz_per%n_bord, vvz_per%list,vvz_per%perlist, & 
+             CALL periodic_matrix_petsc(vvz_per%n_bord, vvz_per%list,vvz_per%perlist, &
                   vel_mat(nu_mat), vv_3_LA)
           END IF
           CALL Dirichlet_M_parallel(vel_mat(nu_mat),vv_mode_global_js_D(i)%DIL)
@@ -865,7 +865,7 @@ CONTAINS
 
     uext = un +(4*dt/3)*der_un(1)%DRT + (4*dt/3)**2/2*der_un(2)%DRT + (4*dt/3)**3/6*der_un(3)%DRT !===1st NL term
     CALL smb_cross_prod_gauss_sft_par(comm_one_d(2),vv_mesh,list_mode,uext,rotv_v1,inputs%precession)
-    !===rotv_v1 is now a non linear term 
+    !===rotv_v1 is now a non linear term
 
     uext = un + dt*der_un(1)%DRT + dt**2/2*der_un(2)%DRT + dt**3/6*der_un(3)%DRT !===2nd NL term
     CALL smb_cross_prod_gauss_sft_par(comm_one_d(2),vv_mesh,list_mode,uext,rotv_v2,inputs%precession)
@@ -873,11 +873,11 @@ CONTAINS
 
     uext = un +(dt/2)*der_un(1)%DRT + (dt/2)**2/2*der_un(2)%DRT + (dt/2)**3/6*der_un(3)%DRT  !===3rd NL term
     CALL smb_cross_prod_gauss_sft_par(comm_one_d(2),vv_mesh,list_mode,uext,rotv_v3,inputs%precession)
-    !===rotv_v3 is now a non linear term 
+    !===rotv_v3 is now a non linear term
 
     uext = un  !===4th NL term
     CALL smb_cross_prod_gauss_sft_par(comm_one_d(2),vv_mesh,list_mode,uext,rotv_v4,inputs%precession)
-    !===rotv_v4 is now a non linear term 
+    !===rotv_v4 is now a non linear term
     tps = user_time() - tps; tps_cumul=tps_cumul+tps
     !===End Compute NL by FFT at Gauss points
 
@@ -885,8 +885,8 @@ CONTAINS
     IF (inputs%verbose_CFL) THEN
        vel_loc = 0.d0
        DO i = 1, m_max_c
-          IF (list_mode(i)==0) THEN 
-             coeff = 1.d0  
+          IF (list_mode(i)==0) THEN
+             coeff = 1.d0
           ELSE
              coeff = 0.5d0
           END IF
@@ -896,7 +896,7 @@ CONTAINS
        CALL MPI_COMM_SIZE(comm_one_d(2),nb_procs,code)
        CALL MPI_ALLREDUCE(vel_loc,vel_tot,vv_mesh%np,MPI_DOUBLE_PRECISION, MPI_SUM, comm_one_d(2), code)
        vel_tot = sqrt(vel_tot)
-       cfl = 0.d0 
+       cfl = 0.d0
        DO m = 1, vv_mesh%dom_me
           vloc = MAXVAL(vel_tot(vv_mesh%jj(:,m)))
           cfl = MAX(vloc*dt/MIN(vv_mesh%hloc(m),MAXVAL(vv_mesh%hm)),cfl)
@@ -971,7 +971,7 @@ CONTAINS
        !===Solve system 1, dtt_ur_c, dtt_ut_s, dtt_uz_c
        nu_mat  =2*i-1
        CALL solver(vel_ksp(nu_mat),vb_3_145,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
-       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,un_p1(:,1))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,un_p1(:,4))
@@ -980,7 +980,7 @@ CONTAINS
        !===Solve system 2, dtt_ur_s, dtt_ut_c, dtt_uz_s
        nu_mat = nu_mat + 1
        CALL solver(vel_ksp(nu_mat),vb_3_236,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
-       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,un_p1(:,2))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,un_p1(:,3))
@@ -993,7 +993,7 @@ CONTAINS
        !===Assemble divergence of dttt_velocity in arrays pb_1, pb_2
        tps = user_time()
        CALL qs_01_div_hybrid_generic(inputs%type_fe_velocity,vv_mesh, pp_mesh, pp_1_LA, mode, un_p1, pb_1, pb_2)
-       !===End assembling; pb_1, and pb_2 are petsc vectors for the rhs divergence 
+       !===End assembling; pb_1, and pb_2 are petsc vectors for the rhs divergence
 
        IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
           CALL periodic_rhs_petsc(pp_per%n_bord, pp_per%list, pp_per%perlist, pb_1, pp_1_LA)
@@ -1009,11 +1009,11 @@ CONTAINS
        !===Solve mass matrix for dttt_pressure correction
        tps = user_time()
        CALL solver(mass_ksp,pb_1,px_1,reinit=.FALSE.,verbose=inputs%my_par_mass%verbose)
-       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(px_1_ghost,1,1,pp_1_LA,div(:,1,i))
        CALL solver(mass_ksp,pb_2,px_1,reinit=.FALSE.,verbose=inputs%my_par_mass%verbose)
-       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(px_1_ghost,1,1,pp_1_LA,div(:,2,i))
        !===End solve mass matrix for dttt_pressure correction
@@ -1026,7 +1026,7 @@ CONTAINS
        !===UPDATES
        tps = user_time()
        !===Handling 2nd order derrivative of mean pressure
-       IF (mode == 0)  THEN  
+       IF (mode == 0)  THEN
           CALL Moy(comm_one_d(1),pp_mesh, der_pn(3)%DRT(:,1,i),moyenne)
           der_pn(3)%DRT(:,1,i) = der_pn(3)%DRT(:,1,i)-moyenne
        ENDIF
@@ -1042,7 +1042,7 @@ CONTAINS
        !===Correction of zero mode
 
        !===UPDATES 3rd order derrivative
-       dttt_un_p1(:,:,i)  = un_p1 
+       dttt_un_p1(:,:,i)  = un_p1
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
        !===End UPDATES 3rd order derrivative
 
@@ -1115,7 +1115,7 @@ CONTAINS
        !===Solve system 1, dtt_ur_c, dtt_ut_s, dtt_uz_c
        nu_mat  =2*i-1
        CALL solver(vel_ksp(nu_mat),vb_3_145,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
-       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,un_p1(:,1))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,un_p1(:,4))
@@ -1124,7 +1124,7 @@ CONTAINS
        !===Solve system 2, dtt_ur_s, dtt_ut_c, dtt_uz_s
        nu_mat = nu_mat + 1
        CALL solver(vel_ksp(nu_mat),vb_3_236,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
-       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,un_p1(:,2))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,un_p1(:,3))
@@ -1137,7 +1137,7 @@ CONTAINS
        !===Assemble divergence of dtt_velocity in arrays pb_1, pb_2
        tps = user_time()
        CALL qs_01_div_hybrid_generic(inputs%type_fe_velocity,vv_mesh, pp_mesh, pp_1_LA, mode, un_p1, pb_1, pb_2)
-       !===End assembling; pb_1, and pb_2 are petsc vectors for the rhs divergence 
+       !===End assembling; pb_1, and pb_2 are petsc vectors for the rhs divergence
 
        IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
           CALL periodic_rhs_petsc(pp_per%n_bord, pp_per%list, pp_per%perlist, pb_1, pp_1_LA)
@@ -1153,11 +1153,11 @@ CONTAINS
        !===Solve mass matrix for dtt_pressure correction
        tps = user_time()
        CALL solver(mass_ksp,pb_1,px_1,reinit=.FALSE.,verbose=inputs%my_par_mass%verbose)
-       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(px_1_ghost,1,1,pp_1_LA,div(:,1,i))
        CALL solver(mass_ksp,pb_2,px_1,reinit=.FALSE.,verbose=inputs%my_par_mass%verbose)
-       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(px_1_ghost,1,1,pp_1_LA,div(:,2,i))
        !===End solve mass matrix for dtt_pressure correction
@@ -1170,7 +1170,7 @@ CONTAINS
        !===UPDATES
        tps = user_time()
        !===Handling 2nd order derrivative of mean pressure
-       IF (mode == 0)  THEN  
+       IF (mode == 0)  THEN
           CALL Moy(comm_one_d(1),pp_mesh, der_pn(2)%DRT(:,1,i),moyenne)
           der_pn(2)%DRT(:,1,i) = der_pn(2)%DRT(:,1,i)-moyenne
        ENDIF
@@ -1186,7 +1186,7 @@ CONTAINS
        !===Correction of zero mode
 
        !===UPDATES 2nd order derrivative
-       dtt_un_p1(:,:,i)  = un_p1 
+       dtt_un_p1(:,:,i)  = un_p1
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
        !===End UPDATES 2nd order derrivative
 
@@ -1258,7 +1258,7 @@ CONTAINS
        !===Solve system 1, dt_ur_c, dt_ut_s, dt_uz_c
        nu_mat  =2*i-1
        CALL solver(vel_ksp(nu_mat),vb_3_145,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
-       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,un_p1(:,1))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,un_p1(:,4))
@@ -1268,7 +1268,7 @@ CONTAINS
        !===Solve system 2, dt_ur_s, dt_ut_c, dt_uz_s
        nu_mat = nu_mat + 1
        CALL solver(vel_ksp(nu_mat),vb_3_236,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
-       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,un_p1(:,2))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,un_p1(:,3))
@@ -1280,7 +1280,7 @@ CONTAINS
        !===Assemble divergence of dt_velocity in arrays pb_1, pb_2
        tps = user_time()
        CALL qs_01_div_hybrid_generic(inputs%type_fe_velocity,vv_mesh, pp_mesh, pp_1_LA, mode, un_p1, pb_1, pb_2)
-       !===End assembling; pb_1, and pb_2 are petsc vectors for the rhs divergence 
+       !===End assembling; pb_1, and pb_2 are petsc vectors for the rhs divergence
 
        IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
           CALL periodic_rhs_petsc(pp_per%n_bord, pp_per%list, pp_per%perlist, pb_1, pp_1_LA)
@@ -1296,11 +1296,11 @@ CONTAINS
        !===Solve mass matrix for dt_pressure correction
        tps = user_time()
        CALL solver(mass_ksp,pb_1,px_1,reinit=.FALSE.,verbose=inputs%my_par_mass%verbose)
-       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(px_1_ghost,1,1,pp_1_LA,div(:,1,i))
        CALL solver(mass_ksp,pb_2,px_1,reinit=.FALSE.,verbose=inputs%my_par_mass%verbose)
-       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(px_1_ghost,1,1,pp_1_LA,div(:,2,i))
        !===End solve mass matrix for dt_pressure correction
@@ -1314,7 +1314,7 @@ CONTAINS
        !===UPDATES
        tps = user_time()
        !===Handling of mean first order derrivative pressure
-       IF (mode == 0)  THEN  
+       IF (mode == 0)  THEN
           CALL Moy(comm_one_d(1),pp_mesh, der_pn(1)%DRT(:,1,i),moyenne)
           der_pn(1)%DRT(:,1,i) = der_pn(1)%DRT(:,1,i)-moyenne
        ENDIF
@@ -1330,7 +1330,7 @@ CONTAINS
        !===Correction of zero mode
 
        !===UPDATE Velocity first order derrivative
-       dt_un_p1(:,:,i)  = un_p1 
+       dt_un_p1(:,:,i)  = un_p1
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
        !===End UPDATE Velocity first order derrivative
 
@@ -1378,7 +1378,7 @@ CONTAINS
        !===Solve system 1, ur_c, ut_s, uz_c
        nu_mat  =2*i-1
        CALL solver(vel_ksp(nu_mat),vb_3_145,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
-       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,un_p1(:,1))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,un_p1(:,4))
@@ -1387,7 +1387,7 @@ CONTAINS
        !===Solve system 2, ur_s, ut_c, uz_s
        nu_mat = nu_mat + 1
        CALL solver(vel_ksp(nu_mat),vb_3_236,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
-       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,un_p1(:,2))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,un_p1(:,3))
@@ -1399,7 +1399,7 @@ CONTAINS
        !===Assemble divergence of velocity in arrays pb_1, pb_2
        tps = user_time()
        CALL qs_01_div_hybrid_generic(inputs%type_fe_velocity,vv_mesh, pp_mesh, pp_1_LA, mode, un_p1, pb_1, pb_2)
-       !===End assembling; pb_1, and pb_2 are petsc vectors for the rhs divergence 
+       !===End assembling; pb_1, and pb_2 are petsc vectors for the rhs divergence
 
        IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
           CALL periodic_rhs_petsc(pp_per%n_bord, pp_per%list, pp_per%perlist, pb_1, pp_1_LA)
@@ -1415,11 +1415,11 @@ CONTAINS
        !===Solve mass matrix for pressure correction
        tps = user_time()
        CALL solver(mass_ksp,pb_1,px_1,reinit=.FALSE.,verbose=inputs%my_par_mass%verbose)
-       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(px_1_ghost,1,1,pp_1_LA,div(:,1,i))
        CALL solver(mass_ksp,pb_2,px_1,reinit=.FALSE.,verbose=inputs%my_par_mass%verbose)
-       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(px_1_ghost,1,1,pp_1_LA,div(:,2,i))
        !===End solve mass matrix for pressure correction
@@ -1432,7 +1432,7 @@ CONTAINS
        !===UPDATES
        tps = user_time()
        !===Handling of mean pressure
-       IF (mode == 0)  THEN  
+       IF (mode == 0)  THEN
           CALL Moy(comm_one_d(1),pp_mesh, pn(:,1,i),moyenne)
           pn(:,1,i) = pn(:,1,i)-moyenne
        ENDIF
@@ -1448,7 +1448,7 @@ CONTAINS
        !===Correction of zero mode
 
        !===UPDATES Velocity 0th order derrivative
-       un(:,:,i)  = un_p1 
+       un(:,:,i)  = un_p1
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
        !===End UPDATES Velocity 0th order derrivative
 
@@ -1471,7 +1471,7 @@ CONTAINS
     tps_tot = user_time() - tps_tot
   END SUBROUTINE update_ns_with_taylor_fourth
   !============================================
-  
+
 
   !===PRECESSION 28/07/09
   SUBROUTINE smb_cross_prod_gauss_sft_par(communicator,mesh,list_mode,V_in,V_out,precession_in)
@@ -1483,13 +1483,13 @@ CONTAINS
     IMPLICIT NONE
 
     TYPE(mesh_type),                INTENT(IN)  :: mesh
-    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode    
+    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: V_in
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT) :: V_out
     LOGICAL,                        INTENT(IN)  :: precession_in
     REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%me,6,SIZE(list_mode)) :: RotV, W, Om
     INTEGER,      DIMENSION(mesh%gauss%n_w)                  :: j_loc
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc     
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc
     INTEGER                                                  ::  m, l , i, mode, index, k
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)   :: Vs, Omega_s
     REAL(KIND=8)   :: ray
@@ -1553,7 +1553,7 @@ CONTAINS
              Om(index,4,i) = SUM(Omega_s(:,4)*mesh%gauss%ww(:,l))
              Om(index,6,i) = SUM(Omega_s(:,6)*mesh%gauss%ww(:,l))
              !-----------------rotational sur les points de Gauss---------------------------
-             !coeff sur les cosinus 
+             !coeff sur les cosinus
              RotV(index,1,i) = mode/ray*W(index,6,i) &
                   -SUM(Vs(:,3)*dw_loc(2,:))
              RotV(index,4,i) =          SUM(Vs(:,2)*dw_loc(2,:)) &
@@ -1561,7 +1561,7 @@ CONTAINS
              RotV(index,5,i) =    1/ray*W(index,3,i) &
                   +SUM(Vs(:,3)*dw_loc(1,:)) &
                   -mode/ray*W(index,2,i)
-             !coeff sur les sinus       
+             !coeff sur les sinus
              RotV(index,2,i) =-mode/ray*W(index,5,i) &
                   -SUM(Vs(:,4)*dw_loc(2,:))
              RotV(index,3,i) =         SUM(Vs(:,1)*dw_loc(2,:)) &
@@ -1587,7 +1587,7 @@ CONTAINS
     CALL MPI_COMM_SIZE(communicator, nb_procs, code)
     bloc_size = SIZE(RotV,1)/nb_procs+1
     m_max_pad = 3*SIZE(list_mode)*nb_procs/2
-    CALL FFT_PAR_CROSS_PROD_DCL(communicator, RotV, W, V_out, nb_procs, bloc_size, m_max_pad, temps) 
+    CALL FFT_PAR_CROSS_PROD_DCL(communicator, RotV, W, V_out, nb_procs, bloc_size, m_max_pad, temps)
     tps = user_time() - tps
 
   END SUBROUTINE smb_cross_prod_gauss_sft_par
@@ -1599,13 +1599,13 @@ CONTAINS
     TYPE(mesh_type)                             :: mesh
     REAL(KIND=8), DIMENSION(:)  ,   INTENT(IN)  :: p
     REAL(KIND=8)                ,   INTENT(OUT) :: RESLT
-    REAL(KIND=8)                                :: vol_loc, vol_out, r_loc, r_out   
+    REAL(KIND=8)                                :: vol_loc, vol_out, r_loc, r_out
     INTEGER ::  m, l , i , ni, code
     INTEGER,      DIMENSION(mesh%gauss%n_w)     :: j_loc
     REAL(KIND=8)   :: ray
     MPI_Comm                                    :: communicator
     r_loc = 0.d0
-    vol_loc = 0.d0   
+    vol_loc = 0.d0
 
     DO m = 1, mesh%dom_me
        j_loc = mesh%jj(:,m)
@@ -1629,7 +1629,7 @@ CONTAINS
 
   SUBROUTINE rhs_ns_gauss_3x3_taylor(vv_mesh, pp_mesh, communicator, list_mode, time, V1m, pn, rotv_v, &
        rhs_gauss, der_ord)
-    !================================= 
+    !=================================
     !RHS for Navier-Stokes_taylor : RHS for (d/dt)**der_ord un
     USE def_type_mesh
     USE my_util
@@ -1643,7 +1643,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: rotv_v
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: V1m
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: pn
-    INTEGER,      DIMENSION(:),                 INTENT(IN) :: list_mode  
+    INTEGER,      DIMENSION(:),                 INTENT(IN) :: list_mode
     INTEGER,                                    INTENT(IN) :: der_ord
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)), INTENT(OUT) :: rhs_gauss
     REAL(KIND=8), DIMENSION(6)                                   :: fs, ft
@@ -1711,25 +1711,25 @@ CONTAINS
              ft(1) = SUM(V1m(j_loc,1,i) * vv_mesh%gauss%ww(:,l)) !inertia
              fp(index,1,i) = -SUM(P(j_loc,1)*dw_loc(1,:))        !pressure term
              !=== u0(2,:) <--> f(r,m,s)
-             fs(2) = SUM(ff(j_loc,2) * vv_mesh%gauss%ww(:,l)) 
-             ft(2) = SUM(V1m(j_loc,2,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(index,2,i) = -SUM(P(j_loc,2)*dw_loc(1,:)) 
+             fs(2) = SUM(ff(j_loc,2) * vv_mesh%gauss%ww(:,l))
+             ft(2) = SUM(V1m(j_loc,2,i) * vv_mesh%gauss%ww(:,l))
+             fp(index,2,i) = -SUM(P(j_loc,2)*dw_loc(1,:))
              !=== u0(3,:) <--> f(th,m,c)
-             fs(3) = SUM(ff(j_loc,3) * vv_mesh%gauss%ww(:,l)) 
-             ft(3) = SUM(V1m(j_loc,3,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(index,3,i) = -SUM(P(j_loc,2)*vv_mesh%gauss%ww(:,l))/ray*list_mode(i) 
+             fs(3) = SUM(ff(j_loc,3) * vv_mesh%gauss%ww(:,l))
+             ft(3) = SUM(V1m(j_loc,3,i) * vv_mesh%gauss%ww(:,l))
+             fp(index,3,i) = -SUM(P(j_loc,2)*vv_mesh%gauss%ww(:,l))/ray*list_mode(i)
              !=== u0(4,:) <--> f(th,m,s)
-             fs(4) = SUM(ff(j_loc,4) * vv_mesh%gauss%ww(:,l)) 
-             ft(4) = SUM(V1m(j_loc,4,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(index,4,i) = SUM(P(j_loc,1)*vv_mesh%gauss%ww(:,l))/ray*list_mode(i) 
+             fs(4) = SUM(ff(j_loc,4) * vv_mesh%gauss%ww(:,l))
+             ft(4) = SUM(V1m(j_loc,4,i) * vv_mesh%gauss%ww(:,l))
+             fp(index,4,i) = SUM(P(j_loc,1)*vv_mesh%gauss%ww(:,l))/ray*list_mode(i)
              !=== u0(5,:) <--> f(z,m,c)
-             fs(5) = SUM(ff(j_loc,5) * vv_mesh%gauss%ww(:,l)) 
-             ft(5) = SUM(V1m(j_loc,5,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(index,5,i) = -SUM(P(j_loc,1)*dw_loc(2,:)) 
+             fs(5) = SUM(ff(j_loc,5) * vv_mesh%gauss%ww(:,l))
+             ft(5) = SUM(V1m(j_loc,5,i) * vv_mesh%gauss%ww(:,l))
+             fp(index,5,i) = -SUM(P(j_loc,1)*dw_loc(2,:))
              !=== u0(6,:) <--> f(z,m,s)
-             fs(6) = SUM(ff(j_loc,6) * vv_mesh%gauss%ww(:,l)) 
-             ft(6) = SUM(V1m(j_loc,6,i) * vv_mesh%gauss%ww(:,l)) 
-             fp(index,6,i) = -SUM(P(j_loc,2)*dw_loc(2,:)) 
+             fs(6) = SUM(ff(j_loc,6) * vv_mesh%gauss%ww(:,l))
+             ft(6) = SUM(V1m(j_loc,6,i) * vv_mesh%gauss%ww(:,l))
+             fp(index,6,i) = -SUM(P(j_loc,2)*dw_loc(2,:))
 
              rhs_gauss(index,:,i) =  (ft+fs-rotv_v(index,:,i))
 
@@ -1747,21 +1747,21 @@ CONTAINS
                          index  = index +1
                          DO TYPE = 1, 6
                             imposed_vel_gauss(index,TYPE) = SUM(imposed_vel(j_loc,TYPE) &
-                                 * vv_mesh%gauss%ww(:,l)) 
+                                 * vv_mesh%gauss%ww(:,l))
                          END DO
                       END DO
                    END DO
-                   rhs_gauss(:,:,i) = rhs_gauss(:,:,i) - imposed_vel_gauss(:,:) 
+                   rhs_gauss(:,:,i) = rhs_gauss(:,:,i) - imposed_vel_gauss(:,:)
                 ELSE IF (der_ord==1) THEN
-                !===CN HF adapt to 4th order
-                !   imposed_vel(:,:) = (imposed_velocity_by_penalty(vv_mesh%rr,time+inputs%dt) &
-                !        - imposed_velocity_by_penalty(vv_mesh%rr,time-inputs%dt))/(2.d0*inputs%dt**2)
+                   !===CN HF adapt to 4th order
+                   !   imposed_vel(:,:) = (imposed_velocity_by_penalty(vv_mesh%rr,time+inputs%dt) &
+                   !        - imposed_velocity_by_penalty(vv_mesh%rr,time-inputs%dt))/(2.d0*inputs%dt**2)
                    imposed_vel(:,:) = &
-               (-2*imposed_velocity_by_penalty(vv_mesh%rr,time-3*inputs%dt)&
-                +9*imposed_velocity_by_penalty(vv_mesh%rr,time-2*inputs%dt)&
-               -18*imposed_velocity_by_penalty(vv_mesh%rr,time-1*inputs%dt)&
-               +11*imposed_velocity_by_penalty(vv_mesh%rr,time))/(6*inputs%dt**2)
-                !===CN HF adapt to 4th order
+                        (-2*imposed_velocity_by_penalty(vv_mesh%rr,time-3*inputs%dt)&
+                        +9*imposed_velocity_by_penalty(vv_mesh%rr,time-2*inputs%dt)&
+                        -18*imposed_velocity_by_penalty(vv_mesh%rr,time-1*inputs%dt)&
+                        +11*imposed_velocity_by_penalty(vv_mesh%rr,time))/(6*inputs%dt**2)
+                   !===CN HF adapt to 4th order
                    index = 0
                    DO m = 1, vv_mesh%dom_me
                       j_loc = vv_mesh%jj(:,m)
@@ -1769,19 +1769,19 @@ CONTAINS
                          index  = index +1
                          DO TYPE = 1, 6
                             imposed_vel_gauss(index,TYPE) = SUM(imposed_vel(j_loc,TYPE) &
-                                 * vv_mesh%gauss%ww(:,l)) 
+                                 * vv_mesh%gauss%ww(:,l))
                          END DO
                       END DO
                    END DO
-                   rhs_gauss(:,:,i) = rhs_gauss(:,:,i) - imposed_vel_gauss(:,:) 
+                   rhs_gauss(:,:,i) = rhs_gauss(:,:,i) - imposed_vel_gauss(:,:)
                 ELSE IF (der_ord==2) THEN
-                !===CN HF adapt to 4th order: nothing to do
+                   !===CN HF adapt to 4th order: nothing to do
                    imposed_vel(:,:) = &
-               (-1*imposed_velocity_by_penalty(vv_mesh%rr,time-3*inputs%dt)&
-                +4*imposed_velocity_by_penalty(vv_mesh%rr,time-2*inputs%dt)&
-                -5*imposed_velocity_by_penalty(vv_mesh%rr,time-1*inputs%dt)&
-                +2*imposed_velocity_by_penalty(vv_mesh%rr,time))/(inputs%dt**3)
-                !===CN HF adapt to 4th order: nothing to do
+                        (-1*imposed_velocity_by_penalty(vv_mesh%rr,time-3*inputs%dt)&
+                        +4*imposed_velocity_by_penalty(vv_mesh%rr,time-2*inputs%dt)&
+                        -5*imposed_velocity_by_penalty(vv_mesh%rr,time-1*inputs%dt)&
+                        +2*imposed_velocity_by_penalty(vv_mesh%rr,time))/(inputs%dt**3)
+                   !===CN HF adapt to 4th order: nothing to do
                    index = 0
                    DO m = 1, vv_mesh%dom_me
                       j_loc = vv_mesh%jj(:,m)
@@ -1789,18 +1789,18 @@ CONTAINS
                          index  = index +1
                          DO TYPE = 1, 6
                             imposed_vel_gauss(index,TYPE) = SUM(imposed_vel(j_loc,TYPE) &
-                                 * vv_mesh%gauss%ww(:,l)) 
+                                 * vv_mesh%gauss%ww(:,l))
                          END DO
                       END DO
                    END DO
-                   rhs_gauss(:,:,i) = rhs_gauss(:,:,i) - imposed_vel_gauss(:,:) 
-                !===CN HF adapt to 4th order
+                   rhs_gauss(:,:,i) = rhs_gauss(:,:,i) - imposed_vel_gauss(:,:)
+                   !===CN HF adapt to 4th order
                 ELSE IF (der_ord==3) THEN
                    imposed_vel(:,:) = &
-               (-1*imposed_velocity_by_penalty(vv_mesh%rr,time-3*inputs%dt)&
-                +3*imposed_velocity_by_penalty(vv_mesh%rr,time-2*inputs%dt)&
-                -3*imposed_velocity_by_penalty(vv_mesh%rr,time-1*inputs%dt)&
-                +1*imposed_velocity_by_penalty(vv_mesh%rr,time))/(inputs%dt**4)
+                        (-1*imposed_velocity_by_penalty(vv_mesh%rr,time-3*inputs%dt)&
+                        +3*imposed_velocity_by_penalty(vv_mesh%rr,time-2*inputs%dt)&
+                        -3*imposed_velocity_by_penalty(vv_mesh%rr,time-1*inputs%dt)&
+                        +1*imposed_velocity_by_penalty(vv_mesh%rr,time))/(inputs%dt**4)
                    index = 0
                    DO m = 1, vv_mesh%dom_me
                       j_loc = vv_mesh%jj(:,m)
@@ -1808,12 +1808,12 @@ CONTAINS
                          index  = index +1
                          DO TYPE = 1, 6
                             imposed_vel_gauss(index,TYPE) = SUM(imposed_vel(j_loc,TYPE) &
-                                 * vv_mesh%gauss%ww(:,l)) 
+                                 * vv_mesh%gauss%ww(:,l))
                          END DO
                       END DO
                    END DO
-                   rhs_gauss(:,:,i) = rhs_gauss(:,:,i) - imposed_vel_gauss(:,:) 
-                !===CN HF adapt to 4th order
+                   rhs_gauss(:,:,i) = rhs_gauss(:,:,i) - imposed_vel_gauss(:,:)
+                   !===CN HF adapt to 4th order
                 ENDIF
              END IF
           END IF
@@ -1827,7 +1827,7 @@ CONTAINS
           bloc_size = SIZE(rhs_gauss,1)/nb_procs+1
 
           CALL FFT_PAR_VAR_ETA_PROD_GAUSS_DCL(communicator, penal_in_real_space, vv_mesh, &
-               rhs_gauss, rhs_gauss_penal, nb_procs, bloc_size, m_max_pad, rr_gauss, time) 
+               rhs_gauss, rhs_gauss_penal, nb_procs, bloc_size, m_max_pad, rr_gauss, time)
           DO i = 1, SIZE(list_mode)
              IF (list_mode(i)==0) THEN
                 rhs_gauss(:,:,i) = rhs_gauss_penal(:,:,i) + imposed_vel_gauss(:,:)
@@ -1838,7 +1838,7 @@ CONTAINS
        END IF
     END IF
 
-    rhs_gauss = rhs_gauss + fp 
+    rhs_gauss = rhs_gauss + fp
 
   END SUBROUTINE rhs_ns_gauss_3x3_taylor
 
@@ -1850,7 +1850,7 @@ CONTAINS
     USE input_data
     IMPLICIT NONE
 
-    INTEGER     ,                 INTENT(IN)    :: type_op, mode, i_mode  
+    INTEGER     ,                 INTENT(IN)    :: type_op, mode, i_mode
     REAL(KIND=8),                 INTENT(IN)    :: visco, mass, lambda
     TYPE(petsc_csr_la)                          :: LA
     TYPE(mesh_type), TARGET                     :: mesh
@@ -1861,9 +1861,9 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w) :: aij, bij, cij, dij, eij, fij
     REAL(KIND=8) :: ray, eps1, eps2, z
     REAL(KIND=8) :: two = 2.d0
-    REAL(KIND=8), DIMENSION(3*mesh%gauss%n_w,3*mesh%gauss%n_w)   :: mat_loc 
+    REAL(KIND=8), DIMENSION(3*mesh%gauss%n_w,3*mesh%gauss%n_w)   :: mat_loc
     INTEGER,      DIMENSION(3*mesh%gauss%n_w)                    :: idxn, jdxn
-    REAL(KIND=8), DIMENSION(2*mesh%gauss%n_ws,2*mesh%gauss%n_ws) :: mat_loc_s 
+    REAL(KIND=8), DIMENSION(2*mesh%gauss%n_ws,2*mesh%gauss%n_ws) :: mat_loc_s
     INTEGER,      DIMENSION(2*mesh%gauss%n_ws)                   :: idxn_s, jdxn_s
     INTEGER                                                      :: ix, jx, iglob, jglob
     INTEGER,      DIMENSION(mesh%gauss%n_w)                      :: jj_loc
@@ -1887,8 +1887,8 @@ CONTAINS
        eps1 = 1.d0
        eps2 = -1.d0
        k_max = 2 !Structure vectorielle
-    ELSEIF (type_op == 3) THEN  
-       !cas du laplacien scalaire   
+    ELSEIF (type_op == 3) THEN
+       !cas du laplacien scalaire
        eps1 = 0.d0
        eps2 = 0.d0
        k_max = 1 !Structure scalaire
@@ -1900,9 +1900,9 @@ CONTAINS
     ENDIF
 
 
-    DO l = 1, mesh%gauss%l_G 
-       DO ni = 1, mesh%gauss%n_w 
-          DO nj = 1, mesh%gauss%n_w 
+    DO l = 1, mesh%gauss%l_G
+       DO ni = 1, mesh%gauss%n_w
+          DO nj = 1, mesh%gauss%n_w
              wwprod(ni,nj,l) = mesh%gauss%ww(ni,l)*mesh%gauss%ww(nj,l)
           END DO
        END DO
@@ -1944,7 +1944,7 @@ CONTAINS
                      + viscomode*mode**2*wwprod(ni,nj,l)/ray
                 cij(ni,nj) =  cij(ni,nj) + z
                 aij(ni,nj) =  aij(ni,nj) + z + viscomode*eps1*wwprod(ni,nj,l)/ray
-                !blocs couplant              
+                !blocs couplant
                 bij(ni,nj) = bij(ni,nj) + eps2*viscomode*2*mode*wwprod(ni,nj,l)/ray
              ENDDO
           ENDDO
@@ -1953,7 +1953,7 @@ CONTAINS
 
        mat_loc = 0.d0
        DO ki= 1, 3
-          DO ni = 1, n_w 
+          DO ni = 1, n_w
              i = jj_loc(ni)
              iglob = LA%loc_to_glob(ki,i)
              ix = (ki-1)*n_w+ni
@@ -2090,7 +2090,7 @@ CONTAINS
     IF (inputs%vv_nb_dirichlet_normal_velocity>0) THEN
        !===Surface terms
        DO ms = 1, mesh%mes
-          IF (MINVAL(ABS(mesh%sides(ms)- inputs%vv_list_dirichlet_normal_velocity_sides)).NE.0) CYCLE 
+          IF (MINVAL(ABS(mesh%sides(ms)- inputs%vv_list_dirichlet_normal_velocity_sides)).NE.0) CYCLE
           aij = 0.d0
           bij = 0.d0
           cij = 0.d0

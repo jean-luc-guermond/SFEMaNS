@@ -252,7 +252,7 @@ CONTAINS
 
        !n_b = SIZE(b_list_loc)
        !n_p = SIZE(p_list_loc)
-       !n_e = SIZE(e_list_loc) 
+       !n_e = SIZE(e_list_loc)
        nsize = 3*n_b + n_p + n_e
 
        ALLOCATE(H_p_phi_per%list(n)%DIL(nsize), H_p_phi_per%perlist(n)%DIL(nsize))
@@ -293,15 +293,15 @@ CONTAINS
   SUBROUTINE list_periodic(np, jjs, sides, rr, side1, side2, e, list_out, perlist_out)
     !============================================================================
     IMPLICIT NONE
-    INTEGER,                      INTENT(IN)  :: np 
-    INTEGER,      DIMENSION(:,:), INTENT(IN)  :: jjs 
-    INTEGER,      DIMENSION(:),   INTENT(IN)  :: sides 
+    INTEGER,                      INTENT(IN)  :: np
+    INTEGER,      DIMENSION(:,:), INTENT(IN)  :: jjs
+    INTEGER,      DIMENSION(:),   INTENT(IN)  :: sides
     REAL(KIND=8), DIMENSION(:,:), INTENT(IN)  :: rr
-    INTEGER,                      INTENT(IN)  :: side1, side2 
-    REAL(KIND=8), DIMENSION(:),   INTENT(IN)  :: e 
+    INTEGER,                      INTENT(IN)  :: side1, side2
+    REAL(KIND=8), DIMENSION(:),   INTENT(IN)  :: e
     INTEGER,      DIMENSION(:),   POINTER     :: list_out, perlist_out
     INTEGER,      DIMENSION(:),   ALLOCATABLE :: list, perlist
-    LOGICAL,      DIMENSION(np)               :: virgin 
+    LOGICAL,      DIMENSION(np)               :: virgin
     REAL(KIND=8), DIMENSION(SIZE(rr,1))       :: ri
     INTEGER :: ms, ns, i, j, long, inter
     REAL(KIND=8) :: r, epsilon = 1.d-9
@@ -339,22 +339,22 @@ CONTAINS
 
     IF (i .NE. j) THEN
        WRITE(*,*) ' FEM_PERIODIC: side1 and side2 have', &
-            ' different numbers of points' 
+            ' different numbers of points'
        STOP
     END IF
-    long = i 
+    long = i
 
-    DO i = 1, long 
+    DO i = 1, long
        ri = rr(:,list(i))+e(:)
        verif = .FALSE.
        !if (i==2) stop
        DO j = i, long
           r = SUM(ABS(ri - rr(:,perlist(j))))
           !if (i==1) write(*,*) ' r',r,'j',  j
-          IF (r .LE. epsilon ) THEN 
+          IF (r .LE. epsilon ) THEN
              inter = perlist(i)
-             perlist(i) = perlist(j) 
-             perlist(j) = inter 
+             perlist(i) = perlist(j)
+             perlist(j) = inter
              verif = .TRUE.
              EXIT
           END IF
@@ -362,13 +362,13 @@ CONTAINS
        IF (.NOT.verif) THEN
           WRITE(*,*) ' BUG dans  data_periodic ou le maillage:', &
                ' side1 + e /= side2'
-          WRITE(*,*) ' i = ', i 
+          WRITE(*,*) ' i = ', i
           !         STOP
        END IF
     END DO
 
     ALLOCATE (list_out(long))
-    list_out(1:long) = list(1:long) 
+    list_out(1:long) = list(1:long)
     ALLOCATE (perlist_out(long))
     perlist_out(1:long) = perlist(1:long)
 
@@ -439,7 +439,7 @@ CONTAINS
                PETSC_NULL_VEC, PETSC_NULL_VEC, ierr) !(JLG) Feb 20, 2019, petsc.3.8.4
        END DO
 !!$       CALL MatAssemblyBegin(matrix,MAT_FINAL_ASSEMBLY,ierr)
-!!$       CALL MatAssemblyEnd(matrix,MAT_FINAL_ASSEMBLY,ierr) 
+!!$       CALL MatAssemblyEnd(matrix,MAT_FINAL_ASSEMBLY,ierr)
 
        DO n = 1, n_bord
           DO l = 1, SIZE(list(n)%DIL)
@@ -449,7 +449,7 @@ CONTAINS
           END DO
        END DO
        CALL MatAssemblyBegin(matrix,MAT_FINAL_ASSEMBLY,ierr)
-       CALL MatAssemblyEnd(matrix,MAT_FINAL_ASSEMBLY,ierr) 
+       CALL MatAssemblyEnd(matrix,MAT_FINAL_ASSEMBLY,ierr)
 
     END DO
 

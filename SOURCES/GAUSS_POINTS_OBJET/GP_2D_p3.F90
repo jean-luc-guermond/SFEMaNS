@@ -100,7 +100,7 @@ CONTAINS
        xx(10)= 0.053145049844817d0; yy(10)= 0.636502499121399d0; p(10)= 0.082851075618374d0
        xx(11)= 0.636502499121399d0; yy(11)= 0.310352451033784d0; p(11)= 0.082851075618374d0
        xx(12)= 0.310352451033784d0; yy(12)= 0.053145049844817d0; p(12) = 0.082851075618374d0
-       p = p*area 
+       p = p*area
     END IF
 
     DO j = 1, l_G
@@ -255,51 +255,50 @@ CONTAINS
 
   END SUBROUTINE element_2d_p3_boundary
 
- SUBROUTINE element_1d_p3(w, d, p, n_ws, l_Gs)
-   !===one-dimensional element with cubic interpolation
-   !===and 4 Gauss integration points
-   !===w(n_w, l_G)    : values of shape functions at Gauss points
-   !===d(1, n_w, l_G) : derivatives values of shape functions at Gauss points
-   !===p(l_G)         : weight for Gaussian quadrature at Gauss points
-   !===Enumeration: 1  3  4  2
-   IMPLICIT NONE
-   INTEGER,                                INTENT(IN)  :: n_ws, l_Gs
-   REAL(KIND=8), DIMENSION(   n_ws, l_Gs), INTENT(OUT) :: w
-   REAL(KIND=8), DIMENSION(1, n_ws, l_Gs), INTENT(OUT) :: d
-   REAL(KIND=8), DIMENSION(l_Gs),          INTENT(OUT) :: p
-   REAL(KIND=8), DIMENSION(l_Gs) :: xx
-   INTEGER :: j
-   REAL(KIND=8) :: f1, f2, f3, f4, df1, df2, df3, df4, x
+  SUBROUTINE element_1d_p3(w, d, p, n_ws, l_Gs)
+    !===one-dimensional element with cubic interpolation
+    !===and 4 Gauss integration points
+    !===w(n_w, l_G)    : values of shape functions at Gauss points
+    !===d(1, n_w, l_G) : derivatives values of shape functions at Gauss points
+    !===p(l_G)         : weight for Gaussian quadrature at Gauss points
+    !===Enumeration: 1  3  4  2
+    IMPLICIT NONE
+    INTEGER,                                INTENT(IN)  :: n_ws, l_Gs
+    REAL(KIND=8), DIMENSION(   n_ws, l_Gs), INTENT(OUT) :: w
+    REAL(KIND=8), DIMENSION(1, n_ws, l_Gs), INTENT(OUT) :: d
+    REAL(KIND=8), DIMENSION(l_Gs),          INTENT(OUT) :: p
+    REAL(KIND=8), DIMENSION(l_Gs) :: xx
+    INTEGER :: j
+    REAL(KIND=8) :: f1, f2, f3, f4, df1, df2, df3, df4, x
 
-   f1(x) = -0.1D1/0.16D2 + x/0.16D2 + 0.9D1/0.16D2*x**2 - 0.9D1/0.16D2*x**3
-   f2(x) = -x/0.16D2 + 0.9D1/0.16D2*x**2 + 0.9D1/0.16D2*x**3 - 0.1D1/0.16D2
-   f3(x) = -0.9D1/0.16D2*x**2 + 0.27D2/0.16D2*x**3 + 0.9D1/0.16D2 - 0.27D2/0.16D2*x
-   f4(x) = -0.9D1/0.16D2*x**2 - 0.27D2/0.16D2*x**3 + 0.9D1/0.16D2 + 0.27D2/0.16D2*x
+    f1(x) = -0.1D1/0.16D2 + x/0.16D2 + 0.9D1/0.16D2*x**2 - 0.9D1/0.16D2*x**3
+    f2(x) = -x/0.16D2 + 0.9D1/0.16D2*x**2 + 0.9D1/0.16D2*x**3 - 0.1D1/0.16D2
+    f3(x) = -0.9D1/0.16D2*x**2 + 0.27D2/0.16D2*x**3 + 0.9D1/0.16D2 - 0.27D2/0.16D2*x
+    f4(x) = -0.9D1/0.16D2*x**2 - 0.27D2/0.16D2*x**3 + 0.9D1/0.16D2 + 0.27D2/0.16D2*x
 
-   df1(x) = 0.1D1/0.16D2 - 0.27D2/0.16D2*x**2 + 0.9D1/0.8D1*x
-   df2(x)  = -0.1D1/0.16D2 + 0.27D2/0.16D2*x**2 + 0.9D1/0.8D1*x
-   df3(x) = -0.27D2/0.16D2 - 0.9D1/0.8D1*x + 0.81D2/0.16D2*x**2
-   df4(x) = -0.9D1/0.8D1*x - 0.81D2/0.16D2*x**2 + 0.27D2/0.16D2
+    df1(x) = 0.1D1/0.16D2 - 0.27D2/0.16D2*x**2 + 0.9D1/0.8D1*x
+    df2(x)  = -0.1D1/0.16D2 + 0.27D2/0.16D2*x**2 + 0.9D1/0.8D1*x
+    df3(x) = -0.27D2/0.16D2 - 0.9D1/0.8D1*x + 0.81D2/0.16D2*x**2
+    df4(x) = -0.9D1/0.8D1*x - 0.81D2/0.16D2*x**2 + 0.27D2/0.16D2
 
-   xx(1) = -SQRT((15.d0+2*SQRT(30.d0))/35.d0)
-   xx(2) = -SQRT((15.d0-2*SQRT(30.d0))/35.d0)
-   xx(3) =  SQRT((15.d0-2*SQRT(30.d0))/35.d0)
-   xx(4) =  SQRT((15.d0+2*SQRT(30.d0))/35.d0)
-   p(1) = (18.d0-SQRT(30.d0))/36.d0
-   p(2) = (18.d0+SQRT(30.d0))/36.d0
-   p(3) = (18.d0+SQRT(30.d0))/36.d0
-   p(4) = (18.d0-SQRT(30.d0))/36.d0
+    xx(1) = -SQRT((15.d0+2*SQRT(30.d0))/35.d0)
+    xx(2) = -SQRT((15.d0-2*SQRT(30.d0))/35.d0)
+    xx(3) =  SQRT((15.d0-2*SQRT(30.d0))/35.d0)
+    xx(4) =  SQRT((15.d0+2*SQRT(30.d0))/35.d0)
+    p(1) = (18.d0-SQRT(30.d0))/36.d0
+    p(2) = (18.d0+SQRT(30.d0))/36.d0
+    p(3) = (18.d0+SQRT(30.d0))/36.d0
+    p(4) = (18.d0-SQRT(30.d0))/36.d0
 
-   DO j = 1, l_Gs
-      w(1, j) =  f1(xx(j))
-      d(1, 1, j) = df1(xx(j))
-      w(2, j) =  f2(xx(j))
-      d(1, 2, j) = df2(xx(j))
-      w(3, j) =  f3(xx(j))
-      d(1, 3, j) = df3(xx(j))
-      w(4, j) =  f4(xx(j))
-      d(1, 4, j) = df4(xx(j))
-   ENDDO
- END SUBROUTINE element_1d_p3
+    DO j = 1, l_Gs
+       w(1, j) =  f1(xx(j))
+       d(1, 1, j) = df1(xx(j))
+       w(2, j) =  f2(xx(j))
+       d(1, 2, j) = df2(xx(j))
+       w(3, j) =  f3(xx(j))
+       d(1, 3, j) = df3(xx(j))
+       w(4, j) =  f4(xx(j))
+       d(1, 4, j) = df4(xx(j))
+    ENDDO
+  END SUBROUTINE element_1d_p3
 END MODULE GP_2d_p3
-

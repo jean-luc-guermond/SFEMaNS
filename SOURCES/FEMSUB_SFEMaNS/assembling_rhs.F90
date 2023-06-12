@@ -8,7 +8,7 @@ CONTAINS
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
-    TYPE(mesh_type)                                                     :: mesh 
+    TYPE(mesh_type)                                                     :: mesh
     TYPE(petsc_csr_LA)                                                  :: vv_3_LA
     INTEGER,                                                 INTENT(IN) :: mode
     REAL(KIND=8), DIMENSION(mesh%dom_me*mesh%gauss%l_G,6),   INTENT(IN) :: rhs_in
@@ -19,7 +19,7 @@ CONTAINS
     INTEGER,      DIMENSION(3*mesh%gauss%n_ws)                          :: idxms
     INTEGER,      DIMENSION(mesh%gauss%n_w)                             :: j_loc
     INTEGER,      DIMENSION(mesh%gauss%n_ws)                            :: js_loc
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)              :: dw_loc  
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)              :: dw_loc
     REAL(KIND=8), DIMENSION(3,6)                                        :: tensor_loc
     REAL(KIND=8), DIMENSION(6)                                          :: smb, f_tensor
     INTEGER      :: m, l, i, ni, index, nw, ix, ki, iglob, type, k, ms, ls, indexs, nws
@@ -76,13 +76,13 @@ CONTAINS
           DO ni = 1, nw
              ix = (ki-1)*nw+ni
              v145_loc(ix) = v145_loc(ix) + mesh%gauss%ww(ni,l)*smb(1)
-             v236_loc(ix) = v236_loc(ix) + mesh%gauss%ww(ni,l)*smb(2) 
+             v236_loc(ix) = v236_loc(ix) + mesh%gauss%ww(ni,l)*smb(2)
           END DO
 
           ki = 2
           DO ni = 1, nw
              ix = (ki-1)*nw+ni
-             v145_loc(ix) = v145_loc(ix) + mesh%gauss%ww(ni,l)*smb(4) 
+             v145_loc(ix) = v145_loc(ix) + mesh%gauss%ww(ni,l)*smb(4)
              v236_loc(ix) = v236_loc(ix) + mesh%gauss%ww(ni,l)*smb(3)
           END DO
 
@@ -90,7 +90,7 @@ CONTAINS
           DO ni = 1, nw
              ix = (ki-1)*nw+ni
              v145_loc(ix) = v145_loc(ix) + mesh%gauss%ww(ni,l)*smb(5)
-             v236_loc(ix) = v236_loc(ix) + mesh%gauss%ww(ni,l)*smb(6) 
+             v236_loc(ix) = v236_loc(ix) + mesh%gauss%ww(ni,l)*smb(6)
           END DO
 
           IF (PRESENT(opt_tensor)) THEN
@@ -158,13 +158,13 @@ CONTAINS
              DO ni = 1, nws
                 ix = (ki-1)*nws+ni
                 v145_loc(ix) = v145_loc(ix) + mesh%gauss%wws(ni,ls)*smb(1)
-                v236_loc(ix) = v236_loc(ix) + mesh%gauss%wws(ni,ls)*smb(2) 
+                v236_loc(ix) = v236_loc(ix) + mesh%gauss%wws(ni,ls)*smb(2)
              END DO
 
              ki = 2
              DO ni = 1, nws
                 ix = (ki-1)*nws+ni
-                v145_loc(ix) = v145_loc(ix) + mesh%gauss%wws(ni,ls)*smb(4) 
+                v145_loc(ix) = v145_loc(ix) + mesh%gauss%wws(ni,ls)*smb(4)
                 v236_loc(ix) = v236_loc(ix) + mesh%gauss%wws(ni,ls)*smb(3)
              END DO
 
@@ -172,7 +172,7 @@ CONTAINS
              DO ni = 1, nws
                 ix = (ki-1)*nws+ni
                 v145_loc(ix) = v145_loc(ix) + mesh%gauss%wws(ni,ls)*smb(5)
-                v236_loc(ix) = v236_loc(ix) + mesh%gauss%wws(ni,ls)*smb(6) 
+                v236_loc(ix) = v236_loc(ix) + mesh%gauss%wws(ni,ls)*smb(6)
              END DO
 
 
@@ -187,7 +187,7 @@ CONTAINS
     CALL VecAssemblyBegin(vb_236,ierr)
     CALL VecAssemblyEnd(vb_236,ierr)
   END SUBROUTINE rhs_3x3
-  
+
 
   SUBROUTINE rhs_3x3_art_comp(mesh, vv_3_LA, mode, rhs_in, vb_145, vb_236, opt_tensor, opt_grad_div)
     USE def_type_mesh
@@ -195,7 +195,7 @@ CONTAINS
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
-    TYPE(mesh_type)                                                     :: mesh 
+    TYPE(mesh_type)                                                     :: mesh
     TYPE(petsc_csr_LA)                                                  :: vv_3_LA
     INTEGER,                                                 INTENT(IN) :: mode
     REAL(KIND=8), DIMENSION(mesh%dom_me*mesh%gauss%l_G,6),   INTENT(IN) :: rhs_in
@@ -204,7 +204,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(3*mesh%gauss%n_w)                           :: v145_loc, v236_loc
     INTEGER,      DIMENSION(3*mesh%gauss%n_w)                           :: idxm
     INTEGER,      DIMENSION(mesh%gauss%n_w)                             :: j_loc
-    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)              :: dw_loc  
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)              :: dw_loc
     REAL(KIND=8), DIMENSION(3,6)                                        :: tensor_loc
     REAL(KIND=8), DIMENSION(2)                                          :: div_loc
     REAL(KIND=8), DIMENSION(6)                                          :: smb, f_tensor, f_div
@@ -255,7 +255,7 @@ CONTAINS
           ELSE
              f_tensor = 0.d0
           END IF
-          
+
           IF (PRESENT(opt_grad_div)) THEN
              DO TYPE = 1, 2
                 div_loc(TYPE) = opt_grad_div(index,TYPE)
@@ -270,20 +270,20 @@ CONTAINS
           ELSE
              f_div = 0.d0
           END IF
-          
+
           smb = (rhs_in(index,:)+f_tensor+f_div)*ray*mesh%gauss%rj(l,m)
 
           ki = 1
           DO ni = 1, nw
              ix = (ki-1)*nw+ni
              v145_loc(ix) = v145_loc(ix) + mesh%gauss%ww(ni,l)*smb(1)
-             v236_loc(ix) = v236_loc(ix) + mesh%gauss%ww(ni,l)*smb(2) 
+             v236_loc(ix) = v236_loc(ix) + mesh%gauss%ww(ni,l)*smb(2)
           END DO
 
           ki = 2
           DO ni = 1, nw
              ix = (ki-1)*nw+ni
-             v145_loc(ix) = v145_loc(ix) + mesh%gauss%ww(ni,l)*smb(4) 
+             v145_loc(ix) = v145_loc(ix) + mesh%gauss%ww(ni,l)*smb(4)
              v236_loc(ix) = v236_loc(ix) + mesh%gauss%ww(ni,l)*smb(3)
           END DO
 
@@ -291,7 +291,7 @@ CONTAINS
           DO ni = 1, nw
              ix = (ki-1)*nw+ni
              v145_loc(ix) = v145_loc(ix) + mesh%gauss%ww(ni,l)*smb(5)
-             v236_loc(ix) = v236_loc(ix) + mesh%gauss%ww(ni,l)*smb(6) 
+             v236_loc(ix) = v236_loc(ix) + mesh%gauss%ww(ni,l)*smb(6)
           END DO
 
           IF (PRESENT(opt_tensor)) THEN
@@ -355,5 +355,5 @@ CONTAINS
     CALL VecAssemblyEnd(vb_236,ierr)
   END SUBROUTINE rhs_3x3_art_comp
 
-  
+
 END MODULE rhs_para_assembling
