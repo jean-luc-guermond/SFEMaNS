@@ -19,7 +19,7 @@ CONTAINS
 
   SUBROUTINE maxwell_decouple_with_H(comm_one_d, H_mesh, pmag_mesh, phi_mesh, interface_H_phi, &
        interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, vel, stab_in, sigma_in, &
-       R_fourier, index_fourier, mu_H_field, mu_phi, time, dt_in, Rem, list_mode, & ! MODIFICATION: dt is dt_in * 1e20 in fhd
+       R_fourier, index_fourier, mu_H_field, mu_phi, time, dt_in, Rem, list_mode, &
        H_phi_per, LA_H, LA_pmag, LA_phi, LA_mhd, one_over_sigma_ns_in, jj_v_to_H)
     USE def_type_mesh
     USE chaine_caractere
@@ -52,7 +52,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(3),     INTENT(IN)     :: stab_in
     REAL(KIND=8),                   INTENT(IN)     :: R_fourier
     INTEGER,                        INTENT(IN)     :: index_fourier
-    REAL(KIND=8),                   INTENT(IN)     :: mu_phi, time, dt_in, Rem   ! MODIFICATION: dt is dt_in * 1e20 in fhd
+    REAL(KIND=8),                   INTENT(IN)     :: mu_phi, time, dt_in, Rem
     REAL(KIND=8), DIMENSION(:),     INTENT(IN)     :: sigma_in, mu_H_field
     !jan 29/JLG+FL/Forget about it/We replace it by H_p_phi_per/Feb 2 2010
     TYPE(periodic_type),            INTENT(IN)     :: H_phi_per
@@ -60,7 +60,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)     :: one_over_sigma_ns_in
     INTEGER,      DIMENSION(:)    , INTENT(IN)     :: jj_v_to_H
     TYPE(petsc_csr_LA)                             :: LA_H, LA_pmag, LA_phi, LA_mhd
-    REAL(KIND=8),                                  SAVE  :: dt ! MODIFICATION: dt is dt_in * 1e20 in fhd
+    REAL(KIND=8),                                  SAVE  :: dt
     REAL(KIND=8), DIMENSION(:), ALLOCATABLE,       SAVE  :: sigma_ns_bar
     REAL(KIND=8), DIMENSION(:), ALLOCATABLE,       SAVE  :: sigma_np
     REAL(KIND=8), DIMENSION(:), ALLOCATABLE,       SAVE  :: sigma
@@ -1572,9 +1572,7 @@ CONTAINS
           !===Compute radius of Gauss point
           ray = SUM(phi_mesh%rr(1,phi_mesh%jjs(:,ms2))* phi_mesh%gauss%wws(:,ls))
           x = rjs(ls,ms2)*ray/sigma(m1)
-          ! TEST REGRESSION
 
-          ! TEST REGRESSION
           !terme sans derivees
           DO ni = 1,n_ws1
              DO nj = 1, n_ws1
@@ -1668,9 +1666,7 @@ CONTAINS
           !===Compute radius of Gauss point
           ray = SUM(phi_mesh%rr(1,phi_mesh%jjs(:,ms2))* phi_mesh%gauss%wws(:,ls))
           x = rjs(ls,ms2)*ray /sigma(m1)
-          ! TEST REGRESSION
 
-          ! TEST REGRESSION
           !termes avec derivees
           DO ni = 1,n_ws1
              y = x*w_cs(ni,ls)
@@ -2018,9 +2014,7 @@ CONTAINS
           !===Compute radius of Gauss point
           ray = SUM(phi_mesh%rr(1,phi_mesh%jjs(:,ms2))* phi_mesh%gauss%wws(:,ls))
           x = rjs(ls,ms2)*ray/sigma(m1)
-          ! TEST REGRESSION
 
-          ! TEST REGRESSION
           !terme sans derivee
           DO ni = 1, n_ws2
              DO nj = 1, n_ws1
@@ -2109,9 +2103,7 @@ CONTAINS
           !===Compute radius of Gauss point
           ray = SUM(phi_mesh%rr(1,phi_mesh%jjs(:,ms2))* phi_mesh%gauss%wws(:,ls))
           x = rjs(ls,ms2)*ray/sigma(m1)
-          ! TEST REGRESSION
 
-          ! TEST REGRESSION
           !terme avec derivee de bi seulement
           DO ni = 1, n_ws2
              y =  x*wws(ni,ls)*mode/ray
@@ -2171,9 +2163,7 @@ CONTAINS
           !===Compute radius of Gauss point
           ray = SUM(phi_mesh%rr(1,phi_mesh%jjs(:,ms2))* phi_mesh%gauss%wws(:,ls))
           x = rjs(ls,ms2)*ray/sigma(m1)
-          ! TEST REGRESSION
 
-          ! TEST REGRESSION
           !terme avec derivee de phi et derivee de bi
           DO ni = 1, n_w2
              y =  x*(dw_s(2,ni,ls,ms2)*rnorms(1,ls,ms2) - dw_s(1,ni,ls,ms2)*rnorms(2,ls,ms2))
@@ -2652,13 +2642,11 @@ CONTAINS
           !===Compute radius of Gauss point
           ray = SUM(H_mesh%rr(1,H_mesh%jjs(:,ms))* H_mesh%gauss%wws(:,ls))
 
-          ! TEST REGRESSION
           IF (jj_v_to_H(H_mesh%jj(1,m1)) == -1) THEN
              x = H_mesh%gauss%rjs(ls,ms)*ray/sigma(m1)
           ELSE
              x = H_mesh%gauss%rjs(ls,ms)*ray/SUM(sigma_np(H_mesh%jjs(:,ms))*H_mesh%gauss%wws(:,ls))
           END IF
-          ! TEST REGRESSION
 
           !terme sans derivees
           DO ni = 1,n_ws1
@@ -2755,13 +2743,11 @@ CONTAINS
           !===Compute radius of Gauss point
           ray = SUM(H_mesh%rr(1,H_mesh%jjs(:,ms))* H_mesh%gauss%wws(:,ls))
 
-          ! TEST REGRESSION
           IF (jj_v_to_H(H_mesh%jj(1,m1)) == -1) THEN
              x = H_mesh%gauss%rjs(ls,ms)*ray/(sigma(m1))
           ELSE
              x = H_mesh%gauss%rjs(ls,ms)*ray/(SUM(sigma_np(H_mesh%jjs(:,ms))*H_mesh%gauss%wws(:,ls)))
           END IF
-          ! TEST REGRESSION
 
           !termes avec derivees
           DO ni = 1,n_ws1
@@ -3130,7 +3116,7 @@ CONTAINS
                   muhl, time, mesh_id1, B_ext_l)/sigma(m1) &
                   + muhl * SUM(NL(H_mesh%jjs(1:n_ws1,ms1),k)*w_cs(1:n_ws1,ls))
           ENDDO
-!!$! TEST REGRESSION : to do before using H with phi
+!!$! TEST LC : to do before using H with phi
 !!$          IF (inputs%if_level_set.AND.inputs%variation_sigma_fluid) THEN
 !!$             DO k = 1, 6
 !!$                JsolH_anal(k) = J_over_sigma_gauss(k) + sigma_curl(index,k) &
@@ -3143,7 +3129,7 @@ CONTAINS
 !!$                  + SUM(NL(H_mesh%jjs(1:n_ws1,ms1),k)*w_cs(1:n_ws1,ls))
 !!$             END DO
 !!$          END IF
-!!$! TEST REGRESSION
+!!$! TEST LC
 
           !---------forcage pour H
 
@@ -3496,9 +3482,6 @@ CONTAINS
              !===I put boggus values for sigma and mu_H_field, Feb 8 2007, Jean-Luc Guermond
              Esolphi_anal(k) = Eexact_gauss(k,gaussp,mode,mu_phi,sigma(1),mu_H_field(1),time)
           ENDDO
-          !TO REGRESSION
-
-          !TO REGRESSION
 
           !===Nemnann forcing for phi in rhs:  - E.(grad(phi) x nv)
           DO ns=1, phi_mesh%gauss%n_ws
@@ -3886,7 +3869,6 @@ CONTAINS
           !===Compute radius of Gauss point
           ray = SUM(H_mesh%rr(1,H_mesh%jjs(:,ms2))* H_mesh%gauss%wws(:,ls))
           x = rjs(ls,ms2)*ray
-          ! TEST REGRESSION
           IF (jj_v_to_H(H_mesh%jj(1,m1)) == -1) THEN
              sigmal1 = sigma(m1)
           ELSE
@@ -3897,24 +3879,19 @@ CONTAINS
           ELSE
              sigmal2 = SUM(sigma_np(H_mesh%jjs(:,ms2))* wws(:,ls))
           END IF
-          ! TEST REGRESSION
           DO ci = 1, 2
              IF (ci==1) THEN
                 normi = rnorms(:,ls,ms1)
                 wwsi = w_cs(:,ls)
                 n_wsi = n_ws1
                 !                sigmai = sigma(m1)
-                ! TEST REGRESSION
                 sigmai = sigmal1
-                ! TEST REGRESSION
              ELSE
                 normi = rnorms(:,ls,ms2)
                 wwsi = wws(:,ls)
                 n_wsi = n_ws2
                 !                sigmai = sigma(m2)
-                ! TEST REGRESSION
                 sigmai = sigmal2
-                ! TEST REGRESSION
              END IF
              DO cj = 1, 2
                 IF (cj==1) THEN
@@ -3922,17 +3899,13 @@ CONTAINS
                    wwsj = w_cs(:,ls)
                    n_wsj = n_ws1
                    !                   sigmaj = sigma(m1)
-                   ! TEST REGRESSION
                    sigmaj = sigmal1
-                   ! TEST REGRESSION
                 ELSE
                    normj = rnorms(:,ls,ms2)
                    wwsj = wws(:,ls)
                    n_wsj = n_ws2
                    !                   sigmaj = sigma(m2)
-                   ! TEST REGRESSION
                    sigmaj = sigmal2
-                   ! TEST REGRESSION
                 END IF
 
                 DO ni = 1,n_wsi  !
@@ -4020,7 +3993,6 @@ CONTAINS
           !===Compute radius of Gauss point
           ray = SUM(H_mesh%rr(1,H_mesh%jjs(:,ms2))* H_mesh%gauss%wws(:,ls))
           x = rjs(ls,ms2)*ray
-          ! TEST REGRESSION
           IF (jj_v_to_H(H_mesh%jj(1,m1)) == -1) THEN
              sigmal1 = sigma(m1)
           ELSE
@@ -4031,7 +4003,6 @@ CONTAINS
           ELSE
              sigmal2 = SUM(sigma_np(H_mesh%jjs(:,ms2))* wws(:,ls))
           END IF
-          ! TEST REGRESSION
 
           DO ci = 1, 2
              IF (ci==1) THEN
@@ -4041,9 +4012,7 @@ CONTAINS
                 n_wsi = n_ws1
                 n_wi = n_w1
                 !                sigmai = sigma(m1)
-                ! TEST REGRESSION
                 sigmai = sigmal1
-                ! TEST REGRESSION
              ELSE
                 normi = rnorms(:,ls,ms2)
                 wwsi = wws(:,ls)
@@ -4051,9 +4020,7 @@ CONTAINS
                 n_wsi = n_ws2
                 n_wi = n_w2
                 sigmai = sigma(m2)
-                ! TEST REGRESSION
                 sigmai = sigmal2
-                ! TEST REGRESSION
              END IF
              DO cj = 1, 2
                 IF (cj==1) THEN
@@ -4063,9 +4030,7 @@ CONTAINS
                    n_wsj = n_ws1
                    n_wj = n_w1
                    sigmaj = sigma(m1)
-                   ! TEST REGRESSION
                    sigmai = sigmal1
-                   ! TEST REGRESSION
                 ELSE
                    normj = rnorms(:,ls,ms2)
                    wwsj = wws(:,ls)
@@ -4073,9 +4038,7 @@ CONTAINS
                    n_wsj = n_ws2
                    n_wj = n_w2
                    sigmaj = sigma(m2)
-                   ! TEST REGRESSION
                    sigmai = sigmal2
-                   ! TEST REGRESSION
                 END IF
 
                 !termes avec derivees
@@ -4514,7 +4477,6 @@ CONTAINS
 !!$                  + muhl1 * SUM(NL(H_mesh%jjs(:,ms),k)*H_mesh%gauss%wws(:,ls)) &
 !!$                  + hm1*Hlocxn(k,ls)
 !!$          ENDDO
-          ! TEST REGRESSION
           IF (inputs%if_level_set.AND.inputs%variation_sigma_fluid) THEN
              DO k = 1, 6
                 JsolH_anal(k) = J_over_sigma_bdy(index,k) &
@@ -4530,7 +4492,6 @@ CONTAINS
                      + hm1*Hlocxn(k,ls)
              END DO
           END IF
-          ! TEST REGRESSION
 
           DO ni = 1, H_mesh%gauss%n_ws
              i = H_mesh%jjs(ni,ms)

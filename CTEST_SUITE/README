@@ -4,3 +4,4 @@ cd BUILD
 cp ../variables_template.cmake ../variables.cmake
 cmake ..
 make
+ctest

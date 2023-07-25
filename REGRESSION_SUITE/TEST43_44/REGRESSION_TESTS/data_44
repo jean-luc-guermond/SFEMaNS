@@ -1,0 +1,268 @@
+===Is mesh file formatted (true/false)?
+.t.
+===Directory and name of mesh file
+'../../MESHES' 'LMB_cake_setup_home_0p001_0p0025.FEM'
+===Number of processors in meridian section
+6
+===Number of processors in Fourier space
+1
+===Number of Fourier modes
+1
+===Problem type: (nst, mxw, mhd, fhd, mhs)
+'mhs'
+===Do we read metis partition? (true/false)
+.t.
+===Restart on velocity (true/false)
+.t.
+===Restart on magnetic field (true/false)
+.t.
+===Restart on concentration (true/false)
+.t.
+===Time step and number of time iterations
+1.0d-2 10
+
+===========================================
+          Data for post processing
+===========================================
+===Frequency to write restart file
+100000
+
+============================================
+              Current collector for EVF
+============================================
+===Is there a current collector ?  (true/false)
+.t.
+===Length of Rcc
+8.d-3
+===Is there a foam ?  (true/false)
+.t.
+===Length of Rfoam
+1.8d-2
+===Maximum radius Rmax
+4.d-2
+
+============================================
+              Vertical current for TI
+============================================
+===Is there a vertical current ? (true/false)
+.t.
+===Amplitude of J0
+-2.d3
+
+============================================
+              Mesh-NAVIER-STOKES
+============================================
+===Number of subdomains in Navier-Stokes mesh
+1
+===List of subdomains for Navier-Stokes mesh
+2
+
+============================================
+              BCs-NAVIER-STOKES
+============================================
+===How many boundary pieces for full Dirichlet BCs on velocity?
+3
+===List of boundary pieces for full Dirichlet BCs on velocity
+2 3 5
+===How many boundary pieces for homogeneous normal velocity?
+0
+===List of boundary pieces for homogeneous normal velocity
+3
+
+============================================
+              Dynamics-NAVIER-STOKES
+============================================
+===Solve Navier-Stokes with u (true) or m (false)?
+.t.
+xx===Reynolds number
+1.d0
+===Kinematic viscosity
+1.44d-7
+===Coefficient for penalty of divergence in NS?
+1.d4
+===Coefficient for Lorentz force
+1.0478885d-4 ! 1/rho*
+
+============================================
+              Solver-velocity-NAVIER-STOKES
+============================================
+===Maximum number of iterations for velocity solver
+100
+===Relative tolerance for velocity solver
+1.d-6
+===Absolute tolerance for velocity solver
+1.d-10
+===Solver type for velocity (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for velocity solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Solver-pressure-NAVIER-STOKES
+============================================
+===Maximum number of iterations for pressure solver
+100
+===Relative tolerance for pressure solver
+1.d-6
+===Absolute tolerance for pressure solver
+1.d-10
+===Solver type for pressure (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for pressure solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Solver-mass-NAVIER-STOKES
+============================================
+===Maximum number of iterations for mass matrix solver
+100
+===Relative tolerance for mass matrix solver
+1.d-6
+===Absolute tolerance for mass matrix solver
+1.d-10
+===Solver type for mass matrix (FGMRES, CG, ...)
+CG
+===Preconditionner type for mass matrix solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+             Concentration
+============================================
+===Is there a concentration field?
+.t.
+===Number of subdomains in concentration mesh
+1
+===List of subdomains for concentration mesh
+2
+===Diffusivity coefficient for concentration (1:nb_dom_conc)
+8.d-9
+===How many boundary pieces for Dirichlet BCs on concentration?
+0
+===List of boundary pieces for Dirichlet BCs on concentration
+2
+===How many boundary pieces for Neumann BCs on concentration?
+1  !for flow with j
+===List of boundary pieces for Neumann BCs on concentration
+5
+===How many boundary pieces for Robin BCs on concentration?
+0
+===List of boundary pieces for Robin BCs on concentration
+5
+===Convection heat transfert coefficient of lhs (1:concentration_nb_robin_sides)
+0.d0 !   [M_Li/n F=6.941d-3/96485.3321233)
+===Convection heat transfert coefficient of rhs (1:concentration_nb_robin_sides)
+7.193839568412322d-8 !   [M_Li/n F=6.941d-3/96485.3321233)
+===Exterior concentration (1:concentration_nb_robin_sides)
+1.514d3    !5.d3 ! T_1=J_0
+===Number of interfaces between velocity and concentration only domains (for nst applications)
+0
+===List of interfaces between velocity and concentration only domains (for nst applications)
+5
+
+============================================
+              Solver-Concentration
+============================================
+===Maximum number of iterations for concentration solver
+100
+===Relative tolerance for concentration solver
+1.d-6
+===Absolute tolerance for concentration solver
+1.d-10
+===Solver type for concentration (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for concentration solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Molar fraction law (formula 5 from Benard et al., PRF, 2020)
+============================================
+===Is there a molar fraction law as a function of density? (true/false)
+.t.
+===Mass of A for molar fraction law
+6.941d-3 ! molar mass of Li
+===Mass of B for molar fraction law
+207.2d-3 ! molar mass of Pb
+===Reference density of pure B
+10525.d0 ! rho_0percent=rho_Pb
+===Slope of density law
+15.1d0
+===Faraday constant
+96485.33d0
+
+============================================
+              H vs molar fraction law (formula 13 from Benard et al., PRF, 2020)
+============================================
+===Is there a coupling between H and molar fraction? (true/false)
+.t.
+===Slope of potential law
+0.598d0
+
+
+============================================
+              Surface integration concentration
+============================================
+===How many boundary pieces for surface integral of concentration
+1
+===List of boundary pieces for surface integral of concentration
+5
+
+
+============================================
+              H-MAXWELL
+============================================
+===Solve Maxwell with H (true) or B (false)?
+.t.
+===Magnetostatic approximation for fhd (true) or (false)?
+.f.
+===Number of subdomains in magnetic field (H) mesh
+5
+===List of subdomains for magnetic field (H) mesh
+1 2 3 4 5
+===Number of interfaces in H mesh
+4
+===List of interfaces in H mesh
+2 5 6 8
+===Number of Dirichlet sides for Hxn
+2
+===List of Dirichlet sides for Hxn
+3 7
+===How many boundary pieces for jump BCs on rot H?
+1
+===List of boundary pieces for jump BCs on rot H
+5
+===Permeability in the conductive part (1:nb_dom_H)
+1.2566371d-6 1.2566371d-6 1.2566371d-6 1.2566371d-6 1.2566371d-6
+===Conductivity in the conductive part (1:nb_dom_H)
+5.8d7 7.39d5 1.87d2 2.7d6 5.8d7
+===Type of finite element for magnetic field
+2
+===Magnetic Reynolds number
+1.d0
+===Stabilization coefficient (divergence)
+1.d0
+===Stabilization coefficient for Dirichlet H and/or interface H/H
+1.d0
+===Stabilization coefficient for interface H/H
+1.d0
+
+============================================
+              Phi-MAXWELL
+============================================
+===Number of subdomains in magnetic potential (phi) mesh
+0
+
+============================================
+              Solver-MAXWELL
+============================================
+===Maximum number of iterations for Maxwell solver
+100
+===Relative tolerance for Maxwell solver
+1.d-6 
+===Absolute tolerance for Maxwell solver
+1.d-10
+===Maxwell solver verbose? (true/false)
+.f.
+===Solver type for Maxwell (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for Maxwell solver (HYPRE, JACOBI, MUMPS...)
+MUMPS

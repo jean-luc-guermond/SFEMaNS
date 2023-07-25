@@ -13,8 +13,8 @@ CONTAINS
 
   SUBROUTINE three_level_ns_tensor_sym_with_m(comm_one_d, time, vv_3_LA, pp_1_LA, &
        dt, Re, list_mode, pp_mesh, vv_mesh, incpn_m1, incpn, pn_m1, pn, un_m1, un,  &
-       Hn_p2, Bn_p2, density_m1, density, density_p1, visco_dyn, tempn, level_set, level_set_p1, &
-       visc_entro_level)
+       Hn_p2, Bn_p2, density_m1, density, density_p1, visco_dyn, tempn, concn, level_set, level_set_p1, &
+       visc_entro_level, level_set_reg)
 
     !==============================
     USE def_type_mesh
@@ -48,9 +48,11 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:,:), INTENT(IN)          :: level_set, level_set_p1
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: visco_dyn
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: tempn
+    REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: concn
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: Hn_p2, Bn_p2
     REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode)) :: Hn_p2_aux
     REAL(KIND=8), DIMENSION(:,:),     INTENT(OUT)         :: visc_entro_level
+    REAL(KIND=8), DIMENSION(:,:,:,:),        INTENT(IN)    :: level_set_reg
     INTEGER,                                         SAVE :: m_max_c
     TYPE(dyn_real_line),DIMENSION(:), ALLOCATABLE,   SAVE :: pp_global_D
     TYPE(dyn_int_line), DIMENSION(:), POINTER,       SAVE :: pp_mode_global_js_D
@@ -357,12 +359,12 @@ CONTAINS
           !===Compute coeff_surface*Grad(level_set):Grad(level_set)
           IF (inputs%if_level_set_P2) THEN
              CALL smb_surface_tension(comm_one_d(2), vv_mesh, list_mode, nb_procs, &
-                  level_set_p1, tensor_surface_gauss)
+                  level_set_reg, tensor_surface_gauss)
           ELSE
              DO nb_inter = 1, inputs%nb_fluid-1
                 DO i = 1, SIZE(list_mode)
                    DO k = 1, 2
-                      CALL inject_P1_P2(pp_mesh%jj, vv_mesh%jj, level_set_p1(nb_inter,:,k,i), &
+                      CALL inject_P1_P2(pp_mesh%jj, vv_mesh%jj, level_set_reg(nb_inter,:,k,i), &
                            level_set_FEM_P2(nb_inter,:,k,i))
                    END DO
                 END DO
@@ -409,13 +411,8 @@ CONTAINS
 
        !===Prediction step
        DO k=1,6
-          IF (inputs%if_temperature) THEN
-             src(:,k) = source_in_NS_momentum(k, vv_mesh%rr, mode, i, time, Re, 'ns', &
-                  opt_density=density_p1, opt_tempn=tempn)
-          ELSE
-             src(:,k) = source_in_NS_momentum(k, vv_mesh%rr, mode, i, time, Re, 'ns', &
-                  opt_density=density_p1)
-          END IF
+          src(:,k) = source_in_NS_momentum(k, vv_mesh%rr, mode, i, time, Re, 'ns', &
+               density_p1, tempn, concn)
        END DO
 
        IF (inputs%if_moment_bdf2) THEN
@@ -579,6 +576,7 @@ CONTAINS
        !jan 29 2007
        DO k=1, 2
           pn_p1(:,k) = pn_p1(:,k) + phi(:,k) - div(:,k,i)*(mu_bar/Re)
+          !pn_p1(:,k) = pn_p1(:,k) + phi(:,k) !- div(:,k,i)*(mu_bar/Re)
        END DO
        !jan 29 2007
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
@@ -664,7 +662,7 @@ CONTAINS
        IF (inputs%LES) THEN
           CALL compute_entropy_viscosity_mom(comm_one_d, vv_3_LA, vv_mesh, pp_mesh, time, list_mode, &
                momentum, momentum_m1, momentum_m2, pn_m1, un_m1, tensor, visc_grad_vel, tensor_surface_gauss, &
-               rotb_b, visco_dyn, density_m1, density, density_p1, tempn, visc_entro_real, visc_entro_level)
+               rotb_b, visco_dyn, density_m1, density, density_p1, tempn, concn, visc_entro_real, visc_entro_level)
        ELSE
           visc_entro_real = 0.d0
           visc_entro_level= 0.d0
@@ -672,7 +670,7 @@ CONTAINS
     ELSE
        IF (inputs%if_LES_in_momentum) THEN
           CALL compute_entropy_viscosity_mom_no_level_set(comm_one_d, vv_3_LA, vv_mesh, pp_mesh, time, list_mode, &
-               momentum, momentum_m1, momentum_m2, pn_m1, un_m1, tensor, rotb_b, tempn, visc_entro_real)
+               momentum, momentum_m1, momentum_m2, pn_m1, un_m1, tensor, rotb_b, density, tempn, concn, visc_entro_real)
        ELSE
           visc_entro_real=0.d0
        END IF

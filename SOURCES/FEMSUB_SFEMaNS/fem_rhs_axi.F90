@@ -986,6 +986,54 @@ CONTAINS
     CALL VecAssemblyEnd(vect,ierr)
   END SUBROUTINE qs_00_gauss
 
+  SUBROUTINE qs_00_gauss_conc (mesh, LA, ff, ff_gauss, vect)
+    !=================================
+    USE def_type_mesh
+    IMPLICIT NONE
+    TYPE(mesh_type), TARGET                     :: mesh
+    type(petsc_csr_LA)                          :: LA
+    REAL(KIND=8), DIMENSION(:), INTENT(IN)      :: ff, ff_gauss
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_w)     :: ff_loc
+    INTEGER,      DIMENSION(mesh%gauss%n_w)     :: jj_loc
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_w)     :: v_loc
+    INTEGER,      DIMENSION(mesh%gauss%n_w)     :: idxm
+    INTEGER ::  i, m, l, ni, iglob, index
+    REAL(KIND=8) :: fl, ray
+    !#include "petsc/finclude/petsc.h"
+    Vec                                         :: vect
+    PetscErrorCode                              :: ierr
+
+    CALL VecSet(vect, 0.d0, ierr)
+
+    index = 0
+    DO m = 1, mesh%dom_me
+       jj_loc = mesh%jj(:,m)
+       ff_loc = ff(jj_loc)
+       DO ni = 1, mesh%gauss%n_w
+          i = mesh%jj(ni,m)
+          iglob = LA%loc_to_glob(1,i)
+          idxm(ni) = iglob-1
+       END DO
+
+       v_loc = 0.d0
+       DO l = 1, mesh%gauss%l_G
+          index  =index + 1
+          ray = 0
+          DO ni = 1, mesh%gauss%n_w
+             i = jj_loc(ni)
+             ray = ray + mesh%rr(1,i)*mesh%gauss%ww(ni,l)
+          END DO
+          fl = ( SUM(ff_loc*mesh%gauss%ww(:,l)) + ff_gauss(index))*mesh%gauss%rj(l,m)*ray
+          DO ni = 1,  mesh%gauss%n_w
+             v_loc(ni) = v_loc(ni) +  mesh%gauss%ww(ni,l) * fl
+          END DO
+       ENDDO
+       CALL VecSetValues(vect, mesh%gauss%n_w, idxm, v_loc, ADD_VALUES, ierr)
+    ENDDO
+    CALL VecAssemblyBegin(vect,ierr)
+    CALL VecAssemblyEnd(vect,ierr)
+  END SUBROUTINE qs_00_gauss_conc
+
   SUBROUTINE qs_ns_momentum_stab_new(mesh,vv_1_LA,vv_2_LA,mode,ff,V1m,P,&
        vb_2_14,vb_2_23,vb_1_5,vb_1_6, rotb_b, tensor, tensor_surface_gauss,&
        stab, momentum, momentum_LES, visc_grad_vel, visc_entro)
@@ -1826,5 +1874,111 @@ CONTAINS
     CALL VecAssemblyEnd(cb,ierr)
 
   END SUBROUTINE qs_00_gauss_surface
+
+  SUBROUTINE qs_00_gauss_surface_conc(mesh, vv_1_LA, conc_list_robin_sides, convection_coeff_conc_rhs, &
+       exterior_concentration, cb) 
+    !MODIFICATION: implementation of the term int_(partial Omega) h*Text*v, with h the convection coefficient
+    USE def_type_mesh
+    USE my_util
+    IMPLICIT NONE
+    TYPE(mesh_type)                          :: mesh
+    TYPE(petsc_csr_LA)                       :: vv_1_LA
+    INTEGER     , DIMENSION(:), INTENT(IN)   :: conc_list_robin_sides
+    REAL(KIND=8), DIMENSION(:), INTENT(IN)   :: convection_coeff_conc_rhs, exterior_concentration
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_ws) :: c_loc
+    INTEGER,      DIMENSION(mesh%gauss%n_ws) :: idxm
+    INTEGER                                  :: nws, ms, ls, ni, i, iglob
+    REAL(KIND=8)                             :: ray, x
+    INTEGER, DIMENSION(1:1)                  :: coeff_index
+
+    !#include "petsc/finclude/petsc.h"
+    Vec                                      :: cb
+    PetscErrorCode                           :: ierr
+
+    nws = mesh%gauss%n_ws
+
+    DO ms = 1, mesh%mes
+       IF (MINVAL(ABS(conc_list_robin_sides - mesh%sides(ms))) > 0) CYCLE
+       c_loc = 0.d0
+       coeff_index = MINLOC(ABS(conc_list_robin_sides - mesh%sides(ms)))
+       DO ls = 1, mesh%gauss%l_Gs
+          !===Compute radius of Gauss point
+          ray = SUM(mesh%rr(1,mesh%jjs(:,ms)) * mesh%gauss%wws(:,ls))
+          x = convection_coeff_conc_rhs(coeff_index(1)) * exterior_concentration(coeff_index(1)) * &
+               ray * mesh%gauss%rjs(ls,ms)
+          DO ni = 1, nws
+             c_loc(ni) = c_loc(ni) + x * mesh%gauss%wws(ni,ls)
+          END DO
+       ENDDO
+       DO ni = 1, nws
+          i = mesh%jjs(ni,ms)
+          iglob = vv_1_LA%loc_to_glob(1,i)
+          idxm(ni) = iglob-1
+       END DO
+       CALL VecSetValues(cb, nws, idxm, c_loc, ADD_VALUES, ierr)
+    ENDDO
+    CALL VecAssemblyBegin(cb,ierr)
+    CALL VecAssemblyEnd(cb,ierr)
+  END SUBROUTINE qs_00_gauss_surface_conc
+
+  SUBROUTINE qs_00_gauss_H_conc(mesh, j_H_to_conc, conc_1_LA, cb_1, cb_2)
+    USE def_type_mesh
+    USE gauss_points
+    USE boundary
+    USE input_data
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    TYPE(mesh_type),                       INTENT(IN)   :: mesh
+    REAL(KIND=8), DIMENSION(:,:),          INTENT(IN)   :: j_H_to_conc
+    REAL(KIND=8), DIMENSION(4)                          :: j_H_to_conc_gauss
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,2)          :: v_loc
+    REAL(KIND=8), DIMENSION(2)                          :: normi
+    REAL(KIND=8) ::  ray, stab, y
+    INTEGER      :: i, ni, ms, ls, nws, iglob
+    INTEGER, DIMENSION(mesh%gauss%n_ws)    :: idxn
+    TYPE(petsc_csr_LA)                     :: conc_1_LA
+    PetscErrorCode          :: ierr
+    Vec                     :: cb_1, cb_2
+
+    CALL gauss(mesh)
+    nws = mesh%gauss%n_ws
+
+    DO ms = 1, mesh%mes
+       IF (MINVAL(ABS(inputs%list_inter_rot_h_jump - mesh%sides(ms))) > 0) CYCLE
+       v_loc=0.d0
+       stab = -inputs%MA/inputs%faraday_cst
+       DO ls = 1, l_Gs
+          !===Compute radius of Gauss point
+          ray = SUM(mesh%rr(1,mesh%jjs(:,ms))* mesh%gauss%wws(:,ls))
+          !===Get normal vector on Gauss point
+          normi = rnorms(:,ls,ms)
+          !===Compute Current on Gauss point
+          j_H_to_conc_gauss(1) = SUM(j_H_to_conc(mesh%jjs(:,ms),1)*mesh%gauss%wws(:,ls))
+          j_H_to_conc_gauss(2) = SUM(j_H_to_conc(mesh%jjs(:,ms),2)*mesh%gauss%wws(:,ls))
+          j_H_to_conc_gauss(3) = SUM(j_H_to_conc(mesh%jjs(:,ms),5)*mesh%gauss%wws(:,ls))
+          j_H_to_conc_gauss(4) = SUM(j_H_to_conc(mesh%jjs(:,ms),6)*mesh%gauss%wws(:,ls))
+          !===Compute j dot n
+          DO ni = 1, nws
+             y = ray*rjs(ls,ms)*stab*wws(ni,ls)
+             v_loc(ni,1) = v_loc(ni,1) + ( j_H_to_conc_gauss(1)*normi(1)+j_H_to_conc_gauss(3)*normi(2))*y
+             v_loc(ni,2) = v_loc(ni,2) + (j_H_to_conc_gauss(2)*normi(1)+j_H_to_conc_gauss(4)*normi(2))*y
+          END DO
+       END DO ! end loop on ls
+       DO ni = 1, nws
+          i = mesh%jjs(ni,ms)
+          iglob = conc_1_LA%loc_to_glob(1,i)
+          idxn(ni) = iglob-1
+       END DO
+       CALL VecSetValues(cb_1, nws, idxn, v_loc(:,1), ADD_VALUES, ierr)
+       CALL VecSetValues(cb_2, nws, idxn, v_loc(:,2), ADD_VALUES, ierr)
+    END DO ! end loop on ms
+
+    CALL VecAssemblyBegin(cb_1,ierr)
+    CALL VecAssemblyEnd(cb_1,ierr)
+    CALL VecAssemblyBegin(cb_2,ierr)
+    CALL VecAssemblyEnd(cb_2,ierr)
+
+  END SUBROUTINE qs_00_gauss_H_conc
 
 END MODULE fem_rhs_axi

@@ -9,9 +9,10 @@ MODULE fourier_to_real_for_vtu
   PUBLIC :: sfemans_initialize_postprocessing
   PUBLIC :: transfer_fourier_to_real, make_vtu_file_2D
   PUBLIC :: vtu_3d
+  PUBLIC :: compute_rot_h
   TYPE(petsc_csr_LA),  PUBLIC  :: vizu_grad_phi_LA
   TYPE(petsc_csr_LA),  PUBLIC  :: vizu_rot_h_LA
-  TYPE(petsc_csr_LA),  PUBLIC  :: vizu_rot_u_LA !ajout rot
+  TYPE(petsc_csr_LA),  PUBLIC  :: vizu_rot_u_LA
   TYPE(mesh_type), POINTER     :: mesh_grad_phi
   TYPE(mesh_type), POINTER     :: mesh_rot_h
   PRIVATE
@@ -20,17 +21,20 @@ MODULE fourier_to_real_for_vtu
   TYPE(mesh_type), TARGET      :: H_mesh_3d
   TYPE(mesh_type), TARGET      :: phi_mesh_3d
   TYPE(mesh_type), TARGET      :: temp_mesh_3d
+  TYPE(mesh_type), TARGET      :: conc_mesh_3d
   TYPE(mesh_type), TARGET      :: vv_mesh_p2_iso_p4
   TYPE(mesh_type), TARGET      :: vv_local_mesh
   TYPE(mesh_type), TARGET      :: pp_local_mesh
   TYPE(mesh_type), TARGET      :: H_local_mesh
   TYPE(mesh_type), TARGET      :: phi_local_mesh
   TYPE(mesh_type), TARGET      :: temp_local_mesh
+  TYPE(mesh_type), TARGET      :: conc_local_mesh
   TYPE(dyn_int_line), DIMENSION(:), POINTER :: vv_loc_to_glob
   TYPE(dyn_int_line), DIMENSION(:), POINTER :: pp_loc_to_glob
   TYPE(dyn_int_line), DIMENSION(:), POINTER :: H_loc_to_glob
   TYPE(dyn_int_line), DIMENSION(:), POINTER :: phi_loc_to_glob
   TYPE(dyn_int_line), DIMENSION(:), POINTER :: temp_loc_to_glob
+  TYPE(dyn_int_line), DIMENSION(:), POINTER :: conc_loc_to_glob
   INTEGER,            DIMENSION(:), POINTER :: fourier_list_mode
   INTEGER                                   :: fourier_nb_angle
   INTEGER                                   :: fourier_width
@@ -38,21 +42,21 @@ MODULE fourier_to_real_for_vtu
   INTEGER                                   :: fourier_nb_procs
   LOGICAL,  SAVE                            :: if_first_grad_phi=.TRUE.
   LOGICAL,  SAVE                            :: if_first_rot_h=.TRUE.
-  LOGICAL,  SAVE                            :: if_first_rot_u=.TRUE. !===Add rot
+  LOGICAL,  SAVE                            :: if_first_rot_u=.TRUE.
   INTEGER, DIMENSION(:), POINTER            :: vizu_list_mode
   MPI_Comm                                  :: fourier_communicator
   MPI_Comm, DIMENSION(2)                    :: vizu_grad_curl_comm
   Mat                                       :: mat_grad_phi
   Mat                                       :: mat_rot_h
-  Mat                                       :: mat_rot_u !===Add rot
+  Mat                                       :: mat_rot_u
   Vec                                       :: vx_phi, vb_phi, vx_phi_ghost
   KSP                                       :: ksp_grad_phi
   KSP                                       :: ksp_rot_h
-  KSP                                       :: ksp_rot_u !===Add rot
+  KSP                                       :: ksp_rot_u
 CONTAINS
 
   SUBROUTINE sfemans_initialize_postprocessing(comm_one_d, vv_mesh_in, pp_mesh, H_mesh, phi_mesh, temp_mesh, &
-       list_mode_in, opt_nb_plane)
+       conc_mesh,list_mode_in, opt_nb_plane)
     USE input_data
     USE sub_plot
     IMPLICIT NONE
@@ -62,6 +66,7 @@ CONTAINS
     TYPE(mesh_type), TARGET                    :: H_mesh
     TYPE(mesh_type), TARGET                    :: phi_mesh
     TYPE(mesh_type),                INTENT(IN) :: temp_mesh
+    TYPE(mesh_type),                INTENT(IN) :: conc_mesh
     INTEGER,          DIMENSION(:), TARGET :: list_mode_in
     INTEGER, OPTIONAL,              INTENT(IN) :: opt_nb_plane
     INTEGER                                    :: code
@@ -76,11 +81,10 @@ CONTAINS
     fourier_nb_procs = nb_procs
     ALLOCATE(fourier_list_mode(SIZE(list_mode_in)))
     fourier_list_mode = list_mode_in
-    !===JLG HF July 25 2019
-    IF ((.NOT.inputs%if_just_processing) .AND. (inputs%freq_plot .GT. inputs%nb_iteration)) THEN
-       !===Not preparation of vizu meshes
-       RETURN
-    END IF
+    !IF ((.NOT.inputs%if_just_processing) .AND. (inputs%freq_plot .GT. inputs%nb_iteration)) THEN
+    !   !===Not preparation of vizu meshes
+    !   RETURN
+    !END IF
     IF (inputs%type_fe_velocity .GE. 3) THEN
        !===divide each cell of vv_mesh into 4 cells
        CALL divide_mesh_into_four_subcells(vv_mesh_in,vv_mesh_p2_iso_p4)
@@ -88,17 +92,18 @@ CONTAINS
     ELSE
        vv_mesh => vv_mesh_in
     END IF
-    !===JLG HF July 25 2019
     CALL divide_mesh(comm_one_d(2), vv_mesh, vv_local_mesh, vv_loc_to_glob)
     CALL divide_mesh(comm_one_d(2), pp_mesh, pp_local_mesh, pp_loc_to_glob)
     CALL divide_mesh(comm_one_d(2), H_mesh,  H_local_mesh,  H_loc_to_glob)
     CALL divide_mesh(comm_one_d(2), phi_mesh, phi_local_mesh, phi_loc_to_glob)
     CALL divide_mesh(comm_one_d(2), temp_mesh, temp_local_mesh, temp_loc_to_glob)
+    CALL divide_mesh(comm_one_d(2), conc_mesh, conc_local_mesh, conc_loc_to_glob)
     CALL prepare_3d_grids(vv_mesh,  vv_local_mesh,  vv_mesh_3d, petsc_rank, opt_nb_plane)
     CALL prepare_3d_grids(pp_mesh,  pp_local_mesh,  pp_mesh_3d, petsc_rank, opt_nb_plane)
     CALL prepare_3d_grids(H_mesh,   H_local_mesh,   H_mesh_3d, petsc_rank,  opt_nb_plane)
     CALL prepare_3d_grids(phi_mesh, phi_local_mesh, phi_mesh_3d, petsc_rank, opt_nb_plane)
     CALL prepare_3d_grids(temp_mesh, temp_local_mesh, temp_mesh_3d, petsc_rank, opt_nb_plane)
+    CALL prepare_3d_grids(conc_mesh, conc_local_mesh, conc_mesh_3d, petsc_rank, opt_nb_plane)
     mesh_rot_h => H_mesh
     mesh_grad_phi => phi_mesh
     CALL MPI_COMM_DUP(comm_one_d(1),vizu_grad_curl_comm(1) , code)
@@ -268,13 +273,14 @@ CONTAINS
     END IF
   END SUBROUTINE prepare_3d_grids
 
-  SUBROUTINE vtu_3d(field, name_of_mesh, header, name_of_field, what, opt_it, opt_grad_curl, opt_2D, opt_mesh_in)
+  SUBROUTINE vtu_3d(comm_one_d,field, name_of_mesh, header, name_of_field, what, opt_it, opt_grad_curl, opt_2D, opt_mesh_in)
     USE dyn_line
     USE def_type_mesh
     USE vtk_viz
     USE sft_parallele
     USE input_data
     USE my_util
+    USE tn_axi
     IMPLICIT NONE
     TYPE(mesh_type),  OPTIONAL                   :: opt_mesh_in
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN), TARGET :: field
@@ -290,8 +296,13 @@ CONTAINS
     CHARACTER(LEN=200) :: header_2D
     CHARACTER(LEN=3)   :: name_of_field_2D
     INTEGER            :: i
+    REAL(KIND=8)       :: norm
+    INTEGER            :: rank_S, rank_F, nb_S
+    !===Declare PETSC===============================================================
+    PetscErrorCode :: ierr
+    MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
 
-    !===HF-CN 20/01/2020
+
     IF (PRESENT(opt_grad_curl)) THEN !=== compute rot_u for P3
        IF ((opt_grad_curl == 'curl_u').AND.(PRESENT(opt_mesh_in))) THEN
           IF (opt_mesh_in%gauss%n_w==10 .AND. inputs%type_fe_velocity==3) THEN
@@ -300,9 +311,7 @@ CONTAINS
           END IF
        END IF
     END IF
-    !===HF-CN 20/01/2020
 
-    !===JLG HF July 26, 2019
     IF (PRESENT(opt_mesh_in)) THEN
        IF (opt_mesh_in%gauss%n_w==10 .AND. inputs%type_fe_velocity==3) THEN
           ALLOCATE(field_tmp(vv_mesh_p2_iso_p4%np,SIZE(field,2),SIZE(field,3)))
@@ -327,15 +336,22 @@ CONTAINS
           field_in => field !=== not present (opt_mesh_in)
        ENDIF
     END IF
-    !===JLG HF July 26, 2019
+
+    CALL MPI_Comm_rank(comm_one_d(1), rank_S, ierr)
+    CALL MPI_Comm_rank(comm_one_d(2), rank_F, ierr)
+    CALL MPI_Comm_size(comm_one_d(1), nb_S, ierr)
 
     IF (PRESENT(opt_grad_curl)) THEN
        IF (opt_grad_curl == 'grad') THEN !===grad phi
           ALLOCATE(field_viz(SIZE(field_in,1), 3*SIZE(field_in,2), SIZE(field_in,3)))
           CALL compute_grad_phi(field_in, field_viz)
-       ELSE IF (opt_grad_curl == 'curl_h') THEN !===curl h
+       ELSE IF ((opt_grad_curl == 'curl_h').AND.(PRESENT(opt_mesh_in))) THEN !===curl h
           ALLOCATE(field_viz(SIZE(field_in,1), SIZE(field_in,2), SIZE(field_in,3)))
           CALL compute_rot_h(field_in, field_viz)
+          norm = norm_SF(comm_one_d, 'L2', opt_mesh_in, vizu_list_mode, field_viz)
+          IF (rank_S == 0) THEN
+             WRITE(102,*) norm
+          END IF
        ELSE IF ((opt_grad_curl == 'curl_u').AND.(PRESENT(opt_mesh_in))) THEN !===curl u
           IF (opt_mesh_in%gauss%n_w==10 .AND. inputs%type_fe_velocity==3) THEN !===P3
              ALLOCATE(field_viz(SIZE(field_in,1), SIZE(field_in,2), SIZE(field_in,3)))
@@ -443,6 +459,13 @@ CONTAINS
        END DO
        mesh_3d     => temp_mesh_3d
        local_mesh  => temp_local_mesh
+       !SB 06/05/2022
+    ELSE IF (name_of_mesh=='conc_mesh') THEN
+       DO n = 1, nb_procs
+          loc_to_glob(n)%DIL => conc_loc_to_glob(n)%DIL
+       END DO
+       mesh_3d     => conc_mesh_3d
+       local_mesh  => conc_local_mesh
     ELSE
        CALL error_petsc('Bug in vtu_3d: name_of_mesh is not correct')
     END IF
@@ -473,7 +496,6 @@ CONTAINS
     !===Compute field_out_FFT in real space on local_mesh
     CALL FFT_PAR_REAL(fourier_communicator, dist_field, field_out_FFT, opt_nb_plane=nb_angle)
 
-    !===FL 29/03/2013
     ALLOCATE(field_out_xyz_FFT(SIZE(field_out_FFT,1), SIZE(field_out_FFT,2), SIZE(field_out_FFT,3)))
     IF (SIZE(field_in,2)==2) THEN
        field_out_xyz_FFT=field_out_FFT
@@ -487,7 +509,6 @@ CONTAINS
           field_out_xyz_FFT(k,3,:) = field_out_FFT(k,3,:)
        END DO
     END IF
-    !===FL 29/03/2013
 
     IF (SIZE(field_in,2)==2) THEN
        dim = 1
@@ -945,7 +966,6 @@ CONTAINS
        CALL init_solver(param_grad_phi,ksp_grad_phi,mat_grad_phi,vizu_grad_curl_comm(1),&
             solver='GMRES',precond='MUMPS')
        CALL MatDestroy(mat_grad_phi,ierr)
-
     END IF
 
     smb_grad_phi = 0
@@ -996,7 +1016,6 @@ CONTAINS
           field_out(:,4,i) = 0.d0
           field_out(:,6,i) = 0.d0
        END IF
-
     END DO
 
   END SUBROUTINE compute_grad_phi
@@ -1010,7 +1029,6 @@ CONTAINS
     IMPLICIT NONE
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)    :: field_in
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT) :: field_out
-
     INTEGER, POINTER, DIMENSION(:)                :: ifrom
     TYPE(solver_param)                            :: param_rot_h
     REAL(KIND=8), DIMENSION(SIZE(field_out,1), SIZE(field_out,2)) :: smb_rot_h
@@ -1041,10 +1059,9 @@ CONTAINS
        CALL init_solver(param_rot_h,ksp_rot_h,mat_rot_h,vizu_grad_curl_comm(1),&
             solver='GMRES',precond='MUMPS')
        CALL MatDestroy(mat_rot_h,ierr)
-
     END IF
 
-    smb_rot_h = 0
+    smb_rot_h = 0.d0
     field_out = 0.d0
     DO i = 1, SIZE(vizu_list_mode)
        mode = vizu_list_mode(i)
@@ -1101,9 +1118,7 @@ CONTAINS
           field_out(:,4,i) = 0.d0
           field_out(:,6,i) = 0.d0
        END IF
-
     END DO !===end loop on mode
-
   END SUBROUTINE compute_rot_h
 
   SUBROUTINE compute_rot_u(field_in, field_out, mesh_in)
@@ -1116,7 +1131,6 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)    :: field_in
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT) :: field_out
     TYPE(mesh_type), INTENT(IN)                   :: mesh_in
-
     INTEGER, POINTER, DIMENSION(:)                :: ifrom
     TYPE(solver_param)                            :: param_rot_u
     REAL(KIND=8), DIMENSION(SIZE(field_out,1), SIZE(field_out,2)) :: smb_rot_u
@@ -1208,9 +1222,7 @@ CONTAINS
           field_out(:,4,i) = 0.d0
           field_out(:,6,i) = 0.d0
        END IF
-
     END DO !===end loop on mode
-
   END SUBROUTINE compute_rot_u
 
   SUBROUTINE divide_mesh_into_four_subcells(mesh_in,mesh_out)
@@ -1413,7 +1425,6 @@ CONTAINS
           mesh_out%jj(n+3,m_out) = n_dof
        END DO
     END DO
-
   END SUBROUTINE divide_mesh_into_four_subcells
 
   SUBROUTINE interpolate(field_in,mesh_in,field_out,mesh_out)
@@ -1480,7 +1491,6 @@ CONTAINS
       REAL(KIND=8)                           :: mes
       mes = ABS(a(1)*b(2)-a(2)*b(1))
     END FUNCTION mesureK
-
   END SUBROUTINE interpolate
 
   SUBROUTINE make_vtu_file_2D(communicator, mesh_in, header, field_in, field_name, what, opt_it)
@@ -1541,7 +1551,7 @@ CONTAINS
        CALL create_pvd_file(file_list, TRIM(header), it, TRIM(what))
     END IF
 
-    IF (SIZE(field,2) == 6) THEN
+    IF (SIZE(field,2) == 6) THEN !vector
        CALL create_xml_vtu_vect_file(field, mesh, TRIM(ADJUSTL(file_list(rank+1))), field_name)
     ELSE IF (SIZE(field,2) == 1) THEN
        CALL create_xml_vtu_scal_file(field(:,1), mesh, TRIM(ADJUSTL(file_list(rank+1))), field_name)

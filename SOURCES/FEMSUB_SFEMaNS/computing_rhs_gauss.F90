@@ -5,7 +5,7 @@ MODULE rhs_gauss_computing
 CONTAINS
 
   SUBROUTINE rhs_ns_gauss_3x3(vv_mesh, pp_mesh, communicator, list_mode, time, V1m, pn, pn_inc, rotv_v, &
-       rhs_gauss, opt_tempn)
+       rhs_gauss, density, tempn, concn)
     !=================================
     !RHS for Navier-Stokes
     USE def_type_mesh
@@ -21,7 +21,9 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: V1m
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: pn, pn_inc
     INTEGER,      DIMENSION(:),                 INTENT(IN) :: list_mode
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN), OPTIONAL   :: opt_tempn
+    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: density
+    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: tempn
+    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: concn
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)), INTENT(OUT) :: rhs_gauss
     REAL(KIND=8), DIMENSION(6)                                   :: fs, ft, fp_inc
     INTEGER,      DIMENSION(vv_mesh%gauss%n_w)                   :: j_loc
@@ -40,15 +42,8 @@ CONTAINS
 
     DO i = 1, SIZE(list_mode)
        DO k= 1, 6
-          !IF (PRESENT(opt_tempn)) THEN
-          !TEST LC-CN 15/12/2016
-          IF (inputs%if_temperature) THEN
-             !TEST LC-CN 15/12/2016
-             ff(:,k) = source_in_NS_momentum(k, vv_mesh%rr, list_mode(i), i, time,  inputs%Re, 'ns', &
-                  opt_tempn=opt_tempn)
-          ELSE
-             ff(:,k) = source_in_NS_momentum(k, vv_mesh%rr, list_mode(i), i, time, inputs%Re, 'ns')
-          END IF
+          ff(:,k) = source_in_NS_momentum(k, vv_mesh%rr, list_mode(i), i, time,  inputs%Re, 'ns', &
+               density, tempn, concn)
        END DO
        DO k = 1, 2
           !===JLG+HF Dec 10 2019
@@ -151,7 +146,7 @@ CONTAINS
   END SUBROUTINE rhs_ns_gauss_3x3
 
   SUBROUTINE rhs_residual_ns_gauss_3x3(vv_mesh, pp_mesh, communicator, list_mode, time, du_dt,&
-       pn, rotv_v, rhs_gauss, opt_tempn)
+       pn, rotv_v, rhs_gauss, density, tempn, concn)
     !=================================
     !RHS for Residual of Navier-Stokes
     USE def_type_mesh
@@ -167,7 +162,9 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: du_dt
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: pn
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: rotv_v
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN), OPTIONAL   :: opt_tempn
+    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: density
+    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: tempn
+    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: concn
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)), INTENT(OUT) :: rhs_gauss
     REAL(KIND=8), DIMENSION(6)                                   :: fs
     INTEGER,      DIMENSION(vv_mesh%gauss%n_w)                   :: j_loc
@@ -185,12 +182,8 @@ CONTAINS
 
     DO i = 1, SIZE(list_mode)
        DO k = 1, 6
-          IF (PRESENT(opt_tempn)) THEN
-             ff(:,k) = source_in_NS_momentum(k, vv_mesh%rr, list_mode(i), i, time,  inputs%Re, 'ns', &
-                  opt_tempn=opt_tempn)
-          ELSE
-             ff(:,k) = source_in_NS_momentum(k, vv_mesh%rr, list_mode(i), i, time, inputs%Re, 'ns')
-          END IF
+          ff(:,k) = source_in_NS_momentum(k, vv_mesh%rr, list_mode(i), i, time,  inputs%Re, 'ns', &
+               density, tempn, concn)
        END DO
        DO k = 1, 2
           !===JLG+HF Dec 10 2019
@@ -256,7 +249,7 @@ CONTAINS
   END SUBROUTINE rhs_residual_ns_gauss_3x3
 
   SUBROUTINE rhs_residual_ns_gauss_3x3_mom(vv_mesh, pp_mesh, list_mode, time, du_dt, pn, &
-       density, rotb_b, rhs_gauss, opt_tempn)
+       density, rotb_b, rhs_gauss, tempn, concn)
     !=================================
     !RHS for Navier-Stokes
     USE def_type_mesh
@@ -273,7 +266,8 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: pn
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: density
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: rotb_b
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN), OPTIONAL   :: opt_tempn
+    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: concn
+    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: tempn
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)), INTENT(OUT) :: rhs_gauss
     REAL(KIND=8), DIMENSION(6)                                   :: fs, ft, fp
     INTEGER,      DIMENSION(vv_mesh%gauss%n_w)                   :: j_loc
@@ -286,13 +280,8 @@ CONTAINS
 
     DO i = 1, SIZE(list_mode)
        DO k = 1, 6
-          IF (inputs%if_temperature) THEN
-             ff(:,k) = source_in_NS_momentum(k, vv_mesh%rr, list_mode(i), i, time, inputs%Re, 'ns', &
-                  opt_density=density, opt_tempn=opt_tempn)
-          ELSE
-             ff(:,k) = source_in_NS_momentum(k, vv_mesh%rr, list_mode(i), i, time, inputs%Re, 'ns', &
-                  opt_density=density)
-          END IF
+          ff(:,k) = source_in_NS_momentum(k, vv_mesh%rr, list_mode(i), i, time, inputs%Re, 'ns', &
+               density, tempn, concn)
        END DO
        DO k = 1, 2
           !===JLG+HF Dec 10 2019
@@ -346,7 +335,7 @@ CONTAINS
   END SUBROUTINE rhs_residual_ns_gauss_3x3_mom
 
   SUBROUTINE rhs_ns_gauss_3x3_art_comp_mom(vv_mesh, pp_mesh, communicator, list_mode, time, V1m, pn, rotv_v, &
-       rhs_gauss, tempn, density)
+       rhs_gauss, tempn, concn, density)
     !=================================
     !RHS for Navier-Stokes
     USE def_type_mesh
@@ -362,6 +351,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: V1m
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: pn
     INTEGER,      DIMENSION(:),                 INTENT(IN) :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: concn
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: tempn
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: density
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)), INTENT(OUT) :: rhs_gauss
@@ -381,13 +371,8 @@ CONTAINS
     CALL MPI_Comm_rank(communicator,rank,ierr)
     DO i = 1, SIZE(list_mode)
        DO k = 1, 6
-          IF (inputs%if_temperature) THEN
-             ff(:,k) = source_in_NS_momentum(k, vv_mesh%rr, list_mode(i), i, time, inputs%Re, 'ns', &
-                  opt_density=density, opt_tempn=tempn)
-          ELSE
-             ff(:,k) = source_in_NS_momentum(k, vv_mesh%rr, list_mode(i), i, time, inputs%Re, 'ns', &
-                  opt_density=density)
-          END IF
+          ff(:,k) = source_in_NS_momentum(k, vv_mesh%rr, list_mode(i), i, time, inputs%Re, 'ns', &
+               density, tempn, concn)
        END DO
        DO k = 1, 2
           CALL inject_generic(inputs%type_fe_velocity, pp_mesh%jj, vv_mesh%jj, pn(:,k,i), P(:,k))

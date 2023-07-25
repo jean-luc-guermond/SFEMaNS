@@ -3,7 +3,7 @@
 ============================================
 ===Number of processors in meridian section (Input)
 1
-===Problem type (Input): (nst, mxw, mhd, fhd)
+===Problem type (Input): (nst, mxw, mhd, fhd, mhs)
 'nst'
 ===Is there an input temperature field?
 .t.
@@ -17,7 +17,7 @@
 ============================================
 ===Number of processors in meridian section (Output)
 5
-===Problem type (Output): (nst, mxw, mhd, fhd)
+===Problem type (Output): (nst, mxw, mhd, fhd, mhs)
 'nst'
 ===Is there an output temperature field?
 .t.

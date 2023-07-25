@@ -1,4 +1,4 @@
-ROO==================================================================
+==================================================================
 !       Install Petsc
 ==================================================================
 Intall or have somebody else install Petsc for you
@@ -42,15 +42,15 @@ export SFEMaNS_DIR= the_path_to_SFEMaNS
 4) Create your own make.in
 	mv make.inc_template make.inc
 
-5) Edit make.inc to correct the path to Petsc, Arpack, FFTW 
-If you do not need arpack (computation of eigenvalues) and do not want to
-go through the installation of ARPACK, disable the line 
+5) Edit make.inc to correct the path to Petsc, FFTW 
+
+If you want to use Arpack, you need to uncomment the following line in main.F90
+line 6
     USE arpack_mhd
-in main.f90, and the lines
+lines 79 to 98
     CALL solver_arpack_mhd(comm_one_d, .FALSE. ,H_mesh,phi_mesh,&
           m_max_c,inputs%dt,list_mode,mu_H_field,interface_H_mu, &
           inputs%mu_phi, interface_H_phi)
-again in main.f90
 
 6) Create your own my_make
 	mv my_make_template  my_make
@@ -62,6 +62,13 @@ again in main.f90
 	make a.exe -j 10
 
 9) Done	
+
+Remark: a second main.F90 (see main.F90_updated_output) 
+is made available to the user. It is a modified version
+of the template main.F90 that write some output (energy,
+anemometer, etc.) in specific file. Comments are available
+in the Fortran file (see lines 200 till 232).
+
 
 ==================================================================
 !       Check installation

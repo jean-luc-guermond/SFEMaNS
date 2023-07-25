@@ -11,8 +11,8 @@ MODULE subroutine_ns_with_m_art_comp
 CONTAINS
 
   SUBROUTINE BDF1_art_comp_with_m(comm_one_d, time, vv_3_LA, pp_1_LA, vvz_per, pp_per, &
-       dt, Re, list_mode, pp_mesh, vv_mesh, pn_m1, pn, un_m1, un, Hn_p2, Bn_p2, tempn, &
-       density_m1, density, density_p1, visco_dyn, level_set_p1, visc_entro_level)
+       dt, Re, list_mode, pp_mesh, vv_mesh, pn_m1, pn, un_m1, un, Hn_p2, Bn_p2, tempn, concn, &
+       density_m1, density, density_p1, visco_dyn, level_set_p1, visc_entro_level, level_set_reg)
     !==============================
     USE def_type_mesh
     USE fem_M_axi
@@ -45,11 +45,13 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:),          INTENT(INOUT) :: pn_m1, pn
     REAL(KIND=8), DIMENSION(:,:,:),          INTENT(INOUT) :: un_m1, un
     REAL(KIND=8), DIMENSION(:,:,:),          INTENT(IN)    :: tempn
+    REAL(KIND=8), DIMENSION(:,:,:),          INTENT(IN)    :: concn
     REAL(KIND=8), DIMENSION(:,:,:),          INTENT(IN)    :: Hn_p2, Bn_p2
     REAL(KIND=8), DIMENSION(:,:,:),          INTENT(IN)    :: density_m1, density, density_p1
     REAL(KIND=8), DIMENSION(:,:,:,:),        INTENT(IN)    :: level_set_p1
     REAL(KIND=8), DIMENSION(:,:,:),          INTENT(IN)    :: visco_dyn
     REAL(KIND=8), DIMENSION(:,:),            INTENT(OUT)   :: visc_entro_level
+    REAL(KIND=8), DIMENSION(:,:,:,:),        INTENT(IN)    :: level_set_reg
     REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode))  :: Hn_p2_aux
     !===Saved variables
     INTEGER,                                       SAVE :: m_max_c
@@ -77,7 +79,8 @@ CONTAINS
     REAL(KIND=8)                             :: moyenne
     !allocations des variables locales
     REAL(KIND=8), DIMENSION(pp_mesh%np, 2, SIZE(list_mode)) :: div
-    REAL(KIND=8), DIMENSION(pp_mesh%np, 2, SIZE(list_mode)) :: visco_dyn_P1, visc_div
+!!$    REAL(KIND=8), DIMENSION(pp_mesh%np, 2, SIZE(list_mode)) :: visco_dyn_P1, visc_div
+!!$    INTEGER :: bloc_size_P1
     REAL(KIND=8), DIMENSION(pp_mesh%np, 2)   :: pn_p1
     REAL(KIND=8), DIMENSION(vv_mesh%np, 6)   :: un_p1
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode))   :: rotb_b, rotb_b_aux
@@ -96,7 +99,7 @@ CONTAINS
 
     REAL(KIND=8), DIMENSION(vv_mesh%np) :: vel_loc, vel_tot
     REAL(KIND=8)   :: coeff, vloc, cfl, cfl_max, norm
-    INTEGER        :: nb_procs_LES, bloc_size_LES, m_max_pad_LES, bloc_size_P1
+    INTEGER        :: nb_procs_LES, bloc_size_LES, m_max_pad_LES
     !April 17th 2008, JLG
     REAL(KIND=8) :: one, zero, three
     DATA zero, one, three/0.d0,1.d0,3.d0/
@@ -364,12 +367,12 @@ CONTAINS
           !===Compute coeff_surface*Grad(level_set):Grad(level_set)
           IF (inputs%if_level_set_P2) THEN
              CALL smb_surface_tension(comm_one_d(2), vv_mesh, list_mode, nb_procs, &
-                  level_set_p1, tensor_surface_gauss)
+                  level_set_reg, tensor_surface_gauss)
           ELSE
              DO nb_inter = 1, inputs%nb_fluid-1
                 DO i = 1, SIZE(list_mode)
                    DO k = 1, 2
-                      CALL inject_P1_P2(pp_mesh%jj, vv_mesh%jj, level_set_p1(nb_inter,:,k,i), &
+                      CALL inject_P1_P2(pp_mesh%jj, vv_mesh%jj, level_set_reg(nb_inter,:,k,i), &
                            level_set_FEM_P2(nb_inter,:,k,i))
                    END DO
                 END DO
@@ -412,10 +415,10 @@ CONTAINS
     !===Computation of rhs at Gauss points for every mode
     IF (inputs%if_moment_bdf2) THEN
        CALL rhs_ns_gauss_3x3_art_comp_mom(vv_mesh, pp_mesh, comm_one_d(2), list_mode, time, &
-            (4*momentum-momentum_m1)/(2*inputs%dt), pn, -rotb_b, rhs_gauss, tempn, density_p1)
+            (4*momentum-momentum_m1)/(2*inputs%dt), pn, -rotb_b, rhs_gauss, tempn, concn, density_p1)
     ELSE
        CALL rhs_ns_gauss_3x3_art_comp_mom(vv_mesh, pp_mesh, comm_one_d(2), list_mode, time, &
-            (momentum)/(inputs%dt), pn, -rotb_b, rhs_gauss, tempn, density_p1)
+            (momentum)/(inputs%dt), pn, -rotb_b, rhs_gauss, tempn, concn, density_p1)
     END IF
     !===End Computation of rhs at Gauss points for every mode
 
@@ -631,7 +634,7 @@ CONTAINS
        IF (inputs%LES) THEN
           CALL compute_entropy_viscosity_mom(comm_one_d, vv_3_LA, vv_mesh, pp_mesh, time, list_mode, &
                momentum, momentum_m1, momentum_m2, pn_m1, un_m1, tensor, visc_grad_vel, tensor_surface_gauss, &
-               rotb_b, visco_dyn, density_m1, density, density_p1, tempn, visc_entro_real, visc_entro_level)
+               rotb_b, visco_dyn, density_m1, density, density_p1, tempn, concn, visc_entro_real, visc_entro_level)
        ELSE
           visc_entro_real = 0.d0
           visc_entro_level= 0.d0
@@ -639,7 +642,7 @@ CONTAINS
     ELSE
        IF (inputs%if_LES_in_momentum) THEN
           CALL compute_entropy_viscosity_mom_no_level_set(comm_one_d, vv_3_LA, vv_mesh, pp_mesh, time, list_mode, &
-               momentum, momentum_m1, momentum_m2, pn_m1, un_m1, tensor, rotb_b, tempn, visc_entro_real)
+               momentum, momentum_m1, momentum_m2, pn_m1, un_m1, tensor, rotb_b, density, tempn, concn, visc_entro_real)
        ELSE
           visc_entro_real=0.d0
        END IF

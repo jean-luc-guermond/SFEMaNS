@@ -11,7 +11,7 @@ MODULE update_taylor_navier_stokes
 CONTAINS
 
   SUBROUTINE navier_stokes_taylor(comm_one_d_ns,time, vv_3_LA, pp_1_LA, &
-       list_mode, pp_mesh, vv_mesh, pn, der_pn, un, der_un, vvz_per, pp_per)
+       list_mode, pp_mesh, vv_mesh, pn, der_pn, un, der_un, vvz_per, pp_per, density, tempn, concn)
     USE def_type_mesh
     USE periodic
 
@@ -24,6 +24,9 @@ CONTAINS
     TYPE(dyn_real_array_three), DIMENSION(:)       :: der_un
     TYPE(dyn_real_array_three), DIMENSION(:)       :: der_pn
     REAL(KIND=8),                   INTENT(IN)     :: time
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)     :: density
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)     :: tempn
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)     :: concn
     TYPE(periodic_type),            INTENT(IN)     :: vvz_per, pp_per
     TYPE(petsc_csr_LA)                             :: vv_3_LA, pp_1_LA
     LOGICAL                                        :: if_navier_stokes_with_taylor = .TRUE. !HF We will nead a 'read_data'
@@ -33,10 +36,12 @@ CONTAINS
     IF (if_navier_stokes_with_taylor) THEN
        IF (inputs%taylor_order==3) THEN
           CALL update_ns_with_taylor(comm_one_d_ns,time,vv_3_LA, pp_1_LA, vvz_per, pp_per, &
-               inputs%dt, inputs%Re, inputs%taylor_lambda, list_mode, pp_mesh, vv_mesh, pn, der_pn, un, der_un)
+               inputs%dt, inputs%Re, inputs%taylor_lambda, list_mode, pp_mesh, vv_mesh, pn, &
+               der_pn, un, der_un, density, tempn, concn)
        ELSE IF (inputs%taylor_order==4) THEN
           CALL update_ns_with_taylor_fourth(comm_one_d_ns,time,vv_3_LA, pp_1_LA, vvz_per, pp_per, &
-               inputs%dt, inputs%Re, inputs%taylor_lambda, list_mode, pp_mesh, vv_mesh, pn, der_pn, un, der_un)
+               inputs%dt, inputs%Re, inputs%taylor_lambda, list_mode, pp_mesh, vv_mesh, pn, der_pn,&
+               un, der_un, density, tempn, concn)
        ELSE
           CALL error_petsc('BUG in navier_stokes_taylor: inputs%taylor_order not well defined')
        END IF
@@ -126,7 +131,7 @@ CONTAINS
   END SUBROUTINE init_velocity_pressure_taylor
 
   SUBROUTINE update_ns_with_taylor(comm_one_d, time, vv_3_LA, pp_1_LA, vvz_per, pp_per, &
-       dt, Re, lambda, list_mode, pp_mesh, vv_mesh, pn, der_pn, un, der_un)
+       dt, Re, lambda, list_mode, pp_mesh, vv_mesh, pn, der_pn, un, der_un, density, tempn, concn)
     !==============================
     USE def_type_mesh
     USE fem_M_axi
@@ -145,6 +150,9 @@ CONTAINS
     IMPLICIT NONE
     REAL(KIND=8)                                        :: time, dt, Re, lambda
     INTEGER,      DIMENSION(:),     INTENT(IN)          :: list_mode
+    REAL(KIND=8),      DIMENSION(:,:,:),     INTENT(IN) :: density
+    REAL(KIND=8),      DIMENSION(:,:,:),     INTENT(IN) :: tempn
+    REAL(KIND=8),      DIMENSION(:,:,:),     INTENT(IN) :: concn
     TYPE(mesh_type),                INTENT(IN)          :: pp_mesh, vv_mesh
     TYPE(petsc_csr_LA)                                  :: vv_3_LA, pp_1_LA
     TYPE(periodic_type),            INTENT(IN)          :: vvz_per, pp_per
@@ -323,7 +331,7 @@ CONTAINS
     !===Computation of second order derivatives
     !===Computation of rhs for dtt_un at Gauss points for every mode
     CALL rhs_ns_gauss_3x3_taylor(vv_mesh, pp_mesh, comm_one_d(2), list_mode, time, &
-         der_un(2)%DRT/dt, der_pn(2)%DRT, (rotv_v1-2.d0*rotv_v2+rotv_v3)/(dt**2), rhs_gauss,2)
+         der_un(2)%DRT/dt, der_pn(2)%DRT, (rotv_v1-2.d0*rotv_v2+rotv_v3)/(dt**2), rhs_gauss,2, density, tempn, concn)
     !===End Computation of rhs for dtt_un
 
     DO i = 1, m_max_c
@@ -453,7 +461,7 @@ CONTAINS
     !===Computation of rhs for dt_un at Gauss points for every mode
     CALL rhs_ns_gauss_3x3_taylor(vv_mesh, pp_mesh, comm_one_d(2), list_mode, time, &
          (der_un(1)%DRT-dt/2.d0*(dtt_un_p1-der_un(2)%DRT))/dt, der_pn(1)%DRT+ dt*der_pn(2)%DRT, &
-         (rotv_v1-rotv_v3)/(2.d0*dt), rhs_gauss,1)
+         (rotv_v1-rotv_v3)/(2.d0*dt), rhs_gauss,1, density, tempn, concn)
     !===End Computation of rhs for dt_un
 
     DO i = 1, m_max_c
@@ -577,7 +585,7 @@ CONTAINS
     !===Computation of rhs for un at Gauss points for every mode
     CALL rhs_ns_gauss_3x3_taylor(vv_mesh, pp_mesh, comm_one_d(2), list_mode, time, &
          (un-dt/2.d0*(dt_un_p1-der_un(1)%DRT)-dt**2/12.d0*(dtt_un_p1-der_un(2)%DRT))/dt, &
-         pn+dt*der_pn(1)%DRT- (dt**2)/2.d0*der_pn(2)%DRT, rotv_v2, rhs_gauss,0)
+         pn+dt*der_pn(1)%DRT- (dt**2)/2.d0*der_pn(2)%DRT, rotv_v2, rhs_gauss,0, density, tempn, concn)
     !===End Computation of rhs for un
 
     DO i = 1, m_max_c
@@ -708,7 +716,7 @@ CONTAINS
   !============================================
 
   SUBROUTINE update_ns_with_taylor_fourth(comm_one_d, time, vv_3_LA, pp_1_LA, vvz_per, pp_per, &
-       dt, Re, lambda, list_mode, pp_mesh, vv_mesh, pn, der_pn, un, der_un)
+       dt, Re, lambda, list_mode, pp_mesh, vv_mesh, pn, der_pn, un, der_un, density, tempn, concn)
     !==============================
     USE def_type_mesh
     USE fem_M_axi
@@ -734,6 +742,9 @@ CONTAINS
     REAL(KIND=8), DIMENSION(pp_mesh%np,2,SIZE(list_mode)), INTENT(INOUT) :: pn
     TYPE(dyn_real_array_three), DIMENSION(inputs%taylor_order-1)         :: der_un
     TYPE(dyn_real_array_three), DIMENSION(inputs%taylor_order-1)         :: der_pn
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)          :: density
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)          :: tempn
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)          :: concn
     !===Saved variables
     INTEGER,                                       SAVE :: m_max_c
     TYPE(dyn_real_line),DIMENSION(:), ALLOCATABLE, SAVE :: pp_global_D
@@ -910,7 +921,8 @@ CONTAINS
     !===Computation of third order derivatives
     !===Computation of rhs for dttt_un at Gauss points for every mode
     CALL rhs_ns_gauss_3x3_taylor(vv_mesh, pp_mesh, comm_one_d(2), list_mode, time, &
-         der_un(3)%DRT/dt, der_pn(3)%DRT, 9*(9*rotv_v1-20*rotv_v2+16*rotv_v3-5*rotv_v4)/(5*dt**3), rhs_gauss,3)
+         der_un(3)%DRT/dt, der_pn(3)%DRT, 9*(9*rotv_v1-20*rotv_v2+16*rotv_v3-5*rotv_v4)/(5*dt**3), &
+         rhs_gauss,3, density, tempn, concn)
     !===End Computation of rhs for dttt_un
 
     DO i = 1, m_max_c
@@ -1053,7 +1065,7 @@ CONTAINS
     !===Computation of rhs for dtt_un at Gauss points for every mode
     CALL rhs_ns_gauss_3x3_taylor(vv_mesh, pp_mesh, comm_one_d(2), list_mode, time, &
          der_un(2)%DRT/dt-dt/2*(dttt_un_p1-der_un(3)%DRT)/dt, der_pn(2)%DRT+dt*der_pn(3)%DRT, &
-         (81*rotv_v1-140*rotv_v2+64*rotv_v3-5*rotv_v4)/(10*dt**2), rhs_gauss,2)
+         (81*rotv_v1-140*rotv_v2+64*rotv_v3-5*rotv_v4)/(10*dt**2), rhs_gauss,2, density, tempn, concn)
     !===End Computation of rhs for dtt_un
 
     DO i = 1, m_max_c
@@ -1197,7 +1209,8 @@ CONTAINS
     !===Computation of rhs for dt_un at Gauss points for every mode
     CALL rhs_ns_gauss_3x3_taylor(vv_mesh, pp_mesh, comm_one_d(2), list_mode, time, &
          der_un(1)%DRT/dt-dt/2*(dtt_un_p1-der_un(2)%DRT)/dt-dt**2/12*(dttt_un_p1-der_un(3)%DRT)/dt, &
-         der_pn(1)%DRT+dt*der_pn(2)%DRT-dt**2/2*der_pn(3)%DRT, (27*rotv_v1-32*rotv_v3+5*rotv_v4)/(20*dt), rhs_gauss,1)
+         der_pn(1)%DRT+dt*der_pn(2)%DRT-dt**2/2*der_pn(3)%DRT, (27*rotv_v1-32*rotv_v3+5*rotv_v4)/(20*dt), rhs_gauss,1, &
+         density, tempn, concn)
     !===End Computation of rhs for dt_un
 
     DO i = 1, m_max_c
@@ -1341,7 +1354,7 @@ CONTAINS
     !===Computation of rhs for un at Gauss points for every mode
     CALL rhs_ns_gauss_3x3_taylor(vv_mesh, pp_mesh, comm_one_d(2), list_mode, time, &
          (un-dt/2*(dt_un_p1-der_un(1)%DRT)-dt**2/12*(dtt_un_p1-der_un(2)%DRT))/dt, &
-         pn+dt*der_pn(1)%DRT-dt**2/2*der_pn(2)%DRT+dt**3/6*der_pn(3)%DRT,rotv_v2,rhs_gauss,0)
+         pn+dt*der_pn(1)%DRT-dt**2/2*der_pn(2)%DRT+dt**3/6*der_pn(3)%DRT,rotv_v2,rhs_gauss,0, density, tempn, concn)
     !===End Computation of rhs for un
 
     DO i = 1, m_max_c
@@ -1628,7 +1641,7 @@ CONTAINS
   END SUBROUTINE Moy
 
   SUBROUTINE rhs_ns_gauss_3x3_taylor(vv_mesh, pp_mesh, communicator, list_mode, time, V1m, pn, rotv_v, &
-       rhs_gauss, der_ord)
+       rhs_gauss, der_ord, density, tempn, concn)
     !=================================
     !RHS for Navier-Stokes_taylor : RHS for (d/dt)**der_ord un
     USE def_type_mesh
@@ -1645,6 +1658,9 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: pn
     INTEGER,      DIMENSION(:),                 INTENT(IN) :: list_mode
     INTEGER,                                    INTENT(IN) :: der_ord
+    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: density
+    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: tempn
+    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: concn
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)), INTENT(OUT) :: rhs_gauss
     REAL(KIND=8), DIMENSION(6)                                   :: fs, ft
     INTEGER,      DIMENSION(vv_mesh%gauss%n_w)                   :: j_loc
@@ -1667,25 +1683,38 @@ CONTAINS
     DO i = 1, SIZE(list_mode)
        DO k= 1, 6 !===external forces
           IF (der_ord==0) THEN
-             ff(:,k) =source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time,             inputs%Re,'ns')
+             ff(:,k) = source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time, &
+                  inputs%Re,'ns', density, tempn, concn)
           ELSEIF (der_ord==1) THEN
              ff(:,k) = &
-                  (11*source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time,             inputs%Re,'ns') &
-                  -18*source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time-inputs%dt,   inputs%Re,'ns') &
-                  + 9*source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time-2*inputs%dt, inputs%Re,'ns') &
-                  - 2*source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time-3*inputs%dt, inputs%Re,'ns'))/(6*inputs%dt)
+                  (11*source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time, &
+                  inputs%Re,'ns', density, tempn, concn) &
+                  -18*source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time-inputs%dt, &
+                  inputs%Re,'ns', density, tempn, concn) &
+                  + 9*source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time-2*inputs%dt, &
+                  inputs%Re,'ns', density, tempn, concn) &
+                  - 2*source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time-3*inputs%dt, &
+                  inputs%Re,'ns', density, tempn, concn))/(6*inputs%dt)
           ELSEIF (der_ord==2) THEN
              ff(:,k) = &
-                  (2*source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time,             inputs%Re,'ns') &
-                  -5*source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time-inputs%dt,   inputs%Re,'ns') &
-                  +4*source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time-2*inputs%dt, inputs%Re,'ns') &
-                  -  source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time-3*inputs%dt, inputs%Re,'ns'))/(inputs%dt**2)
+                  (2*source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time, &
+                  inputs%Re,'ns', density, tempn, concn) &
+                  -5*source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time-inputs%dt, &
+                  inputs%Re,'ns', density, tempn, concn) &
+                  +4*source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time-2*inputs%dt, &
+                  inputs%Re,'ns', density, tempn, concn) &
+                  -  source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time-3*inputs%dt, &
+                  inputs%Re,'ns', density, tempn, concn))/(inputs%dt**2)
           ELSEIF (der_ord==3) THEN
              ff(:,k) = &
-                  (  source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time,             inputs%Re,'ns') &
-                  -3*source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time-inputs%dt,   inputs%Re,'ns') &
-                  +3*source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time-2*inputs%dt, inputs%Re,'ns') &
-                  -  source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time-3*inputs%dt, inputs%Re,'ns'))/(inputs%dt**3)
+                  (  source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time, &
+                  inputs%Re,'ns', density, tempn, concn) &
+                  -3*source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time-inputs%dt, &
+                  inputs%Re,'ns', density, tempn, concn) &
+                  +3*source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time-2*inputs%dt, &
+                  inputs%Re,'ns', density, tempn, concn) &
+                  -  source_in_NS_momentum(k, vv_mesh%rr, list_mode(i),i, time-3*inputs%dt, &
+                  inputs%Re,'ns', density, tempn, concn))/(inputs%dt**3)
           END IF
        END DO
        DO k = 1, 2 !===pressure

@@ -18,7 +18,8 @@ CONTAINS
     USE petsc
     IMPLICIT NONE
 
-    TYPE(mesh_type)                       :: p1_mesh_glob, p2_mesh_glob, p2_c0_mesh_glob_temp
+    TYPE(mesh_type)                       :: p1_mesh_glob, p2_mesh_glob
+    TYPE(mesh_type)                       :: p2_c0_mesh_glob_temp, p2_c0_mesh_glob_conc
 
     TYPE(mesh_type), TARGET               :: H_mesh, phi_mesh
     TYPE(mesh_type), TARGET               :: H_mesh_glob, phi_mesh_glob
@@ -32,47 +33,55 @@ CONTAINS
     TYPE(mesh_type), TARGET               :: temp_mesh_glob
     TYPE(mesh_type), POINTER              :: temp_mesh_in, temp_mesh_out
 
+    TYPE(mesh_type), TARGET               :: conc_mesh
+    TYPE(mesh_type), TARGET               :: conc_mesh_glob
+    TYPE(mesh_type), POINTER              :: conc_mesh_in, conc_mesh_out
+
     CHARACTER(len=200)                    :: old_filename, old_directory
     CHARACTER(len=200)                    :: new_filename, new_directory
     CHARACTER(len=200)                    :: file_name, directory
     CHARACTER(len=200)                    :: file_name_m, directory_m
-    LOGICAL                               :: if_momentum, if_mass, if_induction, if_energy, &
+    LOGICAL                               :: if_momentum, if_mass, if_induction, if_energy, if_conc, &
          old_is_form, new_is_form, iformatted, is_form_m, mono_in, mono_out, is_in, &
-         dom_H_larger_dom_ns, dom_temp_larger_dom_ns, &
+         if_concentration_in, if_concentration_out, if_concentration, &
          if_temperature_in, if_temperature_out, if_temperature, if_level_set, inter_mesh, &
-         rw_ns, rw_temp, rw_mxw, check_plt, test, if_select
+         rw_conc, rw_ns, rw_temp, rw_mxw, check_plt, test, if_select
 
     INTEGER                               :: nb_S, nb_F, nb_procs, rank, type_fe_H, type_fe_phi, &
-         nb_dom_ns, nb_dom_temp, nb_dom_H, nb_dom_phi, nsize, code, m, &
-         m_max_c, rank_S, nb_inter, nb_inter_mu, nb_inter_v_T, &
-         k, kp, i, nb_mode, rang_ns_S, rang_temp_S, rang_S, l, lblank, nb_fluid
+         nb_dom_conc, nb_dom_ns, nb_dom_temp, nb_dom_H, nb_dom_phi, nsize, code, m, &
+         m_max_c, rank_S, nb_inter, nb_inter_mu, nb_inter_c_v, nb_inter_v_T, &
+         k, kp, i, nb_mode, rang_conc_S, rang_ns_S, rang_temp_S, rang_S, l, lblank, nb_fluid
     INTEGER                               :: nb_fic, index_start
-    REAL(KIND=8)                          :: time_h, time_u, time_T, max_vel
+    REAL(KIND=8)                          :: time_h, time_u, time_T, time_conc, max_vel
     TYPE(periodic_data)                   :: my_periodic
 
-    INTEGER, DIMENSION(:), ALLOCATABLE    :: list_inter, list_inter_temp, list_inter_v_T, &
-         list_inter_mu, list_inter_H_phi, list_dom_H, &
-         list_dom_ns, list_dom_temp, list_dom_temp_in, list_dom_phi, list_dom_H_in, list_dom, part, &
+    INTEGER, DIMENSION(:), ALLOCATABLE    :: list_inter, list_inter_temp, list_inter_conc, list_inter_v_T, &
+         list_inter_c_v, list_inter_mu, list_inter_H_phi, list_dom_H, list_dom_conc, list_dom_ns, &
+         list_dom_ns_in, list_dom_temp, list_dom_temp_in, list_dom_phi, list_dom_H_in, list_dom, part, &
          list_mode, controle_H, controle_phi, &
-         controle_vv, controle_pp, controle_temp, temp_in_to_new, H_in_to_new, &
-         l_t_g_vv, l_t_g_pp, l_t_g_H, l_t_g_phi, l_t_g_temp
-
+         controle_vv, controle_pp, controle_temp, controle_conc, vel_in_to_new, temp_in_to_new, H_in_to_new, &
+         l_t_g_vv, l_t_g_pp, l_t_g_H, l_t_g_phi, l_t_g_temp, l_t_g_conc
+    INTEGER, DIMENSION(:), ALLOCATABLE    :: list_dom_H_ref, H_in_to_new_ref, list_dom_temp_ref, temp_in_to_new_ref
     REAL(KIND=8), DIMENSION(:,:,:),   POINTER     :: Hn, Hn1, Bn, Bn1, phin, phin1
     REAL(KIND=8), DIMENSION(:,:,:),   POINTER     :: Hn_glob, Hn1_glob, Bn_glob, Bn1_glob, phin_glob, phin1_glob
     REAL(KIND=8), DIMENSION(:,:,:),   POINTER     :: un, un_m1, pn, pn_m1
     REAL(KIND=8), DIMENSION(:,:,:),   POINTER     :: incpn, incpn_m1, tempn, tempn_m1
+    REAL(KIND=8), DIMENSION(:,:,:),   POINTER     :: concn, concn_m1
     REAL(KIND=8), DIMENSION(:,:,:,:), POINTER     :: level_setn, level_setn_m1
     REAL(KIND=8), DIMENSION(:,:,:),   POINTER     :: un_glob, un_m1_glob, pn_glob, pn_m1_glob
     REAL(KIND=8), DIMENSION(:,:,:),   POINTER     :: incpn_glob, incpn_m1_glob, tempn_glob, tempn_m1_glob
+    REAL(KIND=8), DIMENSION(:,:,:),   POINTER     :: concn_glob, concn_m1_glob
     REAL(KIND=8), DIMENSION(:,:,:,:), POINTER     :: level_setn_glob, level_setn_m1_glob
 
     REAL(KIND=8), DIMENSION(:,:,:),   POINTER     :: Hn_in, Hn1_in, Bn_in, Bn1_in, phin_in, phin1_in
     REAL(KIND=8), DIMENSION(:,:,:),   POINTER     :: Hn_out, Hn1_out, Bn_out, Bn1_out, phin_out, phin1_out
     REAL(KIND=8), DIMENSION(:,:,:),   POINTER     :: un_in, un_m1_in, pn_in, pn_m1_in
     REAL(KIND=8), DIMENSION(:,:,:),   POINTER     :: incpn_in, incpn_m1_in, tempn_in, tempn_m1_in
+    REAL(KIND=8), DIMENSION(:,:,:),   POINTER     :: concn_in, concn_m1_in
     REAL(KIND=8), DIMENSION(:,:,:,:), POINTER     :: level_setn_in, level_setn_m1_in
     REAL(KIND=8), DIMENSION(:,:,:),   POINTER     :: un_out, un_m1_out, pn_out, pn_m1_out
     REAL(KIND=8), DIMENSION(:,:,:),   POINTER     :: incpn_out, incpn_m1_out, tempn_out, tempn_m1_out
+    REAL(KIND=8), DIMENSION(:,:,:),   POINTER     :: concn_out, concn_m1_out
     REAL(KIND=8), DIMENSION(:,:,:,:), POINTER     :: level_setn_out, level_setn_m1_out
 
     CHARACTER(len=3)             :: type_pb, tit_m, tit_s, tit
@@ -83,7 +92,7 @@ CONTAINS
     LOGICAL                      :: if_level_set_P2
     MPI_Comm                                        :: comm_cart
     MPI_Comm, DIMENSION(:), POINTER                 :: comm_one_d, comm_one_d_ns, &
-         comm_one_d_temp, coord_cart
+         comm_one_d_temp, comm_one_d_conc, coord_cart
     PetscErrorCode                                  :: ierr
 
     CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
@@ -97,8 +106,14 @@ CONTAINS
     IF (is_in) THEN
        CALL read_until(22, '===Number of processors in meridian section (Input)')
        READ(22,*) nb_S
-       CALL read_until(22, '===Problem type (Input): (nst, mxw, mhd, fhd)')
+       CALL read_until(22, '===Problem type (Input): (nst, mxw, mhd, fhd, mhs)')
        READ(22,*) type_pb
+       CALL find_string(22, '===Is there an input concentration field?', test)
+       IF (test) THEN
+          READ (22, *) if_concentration_in
+       ELSE
+          if_concentration_in = .FALSE.
+       END IF
        CALL find_string(22, '===Is there an input temperature field?', test)
        IF (test) THEN
           READ (22, *) if_temperature_in
@@ -106,19 +121,27 @@ CONTAINS
           if_temperature_in = .FALSE.
        END IF
        if_temperature = if_temperature_in
+       if_concentration = if_concentration_in
        inter_mesh = .FALSE.
        if_read_partition = .TRUE.
     ELSE
        CALL read_until(22, '===Number of processors in meridian section (Output)')
        READ(22,*) nb_S
-       CALL read_until(22, '===Problem type (Output): (nst, mxw, mhd, fhd)')
+       CALL read_until(22, '===Problem type (Output): (nst, mxw, mhd, fhd, mhs)')
        READ(22,*) type_pb
+       CALL find_string(22, '===Is there an output concentration field?', test)
+       IF (test) THEN
+          READ (22, *) if_concentration_out
+       ELSE
+          if_concentration_out = .FALSE.
+       END IF
        CALL find_string(22, '===Is there an output temperature field?', test)
        IF (test) THEN
           READ (22, *) if_temperature_out
        ELSE
           if_temperature_out = .FALSE.
        END IF
+       if_concentration = if_concentration_out
        if_temperature = if_temperature_out
        CALL read_until(22, '===Should data be interpolated on new mesh? (True/False)')
        READ(22,*) inter_mesh
@@ -126,12 +149,12 @@ CONTAINS
     END IF
 
     !===Set rw_ns, rw_mxw and rw_temp (function of Problem type (Input))
-    CALL read_until(22, '===Problem type (Input): (nst, mxw, mhd, fhd)')
+    CALL read_until(22, '===Problem type (Input): (nst, mxw, mhd, fhd, mhs)')
     READ(22,*) tit
     IF (tit=='nst') THEN
        rw_ns = .TRUE.
        rw_mxw = .FALSE.
-    ELSE IF ((tit=='mhd').OR.(tit=='fhd')) THEN
+    ELSE IF ((tit=='mhd').OR.(tit=='fhd').OR.(tit=='mhs')) THEN
        rw_ns = .TRUE.
        rw_mxw = .TRUE.
     ELSE IF (tit=='mxw') THEN
@@ -139,6 +162,12 @@ CONTAINS
        rw_mxw = .TRUE.
     ELSE
        CALL error_Petsc('BUG in interpol, type_pb (Input) not correct')
+    END IF
+    CALL find_string(22, '===Is there an input concentration field?', test)
+    IF (test) THEN
+       READ (22, *) rw_conc
+    ELSE
+       rw_conc = .FALSE.
     END IF
     CALL find_string(22, '===Is there an input temperature field?', test)
     IF (test) THEN
@@ -203,13 +232,25 @@ CONTAINS
        READ(22,*) new_is_form
     END IF
 
+     !===Data for concentration
+    IF (if_concentration) THEN
+       CALL read_until(22, '===Number of subdomains in concentration mesh')
+       READ(22,*) nb_dom_conc
+       ALLOCATE(list_dom_conc(nb_dom_conc))
+       CALL read_until(22, '===List of subdomains for concentration mesh')
+       READ (22, *)  list_dom_conc
+    ELSE
+       ALLOCATE(list_dom_conc(0))
+    END IF
+
     !===Data for NS
-    IF ( (type_pb == 'nst') .OR. (type_pb == 'mhd') .OR. (type_pb == 'fhd')) THEN
+    IF ( (type_pb == 'nst') .OR. (type_pb == 'mhd') .OR. (type_pb == 'fhd') &
+         .OR. (type_pb == 'mhs')) THEN
        CALL read_until(22, '===Number of subdomains in Navier-Stokes mesh')
        READ(22,*) nb_dom_ns
-       ALLOCATE(list_dom_ns(nb_dom_ns))
+       ALLOCATE(list_dom_ns_in(nb_dom_ns), list_dom_ns(nb_dom_ns), vel_in_to_new(nb_dom_ns))
        CALL read_until(22, '===List of subdomains for Navier-Stokes mesh')
-       READ (22, *)  list_dom_ns
+       READ (22, *)  list_dom_ns_in
        CALL find_string(22, '===Is there a level set?', test)
        IF (test) THEN
           READ (22, *) if_level_set
@@ -228,6 +269,18 @@ CONTAINS
           if_level_set = .FALSE.
        END IF
        IF (type_pb == 'nst') ALLOCATE(list_dom_H(0), list_dom_phi(0))
+
+       CALL find_string(22, '===Number of interfaces between velocity and concentration only domains (for nst applications)', test)
+       IF (test) THEN
+          READ(22,*) nb_inter_c_v
+          ALLOCATE(list_inter_c_v(nb_inter_c_v))
+          CALL read_until(22, '===List of interfaces between velocity and concentration only domains (for nst applications)')
+          READ(22,*) list_inter_c_v
+       ELSE
+          ALLOCATE(list_inter_c_v(0))
+       END IF
+    ELSE
+       ALLOCATE(list_dom_ns(0))
     END IF
 
     !===Data for temperature
@@ -251,7 +304,8 @@ CONTAINS
     END IF
 
     !===Data for Maxwell
-    IF ( (type_pb == 'mhd') .OR. (type_pb == 'mxw') .OR. (type_pb == 'fhd')) THEN
+    IF ( (type_pb == 'mhd') .OR. (type_pb == 'mxw') .OR. (type_pb == 'fhd') &
+         .OR. (type_pb == 'mhs')) THEN
        CALL read_until(22, '===Type of finite element for magnetic field')
        READ (22, *) type_fe_H
        CALL read_until(22, '===Number of subdomains in magnetic field (H) mesh')
@@ -321,106 +375,214 @@ CONTAINS
     CLOSE(22)
 
     !===Creation of logicals for equations
+    if_conc = if_concentration
     if_mass = if_level_set
-    if_momentum = type_pb=='nst' .OR. type_pb=='mhd' .OR. type_pb=='fhd'
-    if_induction = type_pb=='mxw' .OR. type_pb=='mhd' .OR. type_pb=='fhd' ! No mxx: for mxx, put mhd
+    if_momentum = (type_pb=='nst' .OR. type_pb=='mhd' .OR. type_pb=='fhd' &
+                 .OR. type_pb=='mhs')
+    if_induction = (type_pb=='mxw' .OR. type_pb=='mhd' .OR. type_pb=='fhd' &
+                 .OR. type_pb=='mhs')
     if_energy = if_temperature
 
-    !===Check that vv_mesh is a subset of H_mesh
+    !===Check mesh that conc_mesh is a subset of H_mesh===============================
     IF (if_induction) THEN
-       IF (if_momentum) THEN
-          IF (SIZE(list_dom_H) < SIZE(list_dom_ns)) THEN
-             WRITE(*,*) ' BUG: NS must be a subset of Maxwell '
-             STOP
+       ALLOCATE(list_dom_H_ref(nb_dom_H), H_in_to_new_ref(nb_dom_H))
+       IF (if_conc) THEN
+          IF (SIZE(list_dom_H) < SIZE(list_dom_conc)) THEN
+             CALL error_Petsc('BUG mesh_interpol: conc must be a subset of Maxwell ')
           END IF
-          DO k = 1, nb_dom_ns
-             ! JLG/AR Nov 17 2008
-             IF (MINVAL(ABS(list_dom_H_in - list_dom_ns(k))) /= 0) THEN
-                WRITE(*,*) ' BUG : NS must be a subset of Maxwell '
-                STOP
+          DO k = 1, nb_dom_conc
+             IF (MINVAL(ABS(list_dom_H_in - list_dom_conc(k))) /= 0) THEN
+                CALL error_Petsc('BUG in mesh_interpol: conc must be a subset of Maxwell ')
              END IF
              DO kp = 1, nb_dom_H
-                IF (list_dom_H_in(kp) == list_dom_ns(k)) EXIT
+                IF (list_dom_H_in(kp) == list_dom_conc(k)) EXIT
              END DO
              H_in_to_new(k) = kp
-             ! JLG/AR Nov 17 2008
-             list_dom_H(k) = list_dom_ns(k)
+             list_dom_H(k) = list_dom_conc(k)
           END DO
-          m = nb_dom_ns
+          m = nb_dom_conc
           DO k = 1, nb_dom_H
-             IF (MINVAL(ABS(list_dom_H_in(k) - list_dom_ns)) == 0) CYCLE
+             IF (MINVAL(ABS(list_dom_H_in(k) - list_dom_conc)) == 0) CYCLE
              m = m + 1
-             ! JLG/AR Nov 17 2008
              H_in_to_new(m) = k
-             ! JLG/AR Nov 17 2008
              list_dom_H(m) = list_dom_H_in(k)
           END DO
           IF (m/=nb_dom_H) THEN
-             WRITE(*,*) ' BUG : m/=nb_dom_H '
-             STOP
-          END IF
-          IF (nb_dom_H > nb_dom_ns) THEN
-             dom_H_larger_dom_ns = .TRUE.
-          ELSE
-             dom_H_larger_dom_ns = .FALSE.
+             CALL error_Petsc('BUG in mesh_interpol conc subset H: m/=nb_dom_H ')
           END IF
        ELSE
-          ! JLG/AR Nov 17 2008
           DO k = 1, nb_dom_H
              H_in_to_new(k) = k
           END DO
-          ! JLG/AR Nov 17 2008
           list_dom_H = list_dom_H_in
+       END IF
+    ELSE
+       ALLOCATE(H_in_to_new_ref(0))
+    END IF
+
+    !===Check mesh that conc_mesh is a subset of temp_mesh===============================
+    IF (if_energy) THEN
+       ALLOCATE(list_dom_temp_ref(nb_dom_temp), temp_in_to_new_ref(nb_dom_temp))
+       IF (if_conc) THEN
+          IF (SIZE(list_dom_temp) < SIZE(list_dom_conc)) THEN
+             CALL error_Petsc('BUG in mesh_interpol: conc must be a subset of temp ')
+          END IF
+          DO k = 1, nb_dom_conc
+             IF (MINVAL(ABS(list_dom_temp_in - list_dom_conc(k))) /= 0) THEN
+                CALL error_Petsc('BUG in mesh_interpol: conc must be a subset of temp ')
+             END IF
+             DO kp = 1, nb_dom_temp
+                IF (list_dom_temp_in(kp) == list_dom_conc(k)) EXIT
+             END DO
+             temp_in_to_new(k) = kp
+             list_dom_temp(k) = list_dom_conc(k)
+          END DO
+          m = nb_dom_conc
+          DO k = 1, nb_dom_temp
+             IF (MINVAL(ABS(list_dom_temp_in(k) - list_dom_conc)) == 0) CYCLE
+             m = m + 1
+             temp_in_to_new(m) = k
+             list_dom_temp(m) = list_dom_temp(k)
+          END DO
+          IF (m/=nb_dom_temp) THEN
+             CALL error_Petsc('BUG in mesh_interpol conc subset T: m/=nb_dom_temp ')
+          END IF
+       ELSE
+          DO k = 1, nb_dom_temp
+             temp_in_to_new(k) = k
+          END DO
+          list_dom_temp = list_dom_temp_in
+       END IF
+    ELSE
+       ALLOCATE(temp_in_to_new(0))
+       ALLOCATE(temp_in_to_new_ref(0))
+    END IF
+
+    !===Check mesh that conc_mesh is a subset of vv_mesh===============================
+    IF (if_momentum) THEN
+       IF (if_conc) THEN
+          IF (SIZE(list_dom_ns) < SIZE(list_dom_conc)) THEN
+             CALL error_Petsc('BUG in mesh_interpol: conc must be a subset of NS ')
+          END IF
+          DO k = 1, nb_dom_conc
+             IF (MINVAL(ABS(list_dom_ns_in - list_dom_conc(k))) /= 0) THEN
+                CALL error_Petsc('BUG in mesh_interpol: conc must be a subset of NS ')
+             END IF
+             DO kp = 1, nb_dom_ns
+                IF (list_dom_ns_in(kp) == list_dom_conc(k)) EXIT
+             END DO
+             vel_in_to_new(k) = kp
+             list_dom_ns(k) = list_dom_conc(k)
+          END DO
+          m = nb_dom_conc
+          DO k = 1, nb_dom_ns
+             IF (MINVAL(ABS(list_dom_ns_in(k) - list_dom_conc)) == 0) CYCLE
+             m = m + 1
+             vel_in_to_new(m) = k
+             list_dom_ns(m) = list_dom_ns(k)
+          END DO
+          IF (m/=nb_dom_ns) THEN
+             CALL error_Petsc('BUG in mesh_interpol conc subset vel: m/=nb_dom_ns ')
+          END IF
+       ELSE
+          DO k = 1, nb_dom_ns
+             vel_in_to_new(k) = k
+          END DO
+          list_dom_ns = list_dom_ns_in
        END IF
     END IF
 
-    !===Check that vv_mesh is a subset of temp_mesh
-    IF (if_energy) THEN
-       IF (SIZE(list_dom_temp) < SIZE(list_dom_ns)) THEN
-          WRITE(*,*) ' BUG: NS must be a subset of temp '
-          STOP
-       END IF
-       DO k = 1, nb_dom_ns
-          IF (MINVAL(ABS(list_dom_temp_in - list_dom_ns(k))) /= 0) THEN
-             WRITE(*,*) ' BUG : NS must be a subset of temp '
-             STOP
+    !===Check that vv_mesh is a subset of H_mesh
+    IF (if_induction) THEN
+       H_in_to_new_ref=H_in_to_new
+       list_dom_H_ref=list_dom_H
+       IF (if_momentum) THEN
+          IF (SIZE(list_dom_H) < SIZE(list_dom_ns)) THEN
+             CALL error_Petsc('BUG in mesh_interpol: NS must be a subset of Maxwell ')
           END IF
-          DO kp = 1, nb_dom_temp
-             IF (list_dom_temp_in(kp) == list_dom_ns(k)) EXIT
+          DO k = 1+nb_dom_conc, nb_dom_ns
+             IF (MINVAL(ABS(list_dom_H - list_dom_ns(k))) /= 0) THEN
+                CALL error_Petsc('BUG in mesh_interpol: NS must be a subset of Maxwell ')
+             END IF
+             DO kp = 1+nb_dom_conc, nb_dom_H
+                IF (list_dom_H_ref(kp) == list_dom_ns(k)) EXIT
+             END DO
+             H_in_to_new(k) = H_in_to_new_ref(kp)
+             list_dom_H(k) = list_dom_ns(k)
           END DO
-          temp_in_to_new(k) = kp
-          list_dom_temp(k) = list_dom_ns(k)
-       END DO
-       m = nb_dom_ns
-       DO k = 1, nb_dom_temp
-          IF (MINVAL(ABS(list_dom_temp_in(k) - list_dom_ns)) == 0) CYCLE
-          m = m + 1
-          temp_in_to_new(m) = k
-          list_dom_temp(m) = list_dom_temp_in(k)
-       END DO
-       IF (m/=nb_dom_temp) THEN
-          WRITE(*,*) ' BUG : m/=nb_dom_temp '
-          STOP
+          m = nb_dom_ns
+          DO k = 1+nb_dom_conc, nb_dom_H
+             IF (MINVAL(ABS(list_dom_H_ref(k) - list_dom_ns)) == 0) CYCLE
+             m = m + 1
+             H_in_to_new(m) = H_in_to_new_ref(k)
+             list_dom_H(m) = list_dom_H_ref(k)
+          END DO
+          IF (m/=nb_dom_H) THEN
+             CALL error_Petsc('BUG in mesh_interpol vel subset H: m/=nb_dom_H ')
+          END IF
        END IF
-       IF (nb_dom_temp > nb_dom_ns) THEN
-          dom_temp_larger_dom_ns = .TRUE.
-       ELSE
-          dom_temp_larger_dom_ns = .FALSE.
+    END IF
+
+    !===Check mesh that vv_mesh is a subset of temp_mesh============================
+    IF (if_energy) THEN
+       temp_in_to_new_ref=temp_in_to_new
+       list_dom_temp_ref=list_dom_temp
+       IF (if_momentum) THEN
+          IF (SIZE(list_dom_temp) < SIZE(list_dom_ns)) THEN
+             CALL error_Petsc('BUG in mesh_interpol: NS must be a subset of temp ')
+          END IF
+          DO k = 1+nb_dom_conc, nb_dom_ns
+             IF (MINVAL(ABS(list_dom_temp - list_dom_ns(k))) /= 0) THEN
+                CALL error_Petsc('BUG in mesh_interpol: NS must be a subset of temp ')
+             END IF
+             DO kp = 1+nb_dom_conc, nb_dom_temp
+                IF (list_dom_temp_ref(kp) == list_dom_ns(k)) EXIT
+             END DO
+             temp_in_to_new(k) = temp_in_to_new_ref(kp)
+             list_dom_temp(k) = list_dom_ns(k)
+          END DO
+          m = nb_dom_ns
+          DO k = 1+nb_dom_conc, nb_dom_temp
+             IF (MINVAL(ABS(list_dom_temp_ref(k) - list_dom_ns)) == 0) CYCLE
+             m = m + 1
+             temp_in_to_new(m) = temp_in_to_new_ref(k)
+             list_dom_temp(m) = list_dom_temp_ref(k)
+          END DO
+          IF (m/=nb_dom_temp) THEN
+             CALL error_Petsc('BUG in mesh_interpol vel subset temp: m/=nb_dom_temp ')
+          END IF
        END IF
     END IF
 
     !===Check that temp_mesh is a subset of H_mesh
-    IF (if_induction .AND. if_energy) THEN
-       IF (SIZE(list_dom_H) < SIZE(list_dom_temp)) THEN
-          WRITE(*,*) ' BUG: temp must be a subset of Maxwell '
-          STOP
-       END IF
-       DO k = 1, nb_dom_temp
-          IF (MINVAL(ABS(list_dom_H - list_dom_temp(k))) /= 0) THEN
-             WRITE(*,*) ' BUG: temp must be a subset of Maxwell '
-             STOP
+    IF (if_induction) THEN
+       H_in_to_new_ref=H_in_to_new
+       list_dom_H_ref=list_dom_H
+       IF (if_energy) THEN
+          IF (SIZE(list_dom_H) < SIZE(list_dom_temp)) THEN
+             CALL error_Petsc('BUG in mesh_interpol: temp must be a subset of H ')
           END IF
-       END DO
+          DO k = 1+nb_dom_ns, nb_dom_temp
+             IF (MINVAL(ABS(list_dom_H - list_dom_temp(k))) /= 0) THEN
+                CALL error_Petsc('BUG in mesh_interpol: temp must be a subset of H ')
+             END IF
+             DO kp = 1+nb_dom_ns, nb_dom_H
+                IF (list_dom_H_ref(kp) == list_dom_temp(k)) EXIT
+             END DO
+             H_in_to_new(k) = H_in_to_new_ref(kp)
+             list_dom_H(k) = list_dom_temp(k)
+          END DO
+          m = nb_dom_temp
+          DO k = 1+nb_dom_ns, nb_dom_H
+             IF (MINVAL(ABS(list_dom_H_ref(k) - list_dom_temp)) == 0) CYCLE
+             m = m + 1
+             H_in_to_new(m) = H_in_to_new_ref(k)
+             list_dom_H(m) = list_dom_H_ref(k)
+          END DO
+          IF (m/=nb_dom_H) THEN
+             CALL error_Petsc('BUG in mesh_interpol temp subset H: m/=nb_dom_H ')
+          END IF
+       END IF
     END IF
 
     !===Create interfaces in meshes
@@ -435,7 +597,12 @@ CONTAINS
           nsize = SIZE(list_dom_ns)
           ALLOCATE(list_dom(nsize))
           list_dom = list_dom_ns
-          ALLOCATE(list_inter(0))
+          IF (if_conc) THEN
+             ALLOCATE(list_inter(SIZE(list_inter_c_v)))
+             list_inter = list_inter_c_v
+          ELSE
+             ALLOCATE(list_inter(0))
+          END IF
        END IF
     ELSE
        nsize = SIZE(list_dom_H)+SIZE(list_dom_phi)
@@ -455,6 +622,9 @@ CONTAINS
     END IF
     IF (if_energy) THEN
        ALLOCATE(list_inter_temp(0))
+    END IF
+    IF (if_conc) THEN
+       ALLOCATE(list_inter_conc(0))
     END IF
 
     !===Directory, file name and format
@@ -501,8 +671,14 @@ CONTAINS
     !===Prepare meshes and pointers
     CALL load_dg_mesh_free_format(directory, file_name, list_dom, list_inter, 1, p1_mesh_glob, iformatted)
     CALL load_dg_mesh_free_format(directory, file_name, list_dom, list_inter, 2, p2_mesh_glob, iformatted)
+    IF (if_conc) THEN
+!       CALL load_dg_mesh_free_format(directory, file_name, list_dom, &
+       CALL load_dg_mesh_free_format(directory, file_name, list_dom_conc, & !TEST LC
+            list_inter_conc, 2, p2_c0_mesh_glob_conc, iformatted)
+    END IF
     IF (if_energy) THEN
-       CALL load_dg_mesh_free_format(directory, file_name, list_dom, &
+!       CALL load_dg_mesh_free_format(directory, file_name, list_dom, &
+       CALL load_dg_mesh_free_format(directory, file_name, list_dom_temp, & !TEST LC
             list_inter_temp, 2, p2_c0_mesh_glob_temp, iformatted)
     END IF
 
@@ -517,7 +693,7 @@ CONTAINS
        WRITE(*,*) 'read partition'
     ELSE
        WRITE(*,*) 'create partition'
-       CALL part_mesh_M_T_H_phi(nb_S, list_dom_ns, list_dom_temp, list_dom_H, &
+       CALL part_mesh_M_T_H_phi(nb_S, list_dom_conc, list_dom_ns, list_dom_temp, list_dom_H, &
             list_dom_phi, p1_mesh_glob, list_inter, part, my_periodic)
        IF (petsc_rank==0) THEN
           OPEN(UNIT=51, FILE=mesh_part_name, STATUS='replace', FORM='formatted')
@@ -527,12 +703,23 @@ CONTAINS
     END IF
 
     !===Extract local meshes from global meshes
+    IF (if_conc) THEN
+       CALL extract_mesh(comm_one_d(1),nb_S,p2_c0_mesh_glob_conc,part,list_dom_conc,conc_mesh_glob,conc_mesh)
+       ALLOCATE(comm_one_d_conc(2))
+       CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_conc(2), code)
+       CALL MPI_COMM_RANK(comm_one_d(1),rank_S,code)
+       IF (conc_mesh%me/=0) THEN
+          CALL MPI_COMM_SPLIT (comm_one_d(1),1,rank_S,comm_one_d_conc(1),code)
+       ELSE
+          CALL MPI_COMM_SPLIT (comm_one_d(1),MPI_UNDEFINED,rank_S,comm_one_d_conc(1),code)
+       END IF
+    END IF
+
     IF (if_momentum) THEN
        CALL extract_mesh(comm_one_d(1),nb_S,p1_mesh_glob,part,list_dom_ns,pp_mesh_glob,pp_mesh)
        CALL extract_mesh(comm_one_d(1),nb_S,p2_mesh_glob,part,list_dom_ns,vv_mesh_glob,vv_mesh)
-
        ALLOCATE(comm_one_d_ns(2))
-       comm_one_d_ns(2) = comm_one_d(2)
+       CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_ns(2), code)
        CALL MPI_COMM_RANK(comm_one_d(1),rank_S,code)
        IF (pp_mesh%me/=0) THEN
           CALL MPI_COMM_SPLIT (comm_one_d(1),1,rank_S,comm_one_d_ns(1),code)
@@ -569,6 +756,10 @@ CONTAINS
     !===Cleanup
     CALL free_mesh(p1_mesh_glob)
     CALL free_mesh(p2_mesh_glob)
+    IF (if_conc) THEN
+       DEALLOCATE(list_inter_conc)
+       CALL free_mesh(p2_c0_mesh_glob_conc)
+    END IF
     IF (if_energy) THEN
        DEALLOCATE(list_inter_temp)
        CALL free_mesh(p2_c0_mesh_glob_temp)
@@ -577,6 +768,13 @@ CONTAINS
     m_max_c = nb_mode/nb_F
 
     !===Load meshes for monoproc
+    IF (if_conc) THEN
+       CALL free_mesh(conc_mesh_glob)
+       CALL load_mesh_free_format(directory_m, file_name_m, list_dom_conc,  2, conc_mesh_glob, is_form_m)
+       IF (check_plt) THEN
+          CALL plot_const_p1_label(conc_mesh_glob%jj, conc_mesh_glob%rr, 1.d0*conc_mesh_glob%i_d, 'conc.plt')
+       END IF
+    END IF
     IF (if_momentum) THEN
        CALL free_mesh(vv_mesh_glob)
        CALL free_mesh(pp_mesh_glob)
@@ -605,6 +803,17 @@ CONTAINS
     END IF
 
     !===Array allocation
+    IF (if_conc) THEN
+       ALLOCATE(concn_m1_glob(conc_mesh_glob%np, 2, m_max_c))
+       ALLOCATE(concn_glob   (conc_mesh_glob%np, 2, m_max_c))
+       ALLOCATE(concn_m1     (conc_mesh%np, 2, m_max_c))
+       ALLOCATE(concn        (conc_mesh%np, 2, m_max_c))
+       concn_m1_glob = 0.d0
+       concn_glob    = 0.d0
+       concn_m1      = 0.d0
+       concn         = 0.d0
+    END IF
+
     IF (if_momentum) THEN
        ALLOCATE(un_glob      (vv_mesh_glob%np, 6, m_max_c))
        ALLOCATE(un_m1_glob   (vv_mesh_glob%np, 6, m_max_c))
@@ -741,6 +950,14 @@ CONTAINS
           temp_mesh_in => temp_mesh
           temp_mesh_out => temp_mesh_glob
        END IF
+       IF (if_conc) THEN
+          concn_in    => concn
+          concn_m1_in => concn_m1
+          concn_out   => concn_glob
+          concn_m1_out => concn_m1_glob
+          conc_mesh_in => conc_mesh
+          conc_mesh_out => conc_mesh_glob
+       END IF
 
     ELSE
        mono_in = .TRUE.
@@ -794,6 +1011,14 @@ CONTAINS
           tempn_m1_out=> tempn_m1
           temp_mesh_in => temp_mesh_glob
           temp_mesh_out => temp_mesh
+       END IF
+       IF (if_conc) THEN
+          concn_in    => concn_glob
+          concn_m1_in => concn_m1_glob
+          concn_out   => concn
+          concn_m1_out=> concn_m1
+          conc_mesh_in => conc_mesh_glob
+          conc_mesh_out => conc_mesh
        END IF
     END IF
 
@@ -1292,14 +1517,135 @@ CONTAINS
        IF (rank==0) WRITE(*,*) 'End interpolation temperature'
     END IF
 
+    !===Interpolation for concentration
+    IF (rw_conc) THEN
+       IF (rank==0) WRITE(*,*) 'Start interpolation concentration'
+
+       IF (inter_mesh) THEN
+          ALLOCATE(controle_conc(conc_mesh_out%np))
+          DO m = index_start, index_start+nb_fic-1
+             concn_m1_glob = 0.d0
+             concn_glob    = 0.d0
+             concn_m1      = 0.d0
+             concn         = 0.d0
+             WRITE(tit, '(i3)') m
+             lblank = eval_blank(3,tit)
+             DO l = 1, lblank - 1
+                tit(l:l) = '0'
+             END DO
+
+             IF (petsc_rank==0) THEN
+                CALL system('mv suite_conc_I'//tit//'.'//old_filename//'suite_conc.'//old_filename)
+             END IF
+             CALL MPI_Barrier( MPI_Comm_WORLD, code)
+
+             IF (conc_mesh%me/=0) THEN
+                CALL read_restart_conc(comm_one_d_conc, time_conc, list_mode, concn_in, concn_m1_in, old_filename, &
+                     opt_mono = mono_in)
+             END IF
+             controle_conc = 0
+             CALL interp_mesh(conc_mesh_in, conc_mesh_out, concn_in, concn_out, controle_conc, 2)
+             CALL interp_mesh(conc_mesh_in, conc_mesh_out, concn_m1_in, concn_m1_out, controle_conc, 2)
+
+             IF (conc_mesh%me /= 0) THEN
+                CALL write_restart_conc(comm_one_d_conc, conc_mesh_out, time_conc, &
+                     list_mode, concn_out, concn_m1_out, new_filename, m, 1, opt_mono = mono_out)
+                CALL MPI_COMM_RANK(comm_one_d_conc(1), rang_conc_S, ierr)
+             END IF
+          END DO
+          DEALLOCATE(controle_conc)
+
+       ELSE
+
+          ALLOCATE(l_t_g_conc(conc_mesh%np))
+          l_t_g_conc = 0
+          CALL loc_to_glob(conc_mesh, conc_mesh_glob, l_t_g_conc)
+          IF (conc_mesh%me /=0) THEN
+             DO m = index_start, index_start+nb_fic-1
+                concn_m1_glob = 0.d0
+                concn_glob    = 0.d0
+                concn_m1      = 0.d0
+                concn         = 0.d0
+
+                WRITE(tit, '(i3)') m
+                lblank = eval_blank(3,tit)
+                DO l = 1, lblank - 1
+                   tit(l:l) = '0'
+                END DO
+                IF (is_in) THEN
+                   CALL MPI_COMM_RANK(comm_one_d_conc(1), rang_conc_S, ierr)
+                   WRITE(tit_s,'(i3)') rang_conc_S
+                   lblank = eval_blank(3,tit_s)
+                   DO l = 1, lblank - 1
+                      tit_s(l:l) = '0'
+                   END DO
+
+                   CALL system('mv suite_conc_S'//tit_s//'_I'//tit//'.'//old_filename//'suite_conc_S'//tit_s//'.'//old_filename)
+                ELSE
+                   IF (petsc_rank==0) CALL system('mv suite_conc_I'//tit//'.'//old_filename//'suite_conc.'//old_filename)
+                   CALL MPI_Barrier( MPI_Comm_WORLD, code)
+                END IF
+
+                CALL read_restart_conc(comm_one_d_conc, time_conc, list_mode, concn_in, concn_m1_in, old_filename, &
+                     opt_mono = mono_in)
+
+                CALL inter_mesh_loc_to_glob(conc_mesh_in, conc_mesh_out, concn_in, concn_out, l_t_g_conc, is_in, &
+                     comm_one_d_conc(1))
+                CALL inter_mesh_loc_to_glob(conc_mesh_in, conc_mesh_out, concn_m1_in, concn_m1_out, l_t_g_conc, is_in, &
+                     comm_one_d_conc(1))
+
+                CALL write_restart_conc(comm_one_d_conc, conc_mesh_out, time_conc, list_mode, concn_out, concn_m1_out, &
+                     new_filename, m, 1, opt_mono = mono_out)
+                CALL MPI_COMM_RANK(comm_one_d_conc(1), rang_conc_S, ierr)
+             END DO
+          END IF
+       END IF
+
+       IF (check_plt) THEN
+          IF (conc_mesh%me /= 0) THEN
+             CALL MPI_COMM_RANK(comm_one_d_conc(1), rang_conc_S, ierr)
+             WRITE(tit_s,'(i3)') rang_conc_S
+             lblank = eval_blank(3,tit_s)
+             DO l = 1, lblank - 1
+                tit_s(l:l) = '0'
+             END DO
+             DO i = 1, SIZE(list_mode)
+                WRITE(tit_m,'(i3)') list_mode(i)
+                lblank = eval_blank(3,tit_m)
+                DO l = 1, lblank - 1
+                   tit_m(l:l) = '0'
+                END DO
+                CALL plot_scalar_field(conc_mesh%jj, conc_mesh%rr, concn(:,1,i), 'conc_cos_m='//tit_m//'_'//tit_s//'_999.plt' )
+                CALL plot_scalar_field(conc_mesh%jj, conc_mesh%rr, concn(:,2,i), 'conc_sin_m='//tit_m//'_'//tit_s//'_999.plt' )
+             END DO
+             IF (rang_conc_S == 0) THEN
+                DO i = 1, SIZE(list_mode)
+                   WRITE(tit_m,'(i3)') list_mode(i)
+                   lblank = eval_blank(3,tit_m)
+                   DO l = 1, lblank - 1
+                      tit_m(l:l) = '0'
+                   END DO
+                   CALL plot_scalar_field(conc_mesh_glob%jj, conc_mesh_glob%rr, concn(:,1,i), &
+                        'gconc_cos_m='//tit_m//'_'//tit_s//'_999.plt' )
+                   CALL plot_scalar_field(conc_mesh_glob%jj, conc_mesh_glob%rr, concn(:,2,i), &
+                        'gconc_sin_m='//tit_m//'_'//tit_s//'_999.plt' )
+                END DO
+             END IF
+          END IF
+       END IF
+       IF (rank==0) WRITE(*,*) 'End interpolation concentration'
+    END IF
+
     IF (is_in) THEN
        IF (petsc_rank==0 .AND. rw_mxw) CALL system('rm -rf suite_maxwell_S*')
        IF (petsc_rank==0 .AND. rw_ns) CALL system('rm -rf suite_ns_S*')
        IF (petsc_rank==0 .AND. rw_temp) CALL system('rm -rf suite_temp_S*')
+       IF (petsc_rank==0 .AND. rw_conc) CALL system('rm -rf suite_conc_S*')
     ELSE
        IF (petsc_rank==0 .AND. rw_mxw) CALL system('rm -rf suite_maxwell.*')
        IF (petsc_rank==0 .AND. rw_ns) CALL system('rm -rf suite_ns.*')
        IF (petsc_rank==0 .AND. rw_temp) CALL system('rm -rf suite_temp.*')
+       IF (petsc_rank==0 .AND. rw_conc) CALL system('rm -rf suite_conc.*')
     END IF
 
     IF (check_plt .AND. petsc_rank==0) THEN

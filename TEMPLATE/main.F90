@@ -25,6 +25,10 @@ PROGRAM mhd_prog
   REAL(KIND=8), POINTER, DIMENSION(:,:,:)         :: temperature
   REAL(KIND=8), POINTER,      DIMENSION(:)        :: vol_heat_capacity_field
   REAL(KIND=8), POINTER,      DIMENSION(:)        :: temperature_diffusivity_field
+  !===Concentration field===========================================================
+  TYPE(mesh_type), POINTER                        :: conc_mesh
+  REAL(KIND=8), POINTER, DIMENSION(:,:,:)         :: concentration
+  REAL(KIND=8), POINTER,      DIMENSION(:)        :: concentration_diffusivity_field
   !===Level_set===================================================================
   REAL(KIND=8), POINTER, DIMENSION(:,:,:,:)       :: level_set
   !===Density=====================================================================
@@ -41,6 +45,7 @@ PROGRAM mhd_prog
   PetscErrorCode :: ierr
   PetscMPIInt    :: rank
   MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d, comm_one_d_ns, comm_one_d_temp
+  MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d_conc
 
   !===Start PETSC and MPI (mandatory)=============================================
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
@@ -50,12 +55,14 @@ PROGRAM mhd_prog
   CALL read_user_data('data')
 
   !===Initialize SFEMANS (mandatory)==============================================
-  CALL initial(vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, &
+  CALL initial(vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, conc_mesh,&
        interface_H_phi, interface_H_mu, list_mode, &
        un, pn, Hn, Bn, phin, vel, &
-       vol_heat_capacity_field, temperature_diffusivity_field, mu_H_field, sigma_field, &
-       time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp, temperature, &
-       level_set, density, der_un)
+       vol_heat_capacity_field, temperature_diffusivity_field, &
+       concentration_diffusivity_field,mu_H_field, sigma_field, time, m_max_c, &
+       comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc,temperature, &
+       concentration, level_set, density, &
+       der_un)
 
   !===============================================================================
   !                        VISUALIZATION WITHOUT COMPUTING                       !
@@ -77,7 +84,7 @@ PROGRAM mhd_prog
   !   IF (inputs%test_de_convergence) THEN
   !      CALL post_proc_test(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
   !           un, pn, Hn, Bn, phin, temperature, level_set, mu_H_field, &
-  !           time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp) ! MODIFICATION: comm_one_d_temp added
+  !           time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp)
   !      CALL error_Petsc('End of convergence test')
   !      !IF (rank==0) WRITE(*,*) 'End of convergence test'
   !      !RETURN
@@ -99,7 +106,7 @@ PROGRAM mhd_prog
      tploc =  user_time()
      time = time + inputs%dt
 
-     CALL run_SFEMaNS(time, it) ! MODIFICATION: used to compute the magnetic field only once in fhd with steady current case
+     CALL run_SFEMaNS(time, it)
 
      !===My postprocessing
      IF (.NOT.inputs%test_de_convergence) THEN
@@ -123,9 +130,9 @@ PROGRAM mhd_prog
   !===Postprocessing to check convergence=========================================
   !IF (inputs%test_de_convergence) THEN
   IF (inputs%if_regression) THEN
-     CALL regression(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
-          un, pn, Hn, Bn, phin, temperature, level_set, mu_H_field, &
-          time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp)
+     CALL regression(conc_mesh, vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
+          un, pn, Hn, Bn, phin, temperature, level_set, concentration, mu_H_field, &
+          time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc)
      CALL error_Petsc('End of convergence test')
   END IF
 
@@ -141,6 +148,9 @@ CONTAINS
     USE sft_parallele
     USE verbose
     USE vtk_viz
+    USE sfemans_tools
+    USE subroutine_mass
+    USE user_data
     IMPLICIT NONE
     INTEGER,                             INTENT(IN) :: it
     REAL(KIND=8)                                    :: err, norm
@@ -152,6 +162,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(pp_mesh%np, 2, SIZE(list_mode)) :: level_1_P1
     REAL(KIND=8), DIMENSION(vv_mesh%np,2,SIZE(list_mode)) :: chi, one_chi
     INTEGER :: nb_procs, m_max_pad, bloc_size
+    LOGICAL, SAVE :: once_plot=.TRUE.
     !===VTU 2d======================================================================
     CHARACTER(LEN=3)   :: st_mode
     CHARACTER(LEN=200) :: header
@@ -162,8 +173,8 @@ CONTAINS
        CALL MPI_Comm_rank(comm_one_d_ns(1), rank_ns_S, ierr)
        CALL MPI_Comm_rank(comm_one_d_ns(2), rank_ns_F, ierr)
     ELSE
-       rank_ns_s = -1
-       rank_ns_f = -1
+       rank_ns_S = -1
+       rank_ns_F = -1
     END IF
     CALL MPI_Comm_rank(comm_one_d(1), rank_S, ierr)
     CALL MPI_Comm_rank(comm_one_d(2), rank_F, ierr)
@@ -175,7 +186,7 @@ CONTAINS
        ELSE
           norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn)
        END IF
-       IF (norm>1.d2) THEN
+       IF (norm>1.d8 .OR. isnan(norm)) THEN
           CALL error_petsc('From my_post_processing: numerical unstability')
        END IF
     END IF
@@ -266,7 +277,9 @@ CONTAINS
 
     IF (MOD(it,inputs%freq_plot) == 0) THEN
        !===Plot whatever you want here
-       IF (it==inputs%freq_plot) THEN
+       !IF (it==inputs%freq_plot) THEN
+       IF (once_plot) THEN
+          once_plot=.FALSE.
           what = 'new'
        ELSE
           what = 'old'
@@ -276,21 +289,21 @@ CONTAINS
        IF (inputs%if_level_set) THEN
           IF (inputs%if_level_set_P2) THEN
              level_1_P2=level_set(1,:,:,:)
-             CALL vtu_3d(level_1_P2, 'vv_mesh', 'Level_1', 'level_1', what, opt_it=it_plot)
+             CALL vtu_3d(comm_one_d, level_1_P2, 'vv_mesh', 'Level_1', 'level_1', what, opt_it=it_plot)
           ELSE
              level_1_P1=level_set(1,:,:,:)
-             CALL vtu_3d(level_1_P1, 'pp_mesh', 'Level_1', 'level_1', what, opt_it=it_plot)
+             CALL vtu_3d(comm_one_d, level_1_P1, 'pp_mesh', 'Level_1', 'level_1', what, opt_it=it_plot)
           END IF
           !CALL vtu_3d(density, 'vv_mesh', 'Density', 'density', what, opt_it=it_plot)
        END IF
        IF (inputs%type_pb/='mxw' .AND. inputs%type_pb/='mxx') THEN
           IF (inputs%type_fe_velocity==3) THEN
-             CALL vtu_3d(un, 'vv_mesh', 'Velocity', 'vel', what, opt_it=it_plot, opt_mesh_in=vv_mesh)
+             CALL vtu_3d(comm_one_d, un, 'vv_mesh', 'Velocity', 'vel', what, opt_it=it_plot, opt_mesh_in=vv_mesh)
           ELSE
-             CALL vtu_3d(un, 'vv_mesh', 'Velocity', 'vel', what, opt_it=it_plot)
+             CALL vtu_3d(comm_one_d, un, 'vv_mesh', 'Velocity', 'vel', what, opt_it=it_plot)
           ENDIF
-          CALL vtu_3d(pn, 'pp_mesh', 'Pressure', 'pre', what, opt_it=it_plot)
-          CALL vtu_3d(un, 'vv_mesh', 'Vorticity', 'vor', what, opt_it=it_plot, &
+          CALL vtu_3d(comm_one_d, pn, 'pp_mesh', 'Pressure', 'pre', what, opt_it=it_plot)
+          CALL vtu_3d(comm_one_d, un, 'vv_mesh', 'Vorticity', 'vor', what, opt_it=it_plot, &
                opt_grad_curl='curl_u', opt_mesh_in=vv_mesh)
           !===Visualization of the penalty function
           IF (inputs%if_ns_penalty) THEN
@@ -307,7 +320,7 @@ CONTAINS
              END DO
              CALL FFT_PAR_VAR_ETA_PROD_GAUSS_DCL(comm_one_d(2), penal_in_real_space, vv_mesh, &
                   one_chi, chi, nb_procs, bloc_size, m_max_pad, vv_mesh%rr, time)
-             CALL vtu_3d(chi, 'vv_mesh', 'Chi', 'chi', what, opt_it=it_plot)
+             CALL vtu_3d(comm_one_d, chi, 'vv_mesh', 'Chi', 'chi', what, opt_it=it_plot)
           END IF
           !===Visualization of the penalty function
           !===2D plots for each mode of the velocity field and the pressure
@@ -323,14 +336,14 @@ CONTAINS
           END DO
        END IF
        IF (inputs%if_temperature) THEN
-          !CALL vtu_3d(temperature, 'temp_mesh', 'Temperature', 'temp', what, opt_it=it_plot)
+          !CALL vtu_3d(comm_one_d, temperature, 'temp_mesh', 'Temperature', 'temp', what, opt_it=it_plot)
        END IF
        IF (inputs%type_pb/='nst') THEN
-          !CALL vtu_3d(Hn, 'H_mesh', 'MagField', 'mag', what, opt_it=it_plot)
-          !CALL vtu_3d(Hn, 'H_mesh', 'Current', 'cur', what, opt_it=it_plot, &
+          !CALL vtu_3d(comm_one_d, Hn, 'H_mesh', 'MagField', 'mag', what, opt_it=it_plot)
+          !CALL vtu_3d(comm_one_d, Hn, 'H_mesh', 'Current', 'cur', what, opt_it=it_plot, &
           !     opt_grad_curl='curl_h', opt_2D=.FALSE.)
           !IF (inputs%nb_dom_phi>0) THEN
-          !   CALL vtu_3d(phin, 'phi_mesh', 'ScalPot', 'phi', what, opt_it=it_plot)
+          !   CALL vtu_3d(comm_one_d, phin, 'phi_mesh', 'ScalPot', 'phi', what, opt_it=it_plot)
           !END IF
        END IF
        !==End generation of 3D plots

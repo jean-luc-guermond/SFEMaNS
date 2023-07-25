@@ -13,6 +13,7 @@ MODULE initialization
   USE my_util
 #include "petsc/finclude/petsc.h"
   USE petsc
+  USE fourier_to_real_for_vtu
   IMPLICIT NONE
   PUBLIC:: initial, save_run, run_SFEMaNS
   PUBLIC:: prodmat_maxwell_int_by_parts
@@ -20,6 +21,7 @@ MODULE initialization
 
   !Logicals for equations-----------------------------------------------------
   LOGICAL                                         :: if_momentum, if_mass, if_induction, if_energy
+  LOGICAL                                         :: if_concentration
 
   !Fields for Navier-Stokes---------------------------------------------------
   TYPE(mesh_type), TARGET                         :: pp_mesh, vv_mesh
@@ -52,6 +54,12 @@ MODULE initialization
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:)      :: vol_heat_capacity_field
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:)      :: temperature_diffusivity_field
   !---------------------------------------------------------------------------
+  !Fields for concentration-----------------------------------------------------
+  TYPE(mesh_type), TARGET                              :: conc_mesh
+  TYPE(petsc_csr_LA)                                   :: conc_1_LA
+  REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:)  :: concn, concn_m1
+  REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:)      :: concentration_diffusivity_field
+
 
   !Fields for Maxwell---------------------------------------------------------
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:) :: Hn, Hn1, Hext, phin, phin1
@@ -70,12 +78,19 @@ MODULE initialization
   TYPE(periodic_type)                                 :: pp_per
   TYPE(periodic_type)                                 :: temp_per
   TYPE(periodic_type)                                 :: level_set_per
+  TYPE(periodic_type)                                 :: conc_per
   !---------------------------------------------------------------------------
 
   !Coupling variables---------------------------------------------------------
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:) :: v_to_Max
   REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:,:)         :: H_to_NS
   REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:,:)         :: B_to_NS
+  REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:,:)         :: T_to_H
+  REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:,:)         :: j_H_to_T
+  REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:,:)         :: j_H_to_conc
+  REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:,:)         :: conc_to_v
+  REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:,:)         :: conc_to_H
+  REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:,:)         :: v_to_conc
   !October 7, 2008, JLG
   REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:,:)         :: T_to_NS
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:) :: v_to_energy
@@ -86,6 +101,9 @@ MODULE initialization
   !October 7, 2008, JLG
   INTEGER, ALLOCATABLE, DIMENSION(:)                  :: jj_v_to_H
   INTEGER, ALLOCATABLE, DIMENSION(:)                  :: jj_v_to_temp
+  INTEGER, ALLOCATABLE, DIMENSION(:)                  :: jj_T_to_H
+  INTEGER, ALLOCATABLE, DIMENSION(:)                  :: jj_c_to_v
+  INTEGER, ALLOCATABLE, DIMENSION(:)                  :: jj_c_to_H
   !---------------------------------------------------------------------------
 
   !Modes list-----------------------------------------------------------------
@@ -101,8 +119,9 @@ MODULE initialization
 
   !Communicators for Petsc, in space and Fourier------------------------------
   MPI_Comm                                        :: comm_cart
-  MPI_Comm, DIMENSION(:), POINTER                 :: comm_one_d, comm_one_d_ns, &
-       comm_one_d_temp, coord_cart
+  MPI_Comm, DIMENSION(:), POINTER                 :: comm_one_d, comm_one_d_ns
+  MPI_Comm, DIMENSION(:), POINTER                 :: comm_one_d_temp, coord_cart
+  MPI_Comm, DIMENSION(:), POINTER                 :: comm_one_d_conc
   !---------------------------------------------------------------------------
 
   !-------------END OF DECLARATIONS------------------------------------------
@@ -111,12 +130,12 @@ CONTAINS
 
   !---------------------------------------------------------------------------
   SUBROUTINE initial(vv_mesh_out, pp_mesh_out, H_mesh_out, phi_mesh_out, temp_mesh_out, &
-       interface_H_phi_out, interface_H_mu_out, list_mode_out, &
+       conc_mesh_out,interface_H_phi_out, interface_H_mu_out, list_mode_out, &
        un_out, pn_out, Hn_out, Bn_out, phin_out, v_to_Max_out, &
-       vol_heat_capacity_field_out, temperature_diffusivity_field_out, &
+       vol_heat_capacity_field_out, temperature_diffusivity_field_out, concentration_diffusivity_field_out, &
        mu_H_field_out, sigma_field_out, &
-       time_out, m_max_c_out, comm_one_d_out, comm_one_d_ns_out, comm_one_d_temp_out, &
-       tempn_out, level_set_out, density_out, der_un_out)
+       time_out, m_max_c_out, comm_one_d_out, comm_one_d_ns_out, comm_one_d_temp_out, comm_one_d_conc_out, &
+       tempn_out, concn_out, level_set_out, density_out, der_un_out)
     USE fourier_to_real_for_vtu
 #include "petsc/finclude/petsc.h"
     USE petsc
@@ -124,23 +143,26 @@ CONTAINS
     TYPE(mesh_type), POINTER                  :: pp_mesh_out, vv_mesh_out
     TYPE(mesh_type), POINTER                  :: H_mesh_out, phi_mesh_out
     TYPE(mesh_type), POINTER                  :: temp_mesh_out
+    TYPE(mesh_type), POINTER                  :: conc_mesh_out
     TYPE(dyn_real_array_three), POINTER, DIMENSION(:):: der_un_out
     TYPE(interface_type), POINTER             :: interface_H_mu_out, interface_H_phi_out
     INTEGER,      POINTER,  DIMENSION(:)      :: list_mode_out
     REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: un_out, pn_out, Hn_out, Bn_out, phin_out, v_to_Max_out, tempn_out, density_out
+    REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: concn_out
+    REAL(KIND=8), POINTER,  DIMENSION(:)      :: concentration_diffusivity_field_out
     REAL(KIND=8), POINTER,  DIMENSION(:,:,:,:):: level_set_out
     REAL(KIND=8), POINTER,  DIMENSION(:)      :: sigma_field_out, mu_H_field_out
     REAL(KIND=8), POINTER,  DIMENSION(:)      :: vol_heat_capacity_field_out, temperature_diffusivity_field_out
     REAL(KIND=8)                              :: time_out
     INTEGER                                   :: m_max_c_out
-    MPI_Comm, DIMENSION(:), POINTER           :: comm_one_d_out, comm_one_d_ns_out, comm_one_d_temp_out
+    MPI_Comm, DIMENSION(:), POINTER           :: comm_one_d_out, comm_one_d_ns_out
+    MPI_Comm, DIMENSION(:), POINTER           :: comm_one_d_temp_out, comm_one_d_conc_out
 
     CALL INIT
 
     !===Initialize meshes for vtu post processing
     CALL sfemans_initialize_postprocessing(comm_one_d, vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, &
-         list_mode, inputs%number_of_planes_in_real_space)
-
+         conc_mesh, list_mode, inputs%number_of_planes_in_real_space)
     vv_mesh_out => vv_mesh
     pp_mesh_out => pp_mesh
     H_mesh_out => H_mesh
@@ -168,44 +190,95 @@ CONTAINS
     comm_one_d_out => comm_one_d
     comm_one_d_ns_out => comm_one_d_ns
     comm_one_d_temp_out => comm_one_d_temp
+    conc_mesh_out => conc_mesh
+    concn_out => concn
+    concentration_diffusivity_field_out => concentration_diffusivity_field
+    comm_one_d_conc_out => comm_one_d_conc
+
   END SUBROUTINE initial
   !---------------------------------------------------------------------------
 
   !---------------------------------------------------------------------------
   SUBROUTINE run_SFEMaNS(time_in, it)
     USE subroutine_mass
-    USE subroutine_temperature
+    USE update_temperature
+    USE subroutine_concentration
     USE update_navier_stokes
     USE update_maxwell
     USE update_taylor_navier_stokes
     USE input_data
     IMPLICIT NONE
-    REAL(KIND=8), INTENT(in)                                  :: time_in
-    REAL(KIND=8), DIMENSION(vv_mesh%np,2,SIZE(list_mode))     :: visco_dyn_m1
-    REAL(KIND=8), DIMENSION(vv_mesh%np,2,SIZE(list_mode))     :: one_over_sigma_ns
+    REAL(KIND=8), INTENT(IN)                                  :: time_in
+    REAL(KIND=8), DIMENSION(vv_mesh%np,2,SIZE(list_mode))     :: visco_dyn
+    REAL(KIND=8), DIMENSION(vv_mesh%np,2,SIZE(list_mode))     :: one_over_sigma_ns_p1
+    REAL(KIND=8), DIMENSION(vv_mesh%np,2,SIZE(list_mode))     :: heat_density_ns_m1
+    REAL(KIND=8), DIMENSION(vv_mesh%np,2,SIZE(list_mode))     :: heat_density_ns
+    REAL(KIND=8), DIMENSION(vv_mesh%np,2,SIZE(list_mode))     :: heat_density_ns_p1
+    REAL(KIND=8), DIMENSION(vv_mesh%np,2,SIZE(list_mode))     :: heat_diffusivity_ns
     INTEGER                                                   :: it
+    REAL(KIND=8), DIMENSION(H_mesh%np,6,SIZE(list_mode))      :: j_Hn
+    REAL(KIND=8), DIMENSION(SIZE(level_set,1),SIZE(level_set,2),2,SIZE(list_mode)) :: level_set_reg
 
     CALL zero_out_modes
 
     time = time_in
 
     IF (if_mass) THEN
+       IF (inputs%variation_temp_param_fluid) THEN
+          CALL reconstruct_variable(comm_one_d_ns, list_mode, pp_mesh, vv_mesh, level_set_m1, &
+               inputs%heat_capacity_fluid*inputs%density_fluid, heat_density_ns_m1)
+       ELSE
+          heat_density_ns_m1  = 0.d0
+       END IF
+
        CALL three_level_mass(comm_one_d_ns, time, pp_1_LA, vv_1_LA, list_mode, pp_mesh, vv_mesh, &
             2*un-un_m1, max_vel, level_set_per, density_m2, density_m1, density, level_set_m1, level_set,&
-            visc_entro_level)
+            visc_entro_level, level_set_reg)
        CALL reconstruct_variable(comm_one_d_ns, list_mode, pp_mesh, vv_mesh, level_set_m1, &
-            inputs%dyna_visc_fluid, visco_dyn_m1)
+            inputs%dyna_visc_fluid, visco_dyn)
+
        IF (inputs%variation_sigma_fluid) THEN
           CALL reconstruct_variable(comm_one_d_ns, list_mode, pp_mesh, vv_mesh, level_set, &
-               1.d0/inputs%sigma_fluid, one_over_sigma_ns)
+               1.d0/inputs%sigma_fluid, one_over_sigma_ns_p1)
        ELSE
-          one_over_sigma_ns = 0.d0
+          one_over_sigma_ns_p1 = 0.d0
        END IF
+
+       IF (inputs%variation_temp_param_fluid) THEN
+          CALL reconstruct_variable(comm_one_d_ns, list_mode, pp_mesh, vv_mesh, level_set_m1, &
+               inputs%heat_capacity_fluid*inputs%density_fluid, heat_density_ns)
+          CALL reconstruct_variable(comm_one_d_ns, list_mode, pp_mesh, vv_mesh, level_set, &
+               inputs%heat_capacity_fluid*inputs%density_fluid, heat_density_ns_p1)
+          CALL reconstruct_variable(comm_one_d_ns, list_mode, pp_mesh, vv_mesh, level_set, &
+               inputs%heat_diffu_fluid, heat_diffusivity_ns)
+       ELSE
+          heat_density_ns     = 0.d0
+          heat_density_ns_p1  = 0.d0
+          heat_diffusivity_ns = 0.d0
+       END IF
+    END IF
+
+    IF (if_concentration) THEN
+       IF (if_momentum) THEN
+          CALL projection_velocity(conc_mesh, 2*un-un_m1, jj_c_to_v, .TRUE., v_to_conc)
+       END IF
+
+       IF (if_induction) THEN
+          CALL compute_rot_h(2*Hn-Hn1, j_Hn)
+          !j_Hn = Hn
+          CALL projection_mag_field(conc_mesh, j_Hn, jj_c_to_H, .TRUE., j_H_to_conc)
+       END IF
+       CALL three_level_concentration(comm_one_d_conc, time, conc_1_LA, inputs%dt, list_mode, &
+            conc_mesh, concn_m1, concn, v_to_conc,& ! H_to_energy,&
+            concentration_diffusivity_field, inputs%my_par_concentration,&
+            inputs%concentration_list_dirichlet_sides, inputs%concentration_list_robin_sides, &
+            inputs%convection_coeff_conc_lhs, inputs%convection_coeff_conc_rhs,inputs%exterior_concentration, conc_per, &
+            j_H_to_conc)
     END IF
 
     IF (if_energy) THEN
        IF (if_momentum) THEN
-          CALL projection_velocity(temp_mesh, 2*un-un_m1, jj_v_to_temp, v_to_energy)
+          CALL projection_velocity(temp_mesh, 2*un-un_m1, jj_v_to_temp, .FALSE., v_to_energy)
        END IF
        IF (inputs%type_pb=='fhd') THEN
           CALL projection_mag_field(vv_mesh, 2*Hn-Hn1, jj_v_to_H, .TRUE., H_to_NS)
@@ -215,17 +288,18 @@ CONTAINS
              CALL projection_mag_field(temp_mesh, H_to_NS, jj_v_to_temp, .FALSE., pdt_H_to_energy)
           END IF
        END IF
-       CALL three_level_temperature(comm_one_d_temp, time, temp_1_LA, inputs%dt, list_mode, &
+       CALL temperature_decouple(comm_one_d_temp, time, temp_1_LA, list_mode, &
             temp_mesh, tempn_m1, tempn, v_to_energy, H_to_energy, pdt_H_to_energy, &
-            vol_heat_capacity_field, temperature_diffusivity_field, &
-            inputs%my_par_temperature, inputs%temperature_list_dirichlet_sides, &
-            inputs%temperature_list_robin_sides, inputs%convection_coeff, &
-            inputs%exterior_temperature, temp_per) !===MODIFICATION: robin
+            vol_heat_capacity_field, temperature_diffusivity_field, temp_per, &
+            heat_density_ns_m1, heat_density_ns, heat_density_ns_p1, heat_diffusivity_ns, jj_v_to_temp)
     END IF
 
     IF (if_momentum) THEN
        IF (if_energy) THEN
-          CALL projection_temperature(vv_mesh, tempn, jj_v_to_temp, T_to_NS)
+          CALL projection_temperature(vv_mesh, tempn, jj_v_to_temp, .TRUE., T_to_NS)
+       END IF
+       IF (if_concentration) THEN
+          CALL projection_concentration(vv_mesh, concn, jj_c_to_v, conc_to_v)
        END IF
        IF (if_induction) THEN
           CALL projection_mag_field(vv_mesh, 2*Hn-Hn1, jj_v_to_H, .TRUE., H_to_NS)
@@ -235,14 +309,14 @@ CONTAINS
        !===HF April 2019
        IF (inputs%if_navier_stokes_with_taylor) THEN
           CALL navier_stokes_taylor(comm_one_d_ns, time, vv_3_LA, pp_1_LA, &
-               list_mode, pp_mesh, vv_mesh, pn, der_pn, un, der_un, vvz_per, pp_per)
+               list_mode, pp_mesh, vv_mesh, pn, der_pn, un, der_un, vvz_per, pp_per, density, tempn, concn)
 
        ELSE
           CALL navier_stokes_decouple(comm_one_d_ns,time, vv_3_LA, pp_1_LA, &
                list_mode, pp_mesh, vv_mesh, incpn_m1, incpn, &
                pn_m1, pn, un_m1, un, vvz_per, pp_per, H_to_NS, B_to_NS, &
-               density_m2, density_m1, density, visco_dyn_m1, T_to_NS, level_set_m1, level_set, &
-               visc_entro_level)
+               density_m2, density_m1, density, visco_dyn, T_to_NS, conc_to_v,level_set_m1, level_set, &
+               visc_entro_level, level_set_reg)
        END IF
        !===HF April 2019
        !===JLG July 20, 2019, p3 mesh
@@ -252,24 +326,33 @@ CONTAINS
        IF (inputs%type_pb == 'fhd' .AND. inputs%if_steady_current_fhd) THEN !===If steady current, computation of H only once
           IF (it == 1) THEN
              IF (if_momentum) THEN
-                CALL projection_velocity(H_mesh, un, jj_v_to_H, v_to_Max)
+                CALL projection_velocity(H_mesh, un, jj_v_to_H, .FALSE., v_to_Max)
              END IF
              CALL maxwell_decouple(comm_one_d, H_mesh, pmag_mesh, phi_mesh, &
                   interface_H_phi, interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, v_to_Max, &
-                  inputs%stab, sigma_field, R_fourier, index_fourier, mu_H_field, inputs%mu_phi, &
-                  time, inputs%dt, inputs%Rem, list_mode, H_phi_per, LA_H, LA_pmag, LA_phi, LA_mhd, one_over_sigma_ns, jj_v_to_H)
+                  inputs%stab, inputs%stab_jump_h,sigma_field, R_fourier, index_fourier, mu_H_field, inputs%mu_phi, &
+                  time, inputs%dt, inputs%Rem, list_mode, H_phi_per, LA_H, LA_pmag, LA_phi, &
+                  LA_mhd, one_over_sigma_ns_p1, jj_v_to_H,conc_to_H)
              Hn1 = Hn
              Bn1 = Bn
              phin1 = phin
           END IF
        ELSE
           IF (if_momentum) THEN
-             CALL projection_velocity(H_mesh, un, jj_v_to_H, v_to_Max)
+             CALL projection_velocity(H_mesh, un, jj_v_to_H, .FALSE., v_to_Max)
+          END IF
+          IF (if_energy) THEN
+             CALL projection_temperature(H_mesh, 2*tempn-tempn_m1, jj_T_to_H, .FALSE.,&
+                  T_to_H)
+          END IF
+          IF (if_concentration) THEN
+             CALL projection_concentration(H_mesh, 2*concn-concn_m1, jj_c_to_H,conc_to_H)
           END IF
           CALL maxwell_decouple(comm_one_d, H_mesh, pmag_mesh, phi_mesh, &
                interface_H_phi, interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, v_to_Max, &
-               inputs%stab, sigma_field, R_fourier, index_fourier, mu_H_field, inputs%mu_phi, &
-               time, inputs%dt, inputs%Rem, list_mode, H_phi_per, LA_H, LA_pmag, LA_phi, LA_mhd, one_over_sigma_ns, jj_v_to_H)
+               inputs%stab, inputs%stab_jump_h, sigma_field, R_fourier, index_fourier, mu_H_field, inputs%mu_phi, &
+               time, inputs%dt, inputs%Rem, list_mode, H_phi_per, LA_H, LA_pmag, LA_phi, LA_mhd, one_over_sigma_ns_p1, &
+               jj_v_to_H, conc_to_H)
        END IF
     END IF
 
@@ -346,19 +429,61 @@ CONTAINS
   !---------------------------------------------------------------------------
 
   !---------------------------------------------------------------------------
-  SUBROUTINE projection_velocity(mesh, vn, connectivity_structure, coupling_variable)
+  SUBROUTINE projection_velocity(mesh, vn, connectivity_structure, if_restriction, coupling_variable)
+    USE boundary
+    IMPLICIT NONE
+    TYPE(mesh_type), INTENT(IN)                               :: mesh
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)                :: vn
+    INTEGER, DIMENSION(:), INTENT(IN)                         :: connectivity_structure
+    LOGICAL, INTENT(IN)                                       :: if_restriction
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT)               :: coupling_variable
+    INTEGER                                                   :: i, j, k
+
+    IF (if_restriction) THEN
+       IF (mesh%me /=0 ) THEN !===construction of the restricted velocity field
+          DO j = 1, SIZE(connectivity_structure)
+             IF (connectivity_structure(j) == -1) CYCLE
+             coupling_variable(connectivity_structure(j),:,:) = vn(j,:,:)
+          END DO
+       END IF
+    ELSE
+       IF (mesh%np>0) THEN !===Check that ns is a subset of temp before constructing the extended vv field
+          DO i = 1, m_max_c
+             DO k= 1, 6 !===The user has to code extension_vel
+                coupling_variable(:,k,i) = extension_velocity(k, mesh, list_mode(i), time, 1)
+             END DO
+          END DO
+       END IF
+       IF (mesh%me /=0) THEN !===construction of the extended field
+          DO j = 1, SIZE(connectivity_structure)
+             IF (connectivity_structure(j) == -1) CYCLE
+             coupling_variable(j,:,:) = vn(connectivity_structure(j),:,:)
+          END DO
+       END IF
+    END IF
+  END SUBROUTINE projection_velocity
+  !---------------------------------------------------------------------------
+
+  !---------------------------------------------------------------------------
+  SUBROUTINE projection_concentration(mesh, vn, connectivity_structure, coupling_variable)
     USE boundary
     IMPLICIT NONE
     TYPE(mesh_type), INTENT(IN)                               :: mesh
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)                :: vn
     INTEGER, DIMENSION(:), INTENT(IN)                         :: connectivity_structure
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT)               :: coupling_variable
-    INTEGER                                                   :: i, j, k
+    INTEGER                                                   :: i,j,k
 
-    IF (mesh%np>0) THEN !===Check that ns is a subset of temp before constructing the extended vv field
+    !IF (mesh%me /=0 ) THEN !===construction of the restricted  concentration field
+    !   DO j = 1, SIZE(connectivity_structure)
+    !      IF (connectivity_structure(j) == -1) CYCLE
+    !      coupling_variable(connectivity_structure(j),:,:) = vn(j,:,:)
+    !  END DO
+    !END IF
+    IF (mesh%np>0) THEN !===Check that temp is a subset of H before constructing the extended vv field
        DO i = 1, m_max_c
-          DO k= 1, 6 !===The user has to code extension_vel
-             coupling_variable(:,k,i) = extension_velocity(k, mesh, list_mode(i), time, 1)
+          DO k= 1, 2 !===The user has to code extension_concentration
+             coupling_variable(:,k,i) = extension_concentration(k, mesh, list_mode(i), time, 1)
           END DO
        END DO
     END IF
@@ -368,29 +493,45 @@ CONTAINS
           coupling_variable(j,:,:) = vn(connectivity_structure(j),:,:)
        END DO
     END IF
-  END SUBROUTINE projection_velocity
+  END SUBROUTINE projection_concentration
   !---------------------------------------------------------------------------
 
-  !---------------------------------------------------------------------------
-  SUBROUTINE projection_temperature(mesh, vn, connectivity_structure, coupling_variable) !===projection of temp on another mesh subroutine added
+  SUBROUTINE projection_temperature(mesh, vn, connectivity_structure, if_restriction, coupling_variable)
+    USE boundary
     IMPLICIT NONE
     TYPE(mesh_type), INTENT(IN)                               :: mesh
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)                :: vn
     INTEGER, DIMENSION(:), INTENT(IN)                         :: connectivity_structure
+    LOGICAL, INTENT(IN)                                       :: if_restriction
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT)               :: coupling_variable
-    INTEGER                                                   :: j
+    INTEGER                                                   :: i,j,k
 
-    IF (mesh%me /=0 ) THEN !===construction of the restricted temperature field
-       DO j = 1, SIZE(connectivity_structure)
-          IF (connectivity_structure(j) == -1) CYCLE
-          coupling_variable(connectivity_structure(j),:,:) = vn(j,:,:)
-       END DO
+    IF (if_restriction) THEN
+       IF (mesh%me /=0 ) THEN !===construction of the restricted temperature field
+          DO j = 1, SIZE(connectivity_structure)
+             IF (connectivity_structure(j) == -1) CYCLE
+             coupling_variable(connectivity_structure(j),:,:) = vn(j,:,:)
+          END DO
+       END IF
+    ELSE
+       IF (mesh%np>0) THEN !===Check that temp is a subset of H before constructing the extended vv field
+          DO i = 1, m_max_c
+             DO k= 1, 2 !===The user has to code extension_temperature
+                coupling_variable(:,k,i) = extension_temperature(k, mesh, list_mode(i), time, 1)
+             END DO
+          END DO
+       END IF
+       IF (mesh%me /=0) THEN !===construction of the extended field
+          DO j = 1, SIZE(connectivity_structure)
+             IF (connectivity_structure(j) == -1) CYCLE
+             coupling_variable(j,:,:) = vn(connectivity_structure(j),:,:)
+          END DO
+       END IF
     END IF
+
   END SUBROUTINE projection_temperature
   !---------------------------------------------------------------------------
-
-  !---------------------------------------------------------------------------
-  SUBROUTINE projection_mag_field(mesh, vn, connectivity_structure, if_restriction, coupling_variable) !===projection of mag field on another mesh subroutine added
+  SUBROUTINE projection_mag_field(mesh, vn, connectivity_structure, if_restriction, coupling_variable)
     USE my_util
     IMPLICIT NONE
     TYPE(mesh_type), INTENT(IN)                               :: mesh
@@ -460,6 +601,10 @@ CONTAINS
        CALL write_restart_temp(comm_one_d_temp, temp_mesh, time, &
             list_mode, tempn, tempn_m1, inputs%file_name, it, freq_restart)
     END IF
+    IF (if_concentration) THEN
+       CALL write_restart_conc(comm_one_d_conc, conc_mesh, time, &
+            list_mode, concn, concn_m1, inputs%file_name, it, freq_restart)
+    END IF
 
   END SUBROUTINE save_run
   !---------------------------------------------------------------------------
@@ -494,15 +639,19 @@ CONTAINS
     IMPLICIT NONE
     TYPE(mesh_type)                         :: vv_mesh_glob, pp_mesh_glob
     TYPE(mesh_type)                         :: H_mesh_glob, phi_mesh_glob, pmag_mesh_glob, temp_mesh_glob
+    TYPE(mesh_type)                         :: conc_mesh_glob
     TYPE(mesh_type)                         :: p1_mesh_glob, p2_mesh_glob, p1_c0_mesh_glob, p2_c0_mesh_glob_temp
+    TYPE(mesh_type)                         :: p2_c0_mesh_glob_conc
     TYPE(mesh_type)                         :: p3_mesh_glob !===JLG july 20, 2019, p3 mesh
     TYPE(interface_type)                    :: interface_H_phi_glob, interface_H_mu_glob
     INTEGER, DIMENSION(:), ALLOCATABLE      :: list_dom_H, list_dom_H_ref
-    INTEGER, DIMENSION(:), ALLOCATABLE      :: list_dom_temp
-    INTEGER, DIMENSION(:), ALLOCATABLE      :: list_dom, list_inter, part, list_dummy, list_inter_temp
+    INTEGER, DIMENSION(:), ALLOCATABLE      :: list_dom_temp, list_dom_temp_ref
+    INTEGER, DIMENSION(:), ALLOCATABLE      :: list_dom_ns
+    INTEGER, DIMENSION(:), ALLOCATABLE      :: list_dom, list_inter, part, list_dummy, list_inter_temp, list_inter_conc
     INTEGER, DIMENSION(:), ALLOCATABLE      :: H_in_to_new, H_in_to_new_ref
-    INTEGER, DIMENSION(:), ALLOCATABLE      :: temp_in_to_new
-    CHARACTER(len=200)                      :: data_file
+    INTEGER, DIMENSION(:), ALLOCATABLE      :: temp_in_to_new, temp_in_to_new_ref
+    INTEGER, DIMENSION(:), ALLOCATABLE      :: vv_in_to_new
+!!$    CHARACTER(len=200)                      :: data_file
     CHARACTER(len=200)                      :: data_directory
     CHARACTER(len=200)                      :: tit_part, mesh_part_name
     CHARACTER(len=200)                      :: data_fichier
@@ -510,8 +659,10 @@ CONTAINS
     INTEGER                                 :: k, kp, m, n, i, j
     INTEGER                                 :: code, rank, rank_S, nb_procs, petsc_rank, bloc_size, m_max_pad
     REAL(KIND=8)                            :: time_u, time_h, time_T, error, max_vel_S
+    REAL(KIND=8)                            :: time_conc
     LOGICAL                                 :: ns_periodic, mxw_periodic, temp_periodic
-    CHARACTER(len=2)                        :: tit
+    LOGICAL                                 :: conc_periodic
+!!$    CHARACTER(len=2)                        :: tit
     PetscMPIInt                             :: nb_procs_F, nb_procs_S
 
     !===Get numbers of processors===================================================
@@ -595,19 +746,23 @@ CONTAINS
 
     !===Check periodicity===========================================================
     IF (inputs%my_periodic%nb_periodic_pairs< 1) THEN
-       ns_periodic=.FALSE.; mxw_periodic=.FALSE.; temp_periodic = .FALSE.
+       ns_periodic=.FALSE.; mxw_periodic=.FALSE.; temp_periodic = .FALSE.; conc_periodic = .FALSE.
        vvrtz_per%n_bord = 0; vvrt_per%n_bord = 0; vvz_per%n_bord = 0; pp_per%n_bord = 0
-       H_phi_per%n_bord = 0 ; temp_per%n_bord = 0
+       H_phi_per%n_bord = 0 ; temp_per%n_bord = 0 ; conc_per%n_bord = 0
        level_set_per%n_bord = 0
     ELSE
-       ns_periodic=.TRUE.; mxw_periodic=.TRUE.; temp_periodic=.TRUE.
+       ns_periodic=.TRUE.; mxw_periodic=.TRUE.; temp_periodic=.TRUE. ; conc_periodic=.TRUE.
     END IF
 
     !===Creation of logicals for equations==========================================
     if_mass = inputs%if_level_set
-    if_momentum = inputs%type_pb=='nst' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd'
-    if_induction = inputs%type_pb=='mxw' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='mxx' .OR. inputs%type_pb=='fhd'
+    if_momentum = inputs%type_pb=='nst' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd' &
+         .OR. inputs%type_pb=='mhs'
+    if_induction = inputs%type_pb=='mxw' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='mxx' &
+         .OR. inputs%type_pb=='fhd' .OR. inputs%type_pb=='mhs'
     if_energy = inputs%if_temperature
+    if_concentration = inputs%if_concentration
+
     !===JLG july 20, 2019, p3 mesh
     IF (inputs%if_navier_stokes_with_taylor) THEN
        IF (petsc_rank==0) WRITE(*,*) 'INIT: Everything that is not Navier-Stokes is disabled, for Taylor Method'
@@ -615,29 +770,30 @@ CONTAINS
        if_momentum = inputs%type_pb=='nst'
        if_induction = .FALSE.
        if_energy = .FALSE.
+       if_concentration = .FALSE.
     END IF
 
-    !===Check mesh that vv_mesh is a subset of H_mesh===============================
+    !===Check mesh that conc_mesh is a subset of H_mesh===============================
     IF (if_induction) THEN
-       ALLOCATE(list_dom_H(inputs%nb_dom_H), H_in_to_new(inputs%nb_dom_H)) ! JLG/AR Nov 17 2008
+       ALLOCATE(list_dom_H(inputs%nb_dom_H), H_in_to_new(inputs%nb_dom_H))
        ALLOCATE(list_dom_H_ref(inputs%nb_dom_H), H_in_to_new_ref(inputs%nb_dom_H))
-       IF (if_momentum .OR. inputs%type_pb=='mxx') THEN
-          IF (SIZE(list_dom_H) < SIZE(inputs%list_dom_ns)) THEN
-             CALL error_Petsc(' BUG: NS must be a subset of Maxwell ')
+       IF (if_concentration) THEN
+          IF (SIZE(list_dom_H) < SIZE(inputs%list_dom_conc)) THEN
+             CALL error_Petsc(' BUG: conc must be a subset of Maxwell ')
           END IF
-          DO k = 1, inputs%nb_dom_ns
-             IF (MINVAL(ABS(inputs%list_dom_H - inputs%list_dom_ns(k))) /= 0) THEN
-                CALL error_Petsc(' BUG: NS must be a subset of Maxwell ')
+          DO k = 1, inputs%nb_dom_conc
+             IF (MINVAL(ABS(inputs%list_dom_H - inputs%list_dom_conc(k))) /= 0) THEN
+                CALL error_Petsc(' BUG: conc must be a subset of Maxwell ')
              END IF
              DO kp = 1, inputs%nb_dom_H
-                IF (inputs%list_dom_H(kp) == inputs%list_dom_ns(k)) EXIT
+                IF (inputs%list_dom_H(kp) == inputs%list_dom_conc(k)) EXIT
              END DO
              H_in_to_new(k) = kp
-             list_dom_H(k) = inputs%list_dom_ns(k)
+             list_dom_H(k) = inputs%list_dom_conc(k)
           END DO
-          m = inputs%nb_dom_ns
+          m = inputs%nb_dom_conc
           DO k = 1, inputs%nb_dom_H
-             IF (MINVAL(ABS(inputs%list_dom_H(k) - inputs%list_dom_ns)) == 0) CYCLE
+             IF (MINVAL(ABS(inputs%list_dom_H(k) - inputs%list_dom_conc)) == 0) CYCLE
              m = m + 1
              H_in_to_new(m) = k
              list_dom_H(m) = inputs%list_dom_H(k)
@@ -656,26 +812,27 @@ CONTAINS
        ALLOCATE(H_in_to_new_ref(0))
     END IF
 
-    !===Check mesh that vv_mesh is a subset of temp_mesh============================
+    !===Check mesh that conc_mesh is a subset of temp_mesh===============================
     IF (if_energy) THEN
        ALLOCATE(list_dom_temp(inputs%nb_dom_temp), temp_in_to_new(inputs%nb_dom_temp))
-       IF (if_momentum) THEN
-          IF (SIZE(list_dom_temp) < SIZE(inputs%list_dom_ns)) THEN
-             CALL error_Petsc(' BUG: NS must be a subset of temp ')
+       ALLOCATE(list_dom_temp_ref(inputs%nb_dom_temp), temp_in_to_new_ref(inputs%nb_dom_temp))
+       IF (if_concentration) THEN
+          IF (SIZE(list_dom_temp) < SIZE(inputs%list_dom_conc)) THEN
+             CALL error_Petsc(' BUG: conc must be a subset of temp ')
           END IF
-          DO k = 1, inputs%nb_dom_ns
-             IF (MINVAL(ABS(inputs%list_dom_temp - inputs%list_dom_ns(k))) /= 0) THEN
-                CALL error_Petsc(' BUG: NS must be a subset of temp ')
+          DO k = 1, inputs%nb_dom_conc
+             IF (MINVAL(ABS(inputs%list_dom_temp - inputs%list_dom_conc(k))) /= 0) THEN
+                CALL error_Petsc(' BUG: conc must be a subset of temp ')
              END IF
              DO kp = 1, inputs%nb_dom_temp
-                IF (inputs%list_dom_temp(kp) == inputs%list_dom_ns(k)) EXIT
+                IF (inputs%list_dom_temp(kp) == inputs%list_dom_conc(k)) EXIT
              END DO
              temp_in_to_new(k) = kp
-             list_dom_temp(k) = inputs%list_dom_ns(k)
+             list_dom_temp(k) = inputs%list_dom_conc(k)
           END DO
-          m = inputs%nb_dom_ns
+          m = inputs%nb_dom_conc
           DO k = 1, inputs%nb_dom_temp
-             IF (MINVAL(ABS(inputs%list_dom_temp(k) - inputs%list_dom_ns)) == 0) CYCLE
+             IF (MINVAL(ABS(inputs%list_dom_temp(k) - inputs%list_dom_conc)) == 0) CYCLE
              m = m + 1
              temp_in_to_new(m) = k
              list_dom_temp(m) = inputs%list_dom_temp(k)
@@ -691,6 +848,106 @@ CONTAINS
        END IF
     ELSE
        ALLOCATE(temp_in_to_new(0))
+       ALLOCATE(temp_in_to_new_ref(0))
+    END IF
+
+    !===Check mesh that conc_mesh is a subset of vv_mesh===============================
+    IF (if_momentum) THEN
+       ALLOCATE(list_dom_ns(inputs%nb_dom_ns), vv_in_to_new(inputs%nb_dom_ns))
+       IF (if_concentration) THEN
+          IF (SIZE(list_dom_ns) < SIZE(inputs%list_dom_conc)) THEN
+             CALL error_Petsc(' BUG: conc must be a subset of NS ')
+          END IF
+          DO k = 1, inputs%nb_dom_conc
+             IF (MINVAL(ABS(inputs%list_dom_ns - inputs%list_dom_conc(k))) /= 0) THEN
+                CALL error_Petsc(' BUG: conc must be a subset of NS ')
+             END IF
+             DO kp = 1, inputs%nb_dom_ns
+                IF (inputs%list_dom_ns(kp) == inputs%list_dom_conc(k)) EXIT
+             END DO
+             vv_in_to_new(k) = kp
+             list_dom_ns(k) = inputs%list_dom_conc(k)
+          END DO
+          m = inputs%nb_dom_conc
+          DO k = 1, inputs%nb_dom_ns
+             IF (MINVAL(ABS(inputs%list_dom_ns(k) - inputs%list_dom_conc)) == 0) CYCLE
+             m = m + 1
+             vv_in_to_new(m) = k
+             list_dom_ns(m) = inputs%list_dom_ns(k)
+          END DO
+          IF (m/=inputs%nb_dom_ns) THEN
+             CALL error_Petsc(' BUG: m/=inputs%nb_dom_ns ')
+          END IF
+       ELSE
+          DO k = 1, inputs%nb_dom_ns
+             vv_in_to_new(k) = k
+          END DO
+          list_dom_ns = inputs%list_dom_ns
+       END IF
+    ELSE
+       ALLOCATE(vv_in_to_new(0))
+    END IF
+
+    !===Check mesh that vv_mesh is a subset of H_mesh===============================
+    IF (if_induction) THEN
+       H_in_to_new_ref=H_in_to_new
+       list_dom_H_ref=list_dom_H
+       IF (if_momentum .OR. inputs%type_pb=='mxx') THEN
+          IF (SIZE(list_dom_H) < SIZE(list_dom_ns)) THEN
+             CALL error_Petsc(' BUG: NS must be a subset of Maxwell ')
+          END IF
+          DO k = 1+inputs%nb_dom_conc, inputs%nb_dom_ns
+             IF (MINVAL(ABS(list_dom_H - list_dom_ns(k))) /= 0) THEN
+                CALL error_Petsc(' BUG: NS must be a subset of Maxwell ')
+             END IF
+             DO kp = 1+inputs%nb_dom_conc, inputs%nb_dom_H
+                IF (list_dom_H_ref(kp) == list_dom_ns(k)) EXIT
+             END DO
+             H_in_to_new(k) = H_in_to_new_ref(kp)
+             list_dom_H(k) = list_dom_ns(k)
+          END DO
+          m = inputs%nb_dom_ns
+          DO k = 1+inputs%nb_dom_conc, inputs%nb_dom_H
+             IF (MINVAL(ABS(list_dom_H_ref(k) - list_dom_ns)) == 0) CYCLE
+             m = m + 1
+             H_in_to_new(m) = H_in_to_new_ref(k)
+             list_dom_H(m) = list_dom_H_ref(k)
+          END DO
+          IF (m/=inputs%nb_dom_H) THEN
+             CALL error_Petsc(' BUG: m/=inputs%nb_dom_H ')
+          END IF
+       END IF
+    END IF
+
+    !===Check mesh that vv_mesh is a subset of temp_mesh============================
+    IF (if_energy) THEN
+       temp_in_to_new_ref=temp_in_to_new
+       list_dom_temp_ref=list_dom_temp
+       IF (if_momentum) THEN
+          IF (SIZE(list_dom_temp) < SIZE(list_dom_ns)) THEN
+             CALL error_Petsc(' BUG: NS must be a subset of temp ')
+          END IF
+          DO k = 1+inputs%nb_dom_conc, inputs%nb_dom_ns
+             IF (MINVAL(ABS(list_dom_temp - list_dom_ns(k))) /= 0) THEN
+                CALL error_Petsc(' BUG: NS must be a subset of temp ')
+             END IF
+             DO kp = 1+inputs%nb_dom_conc, inputs%nb_dom_temp
+                IF (list_dom_temp_ref(kp) == list_dom_ns(k)) EXIT
+             END DO
+             temp_in_to_new(k) = temp_in_to_new_ref(kp)
+             list_dom_temp(k) = list_dom_ns(k)
+          END DO
+          m = inputs%nb_dom_ns
+          DO k = 1+inputs%nb_dom_conc, inputs%nb_dom_temp
+             IF (MINVAL(ABS(list_dom_temp_ref(k) - list_dom_ns)) == 0) CYCLE
+             m = m + 1
+             temp_in_to_new(m) = temp_in_to_new_ref(k)
+             list_dom_temp(m) = list_dom_temp_ref(k)
+          END DO
+          IF (m/=inputs%nb_dom_temp) THEN
+             CALL error_Petsc(' BUG: m/=inputs%nb_dom_temp ')
+          END IF
+       END IF
     END IF
 
     !===Check mesh that temp_mesh is a subset of H_mesh=============================
@@ -708,7 +965,6 @@ CONTAINS
              DO kp = 1+inputs%nb_dom_ns, inputs%nb_dom_H
                 IF (list_dom_H_ref(kp) == list_dom_temp(k)) EXIT
              END DO
-             !H_in_to_new(k) = kp
              H_in_to_new(k) = H_in_to_new_ref(kp)
              list_dom_H(k) = list_dom_temp(k)
           END DO
@@ -716,8 +972,6 @@ CONTAINS
           DO k = 1+inputs%nb_dom_ns, inputs%nb_dom_H
              IF (MINVAL(ABS(list_dom_H_ref(k) - list_dom_temp)) == 0) CYCLE
              m = m + 1
-             !H_in_to_new(m) = k
-             !list_dom_H(m) = list_dom_H(k)
              H_in_to_new(m) = H_in_to_new_ref(k)
              list_dom_H(m) = list_dom_H_ref(k)
           END DO
@@ -736,10 +990,15 @@ CONTAINS
           ALLOCATE(list_inter(SIZE(inputs%list_inter_v_T)))
           list_inter = inputs%list_inter_v_T
        ELSE
-          nsize = SIZE(inputs%list_dom_ns)
+          nsize = SIZE(list_dom_ns)
           ALLOCATE(list_dom(nsize))
-          list_dom = inputs%list_dom_ns
-          ALLOCATE(list_inter(0))
+          list_dom = list_dom_ns
+          IF (if_concentration) THEN
+             ALLOCATE(list_inter(SIZE(inputs%list_inter_c_v)))
+             list_inter = inputs%list_inter_c_v
+          ELSE
+             ALLOCATE(list_inter(0))
+          END IF
        END IF
     ELSE
        nsize = SIZE(list_dom_H)+SIZE(inputs%list_dom_phi)
@@ -760,17 +1019,26 @@ CONTAINS
     IF (if_energy) THEN
        ALLOCATE(list_inter_temp(0))
     END IF
+    IF (if_concentration) THEN
+       ALLOCATE(list_inter_conc(0))
+    END IF
 
     !===Create meshes===============================================================
     CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom, &
          list_inter, 1, p1_mesh_glob, inputs%iformatted)
     CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom, &
          list_inter, 2, p2_mesh_glob, inputs%iformatted)
+
     !===JLG july 20, 2019, p3 mesh
     IF (inputs%type_fe_velocity==3) THEN
        CALL create_p3_mesh(p1_mesh_glob, p2_mesh_glob, p3_mesh_glob, 3)
     END IF
     !===JLG july 20, 2019, p3 mesh
+    IF (if_concentration) THEN
+       !===MODIFICATION: Dirichlet nodes in temp_mesh not created if list_dom > list_dom_conc
+       CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, inputs%list_dom_conc, &
+            list_inter_conc, 2, p2_c0_mesh_glob_conc, inputs%iformatted)
+    END IF
     IF (if_energy) THEN
        !===MODIFICATION: Dirichlet nodes in temp_mesh not created if list_dom > list_dom_temp
        CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom_temp, &
@@ -793,8 +1061,8 @@ CONTAINS
        WRITE(*,*) 'read partition'
     ELSE
        WRITE(*,*) 'create partition'
-       CALL part_mesh_M_T_H_phi(nb_procs_S, inputs%list_dom_ns, inputs%list_dom_temp, inputs%list_dom_H, &
-            inputs%list_dom_phi, p1_mesh_glob,list_inter,part, inputs%my_periodic)
+       CALL part_mesh_M_T_H_phi(nb_procs_S, inputs%list_dom_conc, inputs%list_dom_ns, inputs%list_dom_temp, &
+            inputs%list_dom_H, inputs%list_dom_phi, p1_mesh_glob, list_inter, part, inputs%my_periodic)
        IF (petsc_rank==0) THEN
           OPEN(UNIT=51, FILE=mesh_part_name, STATUS='replace', FORM='formatted')
           WRITE(51,*) part
@@ -806,11 +1074,11 @@ CONTAINS
     !===Specific to momentum (velocity)
     IF (if_momentum .OR. inputs%type_pb=='mxx') THEN
        IF (inputs%type_fe_velocity==2) THEN !===JLG july 20, 2019, p3 mesh
-          CALL extract_mesh(comm_one_d(1),nb_procs_S,p1_mesh_glob,part,inputs%list_dom_ns,pp_mesh_glob,pp_mesh)
-          CALL extract_mesh(comm_one_d(1),nb_procs_S,p2_mesh_glob,part,inputs%list_dom_ns,vv_mesh_glob,vv_mesh)
+          CALL extract_mesh(comm_one_d(1),nb_procs_S,p1_mesh_glob,part,list_dom_ns,pp_mesh_glob,pp_mesh)
+          CALL extract_mesh(comm_one_d(1),nb_procs_S,p2_mesh_glob,part,list_dom_ns,vv_mesh_glob,vv_mesh)
        ELSE IF (inputs%type_fe_velocity==3) THEN
-          CALL extract_mesh(comm_one_d(1),nb_procs_S,p2_mesh_glob,part,inputs%list_dom_ns,pp_mesh_glob,pp_mesh)
-          CALL extract_mesh(comm_one_d(1),nb_procs_S,p3_mesh_glob,part,inputs%list_dom_ns,vv_mesh_glob,vv_mesh)
+          CALL extract_mesh(comm_one_d(1),nb_procs_S,p2_mesh_glob,part,list_dom_ns,pp_mesh_glob,pp_mesh)
+          CALL extract_mesh(comm_one_d(1),nb_procs_S,p3_mesh_glob,part,list_dom_ns,vv_mesh_glob,vv_mesh)
        ELSE
           CALL error_PETSC('Bug in INIT, inputs%type_fe_velocity not correct')
        END IF
@@ -916,6 +1184,19 @@ CONTAINS
        END IF
     END IF
 
+    !===Extract local meshes from global meshes for concentration=====================
+    IF (if_concentration) THEN
+       CALL extract_mesh(comm_one_d(1),nb_procs_S,p2_c0_mesh_glob_conc,part,inputs%list_dom_conc,conc_mesh_glob,conc_mesh)
+       ALLOCATE(comm_one_d_conc(2))
+       CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_conc(2), code)
+       CALL MPI_COMM_RANK(comm_one_d(1),rank_S,code)
+       IF (conc_mesh%me/=0) THEN
+          CALL MPI_COMM_SPLIT (comm_one_d(1),1,rank_S,comm_one_d_conc(1),code)
+       ELSE
+          CALL MPI_COMM_SPLIT (comm_one_d(1),MPI_UNDEFINED,rank_S,comm_one_d_conc(1),code)
+       END IF
+    END IF
+
     !===Deallocate global meshes====================================================
     CALL free_mesh(p1_mesh_glob)
     CALL free_mesh(p2_mesh_glob)
@@ -931,6 +1212,10 @@ CONTAINS
     IF (if_energy) THEN
        DEALLOCATE(list_inter_temp)
        CALL free_mesh(p2_c0_mesh_glob_temp)
+    END IF
+    IF (if_concentration) THEN
+       DEALLOCATE(list_inter_conc)
+       CALL free_mesh(p2_c0_mesh_glob_conc)
     END IF
 
     !===Specific to induction equation==============================================
@@ -949,7 +1234,51 @@ CONTAINS
           END IF
        END IF
 
-       !===Verify if the two meshes coincide on the NS domain=======================
+       !===Verify if H and temp meshes coincide on the temp domain=======================
+       IF (if_energy) THEN
+          IF (temp_mesh%me/=0) THEN
+             error = 0.d0
+             DO k = 1, 2
+                DO n = 1, SIZE(H_mesh%jj,1)
+                   error = error + MAXVAL(ABS(temp_mesh%rr(k,temp_mesh%jj(n,:))-H_mesh%rr(k,H_mesh%jj(n,1:temp_mesh%me))))
+                END DO
+             END DO
+             IF (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14) THEN
+                CALL error_Petsc('BUG in INIT, (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14')
+             END IF
+
+             error = error + MAXVAL(ABS(temp_mesh%rr(1,temp_mesh%jj(4,1:temp_mesh%me)) &
+                  -(H_mesh%rr(1,H_mesh%jj(2,1:temp_mesh%me))+H_mesh%rr(1,H_mesh%jj(3,1:temp_mesh%me)))/2))&
+                  + MAXVAL(ABS(temp_mesh%rr(1,temp_mesh%jj(5,:)) &
+                  -(H_mesh%rr(1,H_mesh%jj(3,1:temp_mesh%me))+H_mesh%rr(1,H_mesh%jj(1,1:temp_mesh%me)))/2))&
+                  + MAXVAL(ABS(temp_mesh%rr(1,temp_mesh%jj(6,:)) &
+                  -(H_mesh%rr(1,H_mesh%jj(1,1:temp_mesh%me))+H_mesh%rr(1,H_mesh%jj(2,1:temp_mesh%me)))/2))&
+                  + MAXVAL(ABS(temp_mesh%rr(2,temp_mesh%jj(4,:)) &
+                  -(H_mesh%rr(2,H_mesh%jj(2,1:temp_mesh%me))+H_mesh%rr(2,H_mesh%jj(3,1:temp_mesh%me)))/2))&
+                  + MAXVAL(ABS(temp_mesh%rr(2,temp_mesh%jj(5,:)) &
+                  -(H_mesh%rr(2,H_mesh%jj(3,1:temp_mesh%me))+H_mesh%rr(2,H_mesh%jj(1,1:temp_mesh%me)))/2))&
+                  + MAXVAL(ABS(temp_mesh%rr(2,temp_mesh%jj(6,:)) &
+                  -(H_mesh%rr(2,H_mesh%jj(1,1:temp_mesh%me))+H_mesh%rr(2,H_mesh%jj(2,1:temp_mesh%me)))/2))
+             IF (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14) THEN
+                WRITE(*,*) ' WARNING: temp_mesh and H_mesh do not coincide on the temp domain.'
+                WRITE(*,*) ' WARNING: Either you use curved elements P2 elements or BUG, ', &
+                     error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:)))
+             END IF
+
+             error=0.d0
+             DO k = 1, temp_mesh%me
+                DO n = 1, 2
+                   error = error+ MAXVAL(ABS(temp_mesh%rr(n,temp_mesh%jj(1:3,k))-H_mesh%rr(n,H_mesh%jj(1:3,k))))
+                END DO
+             END DO
+             IF (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14) THEN
+                CALL error_Petsc('temp_mesh and H_mesh do NOT have the same P1 nodes')
+             END IF
+
+          END IF
+       END IF
+
+       !===Verify if H and NS meshes coincide on the NS domain=======================
        IF (if_momentum .OR. inputs%type_pb=='mxx') THEN
           IF (vv_mesh%me/=0) THEN
              error = 0.d0
@@ -988,6 +1317,50 @@ CONTAINS
              END DO
              IF (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14) THEN
                 CALL error_Petsc('vv_mesh and H_mesh do NOT have the same P1 nodes')
+             END IF
+
+          END IF
+       END IF
+
+       !===Verify if H and conc meshes coincide on the conc domain=======================
+       IF (if_concentration) THEN
+          IF (conc_mesh%me/=0) THEN
+             error = 0.d0
+             DO k = 1, 2
+                DO n = 1, SIZE(H_mesh%jj,1)
+                   error = error + MAXVAL(ABS(conc_mesh%rr(k,conc_mesh%jj(n,:))-H_mesh%rr(k,H_mesh%jj(n,1:conc_mesh%me))))
+                END DO
+             END DO
+             IF (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14) THEN
+                CALL error_Petsc('BUG in INIT, (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14')
+             END IF
+
+             error = error + MAXVAL(ABS(conc_mesh%rr(1,conc_mesh%jj(4,1:conc_mesh%me)) &
+                  -(H_mesh%rr(1,H_mesh%jj(2,1:conc_mesh%me))+H_mesh%rr(1,H_mesh%jj(3,1:conc_mesh%me)))/2))&
+                  + MAXVAL(ABS(conc_mesh%rr(1,conc_mesh%jj(5,:)) &
+                  -(H_mesh%rr(1,H_mesh%jj(3,1:conc_mesh%me))+H_mesh%rr(1,H_mesh%jj(1,1:conc_mesh%me)))/2))&
+                  + MAXVAL(ABS(conc_mesh%rr(1,conc_mesh%jj(6,:)) &
+                  -(H_mesh%rr(1,H_mesh%jj(1,1:conc_mesh%me))+H_mesh%rr(1,H_mesh%jj(2,1:conc_mesh%me)))/2))&
+                  + MAXVAL(ABS(conc_mesh%rr(2,conc_mesh%jj(4,:)) &
+                  -(H_mesh%rr(2,H_mesh%jj(2,1:conc_mesh%me))+H_mesh%rr(2,H_mesh%jj(3,1:conc_mesh%me)))/2))&
+                  + MAXVAL(ABS(conc_mesh%rr(2,conc_mesh%jj(5,:)) &
+                  -(H_mesh%rr(2,H_mesh%jj(3,1:conc_mesh%me))+H_mesh%rr(2,H_mesh%jj(1,1:conc_mesh%me)))/2))&
+                  + MAXVAL(ABS(conc_mesh%rr(2,conc_mesh%jj(6,:)) &
+                  -(H_mesh%rr(2,H_mesh%jj(1,1:conc_mesh%me))+H_mesh%rr(2,H_mesh%jj(2,1:conc_mesh%me)))/2))
+             IF (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14) THEN
+                WRITE(*,*) ' WARNING: conc_mesh and H_mesh do not coincide on the conc domain.'
+                WRITE(*,*) ' WARNING: Either you use curved elements P2 elements or BUG, ', &
+                     error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:)))
+             END IF
+
+             error=0.d0
+             DO k = 1, conc_mesh%me
+                DO n = 1, 2
+                   error = error+ MAXVAL(ABS(conc_mesh%rr(n,conc_mesh%jj(1:3,k))-H_mesh%rr(n,H_mesh%jj(1:3,k))))
+                END DO
+             END DO
+             IF (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14) THEN
+                CALL error_Petsc('conc_mesh and H_mesh do NOT have the same P1 nodes')
              END IF
 
           END IF
@@ -1090,7 +1463,7 @@ CONTAINS
 
     !===Specific to temperature=====================================================
     IF (if_energy) THEN
-       !===Verify if the two meshes coincide on the NS domain=======================
+       !===Verify if temp and NS coincide on the NS domain=======================
        IF (vv_mesh%me/=0) THEN
           error = 0.d0
           DO k = 1, 2
@@ -1132,6 +1505,49 @@ CONTAINS
 
        END IF
 
+       !===Verify if temp and conc coincide on the conc domain=======================
+       IF (if_concentration) THEN
+          IF (conc_mesh%me/=0) THEN
+             error = 0.d0
+             DO k = 1, 2
+                DO n = 1, SIZE(temp_mesh%jj,1)
+                   error = error + MAXVAL(ABS(conc_mesh%rr(k,conc_mesh%jj(n,:))-temp_mesh%rr(k,temp_mesh%jj(n,1:conc_mesh%me))))
+                END DO
+             END DO
+             IF (error/MAXVAL(ABS(temp_mesh%rr(1,1) -temp_mesh%rr(1,:))) .GE. 5.d-14) THEN
+                CALL error_Petsc('BUG in INIT, (error/MAXVAL(ABS(temp_mesh%rr(1,1) -temp_mesh%rr(1,:))) .GE. 5.d-14')
+             END IF
+
+             error = error + MAXVAL(ABS(conc_mesh%rr(1,conc_mesh%jj(4,1:conc_mesh%me)) &
+                  -(temp_mesh%rr(1,temp_mesh%jj(2,1:conc_mesh%me))+temp_mesh%rr(1,temp_mesh%jj(3,1:conc_mesh%me)))/2))&
+                  + MAXVAL(ABS(conc_mesh%rr(1,conc_mesh%jj(5,:)) &
+                  -(temp_mesh%rr(1,temp_mesh%jj(3,1:conc_mesh%me))+temp_mesh%rr(1,temp_mesh%jj(1,1:conc_mesh%me)))/2))&
+                  + MAXVAL(ABS(conc_mesh%rr(1,conc_mesh%jj(6,:)) &
+                  -(temp_mesh%rr(1,temp_mesh%jj(1,1:conc_mesh%me))+temp_mesh%rr(1,temp_mesh%jj(2,1:conc_mesh%me)))/2))&
+                  + MAXVAL(ABS(conc_mesh%rr(2,conc_mesh%jj(4,:)) &
+                  -(temp_mesh%rr(2,temp_mesh%jj(2,1:conc_mesh%me))+temp_mesh%rr(2,temp_mesh%jj(3,1:conc_mesh%me)))/2))&
+                  + MAXVAL(ABS(conc_mesh%rr(2,conc_mesh%jj(5,:)) &
+                  -(temp_mesh%rr(2,temp_mesh%jj(3,1:conc_mesh%me))+temp_mesh%rr(2,temp_mesh%jj(1,1:conc_mesh%me)))/2))&
+                  + MAXVAL(ABS(conc_mesh%rr(2,conc_mesh%jj(6,:)) &
+                  -(temp_mesh%rr(2,temp_mesh%jj(1,1:conc_mesh%me))+temp_mesh%rr(2,temp_mesh%jj(2,1:conc_mesh%me)))/2))
+             IF (error/MAXVAL(ABS(temp_mesh%rr(1,1) -temp_mesh%rr(1,:))) .GE. 5.d-14) THEN
+                WRITE(*,*) ' WARNING: conc_mesh and temp_mesh do not coincide on the conc domain.'
+                WRITE(*,*) ' WARNING: Either you use curved elements P2 elements or BUG, ', &
+                     error/MAXVAL(ABS(temp_mesh%rr(1,1) -temp_mesh%rr(1,:)))
+             END IF
+
+             error=0.d0
+             DO k = 1, conc_mesh%me
+                DO n = 1, 2
+                   error = error+ MAXVAL(ABS(conc_mesh%rr(n,conc_mesh%jj(1:3,k))-temp_mesh%rr(n,temp_mesh%jj(1:3,k))))
+                END DO
+             END DO
+             IF (error/MAXVAL(ABS(temp_mesh%rr(1,1) -temp_mesh%rr(1,:))) .GE. 5.d-14) THEN
+                CALL error_Petsc('conc_mesh and temp_mesh do NOT have the same P1 nodes')
+             END IF
+
+          END IF
+       END IF
        !===Create periodic structures for temperature===============================
        IF (temp_periodic) THEN
           CALL prep_periodic(inputs%my_periodic, temp_mesh, temp_per)
@@ -1171,6 +1587,80 @@ CONTAINS
        END DO
     END IF
 
+
+    !===Specific to concentration=====================================================
+    IF (if_concentration) THEN
+       !===Verify if vv_mesh and conc_mesh coincide on the conc domain=======================
+       IF (vv_mesh%me/=0) THEN
+          error = 0.d0
+          DO k = 1, 2
+             DO n = 1, SIZE(vv_mesh%jj,1)
+                error = error + MAXVAL(ABS(conc_mesh%rr(k,conc_mesh%jj(n,:))-vv_mesh%rr(k,vv_mesh%jj(n,1:conc_mesh%me))))
+             END DO
+          END DO
+          IF (error/MAXVAL(ABS(vv_mesh%rr(1,1) -vv_mesh%rr(1,:))) .GE. 5.d-14) THEN
+             CALL error_Petsc('BUG in INIT, (error/MAXVAL(ABS(conc_mesh%rr(1,1) -conc_mesh%rr(1,:))) .GE. 5.d-14')
+          END IF
+
+          error = error + MAXVAL(ABS(conc_mesh%rr(1,conc_mesh%jj(4,1:conc_mesh%me)) &
+               -(vv_mesh%rr(1,vv_mesh%jj(2,1:conc_mesh%me))+vv_mesh%rr(1,vv_mesh%jj(3,1:conc_mesh%me)))/2))&
+               + MAXVAL(ABS(conc_mesh%rr(1,conc_mesh%jj(5,:)) &
+               -(vv_mesh%rr(1,vv_mesh%jj(3,1:conc_mesh%me))+vv_mesh%rr(1,vv_mesh%jj(1,1:conc_mesh%me)))/2))&
+               + MAXVAL(ABS(conc_mesh%rr(1,conc_mesh%jj(6,:)) &
+               -(vv_mesh%rr(1,vv_mesh%jj(1,1:conc_mesh%me))+vv_mesh%rr(1,vv_mesh%jj(2,1:conc_mesh%me)))/2))&
+               + MAXVAL(ABS(conc_mesh%rr(2,conc_mesh%jj(4,:)) &
+               -(vv_mesh%rr(2,vv_mesh%jj(2,1:conc_mesh%me))+vv_mesh%rr(2,vv_mesh%jj(3,1:conc_mesh%me)))/2))&
+               + MAXVAL(ABS(conc_mesh%rr(2,conc_mesh%jj(5,:)) &
+               -(vv_mesh%rr(2,vv_mesh%jj(3,1:conc_mesh%me))+vv_mesh%rr(2,vv_mesh%jj(1,1:conc_mesh%me)))/2))&
+               + MAXVAL(ABS(conc_mesh%rr(2,conc_mesh%jj(6,:)) &
+               -(vv_mesh%rr(2,vv_mesh%jj(1,1:conc_mesh%me))+vv_mesh%rr(2,vv_mesh%jj(2,1:conc_mesh%me)))/2))
+          IF (error/MAXVAL(ABS(vv_mesh%rr(1,1) -vv_mesh%rr(1,:))) .GE. 5.d-14) THEN
+             WRITE(*,*) ' WARNING: vv_mesh and conc_mesh do not coincide on the conc domain.'
+             WRITE(*,*) ' WARNING: Either you use curved elements P2 elements or BUG, ', &
+                  error/MAXVAL(ABS(vv_mesh%rr(1,1) -vv_mesh%rr(1,:)))
+          END IF
+
+          error=0.d0
+          DO k = 1, conc_mesh%me
+             DO n = 1, 2
+                error = error+ MAXVAL(ABS(vv_mesh%rr(n,vv_mesh%jj(1:3,k))-conc_mesh%rr(n,conc_mesh%jj(1:3,k))))
+             END DO
+          END DO
+          IF (error/MAXVAL(ABS(vv_mesh%rr(1,1) -vv_mesh%rr(1,:))) .GE. 5.d-14) THEN
+             CALL error_Petsc('vv_mesh and conc_mesh do NOT have the same P1 nodes')
+          END IF
+
+       END IF
+
+       !===Create periodic structures for concentration===============================
+       IF (conc_periodic) THEN
+          CALL prep_periodic(inputs%my_periodic, conc_mesh, conc_per)
+       END IF
+
+       !===Create csr structure for concentration=====================================
+       CALL st_aij_csr_glob_block(comm_one_d_conc(1),1,conc_mesh_glob,conc_mesh,conc_1_LA, opt_per=conc_per)
+
+       !===Deallocate global meshes=================================================
+       CALL free_mesh(conc_mesh_glob)
+
+       !===Start Gauss points generation============================================
+       !===JLG July 20, 2019, p3 mesh
+       conc_mesh%edge_stab    = .FALSE.
+       CALL gauss_points_2d(conc_mesh,2)
+       !===JLG July 20, 2019, p3 mesh
+
+
+       !===Create concentration_diffusivity_field=====================================
+       ALLOCATE(concentration_diffusivity_field(conc_mesh%me))
+       DO m = 1, conc_mesh%me
+          DO k=1, inputs%nb_dom_conc
+             IF (conc_mesh%i_d(m) == inputs%list_dom_conc(k)) THEN
+                concentration_diffusivity_field(m) = inputs%concentration_diffusivity(k)
+             END IF
+          END DO
+       END DO
+
+    END IF
     !===Check coherence of vv_mesh and H_mesh=======================================
     IF ((if_induction .AND. if_momentum) .OR. inputs%type_pb=='mxx') THEN
        IF (vv_mesh%me /=0) THEN
@@ -1182,6 +1672,7 @@ CONTAINS
        END IF
     END IF
     IF (ALLOCATED(list_dom_H)) DEALLOCATE(list_dom_H)
+    IF (ALLOCATED(list_dom_H_ref)) DEALLOCATE(list_dom_H_ref)
 
     !===Check coherence of vv_mesh and temp_mesh====================================
     IF (if_energy) THEN
@@ -1194,6 +1685,21 @@ CONTAINS
        END IF
     END IF
     IF (ALLOCATED(list_dom_temp)) DEALLOCATE(list_dom_temp)
+    IF (ALLOCATED(list_dom_temp_ref)) DEALLOCATE(list_dom_temp_ref)
+
+    !===Check coherence of vv_mesh and conc_mesh====================================
+    IF (if_concentration) THEN
+       IF (vv_mesh%me /=0) THEN
+          DO m = 1, conc_mesh%me
+             IF (MAXVAL(ABS(conc_mesh%rr(:,conc_mesh%jj(1:3,m))-vv_mesh%rr(:,vv_mesh%jj(1:3,m))))/=0.d0) THEN
+                CALL error_Petsc( ' BUG in init: conc_mesh and vv_mesh do not coincide ')
+             END IF
+          END DO
+       END IF
+    END IF
+    IF (ALLOCATED(list_dom_ns)) DEALLOCATE(list_dom_ns)
+
+
 
     !===Compute local mesh size for stabilization================================
     IF (if_momentum .OR. inputs%type_pb=='mxx') THEN
@@ -1208,6 +1714,9 @@ CONTAINS
     END IF
     IF (if_energy) THEN
        CALL compute_local_mesh_size(temp_mesh)
+    END IF
+    IF (if_concentration) THEN
+       CALL compute_local_mesh_size(conc_mesh)
     END IF
 
     !===Allocate arrays for Navier-Stokes===========================================
@@ -1268,6 +1777,13 @@ CONTAINS
        ALLOCATE(tempn      (temp_mesh%np, 2, m_max_c))
     END IF
 
+    !===Allocate arrays for concentration=============================================
+    IF (if_concentration) THEN
+       ALLOCATE(concn_m1   (conc_mesh%np, 2, m_max_c))
+       ALLOCATE(concn      (conc_mesh%np, 2, m_max_c))
+    END IF
+
+
     !===Create data structure jj_v_to_H=============================================
     IF (if_induction) THEN
        ALLOCATE(v_to_Max(H_mesh%np, 6, m_max_c))
@@ -1304,6 +1820,55 @@ CONTAINS
           ALLOCATE(T_to_NS(vv_mesh%np, 2, m_max_c))
        ELSE
           ALLOCATE(T_to_NS(1, 1, 1))
+       END IF
+    END IF
+
+    !===Create data structure jj_c_to_v==========================================
+    IF (if_concentration) THEN
+       ALLOCATE(conc_to_v(vv_mesh%np, 2, m_max_c))
+       ALLOCATE(jj_c_to_v(vv_mesh%np))
+       jj_c_to_v = -1
+       IF (conc_mesh%me/=0) THEN
+          DO m = 1, conc_mesh%me
+             jj_c_to_v(vv_mesh%jj(:,m)) = conc_mesh%jj(1:vv_mesh%gauss%n_w,m)
+          END DO
+          ALLOCATE(v_to_conc(conc_mesh%np, 6, m_max_c))
+       ELSE
+          ALLOCATE(v_to_conc(1, 1, 1))
+       END IF
+    END IF
+
+    !===Create data structure jj_T_to_H==========================================
+    IF (if_induction) THEN
+       ALLOCATE(T_to_H(H_mesh%np, 2, m_max_c))
+       IF (if_energy) THEN
+          ALLOCATE(jj_T_to_H(H_mesh%np))
+          jj_T_to_H = -1
+          DO m = 1, temp_mesh%me
+             jj_T_to_H(H_mesh%jj(:,m)) = temp_mesh%jj(1:H_mesh%gauss%n_w,m)
+          END DO
+          ALLOCATE(j_H_to_T(temp_mesh%np, 6, m_max_c))
+       ELSE
+          ALLOCATE(jj_T_to_H(H_mesh%np))
+          jj_T_to_H = -1
+          ALLOCATE(j_H_to_T(1, 1, 1))
+       END IF
+    END IF
+
+    !===Create data structure jj_c_to_H==========================================
+    IF (if_induction) THEN
+       ALLOCATE(conc_to_H(H_mesh%np, 2, m_max_c))
+       IF (if_concentration) THEN
+          ALLOCATE(jj_c_to_H(H_mesh%np))
+          jj_c_to_H = -1
+          DO m = 1, conc_mesh%me
+             jj_c_to_H(H_mesh%jj(:,m)) = conc_mesh%jj(1:H_mesh%gauss%n_w,m)
+          END DO
+          ALLOCATE(j_H_to_conc(conc_mesh%np, 6, m_max_c))
+       ELSE
+          ALLOCATE(jj_c_to_H(H_mesh%np))
+          jj_c_to_H = -1
+          ALLOCATE(j_H_to_conc(1, 1, 1))
        END IF
     END IF
 
@@ -1519,9 +2084,31 @@ CONTAINS
        END IF
     END IF
 
+
+    !===Initialize concentration======================================================
+    time_conc = 0.d0
+    IF (if_concentration) THEN
+       IF (conc_mesh%me/=0) THEN
+          IF (inputs%irestart_conc) THEN
+             CALL read_restart_conc(comm_one_d_conc, time_conc, list_mode, concn, concn_m1, &
+                  inputs%file_name)
+          ELSE
+             CALL init_concentration(conc_mesh, time_conc, inputs%dt, list_mode, concn_m1, concn)
+          END IF
+          !===Force sine coefficients of zero mode to zero==========================
+          DO i = 1, m_max_c
+             IF (list_mode(i) == 0) THEN
+                concn(:,2,i)       = 0.d0
+                concn_m1(:,2,i)    = 0.d0
+             END IF
+          END DO
+
+       END IF
+    END IF
+
     !===Initialize time=============================================================
-    IF (inputs%irestart_h .OR. inputs%irestart_u .OR. inputs%irestart_T) THEN
-       time = MAX(time_u,time_h,time_T)
+    IF (inputs%irestart_h .OR. inputs%irestart_u .OR. inputs%irestart_T .OR. inputs%irestart_conc) THEN
+       time = MAX(time_u,time_h,time_T,time_conc)
     ELSE
        time = 0.d0
     END IF
@@ -1573,9 +2160,9 @@ CONTAINS
     END DO
 
     CALL maxwell_decouple(comm_one_d, H_mesh, pmag_mesh, phi_mesh, interface_H_phi, interface_H_mu, &
-         Hn, Bn, phin, Hn1, Bn1, phin1, v_to_Max, inputs%stab, sigma_field, R_fourier, index_fourier, &
+         Hn, Bn, phin, Hn1, Bn1, phin1, v_to_Max, inputs%stab, inputs%stab_jump_h,sigma_field, R_fourier, index_fourier, &
          mu_H_field, inputs%mu_phi, time, inputs%dt, inputs%Rem, list_mode, H_phi_per, LA_H, LA_pmag, &
-         LA_phi, LA_mhd, sigma_ns, jj_v_to_H)
+         LA_phi, LA_mhd, sigma_ns, jj_v_to_H,conc_to_H)
 
     DO TYPE = 1, 6
        i_deb = (TYPE-1)*H_mesh%np+1
@@ -1591,50 +2178,49 @@ CONTAINS
 
   END SUBROUTINE prodmat_maxwell_int_by_parts
 
-  SUBROUTINE sfemansinitialize
-    IMPLICIT NONE
-    INTEGER                                          :: narg, i
-    CHARACTER(len=200),DIMENSION(:,:), ALLOCATABLE   :: inline
-    LOGICAL                                          :: ok
-    CHARACTER(len=3)                                 :: tit
-
-    narg = 0
-    ok = .TRUE.
-
-    DO WHILE (ok)
-       CALL getarg(narg+1,tit)
-       IF (tit == '   ') THEN
-          ok = .FALSE.
-       ELSE
-          narg = narg+1
-       END IF
-    END DO
-
-    narg = narg/2
-    ALLOCATE(inline(2,narg))
-
-    DO i = 1, narg
-       CALL getarg(2*(i-1)+1,inline(1,i))
-       CALL getarg(2*i      ,inline(2,i))
-    END DO
-
-    inputs%test_de_convergence = .FALSE.
-    inputs%numero_du_test_debug = 0
-    inputs%data_directory_debug = '.'
-    DO i = 1, narg
-       IF (TRIM(ADJUSTL(inline(1,i))) == 'debug') THEN
-          inputs%test_de_convergence = .TRUE.
-          READ(inline(2,i),*) inputs%numero_du_test_debug
-       ELSE IF (TRIM(ADJUSTL(inline(1,i))) == 'debug_dir') THEN
-          inputs%data_directory_debug=inline(2,i)
-       END IF
-    END DO
-
-  END SUBROUTINE sfemansinitialize
+!!$  SUBROUTINE sfemansinitialize
+!!$    IMPLICIT NONE
+!!$    INTEGER                                          :: narg, i
+!!$    CHARACTER(len=200),DIMENSION(:,:), ALLOCATABLE   :: inline
+!!$    LOGICAL                                          :: ok
+!!$    CHARACTER(len=3)                                 :: tit
+!!$
+!!$    narg = 0
+!!$    ok = .TRUE.
+!!$
+!!$    DO WHILE (ok)
+!!$       CALL getarg(narg+1,tit)
+!!$       IF (tit == '   ') THEN
+!!$          ok = .FALSE.
+!!$       ELSE
+!!$          narg = narg+1
+!!$       END IF
+!!$    END DO
+!!$
+!!$    narg = narg/2
+!!$    ALLOCATE(inline(2,narg))
+!!$
+!!$    DO i = 1, narg
+!!$       CALL getarg(2*(i-1)+1,inline(1,i))
+!!$       CALL getarg(2*i      ,inline(2,i))
+!!$    END DO
+!!$
+!!$    inputs%test_de_convergence = .FALSE.
+!!$    inputs%numero_du_test_debug = 0
+!!$    inputs%data_directory_debug = '.'
+!!$    DO i = 1, narg
+!!$       IF (TRIM(ADJUSTL(inline(1,i))) == 'debug') THEN
+!!$          inputs%test_de_convergence = .TRUE.
+!!$          READ(inline(2,i),*) inputs%numero_du_test_debug
+!!$       ELSE IF (TRIM(ADJUSTL(inline(1,i))) == 'debug_dir') THEN
+!!$          inputs%data_directory_debug=inline(2,i)
+!!$       END IF
+!!$    END DO
+!!$  END SUBROUTINE sfemansinitialize
 
   SUBROUTINE regression_initialize
     IMPLICIT NONE
-    INTEGER                                          :: narg, i
+    INTEGER                                          :: narg
     CHARACTER(len=200)                               :: inline
     LOGICAL                                          :: ok
     CHARACTER(len=3)                                 :: tit
@@ -1658,7 +2244,6 @@ CONTAINS
           inputs%if_regression = .TRUE.
        END IF
     END IF
-
   END SUBROUTINE regression_initialize
 
   SUBROUTINE compute_local_mesh_size(mesh)

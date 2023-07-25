@@ -70,6 +70,26 @@ CONTAINS
     ENDDO
   END SUBROUTINE init_temperature
 
+  !===Initialize concentration
+  MODULE SUBROUTINE init_concentration(mesh, time, dt, list_mode, concn_m1, concn)
+    IMPLICIT NONE
+    TYPE(mesh_type)                            :: mesh
+    REAL(KIND=8),                   INTENT(OUT):: time
+    REAL(KIND=8),                   INTENT(IN) :: dt
+    INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: concn_m1, concn
+    INTEGER                                    :: mode, i, j
+
+    time = 0.d0
+    DO i= 1, SIZE(list_mode)
+       mode = list_mode(i)
+       DO j = 1, 2
+          concn_m1(:,j,i) = concentration_exact(j, mesh%rr, mode, time-dt)
+          concn   (:,j,i) = concentration_exact(j, mesh%rr, mode, time)
+       ENDDO
+    ENDDO
+  END SUBROUTINE init_concentration
+
   !===Initialize level_set
   MODULE SUBROUTINE init_level_set(pp_mesh, time, &
        dt, list_mode, level_set_m1, level_set)
@@ -96,7 +116,7 @@ CONTAINS
   END SUBROUTINE init_level_set
 
   !===Source in momemtum equation. Always called.
-  MODULE FUNCTION source_in_NS_momentum(TYPE, rr, mode, i, time, Re, ty, opt_density, opt_tempn) RESULT(vv)
+  MODULE FUNCTION source_in_NS_momentum(TYPE, rr, mode, i, time, Re, ty, density, tempn, concn) RESULT(vv)
     IMPLICIT NONE
     INTEGER     ,                             INTENT(IN) :: TYPE
     REAL(KIND=8), DIMENSION(:,:),             INTENT(IN) :: rr
@@ -104,12 +124,11 @@ CONTAINS
     REAL(KIND=8),                             INTENT(IN) :: time
     REAL(KIND=8),                             INTENT(IN) :: Re
     CHARACTER(LEN=2),                         INTENT(IN) :: ty
-    REAL(KIND=8), DIMENSION(:,:,:), OPTIONAL, INTENT(IN) :: opt_density
-    REAL(KIND=8), DIMENSION(:,:,:), OPTIONAL, INTENT(IN) :: opt_tempn
+    REAL(KIND=8), DIMENSION(:,:,:),           INTENT(IN) :: density
+    REAL(KIND=8), DIMENSION(:,:,:),           INTENT(IN) :: tempn
+    REAL(KIND=8), DIMENSION(:,:,:),           INTENT(IN) :: concn
     REAL(KIND=8), DIMENSION(SIZE(rr,2))                  :: vv
     INTEGER                                              :: n
-
-    IF (PRESENT(opt_tempn)) CALL error_petsc('temperature should not be present for test 39')
 
     vv = 0.d0*Re
     IF (mode==0) THEN
@@ -144,8 +163,7 @@ CONTAINS
     RETURN
     !===Dummy variables to avoid warning
     nd=TYPE; nd=SIZE(rr,1); nd=mode; nd=i; rd=time; rd=Re; cd2=ty
-    IF (PRESENT(opt_density)) nd=SIZE(opt_density,1)
-    IF (PRESENT(opt_tempn)) nd=SIZE(opt_tempn,1)
+    nd=SIZE(density,1); nd=SIZE(tempn,1); nd=SIZE(concn,1)
     !===Dummy variables to avoid warning
   END FUNCTION source_in_NS_momentum
 
@@ -267,6 +285,23 @@ CONTAINS
     !===Dummy variables to avoid warning
   END FUNCTION temperature_exact
 
+  !===Concentration for boundary conditions in concentration equation.
+  MODULE FUNCTION concentration_exact(TYPE,rr,m,t) RESULT (vv)
+    IMPLICIT NONE
+    INTEGER     ,                        INTENT(IN)   :: TYPE
+    REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
+    INTEGER     ,                        INTENT(IN)   :: m
+    REAL(KIND=8),                        INTENT(IN)   :: t
+    REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
+
+    vv = 0.d0
+    CALL error_petsc('concentration_exact: should not be called for this test')
+    RETURN
+     !===Dummy variables to avoid warning
+    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=t
+    !===Dummy variables to avoid warning
+ END FUNCTION concentration_exact
+
   !===Can be used to initialize level set in the subroutine init_level_set.
   MODULE FUNCTION level_set_exact(interface_nb,TYPE,rr,m,t)  RESULT (vv)
     IMPLICIT NONE
@@ -339,6 +374,36 @@ CONTAINS
     nd=H_mesh%np; nd=TYPE; nd=n_start; nd=mode; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION extension_velocity
+
+  MODULE FUNCTION extension_temperature(TYPE, H_mesh, mode, t, n_start) RESULT(vv)
+    IMPLICIT NONE
+    TYPE(mesh_type),                     INTENT(IN)   :: H_mesh
+    INTEGER     ,                        INTENT(IN)   :: TYPE, n_start
+    INTEGER,                             INTENT(IN)   :: mode
+    REAL(KIND=8),                        INTENT(IN)   :: t
+    REAL(KIND=8), DIMENSION(H_Mesh%np)                :: vv
+
+    vv = 0.d0
+    RETURN
+    !===Dummy variables to avoid warning
+    nd=H_mesh%np; nd=TYPE; nd=n_start; nd=mode; rd=t
+    !===Dummy variables to avoid warning
+  END FUNCTION extension_temperature
+
+  MODULE FUNCTION extension_concentration(TYPE, vv_mesh, mode, t, n_start) RESULT(vv)
+    IMPLICIT NONE
+    TYPE(mesh_type),                     INTENT(IN)   :: vv_mesh
+    INTEGER     ,                        INTENT(IN)   :: TYPE, n_start
+    INTEGER,                             INTENT(IN)   :: mode
+    REAL(KIND=8),                        INTENT(IN)   :: t
+    REAL(KIND=8), DIMENSION(vv_mesh%np)                :: vv
+
+    vv = 0.d0
+    RETURN
+    !===Dummy variables to avoid warning
+    nd=vv_mesh%np; nd=TYPE; nd=n_start; nd=mode; rd=t
+    !===Dummy variables to avoid warning
+  END FUNCTION extension_concentration
 
   !===============================================================================
   !                       Boundary conditions for Maxwell
@@ -546,7 +611,6 @@ CONTAINS
   END FUNCTION mu_in_real_space
 
   MODULE FUNCTION sigma_bar_in_fourier_space(H_mesh) RESULT(vv)
-    USE def_type_mesh
     TYPE(mesh_type), INTENT(IN)                :: H_mesh
     REAL(KIND=8), DIMENSION(SIZE(H_mesh%rr,2)) :: vv
 
@@ -581,5 +645,37 @@ CONTAINS
     CALL error_petsc('nu_tilde_law: should not be called for this test')
     RETURN
   END FUNCTION nu_tilde_law
+
+  MODULE FUNCTION rot_H_jump_interface(mesh,rr,list_mode) RESULT(vv)
+    IMPLICIT NONE
+    TYPE(mesh_type)                                   :: mesh
+    REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
+    INTEGER,      DIMENSION(:),          INTENT(IN)   :: list_mode
+    REAL(KIND=8), DIMENSION(SIZE(rr,2),6,SIZE(list_mode)) :: vv
+
+    vv = 0.d0
+    RETURN
+    !===Dummy variables to avoid warning
+    nd=mesh%np; nd=SIZE(rr,1); nd=SIZE(list_mode)
+    !===Dummy variables to avoid warning
+  END FUNCTION rot_H_jump_interface
+
+  MODULE FUNCTION Derivative_of_potential_from_rhoLi(delta_rhoLi_phys) RESULT(vv)
+    IMPLICIT NONE
+    REAL(KIND=8) :: delta_rhoLi_phys
+    REAL(KIND=8) :: vv
+
+    vv = 0.d0*delta_rhoLi_phys
+    RETURN
+  END FUNCTION Derivative_of_potential_from_rhoLi
+
+  MODULE FUNCTION molar_fraction_from_concentration(delta_rhoLi_phys) RESULT(vv)
+    IMPLICIT NONE
+    REAL(KIND=8) :: delta_rhoLi_phys
+    REAL(KIND=8) :: vv
+
+    vv = 0.d0*delta_rhoLi_phys
+    RETURN
+  END FUNCTION molar_fraction_from_concentration
 
 END SUBMODULE BOUNDARY_GENERIC

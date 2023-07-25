@@ -44,7 +44,8 @@ endif()
 # Create local sources from local dir
 file(GLOB_RECURSE local_sources ${SFEMaNS_DIR}/TEMPLATE/*.F90
   ${CMAKE_CURRENT_SOURCE_DIR}/LOCAL_SOURCES/*.F90)
-list(REMOVE_ITEM local_sources ${SFEMaNS_DIR}/TEMPLATE/condlim.F90)
+list(REMOVE_ITEM local_sources ${SFEMaNS_DIR}/TEMPLATE/condlim.F90
+     ${SFEMaNS_DIR}/TEMPLATE/main.F90)
 
 # Define runtime output directory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../EXECUTABLE)

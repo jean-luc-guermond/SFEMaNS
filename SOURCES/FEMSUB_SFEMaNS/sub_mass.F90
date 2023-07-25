@@ -8,7 +8,7 @@ CONTAINS
 
   SUBROUTINE three_level_mass(comm_one_d, time, level_set_LA_P1, level_set_LA_P2, list_mode, &
        mesh_P1, mesh_P2, chmp_vit_P2, max_vel, level_set_per, density_m2, density_m1, density, &
-       level_set_m1, level_set, visc_entro_level)
+       level_set_m1, level_set, visc_entro_level, level_set_reg)
     USE def_type_mesh
     USE input_data
     USE subroutine_level_set
@@ -28,6 +28,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:,:), INTENT(INOUT)         :: level_set, level_set_m1
     REAL(KIND=8),                     INTENT(INOUT)         :: max_vel
     REAL(KIND=8), DIMENSION(:,:),     INTENT(IN)            :: visc_entro_level
+    REAL(KIND=8), DIMENSION(:,:,:,:), INTENT(OUT)           :: level_set_reg
     REAL(KIND=8), DIMENSION(mesh_P1%np,6,SIZE(list_mode))   :: chmp_vit_P1
     INTEGER                                                 :: n, i, k
     MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
@@ -49,7 +50,7 @@ CONTAINS
                 CALL three_level_level_set(comm_one_d, time, level_set_LA_P2, inputs%dt, list_mode, &
                      mesh_P2, level_set_m1(n,:,:,:), level_set(n,:,:,:), chmp_vit_P2, max_vel, &
                      inputs%my_par_level_set, inputs%level_set_list_dirichlet_sides, level_set_per, n, &
-                     visc_entro_level)
+                     visc_entro_level, level_set_reg(n,:,:,:))
              END DO
           END IF
        ELSE
@@ -72,7 +73,7 @@ CONTAINS
                 CALL three_level_level_set(comm_one_d, time, level_set_LA_P1, inputs%dt, list_mode, &
                      mesh_P1, level_set_m1(n,:,:,:), level_set(n,:,:,:), chmp_vit_P1, max_vel, &
                      inputs%my_par_level_set, inputs%level_set_list_dirichlet_sides, level_set_per, n, &
-                     visc_entro_level)
+                     visc_entro_level, level_set_reg(n,:,:,:))
              END DO
           END IF
        END IF

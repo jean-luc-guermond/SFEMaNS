@@ -10,7 +10,8 @@ MODULE metis_sfemans
 !!$ Dummy for metis...
 CONTAINS
   !===Convention: Domain NS \subset domain Temp \subset Domain H
-  SUBROUTINE part_mesh_M_T_H_phi(nb_proc,list_u, list_T_in, list_h_in, list_phi ,mesh,list_of_interfaces,part,my_periodic)
+  SUBROUTINE part_mesh_M_T_H_phi(nb_proc, list_conc, list_u_in, list_T_in, list_h_in, &
+       list_phi ,mesh,list_of_interfaces,part,my_periodic)
     USE def_type_mesh
     USE my_util
     USE sub_plot
@@ -19,25 +20,27 @@ CONTAINS
     TYPE(mesh_type)                          :: mesh
     INTEGER, DIMENSION(mesh%me)              :: part
     INTEGER, DIMENSION(:)                    :: list_of_interfaces
-    INTEGER, DIMENSION(:)                    :: list_u, list_T_in, list_h_in, list_phi
+    INTEGER, DIMENSION(:)                    :: list_conc, list_u_in, list_T_in
+    INTEGER, DIMENSION(:)                    :: list_h_in, list_phi
     TYPE(periodic_data), OPTIONAL            :: my_periodic
 
     LOGICAL, DIMENSION(mesh%mes)             :: virgins
     INTEGER, DIMENSION(3,mesh%me)            :: neigh_new
     INTEGER, DIMENSION(5)                    :: opts
     INTEGER, DIMENSION(SIZE(mesh%jjs,1))     :: i_loc
-    INTEGER, DIMENSION(:),   ALLOCATABLE     :: xadj_u, xadj_T, xadj_h, xadj_phi, list_h, list_T
-    INTEGER, DIMENSION(:),   ALLOCATABLE     :: xind_u, xind_T, xind_h, xind_phi
+    INTEGER, DIMENSION(:),   ALLOCATABLE     :: xadj_conc, xadj_u, xadj_T, xadj_h, xadj_phi
+    INTEGER, DIMENSION(:),   ALLOCATABLE     :: list_u, list_T, list_h
+    INTEGER, DIMENSION(:),   ALLOCATABLE     :: xind_conc, xind_u, xind_T, xind_h, xind_phi
     INTEGER, DIMENSION(:),   ALLOCATABLE     :: vwgt, adjwgt
-    INTEGER, DIMENSION(:),   ALLOCATABLE     :: u2glob, T2glob, h2glob, phi2glob
-    INTEGER, DIMENSION(:),   ALLOCATABLE     :: part_u, part_T, part_h, part_phi
+    INTEGER, DIMENSION(:),   ALLOCATABLE     :: conc2glob, u2glob, T2glob, h2glob, phi2glob
+    INTEGER, DIMENSION(:),   ALLOCATABLE     :: part_conc, part_u, part_T, part_h, part_phi
     INTEGER, DIMENSION(1)                    :: jm_loc
     INTEGER, DIMENSION(mesh%np,3)            :: per_pts
     INTEGER, DIMENSION(mesh%me)              :: glob2loc
     INTEGER, DIMENSION(mesh%np)              :: indicator
     INTEGER, DIMENSION(3)                    :: j_loc
     INTEGER :: nb_neigh, edge, m, ms, n, nb, numflag, p, wgtflag, j, &
-         ns, nws, msop, nsop, proc, iop, mop, s2, k, me_u, me_T, me_h, me_phi, idm
+         ns, nws, msop, nsop, proc, iop, mop, s2, k, me_conc, me_u, me_T, me_h, me_phi, idm
     REAL(KIND=8)                             :: err
     LOGICAL               :: test
     !===(JLG) Feb 20, 2019. Petsc developpers decide to use REAL(KIND=4) to interface with metis
@@ -61,16 +64,33 @@ CONTAINS
     END IF
     glob2loc = 0
 
-    !===Create list_T = list_T_in \ list_u
+    !===Create list_u = list_u_in \ list_conc
+    nb = 0
+    DO j = 1, SIZE(list_u_in)
+       IF (MINVAL(ABS(list_u_in(j)-list_conc))==0) CYCLE
+       nb = nb + 1
+    END DO
+    ALLOCATE(list_u(nb))
+    nb = 0
+    DO j = 1, SIZE(list_u_in)
+       IF (MINVAL(ABS(list_u_in(j)-list_conc))==0) CYCLE
+       nb = nb + 1
+       list_u(nb) = list_u_in(j)
+    END DO
+    !==Done with list_u
+
+    !===Create list_T = list_T_in \ list_u_in
     nb = 0
     DO j = 1, SIZE(list_T_in)
-       IF (MINVAL(ABS(list_T_in(j)-list_u))==0) CYCLE
+       IF (MINVAL(ABS(list_T_in(j)-list_u_in))==0) CYCLE
+       IF (MINVAL(ABS(list_T_in(j)-list_conc))==0) CYCLE
        nb = nb + 1
     END DO
     ALLOCATE(list_T(nb))
     nb = 0
     DO j = 1, SIZE(list_T_in)
-       IF (MINVAL(ABS(list_T_in(j)-list_u))==0) CYCLE
+       IF (MINVAL(ABS(list_T_in(j)-list_u_in))==0) CYCLE
+       IF (MINVAL(ABS(list_T_in(j)-list_conc))==0) CYCLE
        nb = nb + 1
        list_T(nb) = list_T_in(j)
     END DO
@@ -80,14 +100,16 @@ CONTAINS
     nb = 0
     DO j = 1, SIZE(list_h_in)
        IF (MINVAL(ABS(list_h_in(j)-list_T_in))==0) CYCLE
-       IF (MINVAL(ABS(list_h_in(j)-list_u))==0) CYCLE
+       IF (MINVAL(ABS(list_h_in(j)-list_u_in))==0) CYCLE
+       IF (MINVAL(ABS(list_T_in(j)-list_conc))==0) CYCLE
        nb = nb + 1
     END DO
     ALLOCATE(list_h(nb))
     nb = 0
     DO j = 1, SIZE(list_h_in)
        IF (MINVAL(ABS(list_h_in(j)-list_T_in))==0) CYCLE
-       IF (MINVAL(ABS(list_h_in(j)-list_u))==0) CYCLE
+       IF (MINVAL(ABS(list_h_in(j)-list_u_in))==0) CYCLE
+       IF (MINVAL(ABS(list_T_in(j)-list_conc))==0) CYCLE
        nb = nb + 1
        list_h(nb) = list_h_in(j)
     END DO
@@ -178,14 +200,17 @@ CONTAINS
     END IF
     !===End Create neigh_new for periodic faces
 
-    !===Create glob2loc and u2glob, T2glob, h2glob, phi2glob
+    !===Create glob2loc and conc2glob, u2glob, T2glob, h2glob, phi2glob
+    me_conc = 0
     me_u = 0
     me_T = 0
     me_h = 0
     me_phi = 0
     DO m = 1, mesh%me
        idm = mesh%i_d(m)
-       IF (MINVAL(ABS(idm-list_u))==0) THEN
+       IF (MINVAL(ABS(idm-list_conc))==0) THEN
+          me_conc = me_conc + 1
+       ELSE IF (MINVAL(ABS(idm-list_u))==0) THEN
           me_u = me_u + 1
        ELSE IF (MINVAL(ABS(idm-list_T))==0) THEN
           me_T = me_T + 1
@@ -197,14 +222,19 @@ CONTAINS
           CALL error_Petsc('BUG in part_mesh_M_T_H_phi : element not in the mesh')
        END IF
     END DO
-    ALLOCATE(u2glob(me_u), T2glob(me_T), h2glob(me_h), phi2glob(me_phi))
+    ALLOCATE(conc2glob(me_conc), u2glob(me_u), T2glob(me_T), h2glob(me_h), phi2glob(me_phi))
+    me_conc = 0
     me_u = 0
     me_T = 0
     me_h = 0
     me_phi = 0
     DO m = 1, mesh%me
        idm = mesh%i_d(m)
-       IF (MINVAL(ABS(idm-list_u))==0) THEN
+       IF (MINVAL(ABS(idm-list_conc))==0) THEN
+          me_conc = me_conc + 1
+          conc2glob(me_conc) = m
+          glob2loc(m) = me_conc
+       ELSE IF (MINVAL(ABS(idm-list_u))==0) THEN
           me_u = me_u + 1
           u2glob(me_u) = m
           glob2loc(m) = me_u
@@ -224,11 +254,23 @@ CONTAINS
           CALL error_Petsc('BUG in part_mesh_M_T_H_phi: element not in the mesh')
        END IF
     END DO
-    !===End Create glob2loc and u2glob, T2glob, h2glob, phi2glob
+    !===End Create glob2loc and u2glob, T2glob, h2glob, phi2glob, conc2glob
 
     !===Create the connectivity arrays Xind and Xadj based on neigh (for Metis)
     nb_neigh = SIZE(mesh%neigh,1)
-    ALLOCATE(xind_u(me_u+1), xind_T(me_T+1), xind_h(me_h+1), xind_phi(me_phi+1))
+    ALLOCATE(xind_conc(me_conc+1), xind_u(me_u+1), xind_T(me_T+1), xind_h(me_h+1), xind_phi(me_phi+1))
+    xind_conc(1) = 1
+    DO k = 1, me_conc
+       m = conc2glob(k)
+       nb = 0
+       DO n = 1, nb_neigh
+          mop = neigh_new(n,m)
+          IF (mop==0) CYCLE
+          IF (MINVAL(ABS(mesh%i_d(mop)-list_conc))/=0) CYCLE
+          nb = nb + 1
+       END DO
+       xind_conc(k+1) = xind_conc(k) + nb
+    END DO
     xind_u(1) = 1
     DO k = 1, me_u
        m = u2glob(k)
@@ -278,10 +320,25 @@ CONTAINS
        xind_phi(k+1) = xind_phi(k) + nb
     END DO
 
+    ALLOCATE(xadj_conc(xind_conc(me_conc+1)-1))
     ALLOCATE(xadj_u(xind_u(me_u+1)-1))
     ALLOCATE(xadj_T(xind_T(me_T+1)-1))
     ALLOCATE(xadj_h(xind_h(me_h+1)-1))
     ALLOCATE(xadj_phi(xind_phi(me_phi+1)-1))
+    p = 0
+    DO k = 1, me_conc
+       m = conc2glob(k)
+       DO n = 1, nb_neigh
+          mop = neigh_new(n,m)
+          IF (mop==0) CYCLE
+          IF (MINVAL(ABS(mesh%i_d(mop)-list_conc))/=0) CYCLE
+          p = p + 1
+          xadj_conc(p) = glob2loc(mop)
+       END DO
+    END DO
+    IF (p/=xind_conc(me_conc+1)-1) THEN
+       CALL error_Petsc('BUG in part_mesh_M_T_H_phi, p/=xind_conc(me_conc+1)-1')
+    END IF
     p = 0
     DO k = 1, me_u
        m = u2glob(k)
@@ -349,11 +406,22 @@ CONTAINS
     CALL METIS_SetDefaultOptions(metis_opt)
     metis_opt(METIS_OPTION_NUMBERING)=1
     ubvec=1.01
+    IF (me_conc /= 0) THEN
+       IF (ALLOCATED(vwgt)) THEN
+          DEALLOCATE(vwgt, adjwgt)
+       END IF
+       ALLOCATE(vwgt(me_conc), adjwgt(SIZE(xadj_conc)), part_conc(me_conc))
+       vwgt   = 1
+       adjwgt = 1
+       CALL METIS_PartGraphRecursive(me_conc, 1, xind_conc, xadj_conc, vwgt, vwgt, adjwgt, nb_proc,tpwgts, &
+            ubvec, metis_opt, edge, part_conc)
+    END IF
     IF (me_u /= 0) THEN
        ALLOCATE(vwgt(me_u), adjwgt(SIZE(xadj_u)), part_u(me_u))
        vwgt   = 1
        adjwgt = 1
-       CALL METIS_PartGraphRecursive(me_u, 1, xind_u, xadj_u, vwgt, vwgt, adjwgt, nb_proc, tpwgts, ubvec, metis_opt, edge, part_u)
+       CALL METIS_PartGraphRecursive(me_u, 1, xind_u, xadj_u, vwgt, vwgt, adjwgt, nb_proc, tpwgts, &
+            ubvec, metis_opt, edge, part_u)
     END IF
     IF (me_T /= 0) THEN
        IF (ALLOCATED(vwgt)) THEN
@@ -362,7 +430,8 @@ CONTAINS
        ALLOCATE(vwgt(me_T), adjwgt(SIZE(xadj_T)), part_T(me_T))
        vwgt   = 1
        adjwgt = 1
-       CALL METIS_PartGraphRecursive(me_T, 1, xind_T, xadj_T, vwgt, vwgt, adjwgt, nb_proc, tpwgts, ubvec, metis_opt, edge, part_T)
+       CALL METIS_PartGraphRecursive(me_T, 1, xind_T, xadj_T, vwgt, vwgt, adjwgt, nb_proc, tpwgts, &
+            ubvec, metis_opt, edge, part_T)
     END IF
     IF (me_h /= 0) THEN
        IF (ALLOCATED(vwgt)) THEN
@@ -371,7 +440,8 @@ CONTAINS
        ALLOCATE(vwgt(me_h), adjwgt(SIZE(xadj_h)), part_h(me_h))
        vwgt   = 1
        adjwgt = 1
-       CALL METIS_PartGraphRecursive(me_h, 1, xind_h, xadj_h, vwgt, vwgt, adjwgt, nb_proc,tpwgts, ubvec, metis_opt, edge, part_h)
+       CALL METIS_PartGraphRecursive(me_h, 1, xind_h, xadj_h, vwgt, vwgt, adjwgt, nb_proc,tpwgts, &
+            ubvec, metis_opt, edge, part_h)
     END IF
     IF (me_phi /= 0) THEN
        IF (ALLOCATED(vwgt)) THEN
@@ -383,8 +453,13 @@ CONTAINS
        CALL METIS_PartGraphRecursive(me_phi, 1, xind_phi,xadj_phi,vwgt, vwgt, adjwgt, nb_proc,tpwgts, &
             ubvec, metis_opt, edge, part_phi)
     END IF
+    !===End Create partitions
+
     !===Create global partition 'part'
     part = -1
+    IF (me_conc/=0) THEN
+       part(conc2glob(:)) = part_conc
+    END IF
     IF (me_u/=0) THEN
        part(u2glob(:)) = part_u
     END IF
@@ -400,7 +475,7 @@ CONTAINS
     IF (MINVAL(part)==-1) THEN
        CALL error_Petsc('BUG in part_mesh_mhd_bis, MINVAL(part) == -1')
     END IF
-    !===End Create global partition
+    !===End Create global partition 'part'
 
     !===Create parts and modify part
     !===Search on the boundary whether ms is on a cut.
@@ -525,20 +600,25 @@ CONTAINS
 !!$ WARNING, FL 1/2/13 : TO BE ADDED IF NEEDED
 
     DEALLOCATE(vwgt,adjwgt)
+    IF (ALLOCATED(xadj_conc)) DEALLOCATE(xadj_conc)
     IF (ALLOCATED(xadj_u)) DEALLOCATE(xadj_u)
     IF (ALLOCATED(xadj_T)) DEALLOCATE(xadj_T)
     IF (ALLOCATED(xadj_h)) DEALLOCATE(xadj_h)
     IF (ALLOCATED(xadj_phi)) DEALLOCATE(xadj_phi)
     IF (ALLOCATED(list_T)) DEALLOCATE(list_T)
     IF (ALLOCATED(list_h)) DEALLOCATE(list_h)
+    IF (ALLOCATED(list_u)) DEALLOCATE(list_u)
+    IF (ALLOCATED(xind_conc)) DEALLOCATE(xind_conc)
     IF (ALLOCATED(xind_u)) DEALLOCATE(xind_u)
     IF (ALLOCATED(xind_T)) DEALLOCATE(xind_T)
     IF (ALLOCATED(xind_h)) DEALLOCATE(xind_h)
     IF (ALLOCATED(xind_phi)) DEALLOCATE(xind_phi)
+    IF (ALLOCATED(conc2glob)) DEALLOCATE(conc2glob)
     IF (ALLOCATED(u2glob)) DEALLOCATE(u2glob)
     IF (ALLOCATED(T2glob)) DEALLOCATE(T2glob)
     IF (ALLOCATED(h2glob)) DEALLOCATE(h2glob)
     IF (ALLOCATED(phi2glob)) DEALLOCATE(phi2glob)
+    IF (ALLOCATED(part_conc)) DEALLOCATE(part_conc)
     IF (ALLOCATED(part_u)) DEALLOCATE(part_u)
     IF (ALLOCATED(part_T)) DEALLOCATE(part_T)
     IF (ALLOCATED(part_h)) DEALLOCATE(part_h)

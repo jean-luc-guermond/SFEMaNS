@@ -2,18 +2,18 @@
 !Authors Jean-Luc Guermond, Raphael Laguerre, Caroline Nore, Copyrights 2005
 !Revised for PETSC, Jean-Luc Guermond, Franky Luddens, January 2011
 !
-MODULE subroutine_temperature
+MODULE subroutine_temperature_with_T
   USE my_util
   USE boundary
 
-  PUBLIC :: three_level_temperature
+  PUBLIC :: three_level_temperature_with_T
   PRIVATE
 CONTAINS
 
-  SUBROUTINE three_level_temperature(comm_one_d,time, temp_1_LA, dt, list_mode, &
-       temp_mesh, tempn_m1, tempn, chmp_vit, chmp_mag, chmp_pdt_H, vol_heat_capacity, &
+  SUBROUTINE three_level_temperature_with_T(comm_one_d,time, temp_1_LA, dt, list_mode, &
+       temp_mesh, tempn_m1, tempn, vel_field, mag_field, pdt_H_field, vol_heat_capacity, &
        temp_diffusivity, my_par_cc, temp_list_dirichlet_sides, &
-       temp_list_robin_sides, convection_coeff, exterior_temperature, temp_per) ! MODIFICATION: robin
+       temp_list_robin_sides, convection_coeff, exterior_temperature, temp_per)
     !==============================
     USE def_type_mesh
     USE fem_M_axi
@@ -40,33 +40,33 @@ CONTAINS
     TYPE(solver_param),             INTENT(IN)          :: my_par_cc
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)       :: tempn_m1, tempn
     INTEGER,      DIMENSION(:),     INTENT(IN)          :: temp_list_dirichlet_sides
-    INTEGER,      DIMENSION(:),     INTENT(IN)          :: temp_list_robin_sides  ! MODIFICATION: robin
+    INTEGER,      DIMENSION(:),     INTENT(IN)          :: temp_list_robin_sides
     REAL(KIND=8), DIMENSION(:),     INTENT(IN)          :: vol_heat_capacity, temp_diffusivity
-    REAL(KIND=8), DIMENSION(:),     INTENT(IN)          :: convection_coeff, exterior_temperature ! MODIFICATION: robin
-    REAL(KIND=8), DIMENSION(:,:,:),          INTENT(IN) :: chmp_vit, chmp_mag, chmp_pdt_H
+    REAL(KIND=8), DIMENSION(:),     INTENT(IN)          :: convection_coeff, exterior_temperature
+    REAL(KIND=8), DIMENSION(:,:,:),          INTENT(IN) :: vel_field, mag_field, pdt_H_field
     LOGICAL,                                       SAVE :: once = .TRUE.
     INTEGER,                                       SAVE :: m_max_c
     INTEGER,     DIMENSION(:),   POINTER,          SAVE :: temp_js_D ! Dirichlet nodes
     INTEGER,                                       SAVE :: my_petscworld_rank
     REAL(KIND=8),                                  SAVE :: mass0, hmoy
-    TYPE(dyn_real_line),DIMENSION(:), ALLOCATABLE, SAVE :: temp_global_D ! MODIFICATION: axis BC
-    TYPE(dyn_int_line), DIMENSION(:), POINTER,     SAVE :: temp_mode_global_js_D ! MODIFICATION: axis BC
-    !----------FIN SAVE--------------------------------------------------------------------
+    TYPE(dyn_real_line),DIMENSION(:), ALLOCATABLE, SAVE :: temp_global_D ! axis BC
+    TYPE(dyn_int_line), DIMENSION(:), POINTER,     SAVE :: temp_mode_global_js_D ! axis BC
+    !----------END SAVE--------------------------------------------------------------------
 
-    !----------Declaration sans save-------------------------------------------------------
+    !----------Declaration without save----------------------------------------------------
     INTEGER,          POINTER, DIMENSION(:)  :: temp_1_ifrom
     INTEGER                                  :: i, m, n, l, index
     INTEGER                                  :: code, mode
-    !allocations des variables locales
+    !Allocation of local variables
     REAL(KIND=8), DIMENSION(temp_mesh%np)                      :: ff
     REAL(KIND=8), DIMENSION(temp_mesh%np, 2)                   :: tempn_p1
-    REAL(KIND=8), DIMENSION(temp_mesh%gauss%l_G*temp_mesh%me,2, SIZE(list_mode)) :: ff_conv, pyromag_term ! MODIFICATION: pyromagnetic term for fhd
+    REAL(KIND=8), DIMENSION(temp_mesh%gauss%l_G*temp_mesh%me,2, SIZE(list_mode)) :: ff_conv, pyromag_term
     REAL(KIND=8)   ::tps, tps_tot, tps_cumul
     REAL(KIND=8) :: one, zero, three
     DATA zero, one, three/0.d0,1.d0,3.d0/
     REAL(KIND=8), DIMENSION(2,temp_mesh%gauss%l_G*temp_mesh%me)                  :: rr_gauss
     INTEGER,      DIMENSION(temp_mesh%gauss%n_w)                               :: j_loc
-    !Communicators for Petsc, in space and Fourier------------------------------
+    !Communicators for Petsc, in space and Fourier----------------------------------------
     PetscErrorCode                   :: ierr
     MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
     Mat, DIMENSION(:), POINTER, SAVE :: temp_mat
@@ -80,7 +80,7 @@ CONTAINS
 
        CALL MPI_COMM_RANK(PETSC_COMM_WORLD,my_petscworld_rank,code)
 
-       !-----CREATE PETSC VECTORS AND GHOSTS-----------------------------------------
+       !-----CREATE PETSC VECTORS AND GHOSTS-------------------------------------------
        CALL create_my_ghost(temp_mesh,temp_1_LA,temp_1_ifrom)
        n = temp_mesh%dom_np
        CALL VecCreateGhost(comm_one_d(1), n, &
@@ -88,22 +88,22 @@ CONTAINS
        CALL VecGhostGetLocalForm(cx_1, cx_1_ghost, ierr)
        CALL VecDuplicate(cx_1, cb_1, ierr)
        CALL VecDuplicate(cx_1, cb_2, ierr)
-       !------------------------------------------------------------------------------
+       !--------------------------------------------------------------------------------
 
-       !-------------DIMENSIONS-------------------------------------------------------
+       !-------------DIMENSIONS---------------------------------------------------------
        m_max_c = SIZE(list_mode)
-       !------------------------------------------------------------------------------
+       !--------------------------------------------------------------------------------
 
-       !---------PREPARE pp_js_D ARRAY FOR TEMPERATURE--------------------------------------
+       !---------PREPARE pp_js_D ARRAY FOR TEMPERATURE----------------------------------
        CALL dirichlet_nodes_parallel(temp_mesh, temp_list_dirichlet_sides, temp_js_D)
        CALL scalar_with_bc_glob_js_D(temp_mesh, list_mode, temp_1_LA, temp_js_D, temp_mode_global_js_D) ! MODIFICATION: axis BC
        ALLOCATE(temp_global_D(m_max_c))
        DO i = 1, m_max_c
           ALLOCATE(temp_global_D(i)%DRL(SIZE(temp_mode_global_js_D(i)%DIL)))
        END DO
-       !------------------------------------------------------------------------------
-
        !--------------------------------------------------------------------------------
+
+       !------------------------------------------------------------------------------
        hmoy = 0
        DO m = 1, temp_mesh%dom_me
           hmoy = hmoy + SQRT(SUM(temp_mesh%gauss%rj(:,m)))/2
@@ -118,7 +118,7 @@ CONTAINS
        END DO
        !--------------------------------------------------------------------------------
 
-       !-------------ASSEMBLE TEMPERATURE MATRICES--------------------------------------------
+       !-------------ASSEMBLE TEMPERATURE MATRICES--------------------------------------
        ALLOCATE(temp_mat(m_max_c),temp_ksp(m_max_c))
 
        DO i = 1, m_max_c
@@ -127,13 +127,13 @@ CONTAINS
           !---TEMPERATURE MATRIX
           CALL create_local_petsc_matrix(comm_one_d(1), temp_1_LA, temp_mat(i), clean=.FALSE.)
           CALL qs_diff_mass_scal_M_variant(temp_mesh, temp_1_LA, vol_heat_capacity, temp_diffusivity, &
-               1.5d0/dt, temp_list_robin_sides, convection_coeff, zero, mode, temp_mat(i)) ! MODIFICATION: double precision 1.5d0/dt instead of simple precision 1.5/dt & Robin sides and coefficients added
+               1.5d0/dt, temp_list_robin_sides, convection_coeff, zero, mode, temp_mat(i))
 
           IF (temp_per%n_bord/=0) THEN
              CALL periodic_matrix_petsc(temp_per%n_bord, temp_per%list, temp_per%perlist, temp_mat(i), temp_1_LA)
           END IF
 
-          CALL Dirichlet_M_parallel(temp_mat(i),temp_mode_global_js_D(i)%DIL) ! MODIFICATION: axis BC
+          CALL Dirichlet_M_parallel(temp_mat(i),temp_mode_global_js_D(i)%DIL)
 
           CALL init_solver(my_par_cc,temp_ksp(i),temp_mat(i),comm_one_d(1),&
                solver=my_par_cc%solver,precond=my_par_cc%precond)
@@ -143,17 +143,20 @@ CONTAINS
     tps_tot = user_time()
     tps_cumul = 0
 
-    !===Compute rhs by FFT at Gauss points
+    !===Compute convection term at Gauss points
     tps = user_time()
-    CALL smb_ugradc_gauss_fft_par(comm_one_d(2),temp_mesh,list_mode,vol_heat_capacity,chmp_vit,2*tempn-tempn_m1,ff_conv)
+    CALL smb_ugradc_gauss_fft_par(comm_one_d(2),temp_mesh,list_mode,vol_heat_capacity,vel_field,2*tempn-tempn_m1,ff_conv)
+
+    !===Compute pyromagnetic term at Gauss points if fhd
     IF (inputs%type_pb=='fhd') THEN
-       !===Compute pyromagnetic term if fhd
-       CALL smb_pyromag_gauss_fft_par(comm_one_d(2),temp_mesh,list_mode,2*tempn-tempn_m1,chmp_vit,chmp_mag,chmp_pdt_H,pyromag_term)
+       CALL smb_pyromag_gauss_fft_par(comm_one_d(2),temp_mesh,list_mode,2*tempn-tempn_m1,vel_field,mag_field, &
+            pdt_H_field,pyromag_term)
        ff_conv = ff_conv + pyromag_term
     END IF
     tps = user_time() - tps; tps_cumul=tps_cumul+tps
-    !WRITE(*,*) ' Tps fft vitesse', tps
-    !------------CONSTRUCTION OF rr_gauss------------------
+    !WRITE(*,*) ' Time FFT in temperature equation', tps
+
+    !===Compute radius at Gauss points
     index = 0
     DO m = 1, temp_mesh%me
        j_loc = temp_mesh%jj(:,m)
@@ -163,22 +166,23 @@ CONTAINS
           rr_gauss(2,index) = SUM(temp_mesh%rr(2,j_loc)*temp_mesh%gauss%ww(:,l))
        END DO
     END DO
-    !------------DEBUT BOUCLE SUR LES MODES----------------
+
+    !------------BEGIN LOOP ON FOURIER MODES---------------
     DO i = 1, m_max_c
        mode = list_mode(i)
 
        !===RHS temperature
-       ff = (2d0/dt)*tempn(:,1,i) - (1d0/(2*dt))*tempn_m1(:,1,i) ! MODIFICATION: double precision (2 -> 2d0, 1 -> 1d0)
+       ff = (2.d0/dt)*tempn(:,1,i) - (1.d0/(2*dt))*tempn_m1(:,1,i)
        CALL qs_00_gauss (temp_mesh, temp_1_LA, vol_heat_capacity, ff, &
             -ff_conv(:,1,i) + source_in_temperature(1, rr_gauss, mode, time), cb_1)
 
-       ff = (2d0/dt)*tempn(:,2,i) - (1d0/(2*dt))*tempn_m1(:,2,i) ! MODIFICATION: double precision (2 -> 2d0, 1 -> 1d0)
+       ff = (2.d0/dt)*tempn(:,2,i) - (1.d0/(2*dt))*tempn_m1(:,2,i)
        CALL qs_00_gauss (temp_mesh, temp_1_LA, vol_heat_capacity, ff, &
             -ff_conv(:,2,i) + source_in_temperature(2, rr_gauss, mode, time), cb_2)
 
        !===RHS Robins BCs
        IF (mode == 0) THEN ! exterior temperature = constant
-          CALL qs_00_gauss_surface(temp_mesh, temp_1_LA, temp_list_robin_sides, convection_coeff, exterior_temperature, cb_1) ! MODIFICATION: implementation of the term int_(partial Omega) h*Text*v, with h the convection coefficient
+          CALL qs_00_gauss_surface(temp_mesh, temp_1_LA, temp_list_robin_sides, convection_coeff, exterior_temperature, cb_1)
        END IF
 
        !===RHS periodicity
@@ -186,9 +190,9 @@ CONTAINS
           CALL periodic_rhs_petsc(temp_per%n_bord, temp_per%list, temp_per%perlist, cb_1, temp_1_LA)
           CALL periodic_rhs_petsc(temp_per%n_bord, temp_per%list, temp_per%perlist, cb_2, temp_1_LA)
        END IF
-       !----------------------------------------------------------
+       !------------------------------------------------------
 
-       n = SIZE(temp_js_D) ! MODIFICATION: axis BC
+       n = SIZE(temp_js_D)
        temp_global_D(i)%DRL(n+1:) = 0.d0
        temp_global_D(i)%DRL(1:n) = temperature_exact(1,temp_mesh%rr(:,temp_js_D), mode, time)
        CALL dirichlet_rhs(temp_mode_global_js_D(i)%DIL-1,temp_global_D(i)%DRL,cb_1)
@@ -196,62 +200,47 @@ CONTAINS
        CALL dirichlet_rhs(temp_mode_global_js_D(i)%DIL-1,temp_global_D(i)%DRL,cb_2)
 
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
-       !WRITE(*,*) ' Tps second membre vitesse', tps
-       !-------------------------------------------------------------------------------------
+       !WRITE(*,*) ' Time computing RHS temperature problem', tps
+       !------------------------------------------------------
 
-       !--------------------INVERSION DES OPERATEURS--------------
+       !------------INVERTING OPERATORS-----------------------
        tps = user_time()
-       !Solve system temp_c
+       !Solve system temp_cosine
        CALL solver(temp_ksp(i),cb_1,cx_1,reinit=.FALSE.,verbose=my_par_cc%verbose)
        CALL VecGhostUpdateBegin(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(cx_1_ghost,1,1,temp_1_LA,tempn_p1(:,1))
 
-       !Solve system temp_s
+       !Solve system temp_sine
        CALL solver(temp_ksp(i),cb_2,cx_1,reinit=.FALSE.,verbose=my_par_cc%verbose)
        CALL VecGhostUpdateBegin(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(cx_1_ghost,1,1,temp_1_LA,tempn_p1(:,2))
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
-       !WRITE(*,*) ' Tps solution des pb de vitesse', tps, 'for mode ', mode
-       !-------------------------------------------------------------------------------------
+       !WRITE(*,*) ' Time inverting temperature problem', tps, 'for mode ', mode
+       !------------------------------------------------------
 
-       !---------------UPDATES-----------------------
+       !------------UPDATES-----------------------------------
        tps = user_time()
 
-       !JLG AR, Dec 18 2008/JLG Bug corrige Jan 23 2010
+       !Force Sine Fourier coefficient to zero for mode=0
        IF (mode==0) THEN
           tempn_p1 (:,2) = 0.d0
        END IF
-       !JLG AR, Dec 18 2008/JLG Bug corrige Jan 23 2010
-
 
        tempn_m1(:,:,i) = tempn(:,:,i)
        tempn   (:,:,i) = tempn_p1
 
-       ! Reconstruct dtempndt on Gauss points
-       ! WARNING FL (1/2/13) If reactivated, declare l and index
-       !tempn_p1 = (3*tempn_p1 - 4*tempn(:,:,i) + tempn_m1(:,:,i))/(2*dt)
-       !index = 0
-       !DO m = 1, temp_mesh%me
-       !   DO l = 1, temp_mesh%gauss%l_G
-       !      index  = index + 1
-       !      dtempndt(index,1,i) = SUM(tempn_p1(temp_mesh%jj(:,m),1)*temp_mesh%gauss%ww(:,l)) + ff_conv(index,1,i)
-       !      dtempndt(index,2,i) = SUM(tempn_p1(temp_mesh%jj(:,m),2)*temp_mesh%gauss%ww(:,l)) + ff_conv(index,2,i)
-       !   END DO
-       !END DO
-       ! WARNING FL (1/2/13) If reactivated, declare l and index
-
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
        !WRITE(*,*) ' Tps  des updates', tps
-       !-------------------------------------------------------------------------------------
+       !------------------------------------------------------
     ENDDO
 
     tps_tot = user_time() - tps_tot
-    !WRITE(*,'(A,2(f13.3,2x))') '  Tps boucle en temps Navier_stokes', tps_tot, tps_cumul
+    !WRITE(*,'(A,2(f13.3,2x))') ' Time for loop in Temperature', tps_tot, tps_cumul
     !WRITE(*,*) ' TIME = ', time, '========================================'
 
-  END SUBROUTINE three_level_temperature
+  END SUBROUTINE three_level_temperature_with_T
   !============================================
 
   SUBROUTINE smb_ugradc_gauss_fft_par(communicator,mesh,list_mode,heat_capa_in,V_in,c_in,c_out)
@@ -277,7 +266,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,2)   :: cs
     INTEGER,      DIMENSION(:,:), POINTER       :: jj
     INTEGER,                      POINTER       :: me
-    REAL(KIND=8)   :: ray, tps
+    REAL(KIND=8)                                :: ray, tps
     REAL(KIND=8), DIMENSION(3)                  :: temps
     INTEGER                                     :: code, m_max_pad, bloc_size, nb_procs
     MPI_Comm       :: communicator
@@ -305,7 +294,7 @@ CONTAINS
              !===Compute radius of Gauss point
              ray = SUM(mesh%rr(1,j_loc)*ww(:,l))
 
-             !-----------------vitesse sur les points de Gauss---------------------------
+             !------------Velocity at Gauss points------------------
              W(index,1,i) = SUM(Vs(:,1)*ww(:,l))
              W(index,3,i) = SUM(Vs(:,3)*ww(:,l))
              W(index,5,i) = SUM(Vs(:,5)*ww(:,l))
@@ -314,13 +303,13 @@ CONTAINS
              W(index,4,i) = SUM(Vs(:,4)*ww(:,l))
              W(index,6,i) = SUM(Vs(:,6)*ww(:,l))
 
+             !------------Divergence Vecocity at Gauss points-------
              Div(index,1,i) = SUM(Vs(:,1)*dw_loc(1,:)) + SUM(Vs(:,1)*ww(:,l))/ray &
                   + (mode/ray)*SUM(Vs(:,4)*ww(:,l)) +  SUM(Vs(:,5)*dw_loc(2,:))
              Div(index,2,i) = SUM(Vs(:,2)*dw_loc(1,:)) + SUM(Vs(:,2)*ww(:,l))/ray &
                   - (mode/ray)*SUM(Vs(:,3)*ww(:,l)) +  SUM(Vs(:,6)*dw_loc(2,:))
 
-             !-----------------gradient de c sur les points de Gauss---------------------------
-             !coeff sur les cosinus et sinus
+             !------------Temperature gradient at Gauss points------
              Gradc(index,1,i) = SUM(cs(:,1)*dw_loc(1,:))
              Gradc(index,2,i) = SUM(cs(:,2)*dw_loc(1,:))
              Gradc(index,3,i) =  mode/ray*SUM(cs(:,2)*ww(:,l))
@@ -330,6 +319,7 @@ CONTAINS
 
              Gradc(index,:,i) = heat_capa_in(m) * Gradc(index,:,i)
 
+             !------------Temperature at Gauss points---------------
              Cgauss(index,1,i) = SUM(cs(:,1)*ww(:,l))
              Cgauss(index,2,i) = SUM(cs(:,2)*ww(:,l))
 
@@ -340,7 +330,7 @@ CONTAINS
     END DO
 
     !tps = user_time() - tps
-    !WRITE(*,*) ' Tps dans la grande boucle', tps
+    !WRITE(*,*) ' Time in big loop', tps
     !tps = user_time()
     temps = 0
 
@@ -352,11 +342,10 @@ CONTAINS
     CALL FFT_PAR_PROD_DCL(communicator, Div, Cgauss, cint, nb_procs, bloc_size, m_max_pad, temps)
     c_out = c_out + cint
     tps = user_time() - tps
-    !WRITE(*,*) ' Tps dans FFT_PAR_PROD_VECT', tps
-    !write(*,*) ' Temps de Comm   ', temps(1)
-    !write(*,*) ' Temps de Calc   ', temps(2)
-    !write(*,*) ' Temps de Chan   ', temps(3)
-
+    !WRITE(*,*) ' Time in FFT_PAR_PROD_VECT', tps
+    !write(*,*) ' Communication time   ', temps(1)
+    !write(*,*) ' Computation time   ', temps(2)
+    !write(*,*) ' Change Format Time   ', temps(3)
   END SUBROUTINE smb_ugradc_gauss_fft_par
 
   SUBROUTINE mass_tot(communicator,mesh,tempn,RESLT)
@@ -527,4 +516,4 @@ CONTAINS
 
   END SUBROUTINE smb_pyromag_gauss_fft_par
 
-END MODULE subroutine_temperature
+END MODULE subroutine_temperature_with_T

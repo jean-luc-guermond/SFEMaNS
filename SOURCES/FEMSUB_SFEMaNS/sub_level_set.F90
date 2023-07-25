@@ -17,7 +17,7 @@ CONTAINS
 
   SUBROUTINE three_level_level_set(comm_one_d,time, cc_1_LA, dt, list_mode, cc_mesh, cn_m1, cn, &
        chmp_vit, max_vel, my_par_cc, cc_list_dirichlet_sides, cc_per, nb_inter, &
-       visc_entro_level)
+       visc_entro_level, cext_reg)
     !==============================
     USE def_type_mesh
     USE fem_M_axi
@@ -47,6 +47,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)          :: chmp_vit
     REAL(KIND=8),                   INTENT(INOUT)       :: max_vel
     REAL(KIND=8), DIMENSION(:,:),   INTENT(IN)          :: visc_entro_level
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT)         :: cext_reg
     TYPE(dyn_real_line),DIMENSION(:), ALLOCATABLE, SAVE :: cc_global_D
     TYPE(dyn_int_line), DIMENSION(:), POINTER,     SAVE :: cc_mode_global_js_D
     LOGICAL,                                       SAVE :: once = .TRUE., once_vel=.TRUE.
@@ -66,7 +67,6 @@ CONTAINS
     REAL(KIND=8), DIMENSION(cc_mesh%np)                      :: ff
     REAL(KIND=8), DIMENSION(cc_mesh%np, 2)                   :: cn_p1
     REAL(KIND=8), DIMENSION(cc_mesh%np,2,SIZE(list_mode))    :: cext
-    REAL(KIND=8), DIMENSION(cc_mesh%np,2,SIZE(list_mode))    :: cext_reg
     REAL(KIND=8), DIMENSION(cc_mesh%gauss%l_G*cc_mesh%me, 2, SIZE(list_mode)) :: ff_conv
     REAL(KIND=8), DIMENSION(cc_mesh%gauss%l_G*cc_mesh%me, 2, SIZE(list_mode)) :: ff_comp
     REAL(KIND=8), DIMENSION(cc_mesh%gauss%l_G*cc_mesh%me, 6, SIZE(list_mode)) :: ff_entro

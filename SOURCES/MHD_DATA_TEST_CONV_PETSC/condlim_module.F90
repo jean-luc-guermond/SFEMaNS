@@ -19,8 +19,17 @@ MODULE boundary_generic_module
        REAL(KIND=8),                   INTENT(IN) :: dt
        INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
        REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: tempn_m1, tempn
-       INTEGER                                    :: mode, i, j
      END SUBROUTINE init_temperature
+
+     MODULE SUBROUTINE init_concentration(mesh, time, dt, list_mode, concn_m1, concn)
+       USE def_type_mesh
+       TYPE(mesh_type)                            :: mesh
+       REAL(KIND=8),                   INTENT(OUT):: time
+       REAL(KIND=8),                   INTENT(IN) :: dt
+       INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
+       REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: concn_m1, concn
+     END SUBROUTINE init_concentration
+
 
      MODULE SUBROUTINE init_level_set(pp_mesh, time, &
           dt, list_mode, level_set_m1, level_set)
@@ -33,17 +42,19 @@ MODULE boundary_generic_module
      END SUBROUTINE init_level_set
 
      MODULE FUNCTION source_in_NS_momentum(TYPE, rr, mode, i, time, Re, ty, &
-          opt_density, opt_tempn) RESULT(vv)
+          density, tempn, concn) RESULT(vv)
        INTEGER     ,                             INTENT(IN) :: TYPE
        REAL(KIND=8), DIMENSION(:,:),             INTENT(IN) :: rr
        INTEGER     ,                             INTENT(IN) :: mode, i
        REAL(KIND=8),                             INTENT(IN) :: time
        REAL(KIND=8),                             INTENT(IN) :: Re
        CHARACTER(LEN=2),                         INTENT(IN) :: ty
-       REAL(KIND=8), DIMENSION(:,:,:), OPTIONAL, INTENT(IN) :: opt_density
-       REAL(KIND=8), DIMENSION(:,:,:), OPTIONAL, INTENT(IN) :: opt_tempn
+       REAL(KIND=8), DIMENSION(:,:,:),           INTENT(IN) :: density
+       REAL(KIND=8), DIMENSION(:,:,:),           INTENT(IN) :: tempn
+       REAL(KIND=8), DIMENSION(:,:,:),           INTENT(IN) :: concn
        REAL(KIND=8), DIMENSION(SIZE(rr,2))                  :: vv
      END FUNCTION source_in_NS_momentum
+
 
      MODULE FUNCTION source_in_temperature(TYPE, rr, m, t) RESULT(vv)
        INTEGER     ,                        INTENT(IN)   :: TYPE
@@ -91,6 +102,15 @@ MODULE boundary_generic_module
        REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
      END FUNCTION temperature_exact
 
+     MODULE FUNCTION concentration_exact(TYPE,rr,m,t) RESULT (vv)
+       INTEGER,                             INTENT(IN)   :: TYPE
+       REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
+       INTEGER     ,                        INTENT(IN)   :: m
+       REAL(KIND=8),                        INTENT(IN)   :: t
+       REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
+     END FUNCTION concentration_exact
+
+
      MODULE FUNCTION level_set_exact(interface_nb,TYPE,rr,m,t)  RESULT (vv)
        INTEGER     ,                        INTENT(IN)   :: TYPE
        REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
@@ -118,6 +138,24 @@ MODULE boundary_generic_module
        REAL(KIND=8),                        INTENT(IN)   :: t
        REAL(KIND=8), DIMENSION(H_Mesh%np)                :: vv
      END FUNCTION extension_velocity
+
+     MODULE FUNCTION extension_temperature(TYPE, H_mesh, mode, t, n_start) RESULT(vv)
+       USE def_type_mesh
+       TYPE(mesh_type),                     INTENT(IN)   :: H_mesh
+       INTEGER     ,                        INTENT(IN)   :: TYPE, n_start
+       INTEGER,                             INTENT(IN)   :: mode
+       REAL(KIND=8),                        INTENT(IN)   :: t
+       REAL(KIND=8), DIMENSION(H_Mesh%np)                :: vv
+     END FUNCTION extension_temperature
+
+     MODULE FUNCTION extension_concentration(TYPE, vv_mesh, mode, t, n_start) RESULT(vv)
+       USE def_type_mesh
+       TYPE(mesh_type),                     INTENT(IN)   :: vv_mesh
+       INTEGER     ,                        INTENT(IN)   :: TYPE, n_start
+       INTEGER,                             INTENT(IN)   :: mode
+       REAL(KIND=8),                        INTENT(IN)   :: t
+       REAL(KIND=8), DIMENSION(vv_Mesh%np)               :: vv
+     END FUNCTION extension_concentration
 
      MODULE FUNCTION Vexact(m, H_mesh) RESULT(vv)  !Set uniquement a l'induction
        USE def_type_mesh
@@ -229,6 +267,24 @@ MODULE boundary_generic_module
        REAL(KIND=8) :: temp
        REAL(KIND=8) :: vv
      END FUNCTION nu_tilde_law
+
+     MODULE FUNCTION rot_H_jump_interface(mesh,rr,list_mode) RESULT(vv)
+       USE def_type_mesh
+       TYPE(mesh_type)                                   :: mesh
+       REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
+       INTEGER,      DIMENSION(:),          INTENT(IN)   :: list_mode
+       REAL(KIND=8), DIMENSION(SIZE(rr,2),6,SIZE(list_mode)) :: vv
+     END FUNCTION rot_H_jump_interface
+
+     MODULE FUNCTION Derivative_of_potential_from_rhoLi(delta_rhoLi_phys) RESULT(vv)
+       REAL(KIND=8) :: delta_rhoLi_phys
+       REAL(KIND=8) :: vv
+     END FUNCTION Derivative_of_potential_from_rhoLi
+
+     MODULE FUNCTION molar_fraction_from_concentration(delta_rhoLi_phys) RESULT(vv)
+       REAL(KIND=8) :: delta_rhoLi_phys
+       REAL(KIND=8) :: vv
+     END FUNCTION molar_fraction_from_concentration
 
   END INTERFACE
 END MODULE boundary_generic_module

@@ -1,0 +1,1439 @@
+PROGRAM mhd_prog
+  USE def_type_mesh
+  USE initialization
+  USE my_util
+  USE input_data
+  ! USE arpack_mhd
+  USE fourier_to_real_for_vtu
+  USE user_data
+  USE post_processing_debug
+  USE verbose
+#include "petsc/finclude/petsc.h"
+  USE petsc
+  IMPLICIT NONE
+  !===Navier-Stokes fields========================================================
+  TYPE(mesh_type), POINTER                        :: pp_mesh, vv_mesh
+  REAL(KIND=8), POINTER, DIMENSION(:,:,:)         :: un, pn
+  TYPE(dyn_real_array_three), POINTER, DIMENSION(:):: der_un
+  !===Maxwell fields==============================================================
+  TYPE(mesh_type), POINTER                        :: H_mesh, phi_mesh
+  TYPE(interface_type), POINTER                   :: interface_H_mu, interface_H_phi
+  REAL(KIND=8), POINTER,      DIMENSION(:,:,:)    :: Hn, Bn, phin, vel
+  REAL(KIND=8), POINTER,      DIMENSION(:)        :: sigma_field, mu_H_field
+  !===Temperature field===========================================================
+  TYPE(mesh_type), POINTER                        :: temp_mesh
+  REAL(KIND=8), POINTER, DIMENSION(:,:,:)         :: temperature
+  REAL(KIND=8), POINTER,      DIMENSION(:)        :: vol_heat_capacity_field
+  REAL(KIND=8), POINTER,      DIMENSION(:)        :: temperature_diffusivity_field
+  !===Concentration field===========================================================
+  TYPE(mesh_type), POINTER                        :: conc_mesh
+  REAL(KIND=8), POINTER, DIMENSION(:,:,:)         :: concentration
+  REAL(KIND=8), POINTER,      DIMENSION(:)        :: concentration_diffusivity_field
+  !===Level_set===================================================================
+  REAL(KIND=8), POINTER, DIMENSION(:,:,:,:)       :: level_set
+  !===Density=====================================================================
+  REAL(KIND=8), POINTER, DIMENSION(:,:,:)         :: density
+  !===Fourier modes===============================================================
+  INTEGER                                         :: m_max_c
+  INTEGER,      POINTER,      DIMENSION(:)        :: list_mode
+  !===Time iterations=============================================================
+  REAL(KIND=8)                                    :: time
+  INTEGER                                         :: it
+  !===Timing======================================================================
+  REAL(KIND=8)                                    :: tps, tploc, tploc_max=0.d0
+  !===Declare PETSC===============================================================
+  PetscErrorCode :: ierr
+  PetscMPIInt    :: rank
+  MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d, comm_one_d_ns, comm_one_d_temp
+  MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d_conc
+
+  !===Start PETSC and MPI (mandatory)=============================================
+  CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+  CALL MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
+
+  !===User reads his/her own data=================================================
+  CALL read_user_data('data')
+
+  !===Initialize SFEMANS (mandatory)==============================================
+  CALL initial(vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, conc_mesh,&
+       interface_H_phi, interface_H_mu, list_mode, &
+       un, pn, Hn, Bn, phin, vel, &
+       vol_heat_capacity_field, temperature_diffusivity_field, &
+       concentration_diffusivity_field,mu_H_field, sigma_field, time, m_max_c, &
+       comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc,temperature, &
+       concentration, level_set, density, &
+       der_un)
+
+
+  !===============================================================================
+  !                        VISUALIZATION WITHOUT COMPUTING                       !
+  !===============================================================================
+  IF (inputs%if_just_processing) THEN
+     inputs%freq_plot=1
+     CALL my_post_processing(1)
+     CALL error_petsc('End post_processing')
+  END IF
+
+  !===============================================================================
+  !                        EIGENVALUE PROBLEMS/ARPACK                            !
+  !===============================================================================
+  !  IF (inputs%if_arpack) THEN
+  !     !ATTENTION: m_max_c should be equal to 1, meaning each processors is dealing with 1 Fourier mode
+  !     !    CALL solver_arpack_mhd(comm_one_d,H_mesh,phi_mesh,&
+  !     !         inputs%dt,list_mode,mu_H_field)
+  !     !===Postprocessing to check convergence
+  !     IF (inputs%test_de_convergence) THEN
+  !        CALL post_proc_test(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
+  !             un, pn, Hn, Bn, phin, temperature, level_set, mu_H_field, &
+  !             time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp)
+  !        CALL error_Petsc('End of convergence test')
+  !        !IF (rank==0) WRITE(*,*) 'End of convergence test'
+  !        !RETURN
+  !     END IF
+  !     !=== Put your postprocessing here
+  !
+  !     !===End of code for ARPACK problem
+  !     CALL error_Petsc('END OF ARPACK, EXITING PRGM')
+  !     !IF (rank==0) WRITE(*,*) 'END OF ARPACK, EXITING PRGM'
+  !     !RETURN
+  !  END IF
+
+  !===============================================================================
+  !                        TIME INTEGRATION                                      !
+  !===============================================================================
+
+  IF (inputs%if_post_proc_init) THEN
+     CALL my_post_processing(0)
+  END IF
+
+  !===Start time loop
+  tps = user_time()
+  DO it = 1, inputs%nb_iteration
+     tploc =  user_time()
+     time = time + inputs%dt
+
+     CALL run_SFEMaNS(time, it)
+
+     !===My postprocessing
+     IF (.NOT.inputs%test_de_convergence) THEN
+        CALL my_post_processing(it)
+     END IF
+
+     !===Write restart file
+     IF (MOD(it, inputs%freq_restart) == 0) THEN
+        CALL  save_run(it,inputs%freq_restart)
+     ENDIF
+
+     !===Timing
+     tploc = user_time() - tploc
+     IF (it>1) tploc_max = tploc_max + tploc
+
+  ENDDO
+
+  !===Timing======================================================================
+  tps = user_time() - tps
+  CALL write_verbose(rank,opt_tps=tps,opt_tploc_max=tploc_max)
+
+  !===Postprocessing to check convergence=========================================
+  IF (inputs%if_regression) THEN
+     CALL regression(conc_mesh, vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
+          un, pn, Hn, Bn, phin, temperature, level_set, concentration, mu_H_field, &
+          time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc)
+     CALL error_Petsc('End of convergence test')
+  END IF
+
+  !===End of code=================================================================
+  CALL error_Petsc('End of SFEMaNS')
+CONTAINS
+
+  SUBROUTINE my_post_processing(it)
+    USE sub_plot
+    USE chaine_caractere
+    USE tn_axi
+    USE boundary
+    USE sft_parallele
+    USE verbose
+    USE user_data
+    USE sfemans_tools
+    USE vtk_viz
+    USE subroutine_mass
+    IMPLICIT NONE
+    INTEGER,                             INTENT(IN) :: it
+    REAL(KIND=8)                                    :: err, norm, normr, normt, normz
+    INTEGER                                         :: i, k, it_plot
+    CHARACTER(LEN=3)                                :: what
+    INTEGER                                         :: rank_S, rank_F
+    INTEGER                                         :: rank_ns_S, rank_ns_F, nb_S
+    REAL(KIND=8), DIMENSION(vv_mesh%np, 2, SIZE(list_mode)) :: sigma_fluid
+    REAL(KIND=8), DIMENSION(vv_mesh%np, 2, SIZE(list_mode)) :: level_1_P2
+    REAL(KIND=8), DIMENSION(pp_mesh%np, 2, SIZE(list_mode)) :: level_1_P1
+    LOGICAL,      SAVE                         :: once=.TRUE., once_plot=.TRUE.
+    INTEGER                                    :: my_petscworld_rank, code!, m, mode
+    INTEGER                                    :: bloc_size, m_max_pad, nb_procs!, int_nb
+    !REAL(KIND=8), DIMENSION(3)                 :: umax_loc, umax
+    !REAL(KIND=8)                               :: interface_z_max, interface_z_max_tot
+    !REAL(KIND=8)                               :: interface_z_min, interface_z_min_tot
+    !===Energies====================================================================
+    REAL(KIND=8), DIMENSION(m_max_c)                :: e_c_u, e_cm_h, temp, conc
+    CHARACTER(LEN=3)                                :: truc
+    CHARACTER(LEN=100)                              :: en_file
+    CHARACTER(LEN=100) , SAVE                       :: e_c_u_file, e_cm_h_file, temp_file, conc_file
+    !===Kinetic energy===============================================================
+    REAL(KIND=8), DIMENSION(vv_mesh%np, 6, SIZE(list_mode)) :: momentum
+    !===Anemometers=================================================================
+    CHARACTER(LEN=200) , SAVE                       :: anemometre_h_file, anemometre_v_file, anemometre_T_file
+    CHARACTER(LEN=200) , SAVE                       :: anemometre_conc_file
+    INTEGER , ALLOCATABLE, DIMENSION(:) , SAVE      :: anemo_v, anemo_h, anemo_T, anemo_conc
+    INTEGER                             , SAVE      :: nb_anemo_v, nb_anemo_h, nb_anemo_T, nb_anemo_conc
+    INTEGER                                         :: i_x, i_y
+    !===Errors======================================================================
+    REAL(KIND=8), DIMENSION(SIZE(Hn,1),  SIZE(Hn,2),  SIZE(Hn,3)) :: Hn_ex, Hn_error
+    REAL(KIND=8)                                    :: norm_tot_err,norm_Hn_ex,norm_Hn_error
+    !===VTU 2D======================================================================
+    CHARACTER(LEN=3)   :: st_mode
+    CHARACTER(LEN=200) :: header
+    CHARACTER(LEN=3)   :: name_of_field
+    CHARACTER(LEN=8)   :: name_of_field_error
+    !===VTU 3D======================================================================
+    REAL(KIND=8), DIMENSION(SIZE(concentration,1),SIZE(concentration,2),SIZE(concentration,3)):: molar_fraction
+
+    !===Summary outputs==============================================================
+    !Outputs are written every freq_en iterations (to set in data)
+    !Plots 3D are written every freq_plot iterations (to set in data)
+    !Plots 2D disable by default. To enable, add the following line to data and set to true
+    !===Create 2D plots (true/false)
+    !=======Energies
+    !For each variables, the energy of the Fourier mode i is saved in the following file
+    !e_c_u_i (velocity field)
+    !e_cm_h_i (magnetic field)
+    !temp_i (temperature)
+    !conc_i (concentration)
+    !=======Navier-Stokes and mass conservation equations
+    !fort.31 = Time, L2-norm divergence u, (L2-norm divergence u)/(H1-norm u)
+    !fort.98 = Time, kinetic energy, poloidal/toroidal energy, ... (see below)
+    !fort.96 = Time, kinetic energy for problem with variable density
+    !fort.97 = Time, mass conservation for problem with variable density
+    !======Maxwell equations
+    !fort.41 = Time, L2-norm divergence B, (L2-norm divergence B)/(H1-norm B)
+    !fort.51 = Time, L2-norm B, H1-norm B
+    !fort.78 = Time, magnetic energy
+    !======Temperature equation
+    !fort.60 = Time, L2-norm temperature
+    !======Concentration equation
+    !fort.61 = Time, L2-norm concentration
+    !======Anenometers (disabled by default)
+    !Allow to compute value of variables of interest at given positions in the domain
+    !To enable, see read_my_data.F90 and look for anenometer
+    !======Errors (disabled by defaut)
+    !Allow to compute L2/H1 relative errors of variables of interest (velocity, ...)
+    !Errors are written in the file fort.10 every freq_en iterations
+    !To enable add the following line to data and set to true
+    !===Compute L2/H1 relative errors (true/false)
+    !===END Summary outputs==========================================================
+
+    !===Check ranks
+    IF (vv_mesh%me /=0) THEN
+       CALL MPI_Comm_rank(comm_one_d_ns(1), rank_ns_S, ierr)
+       CALL MPI_Comm_rank(comm_one_d_ns(2), rank_ns_F, ierr)
+    ELSE
+       rank_ns_S = -1
+       rank_ns_F = -1
+    END IF
+    CALL MPI_Comm_rank(comm_one_d(1), rank_S, ierr)
+    CALL MPI_Comm_rank(comm_one_d(2), rank_F, ierr)
+    CALL MPI_Comm_size(comm_one_d(1), nb_S, ierr)
+
+    !===Energies and Anemometers
+103 FORMAT(1500(e22.9,2x))
+106 FORMAT(A,x,i3,2x,A,x,e12.5,2x,A,x,e12.5)
+
+    !===Check numerical stability
+    IF (inputs%check_numerical_stability) THEN
+       IF (inputs%type_pb=='nst' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd' &
+            .OR. inputs%type_pb=='mhs') THEN
+          norm = norm_SF(comm_one_d_ns, 'L2', vv_mesh, list_mode, un)
+       ELSE IF (inputs%type_pb=='mxw') THEN
+          norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn)
+       END IF
+       IF (norm>1.d8.OR.isnan(norm)) THEN
+          WRITE(*,*) ' Norm L2 of magnetic field (mxw) or velocity (nst/mhd/fhd/mhs) ', norm
+          CALL error_petsc('From my_post_processing: numerical unstability')
+       END IF
+    END IF
+
+    IF (once) THEN
+       once=.FALSE.
+       CALL MPI_COMM_RANK(PETSC_COMM_WORLD,my_petscworld_rank,code)
+       IF (inputs%type_pb=='nst' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd' &
+            .OR. inputs%type_pb=='mhs') THEN
+          CALL MPI_COMM_SIZE(comm_one_d_ns(2), nb_procs, code)
+
+          en_file = 'e_c_u'
+          DO i = 1, m_max_c
+             WRITE(truc,'(i3)') list_mode(i)
+             en_file = trim(adjustl(en_file))//'_'//trim(adjustl(truc))
+          END DO
+          e_c_u_file = en_file
+          DO i=1, m_max_c
+             e_c_u(i) = 0.5*(norme_L2_champ_par(comm_one_d_ns(1), vv_mesh, list_mode(i:i), un(:,:,i:i)))**2
+          ENDDO
+
+          IF (rank_ns_S == 0) THEN
+             OPEN(UNIT=20,FILE=e_c_u_file, FORM='formatted', STATUS='unknown')
+             WRITE(20,"(A)")'#energie par mode'
+             WRITE(20,"(A)")'# t  ec mode'
+             WRITE(20,103) time, e_c_u
+             CLOSE(20)
+          END IF
+          IF (inputs%if_anemo_v) THEN
+             ALLOCATE(anemo_v(SIZE(inputs%r_anemo_v)*SIZE(inputs%z_anemo_v)))
+             nb_anemo_v = 0
+             DO i_x = 1, SIZE(inputs%r_anemo_v,1)
+                DO i_y = 1, SIZE(inputs%z_anemo_v,1)
+                   anemo_v(nb_anemo_v+1) = find_point(vv_mesh,inputs%r_anemo_v(i_x),inputs%z_anemo_v(i_y))
+                   IF (anemo_v(nb_anemo_v+1) /= 0) THEN
+                      nb_anemo_v = nb_anemo_v + 1
+                   END IF
+                END DO
+             END DO
+
+             en_file = 'anemometre_V'
+             WRITE(truc, '(i3)') rank_ns_S
+             en_file = trim(adjustl(en_file))//'_'//trim(adjustl(truc))
+             DO i = 1, m_max_c
+                WRITE(truc,'(i3)') list_mode(i)
+                en_file = trim(adjustl(en_file))//'_'//trim(adjustl(truc))
+             END DO
+             anemometre_v_file = en_file
+             OPEN(UNIT=56,FILE=anemometre_v_file, FORM='formatted', STATUS='unknown')
+             WRITE(56,"(A)")'#Anemometre pour le champ de vitesse'
+             WRITE(56,"(A)")'#Coordonnees des points :    '
+             DO i = 1, nb_anemo_v
+                WRITE(56,106) '# point ',i, ' : r=', vv_mesh%rr(1,anemo_v(i)), '; z = ', vv_mesh%rr(2,anemo_v(i))
+             ENDDO
+             CLOSE(56)
+          END IF ! (inputs%if_anemo_v)
+       ENDIF ! nst or mhd or fhd or mhs
+
+       IF (inputs%type_pb=='mxw' .OR. inputs%type_pb=='mhd' .OR. &
+            inputs%type_pb=='mxx' .OR. inputs%type_pb=='fhd' .OR. inputs%type_pb=='mhs') THEN
+          en_file = 'e_cm_h'
+          DO i = 1, m_max_c
+             WRITE(truc,'(i3)') list_mode(i)
+             en_file = trim(adjustl(en_file))//'_'//trim(adjustl(truc))
+          END DO
+          e_cm_h_file = en_file
+          DO i=1, m_max_c
+             e_cm_h(i) = 0.5*(norme_L2_champ_par(comm_one_d(1), H_mesh, list_mode(i:i), Hn(:,:,i:i)))**2
+          ENDDO
+          IF (rank_S == 0) THEN
+             OPEN(UNIT=50,FILE=e_cm_h_file, FORM='formatted', STATUS='unknown')
+             WRITE(50,"(A)")'#energie par mode dans le conducteur '
+             WRITE(50,"(A)")'# t  em mode'
+             WRITE(50,103) time, e_cm_h
+             CLOSE(50)
+          END IF
+
+          IF (inputs%if_anemo_h) THEN
+             ALLOCATE(anemo_h(SIZE(inputs%r_anemo_h)*SIZE(inputs%z_anemo_h)))
+             nb_anemo_h = 0
+             DO i_x = 1, SIZE(inputs%r_anemo_h,1)
+                DO i_y = 1, SIZE(inputs%z_anemo_h,1)
+                   anemo_h(nb_anemo_h+1) = find_point(H_mesh,inputs%r_anemo_h(i_x),inputs%z_anemo_h(i_y))
+                   IF (anemo_h(nb_anemo_h+1) /= 0) THEN
+                      nb_anemo_h = nb_anemo_h + 1
+                   END IF
+                END DO
+             END DO
+             en_file = 'anemometre_H'
+             WRITE(truc, '(i3)') rank_S
+             en_file = trim(adjustl(en_file))//'_'//trim(adjustl(truc))
+             DO i = 1, m_max_c
+                WRITE(truc,'(i3)') list_mode(i)
+                en_file = trim(adjustl(en_file))//'_'//trim(adjustl(truc))
+             END DO
+             anemometre_h_file = en_file
+             OPEN(UNIT=57,FILE=anemometre_h_file, FORM='formatted', STATUS='unknown')
+             WRITE(57,"(A)") '#Anemometre pour le champ magnetique'
+             WRITE(57,"(A)") '#Coordonnees des points :    '
+             DO i = 1, nb_anemo_h
+                WRITE(57,106) '# point ',i, 'r=', H_mesh%rr(1,anemo_h(i)), '; z = ', H_mesh%rr(2,anemo_h(i))
+             ENDDO
+             CLOSE(57)
+          END IF ! (inputs%if_anemo_h)
+       ENDIF ! mxw or mhd or mxx or fhd or mhs
+
+       IF (inputs%if_temperature) THEN
+          en_file = 'temp'
+          DO i = 1, m_max_c
+             WRITE(truc,'(i3)') list_mode(i)
+             en_file = trim(adjustl(en_file))//'_'//trim(adjustl(truc))
+          END DO
+          temp_file = en_file
+          DO i=1, m_max_c
+             temp(i) = norm_S(comm_one_d, 'L2', temp_mesh, list_mode(i:i), temperature(:,:,i:i))
+          ENDDO
+          IF (rank_S == 0) THEN
+             OPEN(UNIT=60,FILE=temp_file, FORM='formatted', STATUS='unknown')
+             WRITE(60,"(A)")'#temperature par mode'
+             WRITE(60,"(A)")'# t  temp mode'
+             WRITE(60,103) time, temp
+             CLOSE(60)
+          END IF
+          IF (inputs%if_anemo_T) THEN
+             ALLOCATE(anemo_T(SIZE(inputs%r_anemo_T)*SIZE(inputs%z_anemo_T)))
+             nb_anemo_T = 0
+             DO i_x = 1, SIZE(inputs%r_anemo_T,1)
+                DO i_y = 1, SIZE(inputs%z_anemo_T,1)
+                   anemo_T(nb_anemo_T+1) = find_point(temp_mesh,inputs%r_anemo_T(i_x),inputs%z_anemo_T(i_y))
+                   IF (anemo_T(nb_anemo_T+1) /= 0) THEN
+                      nb_anemo_T = nb_anemo_T + 1
+                   END IF
+                END DO
+             END DO
+             en_file = 'anemometre_T'
+             WRITE(truc, '(i3)') rank_S
+             en_file = trim(adjustl(en_file))//'_'//trim(adjustl(truc))
+             DO i = 1, m_max_c
+                WRITE(truc,'(i3)') list_mode(i)
+                en_file = trim(adjustl(en_file))//'_'//trim(adjustl(truc))
+             END DO
+             anemometre_T_file = en_file
+             OPEN(UNIT=58,FILE=anemometre_T_file, FORM='formatted', STATUS='unknown')
+             WRITE(58,"(A)") '#Anemometre pour la temperature'
+             WRITE(58,"(A)") '#Coordonnees des points :    '
+             DO i = 1, nb_anemo_T
+                WRITE(58,106) '# point ',i, 'r=', temp_mesh%rr(1,anemo_T(i)), '; z = ', temp_mesh%rr(2,anemo_T(i))
+             ENDDO
+             CLOSE(58)
+          END IF ! (inputs%if_anemo_T)
+       ENDIF ! temperature
+
+       IF (inputs%if_concentration) THEN
+          en_file = 'conc'
+          DO i = 1, m_max_c
+             WRITE(truc,'(i3)') list_mode(i)
+             en_file = trim(adjustl(en_file))//'_'//trim(adjustl(truc))
+          END DO
+          conc_file = en_file
+          DO i=1, m_max_c
+             conc(i) = norm_S(comm_one_d, 'L2', conc_mesh, list_mode(i:i), concentration(:,:,i:i))
+          ENDDO
+          IF (rank_S == 0) THEN
+             OPEN(UNIT=61,FILE=conc_file, FORM='formatted', STATUS='unknown')
+             WRITE(61,"(A)")'#concentration par mode'
+             WRITE(61,"(A)")'# t  conc mode'
+             WRITE(61,103) time, conc
+             CLOSE(61)
+          END IF
+          IF (inputs%if_anemo_conc) THEN
+             ALLOCATE(anemo_conc(SIZE(inputs%r_anemo_conc)*SIZE(inputs%z_anemo_conc)))
+             nb_anemo_conc = 0
+             DO i_x = 1, SIZE(inputs%r_anemo_conc,1)
+                DO i_y = 1, SIZE(inputs%z_anemo_conc,1)
+                   anemo_conc(nb_anemo_conc+1) = find_point(conc_mesh,inputs%r_anemo_conc(i_x),inputs%z_anemo_conc(i_y))
+                   IF (anemo_conc(nb_anemo_conc+1) /= 0) THEN
+                      nb_anemo_conc = nb_anemo_conc + 1
+                   END IF
+                END DO
+             END DO
+             en_file = 'anemometre_conc'
+             WRITE(truc, '(i3)') rank_S
+             en_file = trim(adjustl(en_file))//'_'//trim(adjustl(truc))
+             DO i = 1, m_max_c
+                WRITE(truc,'(i3)') list_mode(i)
+                en_file = trim(adjustl(en_file))//'_'//trim(adjustl(truc))
+             END DO
+             anemometre_conc_file = en_file
+             OPEN(UNIT=59,FILE=anemometre_conc_file, FORM='formatted', STATUS='unknown')
+             WRITE(59,"(A)") '#Anemometre pour la concentration'
+             WRITE(59,"(A)") '#Coordonnees des points :    '
+             DO i = 1, nb_anemo_conc
+                WRITE(59,106) '# point ',i, 'r=', conc_mesh%rr(1,anemo_conc(i)), '; z = ', conc_mesh%rr(2,anemo_conc(i))
+             ENDDO
+             CLOSE(59)
+          END IF ! (inputs%if_anemo_conc)
+       ENDIF ! concentration
+    ENDIF ! end once
+
+    !===Put your postprocessing stuff here
+    IF (MOD(it,inputs%freq_en) == 0) THEN
+       !===Verbose
+       CALL write_verbose(rank)
+
+       !TESTJLG to get the interface height on the frontier
+       !IF (inputs%if_level_set) THEN
+       !   CALL interface_mpr(rank)
+       !ENDIF
+       IF (inputs%if_level_set) THEN
+          CALL vmax_height_m0(time,vv_mesh,comm_one_d_ns,list_mode,un,level_set)
+       ELSE
+          CALL vmax_height_m0(time,vv_mesh,comm_one_d_ns,list_mode,un)
+       ENDIF
+       ! TESTJLG to get the interface height on the frontier
+
+       IF (inputs%if_temperature) THEN
+          CALL tempmax_tempmin(time, comm_one_d_temp, list_mode, temperature)
+       ENDIF
+
+       IF (inputs%if_concentration) THEN
+          CALL concmax_concmin(time, comm_one_d_conc, list_mode, concentration)
+          CALL xmax_xmin(time, comm_one_d_conc, list_mode, concentration)
+       ENDIF
+
+       IF (inputs%type_pb=='nst' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd' &
+            .OR. inputs%type_pb=='mhs') THEN
+          IF (inputs%if_compute_momentum_pseudo_force) THEN
+             !===Compute the term -2/pi*integral((1-chi)*(u-u_solid).e_z/dt)
+             !===chi is the penalty function, u_solid the velocity of the solid, dt the time step
+             !==Output written in the file fort.12
+             CALL FORCES_AND_MOMENTS(time,vv_mesh,comm_one_d_ns,list_mode,un)
+          END IF
+
+          err = norm_SF(comm_one_d_ns, 'div', vv_mesh, list_mode, un)
+          norm = norm_SF(comm_one_d_ns, 'H1', vv_mesh, list_mode, un)
+          IF (rank == 0) THEN
+             !===Divergence of velocity
+             WRITE(31,*) time, err, (err/norm)*vv_mesh%global_diameter
+          END IF
+          normr = norm_SF(comm_one_d_ns, 'L2', vv_mesh,list_mode,un(:,1:2,:))
+          normt = norm_SF(comm_one_d_ns, 'L2', vv_mesh,list_mode,un(:,3:4,:))
+          normz = norm_SF(comm_one_d_ns, 'L2', vv_mesh,list_mode,un(:,5:6,:))
+          norm = norm_SF(comm_one_d_ns, 'L2', vv_mesh, list_mode, un)
+          IF (rank == 0) THEN
+             !===Kinetic energy, Poloidal/Toroidal, En_rt, En_z
+             WRITE(98,103) time, 0.5*norm**2, SQRT((normr**2+normz**2)/normt**2), &
+                  0.5*normr**2, 0.5*normt**2, 0.5*normz**2
+             WRITE(*,*) 'norm L2 of velocity', time, norm
+          END IF
+
+          DO i=1, m_max_c
+             e_c_u(i) = 0.5*(norme_L2_champ_par(comm_one_d_ns(1), vv_mesh, list_mode(i:i), un(:,:,i:i)))**2
+          ENDDO
+          IF (rank_ns_S == 0) THEN
+             OPEN(UNIT=20,FILE=e_c_u_file, FORM='formatted', POSITION = 'append', &
+                  STATUS='unknown')
+             WRITE(20,103) time, e_c_u
+
+             CLOSE(20)
+          ENDIF
+          IF (inputs%if_anemo_v) THEN
+             IF (nb_anemo_v /=0) THEN
+                OPEN(UNIT=56,FILE=anemometre_v_file, FORM='formatted', POSITION = 'append', &
+                     STATUS='unknown')
+                WRITE(56,103) time, un(anemo_v(1:nb_anemo_v),1,:), un(anemo_v(1:nb_anemo_v),2,:), &
+                     un(anemo_v(1:nb_anemo_v),3,:), un(anemo_v(1:nb_anemo_v),4,:), &
+                     un(anemo_v(1:nb_anemo_v),5,:), un(anemo_v(1:nb_anemo_v),6,:)
+                CLOSE(56)
+             ENDIF
+          ENDIF
+
+          err = norm_SF(comm_one_d, 'L2', pp_mesh, list_mode, pn)
+          IF (rank == 0) THEN
+             WRITE(*,*) 'norm L2 of pressure', time, err
+          END IF
+
+          IF (inputs%if_level_set) THEN
+             !===Compute the term integral(level_set-level_set_t=0)/integral(level_set_t=0)
+             !===Output written in file fort.97
+             IF (inputs%if_level_set_P2) THEN
+                CALL compute_level_set_conservation(time,vv_mesh,comm_one_d_ns,list_mode,level_set)
+             ELSE
+                CALL compute_level_set_conservation(time,pp_mesh,comm_one_d_ns,list_mode,level_set)
+             END IF
+
+             !===Compute kinetic energy
+             CALL MPI_COMM_SIZE(comm_one_d_ns(2), nb_procs, code)
+             bloc_size = SIZE(density,1)/nb_procs+1
+             m_max_pad = 3*SIZE(list_mode)*nb_procs/2
+             CALL FFT_SCALAR_VECT_DCL(comm_one_d_ns(2), un, density, momentum, 1, nb_procs, &
+                  bloc_size, m_max_pad)
+
+             norm=dot_product_SF(comm_one_d_ns, vv_mesh, list_mode, un, momentum)
+             IF (rank == 0) THEN
+                WRITE(*,*) 'Kinetic energy (integral of momentum times velocity)', time, err
+                WRITE(96,*) time, 0.5*err
+             END IF
+             !===End compute kinetic energy
+          END IF ! end if level_set
+       END IF ! end nst or mhd or fhd or mhs
+
+       IF (inputs%if_temperature) THEN
+          err = norm_SF(comm_one_d_temp, 'L2', temp_mesh, list_mode, temperature)
+          IF (rank == 0) THEN
+             WRITE(99,*) time, err
+             WRITE(*,*) 'norm L2 of temperature', time, err
+          END IF
+
+          DO i=1, m_max_c
+             temp(i) = norm_S(comm_one_d, 'L2', temp_mesh, list_mode(i:i), temperature(:,:,i:i))
+          ENDDO
+          IF (rank_S == 0) THEN
+             OPEN(UNIT=60,FILE=temp_file, FORM='formatted', POSITION = 'append', &
+                  STATUS='unknown')
+             WRITE(60,103) time, temp
+             CLOSE(60)
+          ENDIF
+
+          IF (inputs%if_anemo_T) THEN
+             IF (nb_anemo_T /=0) THEN
+                OPEN(UNIT=58,FILE=anemometre_T_file, FORM='formatted', POSITION = 'append', &
+                     STATUS='unknown')
+                WRITE(58,103) time, temperature(anemo_T(1:nb_anemo_T),1,:), temperature(anemo_T(1:nb_anemo_T),2,:)
+                CLOSE(58)
+             ENDIF
+          ENDIF
+       END IF ! end if_temperature
+
+       IF (inputs%if_concentration) THEN
+          err = norm_SF(comm_one_d_conc, 'L2', conc_mesh, list_mode, concentration)
+          IF (rank == 0) THEN
+             WRITE(199,*) time, err
+             WRITE(*,*) 'norm L2 of concentration', time, err
+          END IF
+
+          DO i=1, m_max_c
+             conc(i) = norm_S(comm_one_d, 'L2', conc_mesh, list_mode(i:i), concentration(:,:,i:i))
+          ENDDO
+          IF (rank_S == 0) THEN
+             OPEN(UNIT=61,FILE=conc_file, FORM='formatted', POSITION = 'append', &
+                  STATUS='unknown')
+             WRITE(61,103) time, conc
+             CLOSE(61)
+          ENDIF
+
+          IF (inputs%if_anemo_conc) THEN
+             IF (nb_anemo_conc /=0) THEN
+                OPEN(UNIT=59,FILE=anemometre_conc_file, FORM='formatted', POSITION = 'append', &
+                     STATUS='unknown')
+                WRITE(59,103) time, concentration(anemo_conc(1:nb_anemo_conc),1,:), &
+                     concentration(anemo_conc(1:nb_anemo_conc),2,:)
+                CLOSE(59)
+             ENDIF
+          ENDIF
+          !CALL potential_on_axis(time, H_mesh, conc_mesh, comm_one_d, comm_one_d_conc,list_mode, Hn, concentration)
+       END IF ! end if_concentration
+
+       IF (inputs%type_pb=='mxw' .OR. inputs%type_pb=='mhd' &
+            .OR. inputs%type_pb=='fhd' .OR. inputs%type_pb=='mhs' ) THEN
+          err = norm_SF(comm_one_d, 'div', H_mesh, list_mode, Hn)
+          norm = norm_SF(comm_one_d, 'H1', H_mesh, list_mode, Hn)
+          IF (rank == 0) THEN
+             !===L2 norm of magnetic field
+             WRITE(41,*) time, err, (err/norm)*H_mesh%global_diameter
+          END IF
+
+          err = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Bn)
+          norm = norm_SF(comm_one_d, 'H1', H_mesh, list_mode, Bn)
+          IF (rank == 0) THEN
+             !===L2 norm of div(Bn)
+             WRITE(51,*) time, err, norm
+             !===Magnetic energy 0.5*B**2
+             WRITE(78,*) time, 0.5*norm**2
+             WRITE(*,*) 'norm L2 of magnetic field', time, norm
+             WRITE(*,*) 'div(Bn) relative of magnetic field Bn', time, (err/norm)*H_mesh%global_diameter
+             WRITE(*,*) '=========================================================='
+          END IF
+
+          DO i=1, m_max_c
+             e_cm_h(i) = 0.5*(norme_L2_champ_par(comm_one_d(1), H_mesh, list_mode(i:i), Hn(:,:,i:i)))**2
+          ENDDO
+          IF (rank_S == 0) THEN
+             OPEN(UNIT=50,FILE=e_cm_h_file, FORM='formatted',POSITION = 'append',&
+                  STATUS='unknown')
+             WRITE(50,103) time, e_cm_h
+             CLOSE(50)
+          END IF
+
+          !TEST LC to move in if_compute_error
+          DO k = 1, 6
+             DO i=1,size(list_mode)
+                Hn_ex(:,k,i) = Hexact(H_mesh,k, H_mesh%rr,list_mode(i), mu_H_field, time)
+             END DO
+          END DO
+          Hn_error = Hn - Hn_ex
+          norm_tot_err = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn_error) / &
+               norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn_ex)
+
+          norm_Hn_error=norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn_error)
+          norm_Hn_ex=norm_SF(comm_one_d, 'L2', H_mesh,list_mode, Hn_ex)
+          IF (rank == 0) THEN
+             WRITE(42,103) time, norm_Hn_error, norm_Hn_ex, norm_tot_err
+          END IF
+          !TEST LC to move in if_compute_error
+
+          IF (inputs%if_anemo_h) THEN
+             IF (nb_anemo_h /=0) THEN
+                OPEN(UNIT=57,FILE=anemometre_h_file, FORM='formatted', POSITION = 'append', &
+                     STATUS='unknown')
+                WRITE(57,103) time, Hn(anemo_h(1:nb_anemo_h),1,:), Hn(anemo_h(1:nb_anemo_h),2,:), &
+                     Hn(anemo_h(1:nb_anemo_h),3,:), Hn(anemo_h(1:nb_anemo_h),4,:), &
+                     Hn(anemo_h(1:nb_anemo_h),5,:), Hn(anemo_h(1:nb_anemo_h),6,:)
+                CLOSE(57)
+             ENDIF
+          ENDIF
+       END IF ! end mxw OR mhd OR fhd or mhs
+
+       IF (inputs%if_compute_error) THEN
+       END IF
+    END IF ! end freq_en
+
+    IF (MOD(it,inputs%freq_plot) == 0) THEN
+       !===Plot whatever you want here
+       IF (once_plot) THEN
+          once_plot=.FALSE.
+          what = 'new'
+       ELSE
+          what = 'old'
+       END IF
+       it_plot = it/inputs%freq_plot
+
+       !===3D/2D Plots for level set and density
+       IF (inputs%if_level_set) THEN
+          IF (inputs%if_level_set_P2) THEN
+             level_1_P2=level_set(1,:,:,:)
+             CALL vtu_3d(comm_one_d,level_1_P2, 'vv_mesh', 'Level_1', 'level_1', what, opt_it=it_plot)
+             IF (inputs%nb_fluid.GE.3) THEN
+                level_1_P2=level_set(2,:,:,:)
+                CALL vtu_3d(comm_one_d,level_1_P2, 'vv_mesh', 'Level_2', 'level_2', what, opt_it=it_plot)
+             END IF
+          ELSE
+             level_1_P1=level_set(1,:,:,:)
+             CALL vtu_3d(comm_one_d,level_1_P1, 'pp_mesh', 'Level_1', 'level_1', what, opt_it=it_plot)
+             IF (inputs%nb_fluid.GE.3) THEN
+                level_1_P1=level_set(2,:,:,:)
+                CALL vtu_3d(comm_one_d,level_1_P1, 'pp_mesh', 'Level_2', 'level_2', what, opt_it=it_plot)
+             END IF
+          END IF
+          CALL vtu_3d(comm_one_d,density, 'vv_mesh', 'Density', 'density', what, opt_it=it_plot)
+          IF (inputs%if_plot_2D) THEN
+             !===Proceed as follows to make 2D plots in the Fourier space (using Hn
+             !for instance)
+             DO i = 1, m_max_c
+                WRITE(st_mode,'(I3)') list_mode(i)
+                header = 'Ln_'//'mode_'//trim(adjustl(st_mode))
+                name_of_field = 'Ln'
+                IF (inputs%if_level_set_P2) THEN
+                   CALL make_vtu_file_2D(comm_one_d_ns(1), vv_mesh, header, level_1_P2(:,:,i), name_of_field, &
+                        what, opt_it=it_plot)
+                ELSE
+                   CALL make_vtu_file_2D(comm_one_d_ns(1), pp_mesh, header, level_1_P1(:,:,i), name_of_field, &
+                        what, opt_it=it_plot)
+                END IF
+                header = 'Dn_'//'mode_'//trim(adjustl(st_mode))
+                name_of_field = 'Dn'
+                CALL make_vtu_file_2D(comm_one_d_ns(1), vv_mesh, header, density(:,:,i), name_of_field, &
+                     what, opt_it=it_plot)
+             END DO
+          END IF
+          IF (inputs%variation_sigma_fluid) THEN
+             CALL reconstruct_variable(comm_one_d_ns, list_mode, pp_mesh, vv_mesh, level_set, &
+                  inputs%sigma_fluid, sigma_fluid)
+             CALL vtu_3d(comm_one_d,sigma_fluid, 'vv_mesh', 'Sigma', 'sigma', what, opt_it=it_plot)
+          END IF
+       END IF
+
+       !===3D/2D Plots for velocity and pressure
+       IF (inputs%type_pb=='nst' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd' .OR. inputs%type_pb=='mhs') THEN
+          CALL vtu_3d(comm_one_d, un, 'vv_mesh', 'Velocity', 'vel', what, opt_it=it_plot)
+          CALL vtu_3d(comm_one_d, pn, 'pp_mesh', 'Pressure', 'pre', what, opt_it=it_plot)
+          IF (inputs%if_plot_2D) THEN
+             !===2D plots for each mode of the velocity
+             DO i = 1, m_max_c
+                WRITE(st_mode,'(I3)') list_mode(i)  !=== (CHARACTER(LEN=3)   :: st_mode)
+                header = 'Vn_'//'mode_'//trim(adjustl(st_mode)) !=== (CHARACTER(LEN=200) :: header)
+                name_of_field = 'Vn' !===(for instance) (CHARACTER(LEN=3)   :: name_of_field)
+                CALL make_vtu_file_2D(comm_one_d_ns(1), vv_mesh, header, un(:,:,i), name_of_field, what, opt_it=it_plot)
+             END DO
+          END IF
+       END IF
+
+       !===3D/2D Plots for temperature
+       IF (inputs%if_temperature) THEN
+          CALL vtu_3d(comm_one_d,temperature, 'temp_mesh', 'Temperature', 'temp', what, opt_it=it_plot)
+          IF (inputs%if_plot_2D) THEN
+             !===2D plots for each mode of the temperature
+             DO i = 1, m_max_c
+                WRITE(st_mode,'(I3)') list_mode(i)
+                header = 'Tn_'//'mode_'//trim(adjustl(st_mode))
+                name_of_field = 'Tn'
+                CALL make_vtu_file_2D(comm_one_d_temp(1), temp_mesh, header, temperature(:,:,i), name_of_field, &
+                     what, opt_it=it_plot)
+             END DO
+          END IF
+       END IF
+
+       !===3D/2D Plots for concentration
+       IF (inputs%if_concentration) THEN
+          CALL vtu_3d(comm_one_d,concentration, 'conc_mesh', 'Concentration', 'conc', what, opt_it=it_plot)
+          IF (inputs%if_plot_2D) THEN
+             !===2D plots for each mode of the concentration
+             DO i = 1, m_max_c
+                WRITE(st_mode,'(I3)') list_mode(i)
+                header = 'Cn_'//'mode_'//trim(adjustl(st_mode))
+                name_of_field = 'Cn'
+                CALL make_vtu_file_2D(comm_one_d_conc(1), conc_mesh, header, concentration(:,:,i), name_of_field, &
+                     what, opt_it=it_plot)
+             END DO
+          END IF
+
+          !TEST LC check if we keep or if we add a if coupling_Hx
+          !===molar fraction
+          CALL MPI_COMM_SIZE(comm_one_d_conc(2), nb_procs, code)
+          bloc_size = SIZE(concentration,1)/nb_procs+1
+          m_max_pad = 3*SIZE(list_mode)*nb_procs/2
+          DO k=1,2
+             DO i=1,SIZE(list_mode)
+                molar_fraction(:,k,i) = concentration(:,k,i)
+             END DO
+          END DO
+          CALL FFT_PAR_SCAL_FUNCT(comm_one_d_conc(2), molar_fraction,&
+               molar_fraction_from_concentration,nb_procs, bloc_size, m_max_pad)
+          CALL vtu_3d(comm_one_d,molar_fraction, 'conc_mesh', 'Molar_Fraction', 'mol', what, opt_it=it_plot)
+          IF (inputs%if_plot_2D) THEN
+             !===2D plots for each mode of the molar_fraction
+             DO i = 1, m_max_c
+                WRITE(st_mode,'(I3)') list_mode(i)
+                header = 'Xn_'//'mode_'//trim(adjustl(st_mode))
+                name_of_field = 'Xn'
+                CALL make_vtu_file_2D(comm_one_d_conc(1), conc_mesh, header, molar_fraction(:,:,i), name_of_field,&
+                     what, opt_it=it_plot)
+             END DO
+          END IF
+          !TEST LC check if we keep or if we add a if coupling_Hx
+       END IF
+
+       !===3D/2D Plots for magnetic field
+       IF (inputs%type_pb=='mxw' .OR. inputs%type_pb=='mxx' .OR. inputs%type_pb=='mhd' &
+            .OR. inputs%type_pb=='fhd' .OR. inputs%type_pb=='mhs') THEN
+          CALL vtu_3d(comm_one_d,Hn, 'H_mesh', 'MagField', 'mag', what, opt_it=it_plot)
+          CALL vtu_3d(comm_one_d,Hn, 'H_mesh', 'Current', 'cur', what, opt_it=it_plot, opt_grad_curl='curl_h',opt_2D=.TRUE.,&
+               opt_mesh_in=H_mesh)
+          IF (inputs%nb_dom_phi>0) THEN
+             CALL vtu_3d(comm_one_d,phin, 'phi_mesh', 'ScalPot', 'phi', what, opt_it=it_plot)
+          END IF
+
+          IF (inputs%if_plot_2D) THEN
+             !===2D plots for each mode of the magnetic field
+             DO i = 1, m_max_c
+                WRITE(st_mode,'(I3)') list_mode(i)
+                header = 'Hn_'//'mode_'//trim(adjustl(st_mode))
+                name_of_field = 'Hn'
+                CALL make_vtu_file_2D(comm_one_d(1), H_mesh, header, Hn(:,:,i), name_of_field, &
+                     what, opt_it=it_plot)
+             END DO
+             DO i = 1, m_max_c
+                WRITE(st_mode,'(I3)') list_mode(i)
+                header = 'Hn_error_'//'mode_'//trim(adjustl(st_mode))
+                name_of_field_error = 'Hn_error'
+                CALL make_vtu_file_2D(comm_one_d(1), H_mesh, header, Hn_error(:,:,i), name_of_field, &
+                     what, opt_it=it_plot)
+             END DO
+          END IF
+       END IF
+    ENDIF ! end freq_plot
+
+  END SUBROUTINE my_post_processing
+
+  SUBROUTINE FORCES_AND_MOMENTS(time,vv_mesh,communicator,list_mode,un)
+    USE def_type_mesh
+    USE input_data
+    USE boundary
+    USE sft_parallele
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    TYPE(mesh_type),                                        INTENT(IN)          :: vv_mesh
+    INTEGER,      DIMENSION(:),                             INTENT(IN)          :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:),                         INTENT(IN)          :: un
+    REAL(KIND=8),                                           INTENT(IN)          :: time
+    REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: vel_gauss, vel_gauss_penal
+    REAL(KIND=8), DIMENSION(2,vv_mesh%gauss%l_G*vv_mesh%dom_me)                 :: rr_gauss
+    INTEGER,      DIMENSION(vv_mesh%gauss%n_w)                                  :: j_loc
+    REAL(KIND=8)                                                                :: vel_torque, vel_torque_tot
+    INTEGER ::  m, l , i, mode, index, type, nb_procs, m_max_pad, bloc_size
+    PetscErrorCode                   :: ierr
+    MPI_Comm,DIMENSION(2)            :: communicator
+
+    index = 0
+    DO m = 1, vv_mesh%dom_me
+       j_loc = vv_mesh%jj(:,m)
+       DO l = 1, vv_mesh%gauss%l_G
+          index = index + 1
+          rr_gauss(1,index) = SUM(vv_mesh%rr(1,j_loc)*vv_mesh%gauss%ww(:,l))
+          rr_gauss(2,index) = SUM(vv_mesh%rr(2,j_loc)*vv_mesh%gauss%ww(:,l))
+       END DO
+    END DO
+
+    DO i = 1, SIZE(list_mode)
+       mode = list_mode(i)
+       index = 0
+       DO m = 1, vv_mesh%dom_me
+          j_loc = vv_mesh%jj(:,m)
+          DO l = 1, vv_mesh%gauss%l_G
+             index = index + 1
+             DO type = 1, 6
+                vel_gauss(index,type,i) = SUM(un(j_loc,type,i)*vv_mesh%gauss%ww(:,l))*(3/(2*inputs%dt))
+             END DO
+          END DO
+       END DO
+       IF(inputs%if_impose_vel_in_solids) THEN
+          IF (mode==0) THEN
+             vel_gauss(:,:,i)  =  vel_gauss(:,:,i) - imposed_velocity_by_penalty(rr_gauss(:,:),time)
+          ENDIF
+       END IF
+    END DO
+
+    CALL MPI_COMM_SIZE(communicator(2), nb_procs, ierr)
+    m_max_pad = 3*SIZE(list_mode)*nb_procs/2
+    bloc_size = SIZE(vel_gauss,1)/nb_procs+1
+    CALL FFT_PAR_VAR_ETA_PROD_GAUSS_DCL(communicator(2), penal_in_real_space, vv_mesh, &
+         vel_gauss, vel_gauss_penal, nb_procs, bloc_size, m_max_pad, rr_gauss, time)
+
+    vel_torque   = 0.d0
+    DO i = 1, SIZE(list_mode)
+       mode = list_mode(i)
+       IF (mode/=0) THEN
+          CYCLE
+       ELSE
+          index = 0
+          DO m = 1, vv_mesh%dom_me
+             j_loc = vv_mesh%jj(:,m)
+             DO l = 1, vv_mesh%gauss%l_G
+                index = index + 1
+                !===Force is int_domain ((1-chi)*(u-u_solid)/dt )dx
+                vel_torque =  vel_torque + (vel_gauss_penal(index,5,i) - vel_gauss(index,5,i)) &
+                     *rr_gauss(1,index)*vv_mesh%gauss%rj(l,m)
+             END DO
+          END DO
+          CALL MPI_ALLREDUCE(vel_torque, vel_torque_tot,1,MPI_DOUBLE_PRECISION, MPI_SUM, communicator(1), ierr)
+          WRITE(*,*) ' FORCES_AND_MOMENTS ', time, 2*ACOS(-1.d0)*vel_torque_tot/(0.5d0*ACOS(-1.d0))
+          WRITE(12,*) time, 2*ACOS(-1.d0)*vel_torque_tot/(0.5d0*ACOS(-1.d0))
+       END IF
+    END DO
+  END SUBROUTINE FORCES_AND_MOMENTS
+
+  SUBROUTINE compute_level_set_conservation(time, mesh, communicator, list_mode, level_set)
+    USE def_type_mesh
+    USE input_data
+    USE boundary
+    USE sft_parallele
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    TYPE(mesh_type),                                        INTENT(IN)          :: mesh
+    INTEGER,      DIMENSION(:),                             INTENT(IN)          :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:,:),                       INTENT(IN)          :: level_set
+    REAL(KIND=8),                                           INTENT(IN)          :: time
+    LOGICAL,                                    SAVE        :: once_compute=.TRUE.
+    REAL(KIND=8), ALLOCATABLE, DIMENSION(:),    SAVE        :: volum_init
+    REAL(KIND=8)                                            :: volum_init_loc, volum_init_F
+    REAL(KIND=8)                                            :: inte_fft_loc, inte_fft_tot_F
+    REAL(KIND=8), DIMENSION(inputs%nb_fluid-1)              :: inte_fft_tot
+    REAL(KIND=8), DIMENSION(mesh%np, 2, SIZE(list_mode))    :: level_posi_fft
+    REAL(KIND=8)                                            :: ray
+    INTEGER,      DIMENSION(mesh%gauss%n_w)                 :: j_loc
+    INTEGER                                                 :: m, l , i, nb_inter
+    INTEGER                                                 :: my_petscworld_rank, code
+    !PetscErrorCode                   :: ierr
+    MPI_Comm,DIMENSION(2)            :: communicator
+
+    CALL MPI_COMM_RANK(PETSC_COMM_WORLD,my_petscworld_rank,code)
+
+103 FORMAT(1500(e22.9,2x))
+
+    !===Computation of initial integral of level set
+    IF (once_compute) THEN
+       once_compute = .FALSE.
+
+       ALLOCATE(volum_init(SIZE(level_set,1)))
+
+       DO nb_inter=1, SIZE(level_set,1)
+          volum_init_loc = 0.d0
+          DO i = 1, SIZE(list_mode)
+             IF (list_mode(i)==0) THEN
+                DO m = 1, mesh%me
+                   j_loc = mesh%jj(:,m)
+                   DO l = 1, mesh%gauss%l_G
+                      !===Compute radius of Gauss point
+                      ray = SUM(mesh%rr(1,j_loc)*mesh%gauss%ww(:,l))
+                      volum_init_loc = volum_init_loc + SUM(level_set_exact(nb_inter,1,mesh%rr(:,j_loc),list_mode(i),0.d0)* &
+                           mesh%gauss%ww(:,l))*ray*mesh%gauss%rj(l,m)
+                   END DO
+                END DO
+             END IF
+          END DO
+          volum_init_loc = volum_init_loc*2*ACOS(-1.d0)
+          CALL  MPI_ALLREDUCE(volum_init_loc, volum_init_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+               communicator(2), code)
+          CALL MPI_ALLREDUCE(volum_init_F, volum_init(nb_inter), 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+               communicator(1), code)
+       END DO
+       IF (my_petscworld_rank==0) THEN
+          WRITE(*,*) 'mass initial = ', time, volum_init
+       END IF
+    END IF !end once_compute
+
+    !===Computation of level set conservation relative error
+    DO nb_inter=1, SIZE(level_set,1)
+       level_posi_fft = level_set(nb_inter,:,:,:)
+       inte_fft_loc = 0.d0
+       DO i = 1, SIZE(list_mode)
+          IF (list_mode(i)==0) THEN
+             DO m = 1, mesh%me
+                j_loc = mesh%jj(:,m)
+                DO l = 1, mesh%gauss%l_G
+                   !===Compute radius of Gauss point
+                   ray = SUM(mesh%rr(1,j_loc)*mesh%gauss%ww(:,l))
+                   inte_fft_loc = inte_fft_loc + SUM(level_posi_fft(j_loc,1,i)*mesh%gauss%ww(:,l))* &
+                        ray*mesh%gauss%rj(l,m)
+                END DO
+             END DO
+          END IF
+       END DO
+       inte_fft_loc = inte_fft_loc*2*ACOS(-1.d0)
+       CALL  MPI_ALLREDUCE(inte_fft_loc, inte_fft_tot_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+            communicator(2), code)
+       CALL MPI_ALLREDUCE(inte_fft_tot_F, inte_fft_tot(nb_inter), 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+            communicator(1), code)
+    END DO
+    IF (my_petscworld_rank==0) THEN
+       WRITE(*,*) 'relative mass error of level set at t = ', &
+            time, ABS(1-inte_fft_tot/(volum_init+1.d-14))
+       WRITE(97,103)  time, ABS(1-inte_fft_tot/(volum_init+1.d-14))
+    END IF
+  END SUBROUTINE compute_level_set_conservation
+
+!!$  SUBROUTINE interface_mpr(rank_in)
+!!$    USE sfemans_tools
+!!$    USE sft_parallele
+!!$    !USE user_data !===We could read r_mpr and z_mpr from user_data ...
+!!$    INTEGER      :: rank_in
+!!$    REAL(KIND=8) :: dist, dist_glob, r_mpr=0.030435d0, z_mpr=0.d0
+!!$    REAL(KIND=8), DIMENSION(:,:,:), ALLOCATABLE, SAVE :: field_in
+!!$    REAL(KIND=8), DIMENSION(:,:,:), ALLOCATABLE       :: field_out_FFT
+!!$    REAL(KIND=8), SAVE :: norm, d_avg
+!!$    INTEGER, SAVE :: n_mpr
+!!$    LOGICAL, SAVE :: i_am_in
+!!$    LOGICAL, SAVE :: once=.TRUE.
+!!$    INTEGER, SAVE :: nb_procs_F, rank_0
+!!$    INTEGER       :: rank, code
+!!$
+!!$#include "petsc/finclude/petsc.h"
+!!$
+!!$101 FORMAT(2(e22.9,2x))
+!!$    IF (once) THEN
+!!$       once=.FALSE.
+!!$       CALL MPI_COMM_SIZE(comm_one_d_ns(2), nb_procs_F, code)
+!!$       ALLOCATE(field_in(nb_procs_F,2,m_max_c))
+!!$       n_mpr = find_point(vv_mesh,r_mpr,z_mpr)
+!!$       IF (n_mpr==0) THEN
+!!$          dist=1.d30
+!!$       ELSE
+!!$          dist = SQRT((vv_mesh%rr(1,n_mpr)-r_mpr)**2 + (vv_mesh%rr(2,n_mpr)-z_mpr)**2)
+!!$       END IF
+!!$       CALL MPI_ALLREDUCE(dist,dist_glob,1,MPI_DOUBLE_PRECISION, MPI_MIN,comm_one_d_ns(1),ierr)
+!!$       IF (dist==dist_glob) THEN
+!!$          i_am_in = .TRUE.
+!!$          rank = rank_in
+!!$       ELSE
+!!$          i_am_in =.FALSE.
+!!$          rank = 100000000
+!!$       END IF
+!!$       CALL MPI_ALLREDUCE(rank,rank_0,1,MPI_INTEGER,MPI_MIN,PETSC_COMM_WORLD,ierr)
+!!$       IF (rank==rank_0) THEN
+!!$          OPEN(UNIT=50,FILE='interface', FORM='formatted', STATUS='unknown')
+!!$          WRITE(50,"(A)")'#Density at r_mpr=0.03d0, z_mpr=0.d0 '
+!!$          WRITE(50,"(A,i8,2e15.8)")'# t  density', rank_0, vv_mesh%rr(:,n_mpr)
+!!$          CLOSE(50)
+!!$       END IF
+!!$       d_avg = (MAXVAL(inputs%density_fluid)+MINVAL(inputs%density_fluid))/2.d0
+!!$       norm = MAXVAL(inputs%density_fluid)-MINVAL(inputs%density_fluid)
+!!$    END IF
+!!$    field_in = 1.d0
+!!$    IF (i_am_in) THEN
+!!$       field_in(1,:,:) = density(n_mpr,:,:)
+!!$    END IF
+!!$
+!!$    CALL FFT_PAR_REAL(comm_one_d_ns(2), field_in, field_out_FFT)
+!!$    IF (rank_in==rank_0) THEN
+!!$       OPEN(UNIT=50,FILE='interface', FORM='formatted', POSITION = 'append', STATUS='unknown')
+!!$       WRITE(50,101) time, (field_out_FFT(1,1,:)-d_avg)/norm
+!!$       !      WRITE(50,"(2e15.8)") time, (field_out_FFT(1,1,:)-d_avg)/norm
+!!$       CLOSE(50)
+!!$    END IF
+!!$
+!!$  END SUBROUTINE interface_mpr
+
+
+  SUBROUTINE vmax_height_m0(time, mesh, communicator, list_mode, un, opt_level_set)
+    USE def_type_mesh
+    USE input_data
+    USE boundary
+    USE sft_parallele
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    TYPE(mesh_type),                                        INTENT(IN) :: mesh
+    INTEGER,      DIMENSION(:),                             INTENT(IN) :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:),                         INTENT(IN) :: un
+    REAL(KIND=8), DIMENSION(:,:,:,:), OPTIONAL,             INTENT(IN) :: opt_level_set
+    REAL(KIND=8),                                           INTENT(IN) :: time
+    !   REAL(KIND=8), DIMENSION(2,mesh%np)                                 :: rr
+
+    REAL(KIND=8), DIMENSION(:), ALLOCATABLE, SAVE                            :: height_inter_r0, height_inter_r0_max
+    INTEGER       :: n, i, nb_inter
+    REAL(KIND=8)  :: level_n, max_vel_S, max_vel
+    LOGICAL, SAVE :: once=.TRUE.
+    INTEGER, SAVE :: m_max_pad, bloc_size
+    INTEGER       :: rank, code
+
+    MPI_Comm,DIMENSION(2)            :: communicator
+
+    CALL MPI_COMM_RANK(PETSC_COMM_WORLD,rank,code)
+
+101 FORMAT(10(e22.9,2x))
+    IF (once) THEN
+       once=.FALSE.
+
+       IF (rank==0) THEN
+          OPEN(UNIT=50,FILE='vmax_height_m0', FORM='formatted', STATUS='unknown')
+          WRITE(50,"(A)")'#Time Vel_max Height on the z-axis '
+          CLOSE(50)
+       END IF
+       bloc_size = SIZE(un,1)/inputs%ndim(2) + 1
+       m_max_pad = 3*SIZE(list_mode)*inputs%ndim(2)/2
+       IF (inputs%if_level_set) THEN
+          ALLOCATE(height_inter_r0(SIZE(opt_level_set,1)), height_inter_r0_max(SIZE(opt_level_set,1)))
+       END IF
+    END IF ! End once
+
+    IF (inputs%if_level_set) THEN
+
+       DO i = 1, SIZE(list_mode)
+          IF (list_mode(i)==0) THEN
+             DO nb_inter=1, SIZE(opt_level_set,1)
+                height_inter_r0(nb_inter)=0.d0 !Set minimum z of domain if not 0
+                height_inter_r0_max(nb_inter)=0.d0 !Set minimum z of domain if not 0
+
+                DO n = 1, SIZE(mesh%rr,2)
+                   IF (mesh%rr(1,n).LE.1.d-10) THEN
+                      level_n=opt_level_set(nb_inter,n,1,i) !value at node n of the cos part of mode 0 since only 1 mode
+                      IF (level_n.LE.0.5) THEN !interface is level_n=0.5
+                         height_inter_r0(nb_inter) = MAX(mesh%rr(2,n), height_inter_r0(nb_inter)) !USE max if level set increases in z
+                         !height_inter_r0(nb_inter) = MIN(mesh%rr(2,n), height_inter_r0(nb_inter))  !USE min if level set decreases in z
+                      END IF
+                   END IF
+                END DO
+             END DO ! on level_set number
+             CALL MPI_ALLREDUCE(height_inter_r0, height_inter_r0_max,nb_inter, &
+                  MPI_DOUBLE_PRECISION, MPI_MAX, communicator(1), ierr)
+          END IF
+       END DO
+
+    END IF ! if_level_set
+    !
+    ! Computation of maximum velocity everywhere
+    CALL FFT_MAX_VEL_DCL(communicator(2), un, max_vel_S, &
+         inputs%ndim(2), bloc_size, m_max_pad)
+    CALL MPI_ALLREDUCE(max_vel_S,max_vel, 1, MPI_DOUBLE_PRECISION, &
+         MPI_MAX, communicator(1), code)
+
+
+    IF (rank==0) THEN
+       OPEN(UNIT=50,FILE='vmax_height_m0', FORM='formatted', POSITION = 'append', STATUS='unknown')
+       WRITE(50,101) time, max_vel, height_inter_r0_max(:)
+       CLOSE(50)
+    END IF
+
+  END SUBROUTINE vmax_height_m0
+
+  SUBROUTINE tempmax_tempmin(time, communicator, list_mode, temp)
+    USE def_type_mesh
+    USE input_data
+    USE boundary
+    USE sft_parallele
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    INTEGER,      DIMENSION(:),                             INTENT(IN) :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:),                         INTENT(IN) :: temp
+    REAL(KIND=8),                                           INTENT(IN) :: time
+    REAL(KIND=8), DIMENSION(2)  :: max_min_temp_S, max_min_temp ! 1=max, 2=min
+    LOGICAL, SAVE :: once=.TRUE.
+    INTEGER, SAVE :: m_max_pad, bloc_size
+    INTEGER       :: rank, code
+
+    MPI_Comm,DIMENSION(2)            :: communicator
+
+    CALL MPI_COMM_RANK(PETSC_COMM_WORLD,rank,code)
+
+101 FORMAT(10(e22.9,2x))
+    IF (once) THEN
+       once=.FALSE.
+
+       IF (rank==0) THEN
+          OPEN(UNIT=50,FILE='tempmax_tempmin', FORM='formatted', STATUS='unknown')
+          WRITE(50,"(A)")'#Time temp_max temp_min '
+          CLOSE(50)
+       END IF
+       bloc_size = SIZE(temp,1)/inputs%ndim(2) + 1
+       m_max_pad = 2*SIZE(list_mode)*inputs%ndim(2)/2
+    END IF ! End once
+
+    ! Computation of maximum temperature everywhere
+    CALL FFT_MAX_MIN_VEL_DCL(communicator(2), temp, max_min_temp_S, &
+         inputs%ndim(2), bloc_size, m_max_pad)
+    CALL MPI_ALLREDUCE(max_min_temp_S(1), max_min_temp(1), 1, MPI_DOUBLE_PRECISION, &
+         MPI_MAX, communicator(1), code)
+    CALL MPI_ALLREDUCE(max_min_temp_S(2), max_min_temp(2), 1, MPI_DOUBLE_PRECISION, &
+         MPI_MIN, communicator(1), code)
+
+
+    IF (rank==0) THEN
+       OPEN(UNIT=50,FILE='tempmax_tempmin', FORM='formatted', POSITION = 'append', STATUS='unknown')
+       WRITE(50,101) time, max_min_temp
+       CLOSE(50)
+    END IF
+
+  END SUBROUTINE tempmax_tempmin
+
+  SUBROUTINE concmax_concmin(time, communicator, list_mode, conc)
+    USE def_type_mesh
+    USE input_data
+    USE boundary
+    USE sft_parallele
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    INTEGER,      DIMENSION(:),                             INTENT(IN) :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:),                         INTENT(IN) :: conc
+    REAL(KIND=8),                                           INTENT(IN) :: time
+    REAL(KIND=8), DIMENSION(2)  :: max_min_conc_S, max_min_conc ! 1=max, 2=min
+    LOGICAL, SAVE :: once=.TRUE.
+    INTEGER, SAVE :: m_max_pad, bloc_size
+    INTEGER       :: rank, code
+    MPI_Comm,DIMENSION(2)            :: communicator
+
+    CALL MPI_COMM_RANK(PETSC_COMM_WORLD,rank,code)
+
+101 FORMAT(10(e22.9,2x))
+    IF (once) THEN
+       once=.FALSE.
+
+       IF (rank==0) THEN
+          OPEN(UNIT=50,FILE='concmax_concmin', FORM='formatted', STATUS='unknown')
+          WRITE(50,"(A)")'#Time conc_max conc_min '
+          CLOSE(50)
+       END IF
+       bloc_size = SIZE(conc,1)/inputs%ndim(2) + 1
+       m_max_pad = 2*SIZE(list_mode)*inputs%ndim(2)/2
+    END IF ! End once
+
+    ! Computation of maximum temperature everywhere
+    CALL FFT_MAX_MIN_VEL_DCL(communicator(2), conc, max_min_conc_S, &
+         inputs%ndim(2), bloc_size, m_max_pad)
+    CALL MPI_ALLREDUCE(max_min_conc_S(1), max_min_conc(1), 1, MPI_DOUBLE_PRECISION, &
+         MPI_MAX, communicator(1), code)
+    CALL MPI_ALLREDUCE(max_min_conc_S(2), max_min_conc(2), 1, MPI_DOUBLE_PRECISION, &
+         MPI_MIN, communicator(1), code)
+
+
+    IF (rank==0) THEN
+       OPEN(UNIT=50,FILE='concmax_concmin', FORM='formatted', POSITION = 'append', STATUS='unknown')
+       WRITE(50,101) time, max_min_conc
+       CLOSE(50)
+    END IF
+
+  END SUBROUTINE concmax_concmin
+
+  SUBROUTINE xmax_xmin(time, communicator, list_mode, conc)
+    USE def_type_mesh
+    USE input_data
+    USE boundary
+    USE sft_parallele
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    INTEGER,      DIMENSION(:),                             INTENT(IN) :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:),                         INTENT(IN) :: conc
+    REAL(KIND=8),                                           INTENT(IN) :: time
+    !   REAL(KIND=8), DIMENSION(2,mesh%np)                                 :: rr
+    REAL(KIND=8), DIMENSION(SIZE(conc,1),SIZE(conc,2),SIZE(conc,3))        :: mol_frac
+    INTEGER       :: i, k
+    REAL(KIND=8), DIMENSION(2)  :: max_min_mol_frac_S, max_min_mol_frac ! 1=max, 2=min
+    LOGICAL, SAVE :: once=.TRUE.
+    INTEGER, SAVE :: m_max_pad, bloc_size
+    INTEGER       :: rank, code
+
+    MPI_Comm,DIMENSION(2)            :: communicator
+
+    CALL MPI_COMM_RANK(PETSC_COMM_WORLD,rank,code)
+
+101 FORMAT(10(e22.9,2x))
+    IF (once) THEN
+       once=.FALSE.
+
+       IF (rank==0) THEN
+          OPEN(UNIT=50,FILE='xmax_xmin', FORM='formatted', STATUS='unknown')
+          WRITE(50,"(A)")'#Time x_max x_min '
+          CLOSE(50)
+       END IF
+       bloc_size = SIZE(conc,1)/inputs%ndim(2) + 1
+       m_max_pad = 2*SIZE(list_mode)*inputs%ndim(2)/2
+
+    END IF ! End once
+
+    DO k=1,2
+       DO i=1,SIZE(list_mode)
+          mol_frac(:,k,i) = conc(:,k,i)
+       END DO
+    END DO
+
+    CALL FFT_PAR_SCAL_FUNCT(comm_one_d_conc(2), mol_frac,&
+         molar_fraction_from_concentration,inputs%ndim(2), bloc_size, m_max_pad)
+
+
+    ! Computation of maximum temperature everywhere
+    CALL FFT_MAX_MIN_VEL_DCL(communicator(2), mol_frac, max_min_mol_frac_S, &
+         inputs%ndim(2), bloc_size, m_max_pad)
+    CALL MPI_ALLREDUCE(max_min_mol_frac_S(1), max_min_mol_frac(1), 1, MPI_DOUBLE_PRECISION, &
+         MPI_MAX, communicator(1), code)
+    CALL MPI_ALLREDUCE(max_min_mol_frac_S(2), max_min_mol_frac(2), 1, MPI_DOUBLE_PRECISION, &
+         MPI_MIN, communicator(1), code)
+
+
+    IF (rank==0) THEN
+       OPEN(UNIT=50,FILE='xmax_xmin', FORM='formatted', POSITION = 'append', STATUS='unknown')
+       WRITE(50,101) time, max_min_mol_frac
+       CLOSE(50)
+    END IF
+
+  END SUBROUTINE xmax_xmin
+
+!!$  SUBROUTINE potential_on_axis_vol(time, mesh, conc_mesh, communicator, list_mode, Hn, sigma, conc)
+!!$    USE def_type_mesh
+!!$    USE user_data
+!!$    USE boundary
+!!$    USE sft_parallele
+!!$#include "petsc/finclude/petsc.h"
+!!$    USE petsc
+!!$    IMPLICIT NONE
+!!$    TYPE(mesh_type),                                        INTENT(IN) :: mesh
+!!$    TYPE(mesh_type),                                        INTENT(IN) :: conc_mesh
+!!$    INTEGER,      DIMENSION(:),                             INTENT(IN) :: list_mode
+!!$    REAL(KIND=8), DIMENSION(:,:,:),                         INTENT(IN) :: Hn
+!!$    REAL(KIND=8), DIMENSION(:),                             INTENT(IN) :: sigma
+!!$    REAL(KIND=8),                                           INTENT(IN) :: time
+!!$    REAL(KIND=8), DIMENSION(:,:,:),                         INTENT(IN) :: conc
+!!$    REAL(KIND=8), DIMENSION(mesh%np,6,SIZE(list_mode))                 :: j_Hn
+!!$    REAL(KIND=8), DIMENSION(SIZE(conc,1),SIZE(conc,2),SIZE(conc,3))    :: mol_frac
+!!$    INTEGER       :: i, m, l, ni, k, n
+!!$    LOGICAL, SAVE :: once=.TRUE.
+!!$    REAL(KIND=8)  :: pot_loc, pot, ray, mol_frac_on_axis, jump
+!!$    INTEGER, DIMENSION(mesh%gauss%n_w)            :: j_loc
+!!$
+!!$    INTEGER       :: rank, code
+!!$    INTEGER, SAVE :: m_max_pad, bloc_size
+!!$
+!!$    MPI_Comm,DIMENSION(2)            :: communicator
+!!$
+!!$    CALL MPI_COMM_RANK(PETSC_COMM_WORLD,rank,code)
+!!$
+!!$101 FORMAT(10(e22.9,2x))
+!!$
+!!$
+!!$    IF (once) THEN
+!!$       once=.FALSE.
+!!$
+!!$       IF (rank==0) THEN
+!!$          OPEN(UNIT=50,FILE='pot_on_axis_vol', FORM='formatted', STATUS='unknown')
+!!$          WRITE(50,"(A)")'#Time potential'
+!!$          CLOSE(50)
+!!$       END IF
+!!$       bloc_size = SIZE(conc,1)/inputs%ndim(2) + 1
+!!$       m_max_pad = 2*SIZE(list_mode)*inputs%ndim(2)/2
+!!$    END IF
+!!$
+!!$
+!!$    CALL compute_rot_h(Hn, j_Hn)
+!!$
+!!$
+!!$    pot_loc = 0.d0
+!!$    DO i = 1, SIZE(list_mode)
+!!$       IF (list_mode(i)==0) THEN
+!!$          DO m = 1, mesh%me
+!!$             j_loc = mesh%jj(:,m)
+!!$             !             h=SUM(mesh%gauss%rj(:,m))
+!!$             !WRITE(*,*) 'h', h
+!!$             DO l = 1, mesh%gauss%l_G
+!!$                ray = SUM(mesh%rr(1,j_loc)*mesh%gauss%ww(:,l))
+!!$                IF (ray .LE. 2.5d-4) THEN
+!!$                   !===Compute radius of Gauss point on the surface
+!!$                   DO ni = 1, mesh%gauss%n_w
+!!$                      k = mesh%jj(ni,m)
+!!$                      pot_loc = pot_loc - 2.d0*ACOS(-1.d0)/sigma(m)*j_Hn(k,5,i)*mesh%gauss%ww(ni,l)*&
+!!$                           ray*mesh%gauss%rj(l,m)
+!!$                   END DO
+!!$                END IF
+!!$             END DO
+!!$          END DO
+!!$       END IF
+!!$    END DO
+!!$    pot_loc= pot_loc/(ACOS(-1.d0)*(2.5d-4)**2)
+!!$
+!!$
+!!$    DO k=1,2
+!!$       DO i=1,SIZE(list_mode)
+!!$          mol_frac(:,k,i) = conc(:,k,i)
+!!$       END DO
+!!$    END DO
+!!$
+!!$    CALL FFT_PAR_SCAL_FUNCT(comm_one_d_conc(2), mol_frac,&
+!!$         molar_fraction_from_concentration,inputs%ndim(2), bloc_size, m_max_pad)
+!!$
+!!$    mol_frac_on_axis=0.d0
+!!$
+!!$    DO n = 1, SIZE(conc_mesh%rr,2)
+!!$       IF (ABS(conc_mesh%rr(1,n)).LT. 1.d-10 .AND. (ABS(conc_mesh%rr(2,n) - 4.9d-3).LT. 1.d-10)) THEN
+!!$          mol_frac_on_axis = mol_frac(n,1,1)
+!!$       END IF
+!!$    END DO
+!!$
+!!$    !    DO i = 1, SIZE(list_mode)
+!!$    !       IF (list_mode(i)==0) THEN
+!!$    !          DO ms = 1, conc_mesh%mes
+!!$    !             js_loc = conc_mesh%jjs(:,ms)
+!!$    !              IF (conc_mesh%sides(ms)==5) THEN
+!!$    !                DO ls = 1, conc_mesh%gauss%l_Gs
+!!$    !                   DO ni = 1, conc_mesh%gauss%n_ws
+!!$    !                      k = conc_mesh%jjs(ni,ms)
+!!$    !                      IF (ABS(conc_mesh%rr(1,k)).LT. 1.d-6) THEN
+!!$    !                         mol_frac_on_axis = mol_frac(k,1,i)
+!!$    !                      END IF
+!!$    !                   END DO
+!!$    !                END DO
+!!$    !              END IF
+!!$    !             END DO
+!!$    !       END IF
+!!$    !    END DO
+!!$
+!!$
+!!$    jump = 0.614-0.598*(mol_frac_on_axis-(1.d0 + inputs%MA/inputs%MB * (inputs%rho_0percent/65.d0 - inputs%xi -1.d0))**(-1))
+!!$
+!!$    WRITE(*,*) 'jump', jump
+!!$    !pot_loc = pot_loc - (0.614-0.598*(mol_frac_on_axis-0.17))
+!!$    pot_loc = pot_loc - jump
+!!$
+!!$    CALL MPI_ALLREDUCE(pot_loc, pot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+!!$         communicator(1), code)
+!!$
+!!$    IF (rank==0) THEN
+!!$       OPEN(UNIT=50,FILE='pot_on_axis_vol', FORM='formatted', POSITION = 'append', STATUS='unknown')
+!!$       WRITE(50,101) time, pot
+!!$       CLOSE(50)
+!!$    END IF
+!!$
+!!$  END SUBROUTINE potential_on_axis_vol
+
+END PROGRAM mhd_prog

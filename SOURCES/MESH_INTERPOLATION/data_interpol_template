@@ -3,8 +3,10 @@
 ============================================
 ===Number of processors in meridian section (Input)
 1
-===Problem type (Input): (nst, mxw, mhd, fhd)
+===Problem type (Input): (nst, mxw, mhd, fhd, mhs)
 'nst'
+===Is there an input concentration field?
+.f.
 ===Is there an input temperature field?
 .t.
 ===Directory and name of input mesh file
@@ -17,8 +19,10 @@
 ============================================
 ===Number of processors in meridian section (Output)
 5
-===Problem type (Output): (nst, mxw, mhd, fhd)
+===Problem type (Output): (nst, mxw, mhd, fhd, mhs)
 'nst'
+===Is there an output concentration field?
+.f.
 ===Is there an output temperature field?
 .t.
 ===Directory and name of output mesh file
@@ -47,6 +51,14 @@
 4 2 .0d0 1.d0
 
 ============================================
+              Mesh-CONCENTRATION
+============================================
+===Number of subdomains in concentration mesh
+0
+===List of subdomains for concentration mesh
+0
+
+============================================
               Mesh-NAVIER-STOKES
 ============================================
 ===Number of subdomains in Navier-Stokes mesh
@@ -57,6 +69,10 @@
 .f.
 ===How many fluids?
 2
+===Number of interfaces between velocity and concentration only domains (for nst applications)
+0
+===List of interfaces between velocity and concentration only domains (for nst applications)
+0
 
 ============================================
               Mesh-TEMPERATURE

@@ -86,7 +86,8 @@ CONTAINS
     vsize   = 1
     ncon    = 1
     ALLOCATE(tpwgts(nb_proc))
-    tpwgts  = 1.d0/nb_proc
+    !tpwgts  = 1.d0/nb_proc
+    tpwgts  = 1.0/nb_proc
     CALL METIS_SetDefaultOptions(metis_opt)
     metis_opt(METIS_OPTION_NUMBERING)=1
     ubvec   = 1.01
@@ -295,7 +296,7 @@ CONTAINS
     LOGICAL, DIMENSION(mesh%np)              :: virgin
     LOGICAL, DIMENSION(mesh%me)              :: not_my_cells
     INTEGER :: dim, nws, nw, m, ms, mop, msop, ns, msup, minf, dof, &
-         dom_me, nwc, dom_mes, dom_np, n, i, rank, ierr, dom_np_glob
+         dom_me, nwc, dom_mes, dom_np, n, i, ierr, dom_np_glob
 
     dim = SIZE(mesh%rr,1)
     nws = SIZE(mesh%jjs,1)

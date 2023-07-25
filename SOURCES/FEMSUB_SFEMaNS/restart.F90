@@ -220,7 +220,7 @@ CONTAINS
     END IF
 
     IF (rang_F == 0) THEN
-       WRITE(*,*) 'File name', trim(adjustl(in_name))
+       WRITE(*,*) 'File name ', trim(adjustl(in_name))
        WRITE(*,*) 'Time = ', time
        WRITE(*,*) 'Number of processors from restart file = ',nb_procs_r
        WRITE(*,*) 'Number of modes per processor from restart file = ',m_max_cr
@@ -544,7 +544,7 @@ CONTAINS
     END IF
 
     IF (rang_F == 0) THEN
-       WRITE(*,*) 'File name', trim(adjustl(in_name))
+       WRITE(*,*) 'File name ', trim(adjustl(in_name))
        WRITE(*,*) 'Time = ', time
        WRITE(*,*) 'Number of processors from restart file = ',nb_procs_r
        WRITE(*,*) 'Number of modes per processor from restart file = ',m_max_cr
@@ -874,10 +874,10 @@ CONTAINS
     CLOSE(10)
 
     IF (rang_F == 0) THEN
-       WRITE(*,*) 'proprietes fichier ', in_name
-       WRITE(*,*) 'time =',time
-       WRITE(*,*) 'nombre de processeurs = ',nb_procs_r
-       WRITE(*,*) 'nombre de modes par processeur = ',m_max_cr
+       WRITE(*,*) 'File name ', trim(adjustl(in_name))
+       WRITE(*,*) 'Time = ', time
+       WRITE(*,*) 'Number of processors from restart file = ',nb_procs_r
+       WRITE(*,*) 'Number of modes per processor from restart file = ',m_max_cr
     ENDIF
 
     m_max_c   = SIZE(list_mode)      !nombre de modes par proc pour le calcul
@@ -1122,7 +1122,7 @@ CONTAINS
     END IF
 
     IF (rang_F == 0) THEN
-       WRITE(*,*) 'File name', trim(adjustl(in_name))
+       WRITE(*,*) 'File name ', trim(adjustl(in_name))
        WRITE(*,*) 'Time = ', time
        WRITE(*,*) 'Number of processors from restart file = ',nb_procs_r
        WRITE(*,*) 'Number of modes per processor from restart file = ',m_max_cr
@@ -1192,7 +1192,7 @@ CONTAINS
              WRITE(*,'(A,i4,A)') 'mode temp', mode_cherche,' not found'
           ELSE
              tempn(:,:,i)    = 0.d0 ; tempn_m1(:,:,i)    = 0.d0
-             WRITE(*,*) 'mode ns', mode_cherche, ' not found'
+             WRITE(*,*) 'mode temp', mode_cherche, ' not found'
           ENDIF
        ENDIF
        CLOSE(10)                          !fermeture du fichier suite
@@ -1200,5 +1200,221 @@ CONTAINS
 
   END SUBROUTINE read_restart_temp
 
+  SUBROUTINE write_restart_conc(communicator, conc_mesh, time, list_mode, &
+       concn, concn_m1, filename, it, freq_restart, opt_mono)
+    USE def_type_mesh
+    USE chaine_caractere
+    IMPLICIT NONE
+    TYPE(mesh_type), TARGET                                    :: conc_mesh
+    REAL(KIND=8),                                   INTENT(IN) :: time
+    INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator
+    INTEGER,      DIMENSION(:),                     INTENT(IN) :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:),                 INTENT(IN) :: concn, concn_m1
+    LOGICAL, OPTIONAL,                              INTENT(IN) :: opt_mono
+    CHARACTER(len=200),                             INTENT(IN) :: filename
+    INTEGER,                                        INTENT(IN) :: it, freq_restart
+    INTEGER                           :: code, n, i, rang_S, rang_F, nb_procs_S, nb_procs_F
+    INTEGER                           :: l, lblank
+    CHARACTER(len=3)                  :: tit, tit_S
+    LOGICAL                           :: mono=.FALSE.
+    LOGICAL                           :: skip
+    CHARACTER(len=250)                :: out_name
+
+    CALL MPI_COMM_SIZE(communicator(1),nb_procs_S,code)
+    CALL MPI_COMM_SIZE(communicator(2),nb_procs_F,code)
+    CALL MPI_COMM_RANK(communicator(1),rang_S,code)
+    CALL MPI_COMM_RANK(communicator(2),rang_F,code)
+
+    WRITE(tit,'(i3)') it/freq_restart
+    lblank = eval_blank(3,tit)
+    DO l = 1, lblank - 1
+       tit(l:l) = '0'
+    END DO
+    WRITE(tit_S,'(i3)') rang_S
+    lblank = eval_blank(3,tit_S)
+    DO l = 1, lblank - 1
+       tit_S(l:l) = '0'
+    END DO
+
+    IF (PRESENT(opt_mono)) THEN
+       mono = opt_mono
+    END IF
+
+    IF (mono) THEN
+       out_name = 'suite_conc_I'//tit//'.'//filename
+    ELSE
+       out_name = 'suite_conc_S'//tit_S//'_I'//tit//'.'//filename
+    END IF
+
+    skip = (mono .AND. rang_S /= 0)
+
+    DO n = 1, nb_procs_F
+       IF ( (rang_F == n-1) .AND. (.NOT. skip) ) THEN
+          IF (rang_F == 0) THEN
+             OPEN(UNIT = 10, FILE = out_name, POSITION='append', &
+                  FORM = 'unformatted', STATUS = 'replace')
+             IF (mono) THEN
+                WRITE(10) time, conc_mesh%np , nb_procs_F, SIZE(list_mode)
+             ELSE
+                WRITE(10) time, nb_procs_S, nb_procs_F, SIZE(list_mode)
+             END IF
+          ELSE
+             OPEN(UNIT = 10, FILE = out_name, POSITION='append', &
+                  FORM = 'unformatted', STATUS = 'unknown')
+          END IF
+
+          DO i= 1, SIZE(list_mode)
+             WRITE(10) list_mode(i)
+             WRITE(10) concn(:,:,i)
+             WRITE(10) concn_m1(:,:,i)
+          END DO
+          CLOSE(10)
+       END IF
+       CALL MPI_BARRIER(communicator(2),code)
+    END DO
+
+  END SUBROUTINE write_restart_conc
+
+  SUBROUTINE read_restart_conc(communicator, time, list_mode, &
+       concn, concn_m1, filename, val_init, interpol, opt_mono)
+    USE def_type_mesh
+    USE chaine_caractere
+    USE my_util
+    IMPLICIT NONE
+    REAL(KIND=8),                                   INTENT(OUT):: time
+    INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator
+    INTEGER,      DIMENSION(:)                                 :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:),                 INTENT(OUT):: concn, concn_m1
+    CHARACTER(len=200),                             INTENT(IN) :: filename
+    REAL(KIND=8), OPTIONAL,                         INTENT(IN) :: val_init
+    LOGICAL     , OPTIONAL,                         INTENT(IN) :: interpol
+    LOGICAL     , OPTIONAL,                         INTENT(IN) :: opt_mono
+    INTEGER     :: code, n, i, mode, j, rang_S, nb_procs_S, rang_F, nb_procs_F, nlignes, rank
+    INTEGER     :: m_max_cr, nb_procs_r, nb_procs_Sr
+    INTEGER     :: m_max_c, nb_mode_r, mode_cherche
+    LOGICAL     :: trouve, okay
+    INTEGER     :: np
+    INTEGER           :: l, lblank
+    CHARACTER(len=3)  :: tit_S
+    LOGICAL           :: mono=.FALSE.
+    CHARACTER(len=250):: in_name
+    CALL MPI_COMM_RANK(communicator(2),rang_F,code)
+    CALL MPI_COMM_SIZE(communicator(2),nb_procs_F,code)
+    CALL MPI_COMM_RANK(communicator(1),rang_S,code)
+    CALL MPI_COMM_SIZE(communicator(1),nb_procs_S,code)
+    CALL MPI_COMM_RANK(MPI_COMM_WORLD,rank,code)
+
+    nlignes = 2
+
+    WRITE(tit_S,'(i3)') rang_S
+    lblank = eval_blank(3,tit_S)
+    DO l = 1, lblank - 1
+       tit_S(l:l) = '0'
+    END DO
+
+    IF (PRESENT(opt_mono)) THEN
+       mono = opt_mono
+    END IF
+
+    IF (mono) THEN
+       in_name = 'suite_conc.'//filename
+    ELSE
+       in_name = 'suite_conc_S'//tit_S//'.'//filename
+    END IF
+
+    WRITE(*,*) 'restart concentration'
+    OPEN(UNIT = 10, FILE = in_name, FORM = 'unformatted', STATUS = 'unknown')
+
+    IF (mono) THEN
+       READ(10) time, np, nb_procs_r, m_max_cr
+       nb_procs_Sr = -1
+    ELSE
+       READ(10) time, nb_procs_Sr, nb_procs_r, m_max_cr
+    END IF
+    CLOSE(10)
+
+    IF ((nb_procs_Sr /= nb_procs_S) .AND. (.NOT. mono)) THEN
+       CALL error_petsc('BUG in read_restart: nb_procs_Sr /= nb_procs_S')
+       !STOP
+    END IF
+
+    IF (rang_F == 0) THEN
+       WRITE(*,*) 'File name ', trim(adjustl(in_name))
+       WRITE(*,*) 'Time = ', time
+       WRITE(*,*) 'Number of processors from restart file = ',nb_procs_r
+       WRITE(*,*) 'Number of modes per processor from restart file = ',m_max_cr
+    ENDIF
+
+    m_max_c   = SIZE(list_mode)      !nombre de modes par proc pour le calcul
+    nb_mode_r = nb_procs_r*m_max_cr  !nombre total de modes contenus dans le suite
+
+    !June 7 2007, JLG
+    IF (nb_procs_F*m_max_c /= nb_mode_r) THEN
+       !CALL error_petsc('Bug in read_restart_ns: nb_procs_F*m_max_c /= nb_mode_r')
+       WRITE(*,*) 'Warning in read_restart_conc: nb_procs_F*m_max_c /= nb_mode_r'
+       !STOP
+    END IF
+
+    okay = .FALSE.
+    IF (PRESENT(interpol)) THEN
+       IF (interpol) THEN
+          okay =.TRUE.
+       END IF
+    END IF
+    !June 7 2007, JLG
+
+    IF (rank==0) THEN
+       WRITE(*,*) 'Reading concentration modes ...'
+    END IF
+    DO i=1, m_max_c                  !pour tout les modes du processeur courant
+       !ouverture du fichier
+       OPEN(UNIT = 10, FILE = in_name, FORM = 'unformatted', STATUS = 'unknown')
+       !on saute la premiere ligne du fichier qui contient des donnees
+       READ(10)
+       mode_cherche = list_mode(i)
+       !recherche du bon mode
+       trouve = .FALSE.
+       DO j=1, nb_mode_r             !pour tout les modes ecris dans le suite.
+          !lecture du mode
+          READ(10) mode
+          !June 7 2007, JLG
+          IF (okay) THEN
+             IF (j/=rang_F*m_max_c+i) THEN
+                DO n=1, nlignes
+                   READ(10)
+                ENDDO
+                CYCLE
+             ELSE
+                list_mode(i) = mode
+                mode_cherche = mode
+             END IF
+          END IF
+          !June 7 2007, JLG
+          IF (mode == mode_cherche) THEN   !on a trouve le bon mode
+             READ(10) concn(:,:,i)
+             READ(10) concn_m1(:,:,i)
+             WRITE(*,'(A,i4,A)') 'mode conc ', mode_cherche,' found '
+             trouve = .TRUE.
+             EXIT                        !car on a trouve le bon mode
+          ELSE                             !on passe au mode suivant en sautant 6 lignes
+             DO n=1, nlignes
+                READ(10)
+             ENDDO
+          ENDIF
+       ENDDO
+
+       IF (.NOT.trouve) THEN               !mode_cherche non trouve
+          IF (PRESENT(val_init)) THEN ! not implemented yet
+             concn(:,:,i)    = val_init  ; concn_m1(:,:,i)    = val_init
+             WRITE(*,'(A,i4,A)') 'mode conc', mode_cherche,' not found'
+          ELSE
+             concn(:,:,i)    = 0.d0 ; concn_m1(:,:,i)    = 0.d0
+             WRITE(*,*) 'mode conc', mode_cherche, ' not found'
+          ENDIF
+       ENDIF
+       CLOSE(10)                          !fermeture du fichier suite
+    ENDDO
+
+  END SUBROUTINE read_restart_conc
 
 END MODULE restart

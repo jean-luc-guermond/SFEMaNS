@@ -13,7 +13,7 @@ CONTAINS
 
   SUBROUTINE BDF2_ns_stress_bc_with_u(comm_one_d, time, vv_3_LA, pp_1_LA, vvz_per, pp_per, dt, Re, list_mode, pp_mesh, &
        vv_mesh, incpn_m1, incpn, pn_m1, pn, un_m1, un,  &
-       chmp_mag, Bn_p2, opt_tempn)
+       chmp_mag, Bn_p2, density, tempn, concn)
     !==============================
     USE def_type_mesh
     USE fem_M_axi
@@ -36,15 +36,17 @@ CONTAINS
     USE entropy_viscosity
     USE my_util
     IMPLICIT NONE
-    REAL(KIND=8)                                        :: time, dt, Re
-    INTEGER,      DIMENSION(:),     INTENT(IN)          :: list_mode
-    TYPE(mesh_type),                INTENT(IN)          :: pp_mesh, vv_mesh
-    TYPE(petsc_csr_LA)                                  :: vv_3_LA, pp_1_LA
-    TYPE(periodic_type),            INTENT(IN)          :: vvz_per, pp_per
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)       :: incpn_m1, incpn
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)       :: pn_m1, pn
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)       :: un_m1, un
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN), OPTIONAL:: opt_tempn
+    REAL(KIND=8)                                   :: time, dt, Re
+    INTEGER,      DIMENSION(:),     INTENT(IN)     :: list_mode
+    TYPE(mesh_type),                INTENT(IN)     :: pp_mesh, vv_mesh
+    TYPE(petsc_csr_LA)                             :: vv_3_LA, pp_1_LA
+    TYPE(periodic_type),            INTENT(IN)     :: vvz_per, pp_per
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)  :: incpn_m1, incpn
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)  :: pn_m1, pn
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)  :: un_m1, un
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)     :: density
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)     :: concn
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)     :: tempn
     REAL(KIND=8), DIMENSION(:,:,:),          INTENT(IN) :: chmp_mag, Bn_p2
     REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode)):: chmp_mag_aux
     !===Saved variables
@@ -227,7 +229,7 @@ CONTAINS
     uext = 2*un-un_m1
     CALL smb_cross_prod_gauss_sft_par(comm_one_d(2),vv_mesh,list_mode,uext,rotv_v,inputs%precession)
 
-    IF (inputs%type_pb=='mhd') THEN
+    IF (inputs%type_pb=='mhd' .OR. inputs%type_pb=='mhs') THEN
        !===Compute Lorentz force if mhd in quasi-static limit
        IF (inputs%if_quasi_static_approx) THEN
           DO i = 1, m_max_c
@@ -244,15 +246,15 @@ CONTAINS
        ELSE !===Compute Lorentz force if mhd
           CALL smb_CurlH_cross_B_gauss_sft_par(comm_one_d(2),vv_mesh,list_mode,chmp_mag,Bn_p2,rotb_b)
        END IF
-       rotv_v = rotv_v - rotb_b
+       rotv_v = rotv_v - inputs%coeff_lorentz*rotb_b
     END IF
 
     IF (inputs%type_pb=='fhd') THEN
        !===Computate magnetic force if fhd
        IF (inputs%if_helmholtz_force) THEN
-          CALL smb_helmholtz_force_gauss_fft_par(comm_one_d(2),vv_mesh,list_mode,opt_tempn,chmp_mag,mag_force)
+          CALL smb_helmholtz_force_gauss_fft_par(comm_one_d(2),vv_mesh,list_mode,tempn,chmp_mag,mag_force)
        ELSE
-          CALL smb_kelvin_force_gauss_fft_par(comm_one_d(2),vv_mesh,list_mode,opt_tempn,chmp_mag,mag_force)
+          CALL smb_kelvin_force_gauss_fft_par(comm_one_d(2),vv_mesh,list_mode,tempn,chmp_mag,mag_force)
        END IF
        rotv_v = rotv_v - mag_force
     END IF
@@ -288,20 +290,14 @@ CONTAINS
     !===End Computation of CFL
 
     !===Computation of rhs at Gauss points for every mode
-    IF (PRESENT(opt_tempn)) THEN
-       CALL rhs_ns_gauss_3x3(vv_mesh, pp_mesh, comm_one_d(2), list_mode, time, &
-            (4*un-un_m1)/(2*inputs%dt), pn, (4.d0*incpn-incpn_m1)/3.d0, &
-            rotv_v, rhs_gauss, opt_tempn=opt_tempn)
-    ELSE
-       CALL rhs_ns_gauss_3x3(vv_mesh, pp_mesh, comm_one_d(2), list_mode, time, &
-            (4*un-un_m1)/(2*inputs%dt), pn, (4.d0*incpn-incpn_m1)/3.d0, &
-            rotv_v, rhs_gauss)
-    END IF
+    CALL rhs_ns_gauss_3x3(vv_mesh, pp_mesh, comm_one_d(2), list_mode, time, &
+         (4*un-un_m1)/(2*inputs%dt), pn, (4.d0*incpn-incpn_m1)/3.d0, &
+         rotv_v, rhs_gauss, density, tempn, concn)
     !===End Computation of rhs
 
     !===Computation of 2 * nu_tilde(T) * grad^s u
     IF (inputs%if_variable_visco) THEN
-       nu_tilde = opt_tempn
+       nu_tilde = tempn
        CALL smb_nu_tilde_fft_par(comm_one_d(2), list_mode, nu_tilde)
        IF (.NOT. (inputs%verbose_CFL)) THEN
           CALL MPI_COMM_SIZE(comm_one_d(2), nb_procs, code)
@@ -477,13 +473,8 @@ CONTAINS
 
     !===Compute entropy viscosity
     IF (inputs%LES) THEN
-       IF (PRESENT(opt_tempn)) THEN
-          CALL compute_entropy_viscosity(comm_one_d, vv_3_LA, vv_mesh, pp_mesh, time, list_mode, vvz_per, &
-               un, un_m1, un_m2, pn_m1, rotv_v, visco_entro_sym_grad_u, opt_tempn)
-       ELSE
-          CALL compute_entropy_viscosity(comm_one_d, vv_3_LA, vv_mesh, pp_mesh, time, list_mode, vvz_per, &
-               un, un_m1, un_m2, pn_m1, rotv_v, visco_entro_sym_grad_u)
-       END IF
+       CALL compute_entropy_viscosity(comm_one_d, vv_3_LA, vv_mesh, pp_mesh, time, list_mode, vvz_per, &
+            un, un_m1, un_m2, pn_m1, rotv_v, visco_entro_sym_grad_u, density, tempn, concn)
     END IF
     !===End Compute entropy viscosity
 

@@ -3,7 +3,7 @@
 ============================================
 ===Number of processors in meridian section (Input)
 1
-===Problem type (Input): (nst, mxw, mhd, fhd)
+===Problem type (Input): (nst, mxw, mhd, fhd, mhs)
 'nst'
 ===Directory and name of input mesh file
 '../../MESHES' 'Mesh_10_form.FEM'
@@ -15,7 +15,7 @@
 ============================================
 ===Number of processors in meridian section (Output)
 2
-===Problem type (Output): (nst, mxw, mhd, fhd)
+===Problem type (Output): (nst, mxw, mhd, fhd, mhs)
 'mhd'
 ===Directory and name of output mesh file
 '../../MESHES' 'Mesh_10_form.FEM'

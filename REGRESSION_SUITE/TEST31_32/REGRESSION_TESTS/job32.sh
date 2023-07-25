@@ -25,8 +25,6 @@ do
 done < "$datatest"
 nproc=$(( ns*nf ))
 
-cp ../suite_ns_S000_I001.SOLID_FLUID_10.FEM .
-cp ../suite_temp_S000_I001.SOLID_FLUID_10.FEM .
 ./mesh_interpolation.sh "../EXECUTABLE/a_mesh_interpolation_31_32.exe" "$1" "$2" "$4"
 for FILE in suite_*; do mv "$FILE" $(echo "$FILE" | sed 's/_I001//'); done
 cp regression_reference_32 regression_reference

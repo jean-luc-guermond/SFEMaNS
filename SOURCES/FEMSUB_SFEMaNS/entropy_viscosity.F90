@@ -5,7 +5,7 @@ MODULE entropy_viscosity
   PRIVATE
 CONTAINS
   SUBROUTINE compute_entropy_viscosity(comm_one_d, vv_3_LA, vv_mesh, pp_mesh, time, list_mode, vvz_per, &
-       un, un_m1, un_m2, pn_m1, rotv_v_m1, visco_entro_grad_u, opt_tempn)
+       un, un_m1, un_m2, pn_m1, rotv_v_m1, visco_entro_grad_u, density, tempn, concn)
     USE def_type_mesh
     USE fem_M_axi
     USE solve_petsc
@@ -31,7 +31,9 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)         :: un, un_m1, un_m2
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)         :: pn_m1
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)            :: rotv_v_m1
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN), OPTIONAL  :: opt_tempn
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)            :: tempn
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)            :: concn
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)            :: density
     REAL(KIND=8), DIMENSION(:,:,:,:), INTENT(OUT)         :: visco_entro_grad_u
     TYPE(dyn_int_line), DIMENSION(3),                SAVE :: vv_js_D
     LOGICAL,                                         SAVE :: once = .TRUE.
@@ -111,13 +113,8 @@ CONTAINS
     strain_rate_tensor_scal_n_bdy = -1/inputs%Re*strain_rate_tensor_scal_n_bdy
 
     !===Computation of rhs at Gauss points for every mode without the strain rate tensor
-    IF (PRESENT(opt_tempn)) THEN
-       CALL rhs_residual_ns_gauss_3x3(vv_mesh, pp_mesh, comm_one_d(2), list_mode, time-inputs%dt, &
-            (un-un_m2)/(2*inputs%dt), pn_m1, rotv_v_m1, rhs_gauss, opt_tempn=opt_tempn)
-    ELSE
-       CALL rhs_residual_ns_gauss_3x3(vv_mesh, pp_mesh, comm_one_d(2), list_mode, time-inputs%dt, &
-            (un-un_m2)/(2*inputs%dt), pn_m1, rotv_v_m1, rhs_gauss)
-    END IF
+    CALL rhs_residual_ns_gauss_3x3(vv_mesh, pp_mesh, comm_one_d(2), list_mode, time-inputs%dt, &
+         (un-un_m2)/(2*inputs%dt), pn_m1, rotv_v_m1, rhs_gauss, density, tempn, concn)
     !===End Computation of rhs
 
     DO i = 1, SIZE(list_mode)
@@ -202,7 +199,7 @@ CONTAINS
 
   SUBROUTINE compute_entropy_viscosity_mom(comm_one_d, vv_3_LA, vv_mesh, pp_mesh, time, list_mode, &
        momentum, momentum_m1, momentum_m2, pn_m1, un_m1, tensor_m1, visc_grad_vel_m1, tensor_surface_gauss, &
-       rotb_b_m1, visco_dyn_m1, density_m2, density_m1, density, tempn, visc_entro_real, visc_entro_level_real)
+       rotb_b_m1, visco_dyn_m1, density_m2, density_m1, density, tempn, concn, visc_entro_real, visc_entro_level_real)
     USE def_type_mesh
     USE fem_M_axi
     USE solve_petsc
@@ -232,6 +229,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: visco_dyn_m1
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: density_m2, density_m1, density
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: tempn
+    REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: concn
     REAL(KIND=8), DIMENSION(:,:),     INTENT(OUT)         :: visc_entro_real
     REAL(KIND=8), DIMENSION(:,:),     INTENT(OUT)         :: visc_entro_level_real
     !TYPE(dyn_int_line), DIMENSION(3),                SAVE :: vv_js_D
@@ -313,7 +311,7 @@ CONTAINS
 
     !===Computation of rhs at Gauss points for every mode without tensors
     CALL rhs_residual_ns_gauss_3x3_mom(vv_mesh, pp_mesh, list_mode, time-inputs%dt, &
-         (momentum-momentum_m2)/(2*inputs%dt), pn_m1, density_m1, rotb_b_m1, rhs_gauss, opt_tempn=tempn)
+         (momentum-momentum_m2)/(2*inputs%dt), pn_m1, density_m1, rotb_b_m1, rhs_gauss, tempn, concn)
     !===End Computation of rhs
 
     !===Computation of tensor_m1(=m x u) on gauss points
@@ -489,7 +487,7 @@ CONTAINS
 
   SUBROUTINE compute_entropy_viscosity_mom_no_level_set(comm_one_d, vv_3_LA, vv_mesh, pp_mesh, time, list_mode, &
        momentum, momentum_m1, momentum_m2, pn_m1, un_m1, tensor_m1, &
-       rotb_b_m1, tempn, visc_entro_real)
+       rotb_b_m1, density, tempn, concn, visc_entro_real)
     USE def_type_mesh
     USE fem_M_axi
     USE solve_petsc
@@ -516,6 +514,8 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:,:), INTENT(IN)          :: tensor_m1
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: rotb_b_m1
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: tempn
+    REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: concn
+    REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: density
     REAL(KIND=8), DIMENSION(:,:),     INTENT(OUT)         :: visc_entro_real
     !TYPE(dyn_int_line), DIMENSION(3),                SAVE :: vv_js_D
     LOGICAL,                                         SAVE :: once = .TRUE.
@@ -588,7 +588,7 @@ CONTAINS
 
     !===Computation of rhs at Gauss points for every mode without tensors
     CALL rhs_residual_ns_gauss_3x3(vv_mesh, pp_mesh, comm_one_d(2), list_mode, time-inputs%dt, &
-         (momentum-momentum_m2)/(2*inputs%dt), pn_m1, -rotb_b_m1, rhs_gauss, opt_tempn=tempn)
+         (momentum-momentum_m2)/(2*inputs%dt), pn_m1, -rotb_b_m1, rhs_gauss, density, tempn, concn)
     !===End Computation of rhs
 
     !===Computation of tensor_m1(=m x u) on gauss points

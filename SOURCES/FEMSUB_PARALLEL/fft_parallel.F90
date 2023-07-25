@@ -6,14 +6,14 @@ MODULE sft_parallele
   USE petsc
   IMPLICIT NONE
   PUBLIC :: FFT_PAR_REAL, FFT_PAR_CROSS_PROD_DCL, &
-       FFT_PAR_DOT_PROD_DCL, FFT_PAR_PROD_DCL, FFT_HEAVISIDE_DCL, &
+       FFT_PAR_DOT_PROD_DCL, FFT_PAR_PROD_DCL, FFT_PAR_DIV_DCL, FFT_HEAVISIDE_DCL, &
        FFT_SCALAR_VECT_DCL, FFT_MAX_VEL_DCL, FFT_TENSOR_DCL,  &
        FFT_PAR_VAR_ETA_PROD_T_DCL, FFT_PAR_VAR_ETA_PROD_GAUSS_DCL, &
        FFT_CHECK_INTERFACE, FFT_COMPUTE_ENTROPY_VISC, FFT_COMPUTE_ENTROPY_VISC_MOM, &
        FFT_COMPUTE_DIFFU_MOM, FFT_PAR_COMPR_ENTRO_VISC_DCL, &
        FFT_COMPUTE_ENTROPY_VISC_GRAD_MOM, FFT_NO_OVERSHOOT_LEVEL_SET, &
        FFT_COMPRESSION_LEVEL_SET_DCL, regul, FFT_PAR_ENTRO_VISC_DCL, &
-       FFT_PAR_SCAL_FUNCT, FFT_SCALAR_VECT_NO_OVERSHOOT
+       FFT_PAR_SCAL_FUNCT, FFT_SCALAR_VECT_NO_OVERSHOOT, FFT_MAX_MIN_VEL_DCL
   PRIVATE
   !===
   !Comments about the use of select_mode.
@@ -265,7 +265,7 @@ CONTAINS
     ! clean up
     CALL dfftw_destroy_plan(fftw_plan_multi_c2r)
 
-    ! CROSS PRODDUCT
+    ! CROSS PRODUCT
     IF (nb_field==6) THEN
        prod_ru(:,1,:) = ru(:,2,:)*ru(:,6,:) - ru(:,3,:)*ru(:,5,:)
        prod_ru(:,2,:) = ru(:,3,:)*ru(:,4,:) - ru(:,1,:)*ru(:,6,:)
@@ -444,7 +444,7 @@ CONTAINS
     ! clean up
     CALL dfftw_destroy_plan(fftw_plan_multi_c2r)
 
-    ! DOT PRODDUCT
+    ! DOT PRODUCT
     IF (nb_field==6) THEN
        prod_ru(:,:) = ru(:,1,:)*ru(:,4,:) + ru(:,2,:)*ru(:,5,:) + ru(:,3,:)*ru(:,6,:)
     END IF
@@ -612,7 +612,7 @@ CONTAINS
     ! clean up
     CALL dfftw_destroy_plan(fftw_plan_multi_c2r)
 
-    !PRODDUCT
+    !PRODUCT
     prod_ru(:,:) = ru(:,1,:)*ru(:,2,:)
     !PRODUCT
 
@@ -662,6 +662,171 @@ CONTAINS
     IF (PRESENT(temps)) temps(3) = temps(3) + MPI_WTIME() -t
 
   END SUBROUTINE FFT_PAR_PROD_DCL
+
+  SUBROUTINE FFT_PAR_DIV_DCL(communicator, c1_in, c2_in, c_out, nb_procs, bloc_size, m_max_pad, temps)
+    !FFT (FFT(-1) V1 . FFT(-1) V2) = c_out
+    !This a de-aliased version of the code, FEB 4, 2011, JLG
+    USE my_util
+    IMPLICIT NONE
+    INCLUDE 'fftw3.f'
+    ! Format: c_1in(1:np,1:2,1:m_max_c)
+    ! INPUT ARE COSINE AND SINE COEFFICIENTS
+    ! THEY ARE PUT IN COMPLEX FORMAT: c_0 = a_0 + i*0 and c_n = (a_n-i*b_n)/2
+    REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN)  :: c1_in, c2_in
+    REAL(KIND=8), DIMENSION(:,:,:),  INTENT(OUT) :: c_out
+    REAL(KIND=8), DIMENSION(:), OPTIONAL, INTENT(INOUT) :: temps
+    INTEGER, INTENT(IN)                                 :: nb_procs, bloc_size, m_max_pad
+    COMPLEX(KIND=8), DIMENSION(m_max_pad, 2, bloc_size)             :: cu
+    REAL(KIND=8),    DIMENSION(2*m_max_pad-1, 2, bloc_size)         :: ru
+    COMPLEX(KIND=8), DIMENSION(m_max_pad, bloc_size)                :: prod_cu
+    REAL(KIND=8),    DIMENSION(2*m_max_pad-1,bloc_size)             :: prod_ru
+    REAL(KIND=8),    DIMENSION(SIZE(c1_in,3),4, bloc_size*nb_procs) :: dist_field, combined_field
+    COMPLEX(KIND=8), DIMENSION(bloc_size,SIZE(c1_in,3)*nb_procs)    :: dist_prod_cu, combined_prod_cu
+    COMPLEX(KIND=8), DIMENSION(bloc_size)                           :: intermediate
+    INTEGER   :: np, np_tot, m_max, m_max_c, MPID,  N_r_pad
+    INTEGER(KIND=8) :: fftw_plan_multi_c2r, fftw_plan_multi_r2c
+    INTEGER ::   nb, nf, shiftc, shiftl, jindex, longueur_tranche, i, n, code
+    REAL(KIND=8) :: t
+    ! FFTW parameters
+    INTEGER   :: fft_dim, howmany, istride, ostride, idist, odist
+    INTEGER, DIMENSION(1) :: dim, inembed, onembed
+    ! Recall complexes must be rescaled
+    ! End FFTW parameters
+    !#include "petsc/finclude/petsc.h"
+    MPI_Comm :: communicator
+
+    IF (PRESENT(temps)) temps = 0.d0
+
+    np      = SIZE(c1_in,1)
+    m_max_c = SIZE(c1_in,3) ! Number of complex (cosines + sines) coefficients per point
+    m_max = m_max_c*nb_procs! Number of comlex coefficients per point per processor
+    np_tot = nb_procs*bloc_size
+    N_r_pad=2*m_max_pad-1
+
+    IF (m_max_c==0) THEN
+       WRITE(*,*) ' BUG '
+       STOP
+    END IF
+
+    ! Packing all 3 complex components of both v1 and v2 input fields
+    ! into dist_field, where the dimension indexing the nodal points varies the least rapidly,
+    ! so that after distributing the data to the processes, each one will obtain a part
+    ! on nodal points
+    ! TRANSPOSE pr que la variable i associee aux modes soit la 1ere sur laquelle on va faire la FFT
+    t = MPI_WTIME()
+    DO i = 1, m_max_c
+       dist_field(i,1:2,1:np) = TRANSPOSE(c1_in(:,:,i))
+       dist_field(i,3:4,1:np) = TRANSPOSE(c2_in(:,:,i))
+    END DO
+    IF (PRESENT(temps)) temps(3) = temps(3) + MPI_WTIME() -t
+
+    IF (np/=np_tot) dist_field(:,:,np+1:np_tot) = 1.d100
+
+    longueur_tranche=bloc_size*m_max_c*4
+
+    t = MPI_WTIME()
+    MPID=MPI_DOUBLE_PRECISION
+    CALL MPI_ALLTOALL (dist_field,longueur_tranche, MPID, combined_field, longueur_tranche, &
+         MPID, communicator, code)
+    IF (PRESENT(temps)) temps(1) = temps(1) + MPI_WTIME() -t
+
+    t = MPI_WTIME()
+    !JLG, FEB 4, 2011
+    cu = 0.d0
+    !JLG, FEB 4, 2011
+    DO n = 1, bloc_size
+       DO nb = 1, nb_procs
+          shiftc = (nb-1)*bloc_size
+          shiftl = (nb-1)*m_max_c
+          jindex = n + shiftc
+          DO nf = 1, 2
+             ! Put real and imaginary parts in a complex
+             ! nf=1 => c1_in
+             ! nf=2 => c2_in
+             ! INPUT ARE COSINE AND SINE COEFFICIENTS
+             ! THEY ARE PUT IN COMPLEX FORMAT: c_0 = a_0 + i*0 and c_n = (a_n-i*b_n)/2
+             cu(shiftl+1:shiftl+m_max_c,nf,n) = 0.5d0*CMPLX(combined_field(:,2*nf-1,jindex),&
+                  -combined_field(:,2*nf,jindex),KIND=8)
+          END DO
+       END DO
+    END DO
+    cu(1,:,:) = 2*CMPLX(REAL(cu(1,:,:),KIND=8),0.d0,KIND=8)
+    !JLG, FEB 4, 2011
+    !Padding is done by initialization of cu: cu = 0
+    !This is eequivalent to cu(m_max+1:m_max_pad,:,:) = 0.d0
+    !JLG, FEB 4, 2011
+
+    IF (PRESENT(temps)) temps(3) = temps(3) + MPI_WTIME() -t
+
+    ! Set the parameters for dfftw
+    fft_dim=1; istride=1; ostride=1;
+    !JLG, FEB 4, 2011
+!!$       idist=N_r;   inembed(1)=N_r; DIM(1)=N_r
+!!$       odist=m_max; onembed(1)=m_max
+    idist=N_r_pad;   inembed(1)=N_r_pad; DIM(1)=N_r_pad
+    odist=m_max_pad; onembed(1)=m_max_pad
+    !JLG, FEB 4, 2011
+
+    howmany=bloc_size*2
+
+    t = MPI_WTIME()
+    CALL dfftw_plan_many_dft_c2r(fftw_plan_multi_c2r, fft_dim, dim, howmany, cu, &
+         onembed, ostride, odist, ru, inembed, istride, idist, FFTW_ESTIMATE)
+    CALL dfftw_execute(fftw_plan_multi_c2r)
+
+    ! clean up
+    CALL dfftw_destroy_plan(fftw_plan_multi_c2r)
+
+    !DIVISION
+    prod_ru(:,:) = ru(:,1,:)/ru(:,2,:)
+    !DIVISION
+
+    howmany = bloc_size*1
+    CALL dfftw_plan_many_dft_r2c(fftw_plan_multi_r2c, fft_dim, dim, howmany, prod_ru, &
+         inembed, istride, idist, prod_cu, onembed, ostride, odist, FFTW_ESTIMATE)
+    CALL dfftw_execute(fftw_plan_multi_r2c)
+
+    ! clean up
+    CALL dfftw_destroy_plan(fftw_plan_multi_r2c)
+
+    !JLG, FEB 4, 2011
+!!$       prod_cu = prod_cu/N_r !Scaling
+    prod_cu = prod_cu*(1.d0/N_r_pad) !Scaling
+    !JLG, FEB 4, 2011
+    IF (PRESENT(temps)) temps(2) = temps(2) + MPI_WTIME() -t
+
+    !Now we need to redistribute the Fourier coefficients on each processor
+    t = MPI_WTIME()
+    combined_prod_cu(:,1)=prod_cu(1,:)
+    DO n=2, m_max
+       combined_prod_cu(:,n)=2*CONJG(prod_cu(n,:))
+    END DO
+
+    IF (PRESENT(temps)) temps(3) = temps(3) + MPI_WTIME() -t
+
+    t = MPI_WTIME()
+    longueur_tranche=bloc_size*m_max_c*2
+    MPID=MPI_DOUBLE_PRECISION
+    CALL MPI_ALLTOALL (combined_prod_cu,longueur_tranche,MPID, dist_prod_cu,longueur_tranche, &
+         MPID,communicator,code)
+    IF (PRESENT(temps)) temps(1) = temps(1) + MPI_WTIME() -t
+
+    t = MPI_WTIME()
+    DO i = 1, m_max_c
+       DO nb = 1, nb_procs
+          shiftc = (nb-1)*bloc_size
+          shiftl = (nb-1)*m_max_c
+          intermediate = dist_prod_cu(:,shiftl+i)
+          DO n = 1, bloc_size
+             IF (n+shiftc > np ) CYCLE
+             c_out(n+shiftc, 1, i) = REAL (intermediate(n),KIND=8)
+             c_out(n+shiftc, 2 , i)  = AIMAG(intermediate(n))
+          END DO
+       END DO
+    END DO
+    IF (PRESENT(temps)) temps(3) = temps(3) + MPI_WTIME() -t
+
+  END SUBROUTINE FFT_PAR_DIV_DCL
 
   SUBROUTINE FFT_HEAVISIDE_DCL(communicator, V1_in, values, V_out, nb_procs, bloc_size, &
        m_max_pad, coeff_tanh, temps)
@@ -788,7 +953,7 @@ CONTAINS
        V1_real_loc(interface_nb,:,:)=ru
     END DO
 
-    ! CROSS PRODDUCT
+    ! CROSS PRODUCT
     IF (nb_field==2) THEN
        DO n1 = 1, 2*m_max_pad-1
           DO n2 = 1, bloc_size
@@ -1505,7 +1670,7 @@ CONTAINS
     CALL dfftw_destroy_plan(fftw_plan_multi_c2r)
 
 
-    ! TENSOR PRODDUCT
+    ! TENSOR PRODUCT
     IF(.NOT.PRESENT(opt_tension)) THEN
        IF (nb_field==6) THEN
           prod_ru1(:,1,:) = ru(:,1,:)*ru(:,4,:)
@@ -3655,7 +3820,6 @@ CONTAINS
   SUBROUTINE FFT_COMPRESSION_LEVEL_SET_DCL(communicator_F,communicator_S, V1_in, V2_in, c_in, c_out, &
        hloc_gauss, l_G, nb_procs, bloc_size, m_max_pad, temps)
     USE input_data
-
     !FFT (FFT(-1) V1 . FFT(-1) V2) = c_out
     !This a de-aliased version of the code, FEB 4, 2011, JLG
     IMPLICIT NONE
@@ -4298,5 +4462,139 @@ CONTAINS
     IF (PRESENT(temps)) temps(3) = temps(3) + MPI_WTIME() -t
 
   END SUBROUTINE FFT_PAR_SCAL_FUNCT
+
+  SUBROUTINE FFT_MAX_MIN_VEL_DCL(communicator, V1_in, V_out, nb_procs, bloc_size, m_max_pad)
+    !This a de-aliased version of the code, FEB 4, 2011, JLG
+    USE my_util
+    IMPLICIT NONE
+    INCLUDE 'fftw3.f'
+    ! Format: V_1in(1:np,1:6,1:m_max_c)
+    ! INPUT ARE COSINE AND SINE COEFFICIENTS
+    ! THEY ARE PUT IN COMPLEX FORMAT: c_0 = a_0 + i*0 and c_n = (a_n-i*b_n)/2
+    REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN)  :: V1_in ! VECTOR
+    REAL(KIND=8), DIMENSION(2),      INTENT(OUT) :: V_out ! V_out(1)=max, V_out(2) = min
+    INTEGER, INTENT(IN)                          :: bloc_size, m_max_pad, nb_procs
+    INTEGER          :: np, np_tot, nb_field1, m_max, m_max_c, MPID, N_r_pad
+    INTEGER(KIND=8)  :: fftw_plan_multi_c2r
+    COMPLEX(KIND=8), DIMENSION(m_max_pad, SIZE(V1_in,2)/2, bloc_size)  :: cu
+    REAL(KIND=8), DIMENSION(2*m_max_pad-1, SIZE(V1_in,2)/2,bloc_size)  :: ru
+    REAL(KIND=8), DIMENSION(SIZE(V1_in,3),SIZE(V1_in,2),bloc_size*nb_procs) :: dist_field, combined_field
+    INTEGER :: nb, nf, shiftc, shiftl, jindex, longueur_tranche, i, n, code
+    REAL(KIND=8), DIMENSION(2*m_max_pad-1, bloc_size) ::  norm_vel_loc
+    REAL(KIND=8) :: max_velocity, min_velocity
+    ! FFTW parameters
+    INTEGER   :: fft_dim, howmany, istride, ostride, idist, odist
+    INTEGER, DIMENSION(1) :: dim, inembed, onembed
+    ! Recall complexes must be rescaled
+    ! End FFTW parameters
+    !#include "petsc/finclude/petsc.h"
+    MPI_Comm :: communicator
+
+    np        = SIZE(V1_in,1)
+    nb_field1 = SIZE(V1_in,2) ! Number of fields
+    m_max_c   = SIZE(V1_in,3) ! Number of complex (cosines + sines) coefficients per point
+    m_max     = m_max_c*nb_procs! Number of comlex coefficients per point per processor
+    N_r_pad   = 2*m_max_pad-1
+    np_tot    = nb_procs*bloc_size
+
+    IF (MOD(nb_field1,2)/=0 .OR. m_max_c==0) THEN
+       WRITE(*,*) ' BUG '
+       STOP
+    END IF
+
+    ! Bloc_size is the number of points that are handled by one processor
+    ! once the Fourier modes are all collected
+    ! Computation of bloc_size and np_tot
+    ! fin de la repartition des points
+
+    ! Packing all 3 complex components of both v1 and v2 input fields
+    ! into dist_field, where the dimension indexing the nodal points varies the least rapidly,
+    ! so that after distributing the data to the processes, each one will obtain a part
+    ! on nodal points
+    ! TRANSPOSE pr que la variable i associee aux modes soit la 1ere sur laquelle on va faire la FFT
+
+    DO i = 1, m_max_c
+       dist_field(i,1:nb_field1,1:np) = TRANSPOSE(V1_in(:,:,i))
+    END DO
+
+    IF (np/=np_tot) dist_field(:,:,np+1:np_tot) = 0.d0
+
+    longueur_tranche=bloc_size*m_max_c*nb_field1
+
+    MPID=MPI_DOUBLE_PRECISION
+    CALL MPI_ALLTOALL (dist_field,longueur_tranche, MPID, combined_field, longueur_tranche, &
+         MPID, communicator, code)
+
+    !JLG, FEB 4, 2011
+    cu = 0.d0
+    !JLG, FEB 4, 2011
+    DO n = 1, bloc_size
+       DO nb = 1, nb_procs
+          shiftc = (nb-1)*bloc_size
+          shiftl = (nb-1)*m_max_c
+          jindex = n + shiftc
+          DO nf = 1, nb_field1/2
+             ! Put real and imaginary parts in a complex
+             ! nf=1,2,3 => V1_in
+             ! nf=4 => V2_in
+             ! INPUT ARE COSINE AND SINE COEFFICIENTS
+             ! THEY ARE PUT IN COMPLEX FORMAT: c_0 = a_0 + i*0 and c_n = (a_n-i*b_n)/2
+             cu(shiftl+1:shiftl+m_max_c,nf,n) = 0.5d0*CMPLX(combined_field(:,2*nf-1,jindex),&
+                  -combined_field(:,2*nf,jindex),KIND=8)
+          END DO
+       END DO
+    END DO
+    cu(1,:,:) = 2*CMPLX(REAL(cu(1,:,:),KIND=8),0.d0,KIND=8)
+    !JLG, FEB 4, 2011
+    !Padding is done by initialization of cu: cu = 0
+    !This is eequivalent to cu(m_max+1:m_max_pad,:,:) = 0.d0
+    !JLG, FEB 4, 2011
+
+    ! Set the parameters for dfftw
+    fft_dim=1; istride=1; ostride=1;
+    !JLG, FEB 4, 2011
+!!$       idist=N_r;   inembed(1)=N_r; DIM(1)=N_r
+!!$       odist=m_max; onembed(1)=m_max
+    idist=N_r_pad;   inembed(1)=N_r_pad; DIM(1)=N_r_pad
+    odist=m_max_pad; onembed(1)=m_max_pad
+    !JLG, FEB 4, 2011
+
+    howmany=bloc_size*nb_field1/2
+
+    CALL dfftw_plan_many_dft_c2r(fftw_plan_multi_c2r, fft_dim, dim, howmany, cu, &
+         onembed, ostride, odist, ru, inembed, istride, idist, FFTW_ESTIMATE)
+    !write(*,*) ' FFT_PAR_CROSS_PROD: fftw_plan_multi_c2r', fftw_plan_multi_c2r
+    CALL dfftw_execute(fftw_plan_multi_c2r)
+
+    ! clean up
+    CALL dfftw_destroy_plan(fftw_plan_multi_c2r)
+
+    IF (nb_field1==6) THEN
+       norm_vel_loc(:,:) = SQRT(ru(:,1,:)**2 + ru(:,2,:)**2 + ru(:,3,:)**2)
+    ELSE
+       norm_vel_loc(:,:) = SQRT(ru(:,1,:)**2)
+    END IF
+    max_velocity = MAXVAL(norm_vel_loc)
+    !   min_velocity = MINVAL(norm_vel_loc)
+    DO i=1, N_r_pad
+       DO n=1, bloc_size
+          min_velocity = norm_vel_loc(i,n)
+          IF (min_velocity.GT.0.d0) THEN
+             EXIT
+          END IF
+       END DO
+    END DO
+    DO i=1, N_r_pad
+       DO n=1, bloc_size
+          IF ((norm_vel_loc(i,n).LT.min_velocity).AND.(norm_vel_loc(i,n).GT.0.d0)) THEN
+             min_velocity=norm_vel_loc(i,n)
+          END IF
+       END DO
+    END DO
+    CALL MPI_ALLREDUCE(max_velocity, V_out(1), 1, MPI_DOUBLE_PRECISION, &
+         MPI_MAX, communicator, code)
+    CALL MPI_ALLREDUCE(min_velocity, V_out(2), 1, MPI_DOUBLE_PRECISION, &
+         MPI_MIN, communicator, code)
+  END SUBROUTINE FFT_MAX_MIN_VEL_DCL
 
 END MODULE sft_parallele

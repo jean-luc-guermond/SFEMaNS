@@ -197,6 +197,7 @@ CONTAINS
 
   END SUBROUTINE qs_diff_mass_scal_M
 
+
   SUBROUTINE qs_diff_mass_scal_M_variant(mesh, LA, heat_capa, visco, mass, temp_list_robin_sides, &
        convection_coeff, stab, mode, matrix)
     USE my_util
@@ -1702,5 +1703,112 @@ CONTAINS
     CALL MatAssemblyEnd(matrix,MAT_FINAL_ASSEMBLY,ierr)
 
   END SUBROUTINE qs_diff_mass_scal_M_level
+
+  SUBROUTINE qs_diff_mass_scal_M_conc(mesh, LA, visco, mass, conc_list_robin_sides, &
+       convection_coeff_conc_lhs, stab, mode, matrix)
+    USE my_util
+    !=================================================
+    IMPLICIT NONE
+    TYPE(mesh_type),              INTENT(IN)               :: mesh
+    TYPE(petsc_csr_LA)                                     :: LA
+    REAL(KIND=8),                 INTENT(IN)               :: mass, stab
+    REAL(KIND=8), DIMENSION(:),   INTENT(IN)               :: visco, convection_coeff_conc_lhs  ! Robin coeff = convection coeff h for temperature case
+    INTEGER, DIMENSION(:),   INTENT(IN)                    :: conc_list_robin_sides ! Robin sides added to build the matrix
+    INTEGER,                      INTENT(IN)               :: mode
+    INTEGER,      DIMENSION(mesh%gauss%n_w)                :: jj_loc
+    INTEGER,      DIMENSION(mesh%gauss%n_w)                :: idxm, idxn
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w,mesh%gauss%l_G) :: wwprod
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w) :: a_loc
+    REAL(KIND=8)                                           :: ray
+    INTEGER      :: m, l, ni, nj, i, j, iglob, jglob, n_w, n_ws, ms, ls, ib ! for Robin
+    REAL(KIND=8) :: viscolm, xij, x ! for Robin
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,mesh%gauss%n_ws) :: h_phii_phij ! terms for Robin
+    INTEGER, DIMENSION(1:1)                                  :: coeff_index ! index of robin coefficient in the list
+
+    !#include "petsc/finclude/petsc.h"
+    Mat                                         :: matrix
+    PetscErrorCode                              :: ierr
+    CALL MatZeroEntries (matrix, ierr)
+    CALL MatSetOption (matrix, MAT_ROW_ORIENTED, PETSC_FALSE, ierr)
+
+    DO l = 1, mesh%gauss%l_G
+       DO ni = 1, mesh%gauss%n_w
+          DO nj = 1, mesh%gauss%n_w
+             wwprod(ni,nj,l) = mesh%gauss%ww(ni,l)*mesh%gauss%ww(nj,l)
+          END DO
+       END DO
+    END DO
+
+    n_w = mesh%gauss%n_w
+    DO m = 1, mesh%dom_me
+       jj_loc = mesh%jj(:,m)
+       a_loc = 0.d0
+
+       DO nj = 1, mesh%gauss%n_w;
+          j = jj_loc(nj)
+          jglob = LA%loc_to_glob(1,j)
+          idxn(nj) = jglob-1
+          DO ni = 1, mesh%gauss%n_w;
+             i = jj_loc(ni)
+             iglob = LA%loc_to_glob(1,i)
+             idxm(ni) = iglob-1
+          END DO
+       END DO
+
+       DO l = 1,  mesh%gauss%l_G
+          !Compute radius of Gauss point
+          ray = 0
+          DO ni = 1, n_w;  i = jj_loc(ni)
+             ray = ray + mesh%rr(1,i)*mesh%gauss%ww(ni,l)
+          END DO
+          viscolm  = (visco(m) + stab*mesh%hloc(m))*mesh%gauss%rj(l,m)
+          DO nj = 1, n_w
+             DO ni = 1, n_w
+                !grad(u).grad(v) w.r.t. r and z
+                xij = SUM(mesh%gauss%dw(:,nj,l,m)*mesh%gauss%dw(:,ni,l,m))
+                !start diagonal block
+                a_loc(ni,nj) =  a_loc(ni,nj) + ray * viscolm* xij  &
+                     + mass*ray*wwprod(ni,nj,l)*mesh%gauss%rj(l,m) &
+                     + viscolm*mode**2*wwprod(ni,nj,l)/ray
+                !end diagonal block
+             END DO
+          END DO
+       END DO
+       CALL MatSetValues(matrix,n_w,idxm,n_w,idxn,a_loc,ADD_VALUES,ierr)
+    ENDDO
+
+    !===Robin conditions ! MODIFICATION: Robin: addition of the term int_(partial Omega) h*u*v
+    IF (SIZE(conc_list_robin_sides) > 0) THEN
+
+       n_ws = mesh%gauss%n_ws
+       DO ms = 1, mesh%mes
+          IF (MINVAL(ABS(conc_list_robin_sides - mesh%sides(ms))) > 0) CYCLE
+          h_phii_phij = 0d0
+          coeff_index = MINLOC(ABS(conc_list_robin_sides - mesh%sides(ms)))
+          DO ls = 1, mesh%gauss%l_Gs
+             !===Compute radius of Gauss point
+             ray = SUM(mesh%rr(1,mesh%jjs(:,ms))* mesh%gauss%wws(:,ls))
+             x = convection_coeff_conc_lhs(coeff_index(1)) * ray * mesh%gauss%rjs(ls,ms)
+             DO ni=1, n_ws
+                DO nj=1, n_ws
+                   h_phii_phij(ni,nj) = h_phii_phij(ni,nj) + &
+                        x * mesh%gauss%wws(ni,ls) * mesh%gauss%wws(nj,ls)
+                ENDDO
+             ENDDO
+          ENDDO
+          DO ni = 1, n_ws
+             i =  mesh%jjs(ni,ms)
+             ib = LA%loc_to_glob(1,i)
+             idxn(ni) = ib - 1
+          END DO
+          CALL MatSetValues(matrix, n_ws, idxn(1:n_ws), n_ws, idxn(1:n_ws), &
+               h_phii_phij, ADD_VALUES, ierr)
+       END DO
+    END IF
+    !===End Robin conditions
+    CALL MatAssemblyBegin(matrix,MAT_FINAL_ASSEMBLY,ierr)
+    CALL MatAssemblyEnd(matrix,MAT_FINAL_ASSEMBLY,ierr)
+
+  END SUBROUTINE qs_diff_mass_scal_M_conc
 
 END MODULE fem_M_axi

@@ -1,0 +1,105 @@
+============================================
+              Input information
+============================================
+===Number of processors in meridian section (Input)
+2
+===Problem type (Input): (nst, mxw, mhd, fhd, mhs)
+'mhs'
+===Is there an input concentration field?
+.t.
+===Directory and name of input mesh file
+'../../MESHES' 'LMB_cake_setup_home_0p001_0p005.FEM'
+===Is input mesh file formatted (true/false)?
+.t.
+
+============================================
+              Output information
+============================================
+===Number of processors in meridian section (Output)
+6
+===Problem type (Output): (nst, mxw, mhd, fhd, mhs)
+'mhs'
+===Is there an output concentration field?
+.t.
+===Directory and name of output mesh file
+'../../MESHES' 'LMB_cake_setup_home_0p001_0p0025.FEM'
+===Is output mesh file formatted (true/false)?
+.t.
+
+============================================
+              What should be done?
+============================================
+===Should data be interpolated on new mesh? (True/False)
+.t.
+===How many files (times steps) should be converted?
+1
+===What is the starting index? (suite*_I*index.mesh*), index is an integer in [1,999]
+1
+===Number of Fourier modes
+1
+
+============================================
+              Periodicity
+============================================
+===How many pieces of periodic boundary?
+0
+xx===Indices of periodic boundaries and corresponding vectors
+xx4 2 .0d0 1.d0
+
+============================================
+              Mesh-CONCENTRATION
+============================================
+===Number of subdomains in concentration mesh
+1
+===List of subdomains for concentration mesh
+2
+
+============================================
+              Mesh-NAVIER-STOKES
+============================================
+===Number of subdomains in Navier-Stokes mesh
+1
+===List of subdomains for Navier-Stokes mesh
+2
+===Is there a level set?
+.f.
+xx===How many fluids?
+xx2
+xx===Number of interfaces between velocity and concentration only domains (for nst applications)
+xx0
+xx===List of interfaces between velocity and concentration only domains (for nst applications)
+xx0
+
+============================================
+              H-MAXWELL
+============================================
+===Type of finite element for magnetic field
+2
+===Number of subdomains in magnetic field (H) mesh
+5
+===List of subdomains for magnetic field (H) mesh
+1 2 3 4 5
+===Number of interfaces in H mesh
+4
+===List of interfaces in H mesh
+2 5 6 8
+
+============================================
+              Phi-MAXWELL
+============================================
+===Number of subdomains in magnetic potential (phi) mesh
+0
+xx===List of subdomains for magnetic potential (phi) mesh
+xx2
+xx===Number of interfaces between H and phi
+xx1
+xx===List of interfaces between H and phi
+xx5
+xx===Type of finite element for scalar potential
+xx2
+
+============================================
+              Control and verbose
+============================================
+===Check construction with plotmtv? (True/False)
+.f.

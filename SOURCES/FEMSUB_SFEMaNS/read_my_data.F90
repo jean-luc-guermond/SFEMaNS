@@ -32,6 +32,7 @@ MODULE my_data_module
      REAL(KIND=8)                            :: penal_coeff_art_comp
      LOGICAL                                 :: if_tensor_sym
      LOGICAL                                 :: if_moment_bdf2
+     LOGICAL                                 :: if_temp_bdf2
      LOGICAL                                 :: if_level_bdf2
      LOGICAL                                 :: irestart_u
      LOGICAL                                 :: if_variable_visco
@@ -42,6 +43,7 @@ MODULE my_data_module
      INTEGER                                 :: nb_dom_ns
      INTEGER, DIMENSION(:), POINTER          :: list_dom_ns
      REAL(KIND=8)                            :: Re
+     REAL(KIND=8)                            :: coeff_lorentz
      TYPE(solver_param)                      :: my_par_vv, my_par_pp, my_par_mass
      INTEGER                                 :: pp_nb_dirichlet_sides
      INTEGER, DIMENSION(:), POINTER          :: pp_list_dirichlet_sides
@@ -56,7 +58,7 @@ MODULE my_data_module
      INTEGER                                 :: nb_dom_H, nb_dom_phi, nb_inter, nb_inter_mu
      INTEGER                                 :: type_fe_H, type_fe_phi, nb_dirichlet_sides_H
      INTEGER, DIMENSION(:), POINTER          :: list_dom_H, list_dom_phi, list_inter_H_phi
-     INTEGER, DIMENSION(:), POINTER          :: list_inter_mu, list_dirichlet_sides_H
+     INTEGER, DIMENSION(:), POINTER          :: list_inter_mu, list_dirichlet_sides_H, list_inter_rot_h_jump
      REAL(KIND=8)                            :: Rem, mu_phi
      LOGICAL                                 :: analytical_permeability
      LOGICAL                                 :: if_use_fem_integration_for_mu_bar
@@ -67,26 +69,57 @@ MODULE my_data_module
      INTEGER                                 :: phi_nb_dirichlet_sides
      INTEGER, DIMENSION(:), POINTER          :: phi_list_dirichlet_sides
      LOGICAL                                 :: if_quasi_static_approx
-     LOGICAL                                 :: if_steady_current_fhd ! MODIFICATION: for fhd, possibility of computing H only once in the case of steady current
+     LOGICAL                                 :: if_steady_current_fhd
+     REAL(KIND=8)                            :: stab_jump_h
+     INTEGER                                 :: rot_h_nb_jump_sides
      !===Data for temperature========================================================
      LOGICAL                                 :: if_temperature
+     LOGICAL                                 :: if_temperature_with_T
      LOGICAL                                 :: irestart_T
      LOGICAL                                 :: if_helmholtz_force
      REAL(KIND=8)                            :: gravity_coefficient
-     REAL(KIND=8)                            :: mag_force_coefficient ! MODIFICATION: coefficient for magnetic force in ferrofluids
+     REAL(KIND=8)                            :: mag_force_coefficient
      REAL(KIND=8), DIMENSION(:), POINTER     :: temperature_diffusivity
-     REAL(KIND=8), DIMENSION(:), POINTER     :: density, heat_capacity, vol_heat_capacity ! MODIFICATION: density and heat capacity found in the litterature more often than vol heat capacity
+     REAL(KIND=8), DIMENSION(:), POINTER     :: density, heat_capacity, vol_heat_capacity
      TYPE(solver_param)                      :: my_par_temperature
      INTEGER                                 :: temperature_nb_dirichlet_sides
      INTEGER, DIMENSION(:), POINTER          :: temperature_list_dirichlet_sides
-     INTEGER                                 :: temperature_nb_robin_sides ! MODIFICATION: Robin
+     INTEGER                                 :: temperature_nb_robin_sides
      INTEGER, DIMENSION(:), POINTER          :: temperature_list_robin_sides
-     REAL(KIND=8), DIMENSION(:), POINTER     :: convection_coeff ! MODIFICATION: Robin
-     REAL(KIND=8), DIMENSION(:), POINTER     :: exterior_temperature ! MODIFICATION: Robin
+     INTEGER                                 :: temperature_nb_neumann_sides
+     INTEGER, DIMENSION(:), POINTER          :: temperature_list_neumann_sides
+     REAL(KIND=8), DIMENSION(:), POINTER     :: convection_coeff
+     REAL(KIND=8), DIMENSION(:), POINTER     :: exterior_temperature
      INTEGER                                 :: nb_dom_temp
      INTEGER, DIMENSION(:), POINTER          :: list_dom_temp
      INTEGER                                 :: nb_inter_v_T
      INTEGER, DIMENSION(:), POINTER          :: list_inter_v_T
+     !===Data for concentration======================================================
+     LOGICAL                                 :: if_concentration
+     LOGICAL                                 :: irestart_conc
+     REAL(KIND=8), DIMENSION(:), POINTER     :: concentration_diffusivity
+     TYPE(solver_param)                      :: my_par_concentration
+     INTEGER                                 :: concentration_nb_dirichlet_sides
+     INTEGER, DIMENSION(:), POINTER          :: concentration_list_dirichlet_sides
+     INTEGER                                 :: concentration_nb_robin_sides
+     INTEGER, DIMENSION(:), POINTER          :: concentration_list_robin_sides
+     INTEGER                                 :: concentration_nb_neumann_sides
+     INTEGER, DIMENSION(:), POINTER          :: concentration_list_neumann_sides
+     REAL(KIND=8), DIMENSION(:), POINTER     :: convection_coeff_conc_lhs, convection_coeff_conc_rhs
+     REAL(KIND=8), DIMENSION(:), POINTER     :: exterior_concentration
+     INTEGER                                 :: nb_dom_conc
+     INTEGER, DIMENSION(:), POINTER          :: list_dom_conc
+     INTEGER                                 :: nb_inter_c_v
+     INTEGER, DIMENSION(:), POINTER          :: list_inter_c_v
+     !===Data for mhs problems=======================================================
+     LOGICAL                                 :: if_coupling_H_x
+     LOGICAL                                 :: if_coupling_analytical
+     REAL(KIND=8)                            :: MA
+     REAL(KIND=8)                            :: MB
+     REAL(KIND=8)                            :: rho_0percent
+     REAL(KIND=8)                            :: xi
+     REAL(KIND=8)                            :: pot_slope
+     REAL(KIND=8)                            :: faraday_cst
      !===Data for level set==========================================================
      LOGICAL                                 :: if_level_set
      LOGICAL                                 :: if_level_set_fixed
@@ -102,12 +135,15 @@ MODULE my_data_module
      REAL(KIND=8), DIMENSION(:), POINTER     :: dyna_visc_fluid
      LOGICAL                                 :: variation_sigma_fluid
      REAL(KIND=8), DIMENSION(:), POINTER     :: sigma_fluid
+     LOGICAL                                 :: variation_temp_param_fluid
+     REAL(KIND=8), DIMENSION(:), POINTER     :: heat_capacity_fluid
+     REAL(KIND=8), DIMENSION(:), POINTER     :: heat_diffu_fluid
      LOGICAL                                 :: if_surface_tension
      REAL(KIND=8), DIMENSION(:), POINTER     :: coeff_surface
      LOGICAL                                 :: if_mass_correction
      LOGICAL                                 :: if_kill_overshoot
      REAL(KIND=8)                            :: multiplier_for_h_min_distance
-     REAL(KIND=8)                            :: sigma_min, mu_min !LC 2017/01/27
+     REAL(KIND=8)                            :: sigma_min, mu_min
      !===Computed data for level set
      REAL(KIND=8)                            :: h_min_distance
      LOGICAL                                 :: if_level_set_P2
@@ -138,7 +174,21 @@ MODULE my_data_module
      INTEGER                                 :: freq_restart, freq_en, freq_plot
      LOGICAL                                 :: verbose_timing, verbose_divergence, verbose_CFL
      LOGICAL                                 :: if_just_processing
+     LOGICAL                                 :: if_post_proc_init
      LOGICAL                                 :: if_xml
+     LOGICAL                                 :: if_plot_2D
+     LOGICAL                                 :: if_compute_error
+     !===Data for anemometer (postprocessing)========================================
+     LOGICAL                                 :: if_anemo_conc, if_anemo_v, if_anemo_T, if_anemo_h
+     INTEGER                                 :: nb_anemo_r_conc, nb_anemo_z_conc
+     INTEGER                                 :: nb_anemo_r_v, nb_anemo_z_v
+     INTEGER                                 :: nb_anemo_r_T, nb_anemo_z_T
+     INTEGER                                 :: nb_anemo_r_h, nb_anemo_z_h
+     REAL(KIND=8), DIMENSION(:), POINTER     :: r_anemo_conc, z_anemo_conc
+     REAL(KIND=8), DIMENSION(:), POINTER     :: r_anemo_v, z_anemo_v
+     REAL(KIND=8), DIMENSION(:), POINTER     :: r_anemo_T, z_anemo_T
+     REAL(KIND=8), DIMENSION(:), POINTER     :: r_anemo_h, z_anemo_h
+
    CONTAINS
      PROCEDURE, PUBLIC                       :: init
   END TYPE my_data
@@ -159,18 +209,22 @@ CONTAINS
     a%if_navier_stokes_art_comp=.FALSE.
     a%if_tensor_sym=.FALSE.
     a%if_moment_bdf2=.FALSE.
+    a%if_temp_bdf2=.FALSE.
     a%if_level_bdf2=.FALSE.
     a%irestart_u=.FALSE.
     a%if_maxwell_with_H=.FALSE.
     a%irestart_h=.FALSE.
     a%irestart_T=.FALSE.
+    a%irestart_conc=.FALSE.
     a%if_helmholtz_force=.FALSE.
     a%analytical_permeability=.FALSE.
     a%if_use_fem_integration_for_mu_bar=.FALSE.
     a%if_permeability_variable_in_theta=.FALSE.
     a%if_quasi_static_approx=.FALSE.
-    a%if_steady_current_fhd=.FALSE. ! MODIFICATION
+    a%if_steady_current_fhd=.FALSE.
     a%if_temperature=.FALSE.
+    a%if_temperature_with_T=.FALSE.
+    a%if_concentration=.FALSE.
     a%if_level_set=.FALSE.
     a%if_level_set_fixed=.FALSE.
     a%variation_sigma_fluid=.FALSE.
@@ -181,7 +235,15 @@ CONTAINS
     a%if_compression_mthd_JLG=.FALSE.
     a%if_variable_visco=.FALSE.
     a%if_xml = .TRUE.
+    a%if_plot_2D=.FALSE.
+    a%if_compute_error=.FALSE.
+    a%if_anemo_conc=.FALSE.
+    a%if_anemo_v=.FALSE.
+    a%if_anemo_T=.FALSE.
+    a%if_anemo_h=.FALSE.
     a%if_navier_stokes_with_taylor =.FALSE.
+    a%if_coupling_H_x=.FALSE.
+    a%if_coupling_analytical=.FALSE.
     !===Done in sfemansinitialize. Do not touch. a%test_de_convergence
     a%if_arpack=.FALSE.
     a%if_arpack_vtu_2d=.FALSE.
@@ -192,11 +254,13 @@ CONTAINS
     a%verbose_divergence=.FALSE.
     a%verbose_CFL=.FALSE.
     a%if_just_processing=.FALSE.
+    a%if_post_proc_init=.FALSE.
     a%my_par_vv%verbose=.FALSE.
     a%my_par_pp%verbose=.FALSE.
     a%my_par_mass%verbose=.FALSE.
     a%my_par_H_p_phi%verbose=.FALSE.
     a%my_par_temperature%verbose=.FALSE.
+    a%my_par_concentration%verbose=.FALSE.
     a%my_par_level_set%verbose=.FALSE.
     !===Reals
     a%LES_coeff1=0.d0
@@ -220,6 +284,12 @@ CONTAINS
     a%multiplier_for_h_min_distance=0.d0
     a%taylor_lambda = 1.d0
     a%penal_coeff_art_comp=1.d0
+    a%MA=0.d0
+    a%MB=1.d0
+    a%rho_0percent=0.d0
+    a%xi=0.d0
+    a%pot_slope=1.d0
+    a%faraday_cst=1.d0
     !===Integers
     a%vv_nb_dirichlet=0
     a%vv_nb_dirichlet_normal_velocity=0
@@ -228,6 +298,11 @@ CONTAINS
     a%freq_plot = 10000000
     a%type_fe_velocity = 2
     a%taylor_order = -1
+    a%nb_dom_conc=0
+    a%nb_dom_ns=0
+    a%nb_dom_temp=0
+    a%nb_dom_H=0
+    a%nb_dom_phi=0
   END SUBROUTINE init
 END MODULE my_data_module
 
@@ -286,16 +361,25 @@ CONTAINS
     END IF
 
     !===Type of problem to be solved================================================
-    CALL read_until(21, '===Problem type: (nst, mxw, mhd, fhd)')
-    READ(21,*) inputs%type_pb
-    IF (inputs%type_pb/='nst' .AND. inputs%type_pb/='mhd' .AND. inputs%type_pb/='mxw' .AND. inputs%type_pb/='fhd') THEN
+    CALL find_string(21,'===Problem type: (nst, mxw, mhd, fhd, mhs)', test)
+    IF (test) THEN
+       READ (21,*) inputs%type_pb
+    ELSE
+       CALL read_until(21, '===Problem type: (nst, mxw, mhd, fhd)')
+       READ(21,*) inputs%type_pb
+    END IF
+    !   CALL read_until(21, '===Problem type: (nst, mxw, mhd, fhd, mhs)')
+    !   READ(21,*) inputs%type_pb
+    IF (inputs%type_pb/='nst' .AND. inputs%type_pb/='mhd' .AND. inputs%type_pb/='mxw'&
+         .AND. inputs%type_pb/='fhd' .AND. inputs%type_pb/='mhs') THEN
        CALL error_Petsc('BUG in read_my_data, type_pb of probleme not yet defined')
     END IF
 
     !===Restarts====================================================================
     CALL read_until(21, '===Restart on velocity (true/false)')
     READ (21 ,*) inputs%irestart_u
-    IF (inputs%type_pb=='mhd' .OR. inputs%type_pb=='mxw' .OR. inputs%type_pb=='fhd') THEN
+    IF (inputs%type_pb=='mhd' .OR. inputs%type_pb=='mxw' .OR. inputs%type_pb=='fhd' &
+         .OR. inputs%type_pb=='mhs') THEN
        CALL read_until(21, '===Restart on magnetic field (true/false)')
        READ (21 ,*) inputs%irestart_h
     ELSE
@@ -307,6 +391,13 @@ CONTAINS
     ELSE
        inputs%irestart_T = .FALSE.
     END IF
+    CALL find_string(21, '===Restart on concentration (true/false)', test)
+    IF (test) THEN
+       READ (21 ,*) inputs%irestart_conc
+    ELSE
+       inputs%irestart_conc = .FALSE.
+    END IF
+
 
     !===Mesh partitioning===========================================================
     CALL find_string(21, '===Do we read metis partition? (true/false)', test)
@@ -315,7 +406,8 @@ CONTAINS
     ELSE
        inputs%if_read_partition = .FALSE.
     END IF
-    IF (.NOT.inputs%if_read_partition .AND. (inputs%irestart_u .OR. inputs%irestart_h .OR. inputs%irestart_T)) THEN
+    IF (.NOT.inputs%if_read_partition .AND. (inputs%irestart_u .OR. inputs%irestart_h &
+         .OR. inputs%irestart_T .OR. inputs%irestart_conc)) THEN
        call error_petsc('Possibility of bug: set "===Do we read metis partition? (true/false) "' // &
             'parameter to .true. when restarting a computation since number of procs, ' // &
             'or machine, or type_pb may have changed. Make sure your mesh_part file is the correct one.')
@@ -357,8 +449,10 @@ CONTAINS
        inputs%is_mesh_symmetric = .FALSE.
     END IF
 
+
     !===Navier Stokes data==========================================================
-    IF (inputs%type_pb=='nst' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd' .OR. inputs%irestart_u) THEN
+    IF (inputs%type_pb=='nst' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd' &
+         .OR. inputs%type_pb=='mhs' .OR. inputs%irestart_u) THEN
 
        !==========Navier Stokes with artifical compression or projection-correction schemes===============!
        CALL find_string(21, '===Solve Navier-Stokes with art comp scheme (true) or (false)?', test)
@@ -534,6 +628,15 @@ CONTAINS
           inputs%Re = 1.d0 / inputs%Re
        END IF
 
+
+       !==========Lorentz Force Coefficient===============!
+       CALL find_string(21, '===Coefficient for Lorentz force', test)
+       IF (test) THEN
+          READ(21,*) inputs%coeff_lorentz
+       ELSE
+          inputs%coeff_lorentz=1.d0
+       END IF
+
        !==========Variable viscosity======================!
        CALL find_string(21, '===Variable viscosity (true/false)?',test)
        IF (test) THEN
@@ -691,7 +794,8 @@ CONTAINS
     END IF
 
     !===Maxwell data================================================================
-    IF (inputs%type_pb=='mxw' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd') THEN
+    IF (inputs%type_pb=='mxw' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd'&
+         .OR. inputs%type_pb=='mhs') THEN
        !==========Maxwell with H or B=====================!
        CALL find_string(21, '===Solve Maxwell with H (true) or B (false)?', test)
        IF (test) THEN
@@ -732,6 +836,21 @@ CONTAINS
        IF (inputs%nb_inter_mu>0) THEN
           CALL read_until(21, '===List of interfaces in H mesh')
           READ(21,*) inputs%list_inter_mu
+       END IF
+
+       !==========Interfaces jump rot h==========================!
+       CALL find_string(21, '===How many boundary pieces for jump BCs on rot H?', test)
+       IF (test) THEN
+          READ(21,*) inputs%rot_h_nb_jump_sides
+       ELSE
+          inputs%rot_h_nb_jump_sides = 0
+       END IF
+       IF (test .AND. (inputs%rot_h_nb_jump_sides>0)) THEN
+          ALLOCATE(inputs%list_inter_rot_h_jump(inputs%rot_h_nb_jump_sides))
+          CALL read_until(21, '===List of boundary pieces for jump BCs on rot H')
+          READ(21,*) inputs%list_inter_rot_h_jump
+       ELSE
+          ALLOCATE(inputs%list_inter_rot_h_jump(0))
        END IF
 
        !==========Dirichlet BCs for H=====================!
@@ -777,14 +896,13 @@ CONTAINS
        ALLOCATE(inputs%sigma(inputs%nb_dom_H))
        READ(21,*) inputs%sigma
 
-       !LC 2017/01/27
        !==========Minimum of conductivity=================!
        CALL find_string(21,'===Minimum of conductivity in the whole domain', test)
        IF (test) THEN
           READ(21,*) inputs%sigma_min
        ELSE
           test_sigma_min = .TRUE.
-          inputs%sigma_min=MINVAL(inputs%sigma) !JLG (Feb 23/2017) !LC 1.d0
+          inputs%sigma_min=MINVAL(inputs%sigma) !JLG (Feb 23/2017)
        END IF
 
        !==========Minimum of permeability=================!
@@ -795,7 +913,7 @@ CONTAINS
           IF (.NOT.inputs%analytical_permeability) THEN ! JLG (FEB 23, 2017), begin
              inputs%mu_min = MINVAL(inputs%mu_H)
           ELSE
-             inputs%mu_min=1.d0 ! LC
+             inputs%mu_min=1.d0
           END IF ! JLG (FEB 23, 2017), end
        END IF
 
@@ -816,7 +934,18 @@ CONTAINS
        ELSE
           inputs%stab(3) = 0.d0
        END IF
-
+       !==========Stab coefficient for interface jump on H========================!
+       IF (inputs%nb_inter_mu>0) THEN
+          !CALL read_until(21, '===Stabilization coefficient for interface H/H')
+          CALL find_string(21, '===Stabilization coefficient for interface H/H', test)
+          IF (test) THEN
+             READ(21,*) inputs%stab_jump_h
+          ELSE
+             inputs%stab_jump_h=1.d0
+          END IF
+       ELSE
+          inputs%stab_jump_h = 0.d0
+       END IF
        !==========Subdomains for phi======================!
        CALL find_string(21, '===Number of subdomains in magnetic potential (phi) mesh', test)
        IF (test) THEN
@@ -880,6 +1009,7 @@ CONTAINS
        READ(21,*) inputs%my_par_H_p_phi%precond
     END IF
 
+
     !===Data temperature==============================================================
     CALL find_string(21, '===Is there a temperature field?', test)
     IF (test) THEN
@@ -888,6 +1018,25 @@ CONTAINS
        inputs%if_temperature = .FALSE.
     END IF
     IF (inputs%if_temperature) THEN
+       !==========Temperature with T or e=================!
+       CALL find_string(21, '===Solve Temperature with T (true) or e (false)?', test)
+       IF (test) THEN
+          READ(21,*) inputs%if_temperature_with_T
+       ELSE
+          inputs%if_temperature_with_T = .TRUE.
+       END IF
+
+       IF (.NOT. inputs%if_temperature_with_T) THEN
+          CALL find_string(21, '===Do we solve heat equation with bdf2 (true/false)?', test)
+          IF (test) THEN
+             READ(21,*) inputs%if_temp_bdf2
+          ELSE
+             inputs%if_temp_bdf2=.FALSE.
+          END IF
+          IF (inputs%if_temp_bdf2) THEN
+             inputs%if_level_bdf2=.TRUE.
+          END IF
+       END IF
        !==========Gravity coefficient for temperature=====!
        CALL find_string(21, '===Non-dimensional gravity coefficient', test)
        IF (test) THEN
@@ -900,7 +1049,7 @@ CONTAINS
        IF (test) THEN
           READ (21,*) inputs%if_helmholtz_force
        END IF
-       CALL find_string(21, '===Non-dimensional magnetic force coefficient for ferrohydrodynamics', test) ! MODIFICATION: coefficient for magnetic force
+       CALL find_string(21, '===Non-dimensional magnetic force coefficient for ferrohydrodynamics', test)
        IF (test) THEN
           READ (21,*) inputs%mag_force_coefficient
        END IF
@@ -966,6 +1115,13 @@ CONTAINS
        ELSE
           ALLOCATE(inputs%temperature_list_robin_sides(0))
        END IF
+       !==========Inhomogeneous Neumann BCs on temperature================!
+       ! SB 29/04/2022 Additional parameter for inhomogeneous Neumann BC for temp related to H
+       IF ((inputs%type_pb=='mhs') .AND. (inputs%rot_h_nb_jump_sides>0)) THEN
+          ALLOCATE(inputs%temperature_list_neumann_sides(inputs%rot_h_nb_jump_sides))
+          inputs%temperature_list_neumann_sides = inputs%list_inter_rot_h_jump
+       END IF
+
        !==========Interfaces between vel and temp=========!
        CALL find_string(21, '===Number of interfaces between velocity and temperature only domains (for nst applications)', test)
        IF (test) THEN
@@ -991,6 +1147,137 @@ CONTAINS
        READ(21,*) inputs%my_par_temperature%solver
        CALL read_until(21, '===Preconditionner type for temperature solver (HYPRE, JACOBI, MUMPS...)')
        READ(21,*) inputs%my_par_temperature%precond
+    END IF
+
+
+
+    !===Data concentration==============================================================
+    CALL find_string(21, '===Is there a concentration field?', test)
+    IF (test) THEN
+       READ (21,*) inputs%if_concentration
+    ELSE
+       inputs%if_concentration = .FALSE.
+    END IF
+    IF (inputs%if_concentration) THEN
+       !==========Subdomains for conc=====================!
+       CALL read_until(21, '===Number of subdomains in concentration mesh')
+       READ(21,*) inputs%nb_dom_conc  ! number of sub_domains for conc
+       ALLOCATE(inputs%list_dom_conc(inputs%nb_dom_conc))
+       CALL read_until(21, '===List of subdomains for concentration mesh')
+       READ(21,*) inputs%list_dom_conc
+       ALLOCATE(inputs%concentration_diffusivity(inputs%nb_dom_conc)) ! In both cases, concentration_diffusivity is used, it contains the conductivities in 1) and the diffusivities in 2)
+       CALL read_until(21, '===Diffusivity coefficient for concentration (1:nb_dom_conc)')
+       READ(21,*) inputs%concentration_diffusivity
+       !==========Dirichlet BCs on concentration============!
+       CALL read_until(21, '===How many boundary pieces for Dirichlet BCs on concentration?')
+       READ(21,*) inputs%concentration_nb_dirichlet_sides
+       IF (inputs%concentration_nb_dirichlet_sides>0) THEN
+          ALLOCATE(inputs%concentration_list_dirichlet_sides(inputs%concentration_nb_dirichlet_sides))
+          CALL read_until(21, '===List of boundary pieces for Dirichlet BCs on concentration')
+          READ(21,*) inputs%concentration_list_dirichlet_sides
+       ELSE
+          ALLOCATE(inputs%concentration_list_dirichlet_sides(0))
+       END IF
+       !==========Robin BCs on concentration================!
+       CALL find_string(21, '===How many boundary pieces for Robin BCs on concentration?', test)
+       IF (test) THEN
+          READ(21,*) inputs%concentration_nb_robin_sides
+       ELSE
+          inputs%concentration_nb_robin_sides = 0
+       END IF
+       IF (test .AND. (inputs%concentration_nb_robin_sides>0)) THEN
+          ALLOCATE(inputs%concentration_list_robin_sides(inputs%concentration_nb_robin_sides))
+          CALL read_until(21, '===List of boundary pieces for Robin BCs on concentration')
+          READ(21,*) inputs%concentration_list_robin_sides
+          ALLOCATE(inputs%convection_coeff_conc_lhs(inputs%concentration_nb_robin_sides))
+          CALL read_until(21, '===Convection heat transfert coefficient of lhs (1:concentration_nb_robin_sides)')
+          READ(21,*) inputs%convection_coeff_conc_lhs
+          ALLOCATE(inputs%convection_coeff_conc_rhs(inputs%concentration_nb_robin_sides))
+          CALL read_until(21, '===Convection heat transfert coefficient of rhs (1:concentration_nb_robin_sides)')
+          READ(21,*) inputs%convection_coeff_conc_rhs
+          ALLOCATE(inputs%exterior_concentration(inputs%concentration_nb_robin_sides))
+          CALL read_until(21, '===Exterior concentration (1:concentration_nb_robin_sides)')
+          READ(21,*) inputs%exterior_concentration
+       ELSE
+          ALLOCATE(inputs%concentration_list_robin_sides(0))
+       END IF
+
+       !==========Neumann BCs on concentration================!
+       CALL find_string(21, '===How many boundary pieces for Neumann BCs on concentration?', test)
+       IF (test) THEN
+          READ(21,*) inputs%concentration_nb_neumann_sides
+       ELSE
+          inputs%concentration_nb_neumann_sides = 0
+       END IF
+       IF (test .AND. (inputs%concentration_nb_neumann_sides>0)) THEN
+          ALLOCATE(inputs%concentration_list_neumann_sides(inputs%concentration_nb_neumann_sides))
+          CALL read_until(21, '===List of boundary pieces for Neumann BCs on concentration')
+          READ(21,*) inputs%concentration_list_neumann_sides
+       ELSE
+          ALLOCATE(inputs%concentration_list_neumann_sides(0))
+       END IF
+       !==========Interfaces between vel and conc=========!
+       CALL find_string(21, '===Number of interfaces between velocity and concentration only domains (for nst applications)', test)
+       IF (test) THEN
+          READ(21,*) inputs%nb_inter_c_v
+          ALLOCATE(inputs%list_inter_c_v(inputs%nb_inter_c_v))
+          CALL read_until(21, '===List of interfaces between velocity and concentration only domains (for nst applications)')
+          READ(21,*) inputs%list_inter_c_v
+       ELSE
+          ALLOCATE(inputs%list_inter_c_v(0))
+       END IF
+       !==========Solver parameters=======================!
+       CALL read_until(21, '===Maximum number of iterations for concentration solver')
+       READ(21,*) inputs%my_par_concentration%it_max
+       CALL read_until(21, '===Relative tolerance for concentration solver')
+       READ(21,*) inputs%my_par_concentration%rel_tol
+       CALL read_until(21, '===Absolute tolerance for concentration solver')
+       READ(21,*) inputs%my_par_concentration%abs_tol
+       CALL find_string(21, '===Temperature solver verbose? (true/false)',test)
+       IF (test) THEN
+          READ(21,*) inputs%my_par_concentration%verbose
+       END IF
+       CALL read_until(21, '===Solver type for concentration (FGMRES, CG, ...)')
+       READ(21,*) inputs%my_par_concentration%solver
+       CALL read_until(21, '===Preconditionner type for concentration solver (HYPRE, JACOBI, MUMPS...)')
+       READ(21,*) inputs%my_par_concentration%precond
+    END IF
+
+    !===Data For mhs problem or with concentration======================================
+    CALL find_string(21, '===Is there a molar fraction law as a function of density? (true/false)', test)
+    IF (test) THEN
+       CALL read_until(21, '===Mass of A for molar fraction law')
+       READ(21,*) inputs%MA
+       CALL read_until(21, '===Mass of B for molar fraction law')
+       READ(21,*) inputs%MB
+       CALL read_until(21, '===Reference density of pure B')
+       READ(21,*) inputs%rho_0percent
+       CALL read_until(21, '===Slope of density law')
+       READ(21,*) inputs%xi
+       CALL read_until(21, '===Slope of potential law')
+       READ(21,*) inputs%pot_slope
+       CALL read_until(21, '===Faraday constant')
+       READ(21,*) inputs%faraday_cst
+       CALL find_string(21, '===Is there a coupling between H and molar fraction? (true/false)', test)
+       IF (test) THEN
+          READ(21,*) inputs%if_coupling_H_x
+       ELSE
+          inputs%if_coupling_H_x=.FALSE.
+       END IF
+    ELSE
+       inputs%if_coupling_H_x = .FALSE.
+       inputs%MA = 0.d0
+       inputs%MB = 1.d0
+       inputs%rho_0percent = 0.d0
+       inputs%xi = 0.d0
+       inputs%pot_slope = 1.d0
+       inputs%faraday_cst = 1.d0
+    END IF
+    CALL find_string(21, '===Is there an analytical coupling for mhs problems? (true/false)', test)
+    IF (test) THEN
+       READ(21,*) inputs%if_coupling_analytical
+    ELSE
+       inputs%if_coupling_analytical = .FALSE.
     END IF
 
     !===Data Level set================================================================
@@ -1029,7 +1316,7 @@ CONTAINS
        CALL read_until(21, '===Dynamic viscosity of fluid 0, fluid 1, ...')
        READ(21,*) inputs%dyna_visc_fluid
        !==========Conductivities of fluids================!
-       IF (inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd') THEN
+       IF (inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd' .OR. inputs%type_pb=='mhs') THEN
           CALL find_string(21, '===Conductivity of fluid 0, fluid 1, ...', test)
           IF (test) THEN
              inputs%variation_sigma_fluid =.TRUE.
@@ -1041,6 +1328,30 @@ CONTAINS
              END IF
           ELSE
              inputs%variation_sigma_fluid =.FALSE.
+          END IF
+       END IF
+       !==========Temperature parameters of fluids========!
+       IF(.NOT.inputs%if_temperature_with_T) THEN
+          ALLOCATE(inputs%heat_capacity_fluid(inputs%nb_fluid))
+          ALLOCATE(inputs%heat_diffu_fluid(inputs%nb_fluid))
+          CALL find_string(21, '===Heat Capacity of fluid 0, fluid 1, ...', test)
+          IF (test) THEN
+             inputs%variation_temp_param_fluid=.TRUE.
+             READ(21,*) inputs%heat_capacity_fluid
+          ELSE
+             inputs%variation_temp_param_fluid=.FALSE.
+             inputs%heat_capacity_fluid=1.d0
+          END IF
+          CALL find_string(21, '===Heat Diffusivity of fluid 0, fluid 1, ...', test)
+          IF (test) THEN
+             IF(.NOT. inputs%variation_temp_param_fluid) THEN
+                CALL error_petsc('BUG in read_my_data: if define Heat Diffusivity in fluid, &
+                     & one also needs to define Heat capacity in fluid')
+             ELSE
+                READ(21,*) inputs%heat_diffu_fluid
+             END IF
+          ELSE
+             inputs%heat_diffu_fluid=1.d0
           END IF
        END IF
        !==========Surface tension=========================!
@@ -1216,10 +1527,122 @@ CONTAINS
     ELSE
        inputs%if_just_processing = .FALSE.
     END IF
+    CALL find_string(21, '===Should I do post proc init? (true/false)', test)
+    IF (test) THEN
+       READ (21, *) inputs%if_post_proc_init
+    ELSE
+       inputs%if_post_proc_init=.FALSE.
+    END IF
+    CALL find_string(21, '===Create 2D plots (true/false)', test)
+    IF (test) THEN
+       READ (21,*) inputs%if_plot_2D
+    ELSE
+       inputs%if_plot_2D = .FALSE.
+    END IF
+    CALL find_string(21, '===Compute L2 and H1 relative errors (true/false)', test)
+    IF (test) THEN
+       READ (21,*) inputs%if_compute_error
+    ELSE
+       inputs%if_compute_error = .FALSE.
+    END IF
+
+    !==========Anemometer parameters===================!
+    !===Anemometers for concentration
+    CALL find_string(21, '===Anemometers (conc) ? (true/false)', test)
+    IF (test) THEN
+       READ (21, *) inputs%if_anemo_conc
+       IF (inputs%if_anemo_conc) THEN
+          CALL read_until(21, '===Number of anemo_conc (r,z)')
+          READ (21, *) inputs%nb_anemo_r_conc, inputs%nb_anemo_z_conc
+          ALLOCATE(inputs%r_anemo_conc(inputs%nb_anemo_r_conc))
+          ALLOCATE(inputs%z_anemo_conc(inputs%nb_anemo_z_conc))
+          CALL read_until(21, '===List of r anemo_conc')
+          READ (21, *) inputs%r_anemo_conc
+          CALL read_until(21, '===List of z anemo_conc')
+          READ (21, *) inputs%z_anemo_conc
+       ELSE
+          inputs%if_anemo_conc = .FALSE.
+          inputs%nb_anemo_r_conc=0
+          inputs%nb_anemo_z_conc=0
+       END IF
+    ELSE
+       inputs%if_anemo_conc = .FALSE.
+       inputs%nb_anemo_r_conc=0
+       inputs%nb_anemo_z_conc=0
+    END IF
+    !===Anemometers for velocity
+    CALL find_string(21, '===Anemometers (v) ? (true/false)', test)
+    IF (test) THEN
+       READ (21, *) inputs%if_anemo_v
+       IF (inputs%if_anemo_v) THEN
+          CALL read_until(21, '===Number of anemo_v (r,z)')
+          READ (21, *) inputs%nb_anemo_r_v, inputs%nb_anemo_z_v
+          ALLOCATE(inputs%r_anemo_v(inputs%nb_anemo_r_v))
+          ALLOCATE(inputs%z_anemo_v(inputs%nb_anemo_z_v))
+          CALL read_until(21, '===List of r anemo_v')
+          READ (21, *) inputs%r_anemo_v
+          CALL read_until(21, '===List of z anemo_v')
+          READ (21, *) inputs%z_anemo_v
+       ELSE
+          inputs%if_anemo_v = .FALSE.
+          inputs%nb_anemo_r_v=0
+          inputs%nb_anemo_z_v=0
+       END IF
+    ELSE
+       inputs%if_anemo_v = .FALSE.
+       inputs%nb_anemo_r_v=0
+       inputs%nb_anemo_z_v=0
+    END IF
+    !===Anemometers for temperature
+    CALL find_string(21, '===Anemometers (T) ? (true/false)', test)
+    IF (test) THEN
+       READ (21, *) inputs%if_anemo_T
+       IF (inputs%if_anemo_T) THEN
+          CALL read_until(21, '===Number of anemo_T (r,z)')
+          READ (21, *) inputs%nb_anemo_r_T, inputs%nb_anemo_z_T
+          ALLOCATE(inputs%r_anemo_T(inputs%nb_anemo_r_T))
+          ALLOCATE(inputs%z_anemo_T(inputs%nb_anemo_z_T))
+          CALL read_until(21, '===List of r anemo_T')
+          READ (21, *) inputs%r_anemo_T
+          CALL read_until(21, '===List of z anemo_T')
+          READ (21, *) inputs%z_anemo_T
+       ELSE
+          inputs%if_anemo_T = .FALSE.
+          inputs%nb_anemo_r_T=0
+          inputs%nb_anemo_z_T=0
+       END IF
+    ELSE
+       inputs%if_anemo_T = .FALSE.
+       inputs%nb_anemo_r_T=0
+       inputs%nb_anemo_z_T=0
+    END IF
+    !===Anemometers for magnetic field
+    CALL find_string(21, '===Anemometers (H) ? (true/false)', test)
+    IF (test) THEN
+       READ (21, *) inputs%if_anemo_h
+       IF (inputs%if_anemo_h) THEN
+          CALL read_until(21, '===Number of anemo_h (r,z)')
+          READ (21, *) inputs%nb_anemo_r_h, inputs%nb_anemo_z_h
+          ALLOCATE(inputs%r_anemo_h(inputs%nb_anemo_r_h))
+          ALLOCATE(inputs%z_anemo_h(inputs%nb_anemo_z_h))
+          CALL read_until(21, '===List of r anemo_h')
+          READ (21, *) inputs%r_anemo_h
+          CALL read_until(21, '===List of z anemo_h')
+          READ (21, *) inputs%z_anemo_h
+       ELSE
+          inputs%if_anemo_h = .FALSE.
+          inputs%nb_anemo_r_h=0
+          inputs%nb_anemo_z_h=0
+       END IF
+    ELSE
+       inputs%if_anemo_h = .FALSE.
+       inputs%nb_anemo_r_h=0
+       inputs%nb_anemo_z_h=0
+    END IF
 
 
     !==========Modes to be zeroed out==================!
-    IF (inputs%type_pb=='mhd') THEN
+    IF (inputs%type_pb=='mhd' .OR. inputs%type_pb=='mhs') THEN
        CALL find_string(21, '===Should some modes be zeroed out?', test)
        IF (test) THEN
           READ (21,*) inputs%if_zero_out_modes
@@ -1291,7 +1714,9 @@ CONTAINS
 
     !===Dirichlet BCs for Navier-Stokes=============================================
     IF (inputs%my_periodic%nb_periodic_pairs>0) THEN
-       IF (inputs%type_pb=='nst' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd' .OR. inputs%irestart_u) THEN ! MODIFICATION: fhd added
+       IF (inputs%type_pb=='nst' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd' &
+            .OR. inputs%type_pb=='mhs'  &
+            .OR. inputs%irestart_u) THEN
           !==========Velocity================================!
           DO k = 1, 3
              IF (inputs%vv_nb_dirichlet_sides(k)<1) CYCLE
@@ -1327,7 +1752,16 @@ CONTAINS
           END IF
        END IF
     END IF
-
+    !===Dirichlet BCs for concentration for Navier-Stokes=============================
+    IF (inputs%if_concentration.AND. inputs%my_periodic%nb_periodic_pairs>0) THEN
+       IF (inputs%concentration_nb_dirichlet_sides>0) THEN
+          test = check_coherence_with_periodic_bcs(inputs%concentration_list_dirichlet_sides)
+          IF (test) THEN
+             CALL error_petsc(' BUG in read_my_data: Incompatible Dirichlet'// &
+                  ' and periodic BCs on concentration')
+          END IF
+       END IF
+    END IF
     !===Dirichlet BCs for Level_set for Navier-Stokes=============================
     IF (inputs%if_level_set.AND. inputs%my_periodic%nb_periodic_pairs>0) THEN
        IF (inputs%level_set_nb_dirichlet_sides>0) THEN
@@ -1349,9 +1783,31 @@ CONTAINS
        END DO
     END IF
 
+    !===Dirichlet BCs for concentration for Navier-Stokes=============================
+    IF (inputs%if_concentration.AND. inputs%my_periodic%nb_periodic_pairs>0) THEN
+       IF (inputs%concentration_nb_dirichlet_sides>0) THEN
+          test = check_coherence_with_periodic_bcs(inputs%concentration_list_dirichlet_sides)
+          IF (test) THEN
+             CALL error_petsc(' BUG in read_my_data: Incompatible Dirichlet'// &
+                  ' and periodic BCs on concentration')
+          END IF
+       END IF
+    END IF
+
+    !===Robin and Dirichlet BCs===================================================== ! MODIFICATION/ The user should not specify sides that are Robin and Dirichlet
+    IF (inputs%concentration_nb_robin_sides>0) THEN
+       DO k = 1, inputs%concentration_nb_robin_sides
+          IF (MINVAL(ABS(inputs%concentration_list_dirichlet_sides - inputs%concentration_list_robin_sides(k))) == 0) THEN
+             CALL error_petsc(' BUG in read_my_data: Incompatible Dirichlet'// &
+                  ' and Robin BCs for concentration')
+          END IF
+       END DO
+    END IF
+
     !===Dirichlet BCs magnetic field for Maxwell====================================
     IF (inputs%my_periodic%nb_periodic_pairs>0) THEN
-       IF (inputs%type_pb=='mxw' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd') THEN
+       IF (inputs%type_pb=='mxw' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd' &
+            .OR. inputs%type_pb=='mhs') THEN
           !==========Magnetic field==========================!
           IF (inputs%nb_dirichlet_sides_H>0) THEN
              test = check_coherence_with_periodic_bcs(inputs%list_dirichlet_sides_H)
@@ -1376,6 +1832,13 @@ CONTAINS
     IF (inputs%my_periodic%nb_periodic_pairs>0) THEN
        IF (inputs%if_temperature .AND. inputs%type_pb=='mxw') THEN
           CALL error_petsc('Bug in read_my_data: incompatible temperature with maxwell')
+       END IF
+    END IF
+
+    !===Check concentration with Maxwell==============================================
+    IF (inputs%my_periodic%nb_periodic_pairs>0) THEN
+       IF (inputs%if_concentration .AND. inputs%type_pb=='mxw') THEN
+          CALL error_petsc('Bug in read_my_data: incompatible concentration with maxwell')
        END IF
     END IF
 
@@ -1427,6 +1890,7 @@ CONTAINS
     IF (.NOT. ASSOCIATED(inputs%list_dom_H))   ALLOCATE(inputs%list_dom_H(0))
     IF (.NOT. ASSOCIATED(inputs%list_dom_phi)) ALLOCATE(inputs%list_dom_phi(0))
     IF (.NOT. ASSOCIATED(inputs%list_dom_temp))   ALLOCATE(inputs%list_dom_temp(0))
+    IF (.NOT. ASSOCIATED(inputs%list_dom_conc))   ALLOCATE(inputs%list_dom_conc(0))
 
   END SUBROUTINE check_coherence_of_data
 

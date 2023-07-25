@@ -6,8 +6,8 @@ CONTAINS
 
   SUBROUTINE navier_stokes_decouple(comm_one_d_ns,time, vv_3_LA, pp_1_LA, &
        list_mode, pp_mesh, vv_mesh, incpn_m1, incpn, pn_m1, pn, un_m1, un, &
-       vvz_per, pp_per, Hn_p2, Bn_p2, density_m2, density_m1, density, visco_dyn, tempn, &
-       level_set_m1, level_set, visc_entro_level)
+       vvz_per, pp_per, Hn_p2, Bn_p2, density_m2, density_m1, density, visco_dyn, tempn, concn,&
+       level_set_m1, level_set, visc_entro_level, level_set_reg)
 
     USE def_type_mesh
     USE periodic
@@ -23,10 +23,12 @@ CONTAINS
     REAL(KIND=8), DIMENSION(vv_mesh%np,2,SIZE(list_mode)), INTENT(IN)     :: density_m2, density_m1, density
     REAL(KIND=8), DIMENSION(vv_mesh%np,2,SIZE(list_mode)), INTENT(IN)     :: visco_dyn
     REAL(KIND=8), DIMENSION(:,:,:),                        INTENT(IN)     :: tempn
+    REAL(KIND=8), DIMENSION(:,:,:),                        INTENT(IN)     :: concn
     REAL(KIND=8), DIMENSION(pp_mesh%np,2,SIZE(list_mode)), INTENT(INOUT)  :: pn_m1, pn, incpn_m1, incpn
     REAL(KIND=8), DIMENSION(:,:,:),                        INTENT(IN)     :: Hn_p2
     REAL(KIND=8), DIMENSION(:,:,:),                        INTENT(IN)     :: Bn_p2
     REAL(KIND=8), DIMENSION(:,:,:,:),                      INTENT(IN)     :: level_set_m1, level_set
+    REAL(KIND=8), DIMENSION(:,:,:,:),                      INTENT(IN)     :: level_set_reg
     REAL(KIND=8),                   INTENT(IN)     :: time
     REAL(KIND=8), DIMENSION(:,:),   INTENT(OUT)    :: visc_entro_level
     TYPE(periodic_type),            INTENT(IN)     :: vvz_per, pp_per
@@ -39,8 +41,8 @@ CONTAINS
        IF (.NOT.inputs%if_navier_stokes_with_u) THEN
           CALL BDF1_art_comp_with_m(comm_one_d_ns,time,vv_3_LA, pp_1_LA, vvz_per, pp_per, &
                inputs%dt, inputs%Re, list_mode, pp_mesh, vv_mesh, &
-               pn_m1, pn, un_m1, un, Hn_p2, Bn_p2, tempn, density_m2, density_m1, density,&
-               visco_dyn, level_set, visc_entro_level)
+               pn_m1, pn, un_m1, un, Hn_p2, Bn_p2, tempn, concn, density_m2, density_m1, density,&
+               visco_dyn, level_set, visc_entro_level, level_set_reg)
        ELSE
           CALL error_petsc('Artificial compressibility with velocity not programmed yet')
        END IF
@@ -48,12 +50,12 @@ CONTAINS
        IF (inputs%if_navier_stokes_with_u) THEN
           CALL BDF2_ns_stress_bc_with_u(comm_one_d_ns,time,vv_3_LA, pp_1_LA, vvz_per, pp_per, &
                inputs%dt, inputs%Re, list_mode, pp_mesh, vv_mesh, incpn_m1, incpn, &
-               pn_m1, pn, un_m1, un, Hn_p2, Bn_p2, opt_tempn=tempn)
+               pn_m1, pn, un_m1, un, Hn_p2, Bn_p2, density, tempn, concn)
        ELSE
           CALL three_level_ns_tensor_sym_with_m(comm_one_d_ns,time,vv_3_LA, pp_1_LA, &
                inputs%dt, inputs%Re, list_mode, pp_mesh, vv_mesh, incpn_m1, incpn, &
-               pn_m1, pn, un_m1, un, Hn_p2, Bn_p2, density_m2, density_m1, density, visco_dyn, tempn, &
-               level_set_m1, level_set, visc_entro_level)
+               pn_m1, pn, un_m1, un, Hn_p2, Bn_p2, density_m2, density_m1, density, visco_dyn, tempn, concn, &
+               level_set_m1, level_set, visc_entro_level, level_set_reg)
        END IF
     END IF
   END SUBROUTINE navier_stokes_decouple
