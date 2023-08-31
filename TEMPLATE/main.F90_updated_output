@@ -157,6 +157,7 @@ CONTAINS
     USE sfemans_tools
     USE vtk_viz
     USE subroutine_mass
+    USE subroutine_ns_with_u
     IMPLICIT NONE
     INTEGER,                             INTENT(IN) :: it
     REAL(KIND=8)                                    :: err, norm, normr, normt, normz
@@ -187,13 +188,21 @@ CONTAINS
     INTEGER                             , SAVE      :: nb_anemo_v, nb_anemo_h, nb_anemo_T, nb_anemo_conc
     INTEGER                                         :: i_x, i_y
     !===Errors======================================================================
-    REAL(KIND=8), DIMENSION(SIZE(Hn,1),  SIZE(Hn,2),  SIZE(Hn,3)) :: Hn_ex, Hn_error
-    REAL(KIND=8)                                    :: norm_tot_err,norm_Hn_ex,norm_Hn_error
+    REAL(KIND=8), DIMENSION(SIZE(un,1),SIZE(un,2),SIZE(un,3))   :: u_err
+    REAL(KIND=8), DIMENSION(SIZE(pn,1),SIZE(pn,2),SIZE(pn,3))   :: p_err
+    REAL(KIND=8), DIMENSION(SIZE(level_set,1),SIZE(level_set,2),SIZE(level_set,3),SIZE(level_set,4)) :: level_set_err
+    REAL(KIND=8), DIMENSION(SIZE(temperature,1),SIZE(temperature,2),SIZE(temperature,3))       :: temp_err
+    REAL(KIND=8), DIMENSION(SIZE(concentration,1),SIZE(concentration,2),SIZE(concentration,3)) :: conc_err
+    REAL(KIND=8), DIMENSION(SIZE(Hn,1),SIZE(Hn,2),SIZE(Hn,3))       :: H_err
+    REAL(KIND=8), DIMENSION(SIZE(phin,1),SIZE(phin,2),SIZE(phin,3)) :: phi_err
+    !concentration, magn field
+    REAL(KIND=8), DIMENSION(4) :: norm_err
+    REAL(KIND=8)               :: avg
+    INTEGER                    :: int_nb
     !===VTU 2D======================================================================
     CHARACTER(LEN=3)   :: st_mode
     CHARACTER(LEN=200) :: header
     CHARACTER(LEN=3)   :: name_of_field
-    CHARACTER(LEN=8)   :: name_of_field_error
     !===VTU 3D======================================================================
     REAL(KIND=8), DIMENSION(SIZE(concentration,1),SIZE(concentration,2),SIZE(concentration,3)):: molar_fraction
 
@@ -645,23 +654,6 @@ CONTAINS
              CLOSE(50)
           END IF
 
-          !TEST LC to move in if_compute_error
-          DO k = 1, 6
-             DO i=1,size(list_mode)
-                Hn_ex(:,k,i) = Hexact(H_mesh,k, H_mesh%rr,list_mode(i), mu_H_field, time)
-             END DO
-          END DO
-          Hn_error = Hn - Hn_ex
-          norm_tot_err = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn_error) / &
-               norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn_ex)
-
-          norm_Hn_error=norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn_error)
-          norm_Hn_ex=norm_SF(comm_one_d, 'L2', H_mesh,list_mode, Hn_ex)
-          IF (rank == 0) THEN
-             WRITE(42,103) time, norm_Hn_error, norm_Hn_ex, norm_tot_err
-          END IF
-          !TEST LC to move in if_compute_error
-
           IF (inputs%if_anemo_h) THEN
              IF (nb_anemo_h /=0) THEN
                 OPEN(UNIT=57,FILE=anemometre_h_file, FORM='formatted', POSITION = 'append', &
@@ -675,6 +667,122 @@ CONTAINS
        END IF ! end mxw OR mhd OR fhd or mhs
 
        IF (inputs%if_compute_error) THEN
+          !Error Velocity-pressure
+          IF (vv_mesh%np>0) THEN
+             DO i = 1, m_max_c
+                DO k = 1, 6
+                   u_err(:,k,i) = un(:,k,i) - vv_exact(k,vv_mesh%rr,list_mode(i),time)
+                END DO
+                DO k = 1, 2
+                   p_err(:,k,i) = pn(:,k,i) - pp_exact(k,pp_mesh%rr,list_mode(i),time)
+                END DO
+                IF (list_mode(i) == 0)  THEN
+                   CALL Moy(comm_one_d(1),pp_mesh, p_err(:,1,i),avg)
+                   p_err(:,1,i) = p_err(:,1,i) - avg
+                END IF
+             END DO
+             norm_err(1) = SQRT(dot_product_SF(comm_one_d_NS,vv_mesh, list_mode, u_err, u_err))
+             norm_err(2) = norm_SF(comm_one_d_NS, 'sH1', vv_mesh, list_mode, u_err)
+             norm_err(3) = norm_SF(comm_one_d_NS, 'div', vv_mesh, list_mode, un)
+             norm_err(4) = norm_SF(comm_one_d_NS, 'L2', pp_mesh, list_mode, p_err)
+             IF (rank==0) THEN
+                WRITE(10,*) 'Velocity field   #####################'
+                WRITE(10,*) 'L2 error on velocity  = ', norm_err(1)
+                WRITE(10,*) 'H1 error on velocity  = ', norm_err(2)
+                WRITE(10,*) 'L2 norm of divergence = ', norm_err(3)
+                WRITE(10,*) 'Pressure field   #####################'
+                WRITE(10,*) 'L2 error on pressure  = ', norm_err(4)
+             END IF
+          END IF
+
+          !Error level set
+          IF (inputs%if_level_set) THEN
+             IF (inputs%if_level_set_P2) THEN
+                DO i = 1, m_max_c
+                   DO k = 1, 2
+                      DO int_nb = 1, inputs%nb_fluid - 1
+                         level_set_err(int_nb,:,k,i) = level_set(int_nb,:,k,i) &
+                              -level_set_exact(int_nb,k,vv_mesh%rr,list_mode(i),time)
+                      END DO
+                   END DO
+                END DO
+                norm_err(1) = norm_SF(comm_one_d_ns, 'L2', vv_mesh, list_mode,level_set_err(1,:,:,:))
+             ELSE
+                DO i = 1, m_max_c
+                   DO k = 1, 2
+                      DO int_nb = 1, inputs%nb_fluid - 1
+                         level_set_err(int_nb,:,k,i) = level_set(int_nb,:,k,i) &
+                              -level_set_exact(int_nb,k,pp_mesh%rr,list_mode(i),time)
+                      END DO
+                   END DO
+                END DO
+                norm_err(1) = norm_SF(comm_one_d_ns, 'L2', pp_mesh, list_mode,level_set_err(1,:,:,:))
+             END IF
+             IF (rank==0) THEN
+                WRITE(10,*) 'Level set field#####################'
+                WRITE(10,*) 'L2 error on level set', norm_err(1)
+             END IF
+          END IF
+          
+          !Error temperature
+          IF (temp_mesh%np>0) THEN
+             DO i = 1, m_max_c
+                DO k = 1, 2
+                   temp_err(:,k,i) = temperature(:,k,i) - temperature_exact(k,temp_mesh%rr, list_mode(i), time)
+                END DO
+             END DO
+             norm_err(1) = norm_SF(comm_one_d_temp, 'L2', temp_mesh, list_mode, temp_err)
+             IF (rank==0) THEN
+                WRITE(10,*) 'Temperature field#####################'
+                WRITE(10,*) 'L2 error on temperature = ', norm_err(1)
+             END IF
+          END IF
+          
+          !Error concentration
+          IF (conc_mesh%np>0) THEN
+             DO i = 1, m_max_c
+                DO k = 1, 2
+                   conc_err(:,k,i) = concentration(:,k,i) - concentration_exact(k,conc_mesh%rr, list_mode(i), time)
+                END DO
+             END DO
+             norm_err(1) = norm_SF(comm_one_d_conc, 'L2', conc_mesh, list_mode, conc_err)
+             IF (rank==0) THEN
+                WRITE(10,*) 'Concentration field#####################'
+                WRITE(10,*) 'L2 error on concentration = ', norm_err(1)
+             END IF  
+          END IF
+          
+          !Error Magnetic Field
+          IF (H_mesh%np>0) THEN
+             DO k = 1, 6
+                DO i = 1, SIZE(list_mode)
+                   H_err(:,k,i) = Hn(:,k,i) - Hexact(H_mesh,k, H_mesh%rr,list_mode(i), mu_H_field, time)
+                END DO
+             END DO
+             norm_err(1) = SQRT(dot_product_SF(comm_one_d,H_mesh, list_mode, H_err, H_err))
+             norm_err(2) = norm_SF(comm_one_d_NS, 'sH1', vv_mesh, list_mode, H_err)
+             norm_err(3) = norm_SF(comm_one_d_NS, 'div', vv_mesh, list_mode, Hn)
+             IF (rank==0) THEN
+                WRITE(10,*) 'Magnetic field   #####################'
+                WRITE(10,*) 'L2 error on H  = ', norm_err(1)
+                WRITE(10,*) 'H1 error on H  = ', norm_err(2)
+                WRITE(10,*) 'L2 norm of divergence = ', norm_err(3)
+             END IF
+          END IF
+          
+          !Error magnetic scalar potential
+          IF (phi_mesh%np>0) THEN
+             DO i = 1, m_max_c
+                DO k = 1, 2
+                   phi_err(:,k,i) = phin(:,k,i) - Phiexact(k, phi_mesh%rr, list_mode(i), inputs%mu_phi,time)
+                END DO
+             END DO
+             norm_err(1) = norm_SF(comm_one_d_conc, 'L2', conc_mesh, list_mode, phi_err)
+             IF (rank==0) THEN
+                WRITE(10,*) 'Concentration field#####################'
+                WRITE(10,*) 'L2 error on magnetic scalar potential = ', norm_err(1)
+             END IF
+          END IF
        END IF
     END IF ! end freq_en
 
@@ -820,13 +928,6 @@ CONTAINS
                 header = 'Hn_'//'mode_'//trim(adjustl(st_mode))
                 name_of_field = 'Hn'
                 CALL make_vtu_file_2D(comm_one_d(1), H_mesh, header, Hn(:,:,i), name_of_field, &
-                     what, opt_it=it_plot)
-             END DO
-             DO i = 1, m_max_c
-                WRITE(st_mode,'(I3)') list_mode(i)
-                header = 'Hn_error_'//'mode_'//trim(adjustl(st_mode))
-                name_of_field_error = 'Hn_error'
-                CALL make_vtu_file_2D(comm_one_d(1), H_mesh, header, Hn_error(:,:,i), name_of_field, &
                      what, opt_it=it_plot)
              END DO
           END IF

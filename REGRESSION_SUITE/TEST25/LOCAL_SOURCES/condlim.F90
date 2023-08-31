@@ -127,20 +127,27 @@ CONTAINS
     REAL(KIND=8), DIMENSION(SIZE(rr,2))                  :: vv
     REAL(KIND=8), DIMENSION(SIZE(rr,2))                  :: r, z
     INTEGER                                              :: m
-    REAL(KIND=8)                                         :: t
+    REAL(KIND=8)                                         :: t, rho1, rho2, eta1, eta2
 
     r = rr(1,:)
     z = rr(2,:)
     m = mode
     t = time
+    rho1 = inputs%density_fluid(1)
+    rho2 = inputs%density_fluid(2)
+    eta1 = inputs%dyna_visc_fluid(1)
+    eta2 = inputs%dyna_visc_fluid(2)
 
     IF (m==0 .AND. TYPE==1) THEN
-       vv = -r**3*(1+r**2+z**2)*SIN(-z+t)**2
+       vv = -r**3*(rho1+(rho2-rho1)*(r**2+z**2))*SIN(-z+t)**2
     ELSE IF (m==0 .AND. TYPE==3) THEN
-       vv = r**2*(1+r**2+z**2)*COS(-z+t) &
-            - 1/Re*(3.d0+4.d0*r**2+3.d0*z**2 &
-            - r**4 - r**2*z**2)*SIN(-z+t) &
-            + 2.d0/Re*z*r**2*COS(-z+t)
+       vv = r**2*(rho1+(rho2-rho1)*(r**2+z**2))*COS(-z+t) &
+            - 1/Re*( &
+               3.d0*eta1 &
+               + (-eta1+2.d0*(eta2-eta1))*r**2 &
+               + 3.d0*(eta2-eta1)*(r**2+z**2) &
+               - (eta2-eta1)*(r**2+z**2)*r**2 )*SIN(-z+t) &
+            + 2.d0/Re*(eta2-eta1)*z*r**2*COS(-z+t)
     ELSE
        vv = 0.d0
     END IF
