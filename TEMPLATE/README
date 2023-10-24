@@ -26,53 +26,11 @@ export PETSC_ARCH=linux-gnu-c
 
 
 ==================================================================
-!       Make SFEMaNS
-==================================================================
-1) Define the environement variable SFEMaNS_DIR in your ~/.bashrc file
-Example: edit ~/.bashrc and add one line 
-export SFEMaNS_DIR= the_path_to_SFEMaNS
-
-2) Create you own application (Not in SFEMaNS) 
-	mkdir MY_APPLICATION
-	cd MY_APPLICATION
-
-3) Create an application from the template
-	cp $SFEMaNS_DIR/TEMPLATE/* .
-
-4) Create your own make.in
-	mv make.inc_template make.inc
-
-5) Edit make.inc to correct the path to Petsc, FFTW 
-
-If you want to use Arpack, you need to uncomment the following line in main.F90
-line 6
-    USE arpack_mhd
-lines 79 to 98
-    CALL solver_arpack_mhd(comm_one_d, .FALSE. ,H_mesh,phi_mesh,&
-          m_max_c,inputs%dt,list_mode,mu_H_field,interface_H_mu, &
-          inputs%mu_phi, interface_H_phi)
-
-6) Create your own my_make
-	mv my_make_template  my_make
-
-7) Create your makefile
-	./my_make
-
-8) Create the excecutable
-	make a.exe -j 10
-
-9) Done	
-
-Remark: a second main.F90 (see main.F90_updated_output) 
-is made available to the user. It is a modified version
-of the template main.F90 that write some output (energy,
-anemometer, etc.) in specific file. Comments are available
-in the Fortran file (see lines 200 till 232).
-
-
-==================================================================
 !       Check installation
 ==================================================================
+0) Define the environement variable SFEMaNS_DIR in your ~/.bashrc file
+Example: edit ~/.bashrc and add one line 
+export SFEMaNS_DIR= the_path_to_SFEMaNS
 
 1) Create the executable a.exe as described above
 
@@ -83,3 +41,39 @@ in the Fortran file (see lines 200 till 232).
        ./debug_SFEMaNS_test
 
 4) If all the test are "OK", SFEMaNS is correctly installed.
+
+
+==================================================================
+!       Make your own SFEMaNS applications
+==================================================================
+
+1) Create you own application (Not in SFEMaNS) 
+	mkdir MY_APPLICATIONS_SFEMaNS
+	cd MY_APPLICATIONS_SFEMaNS
+
+2) Create an application from the template
+	cp $SFEMaNS_DIR/TEMPLATE/* .
+
+3) Rename and update variables_template.cmake
+	mv variables_template.cmake variables.cmake
+
+4) Update the *.F90 in the directory LOCAL_SOURCES
+(see online documentation)
+
+Remark: a second main.F90 (see main.F90_updated_output) 
+is made available to the user in LOCAL_SOURCES. It is a modified version
+of the template main.F90 that write some output (energy,
+anemometer, etc.) in specific file. Comments are available
+in the Fortran file (see lines 200 till 232).
+
+5) Compile code
+cd BUILD
+cmake ..
+make debug (or make native/make release, see options in variables.cmake)
+
+6) Run simulation
+   6.a) Generate mesh (see online documentation)
+   6.b) Update data file (see online documentation)
+   6.c) Run code using mpirun
+mpirun -np XX EXECUTABLE/a.exe
+

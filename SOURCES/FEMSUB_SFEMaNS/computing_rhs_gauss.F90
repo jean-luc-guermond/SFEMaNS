@@ -335,7 +335,7 @@ CONTAINS
   END SUBROUTINE rhs_residual_ns_gauss_3x3_mom
 
   SUBROUTINE rhs_ns_gauss_3x3_art_comp_mom(vv_mesh, pp_mesh, communicator, list_mode, time, V1m, pn, rotv_v, &
-       rhs_gauss, tempn, concn, density)
+       rhs_gauss, tempn, concn, density, buoyancy)
     !=================================
     !RHS for Navier-Stokes
     USE def_type_mesh
@@ -354,6 +354,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: concn
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: tempn
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: density
+    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: buoyancy
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)), INTENT(OUT) :: rhs_gauss
     REAL(KIND=8), DIMENSION(6)                                   :: fs, ft
     INTEGER,      DIMENSION(vv_mesh%gauss%n_w)                   :: j_loc
@@ -372,7 +373,7 @@ CONTAINS
     DO i = 1, SIZE(list_mode)
        DO k = 1, 6
           ff(:,k) = source_in_NS_momentum(k, vv_mesh%rr, list_mode(i), i, time, inputs%Re, 'ns', &
-               density, tempn, concn)
+               density, tempn, concn) + buoyancy(:,k,i)
        END DO
        DO k = 1, 2
           CALL inject_generic(inputs%type_fe_velocity, pp_mesh%jj, vv_mesh%jj, pn(:,k,i), P(:,k))

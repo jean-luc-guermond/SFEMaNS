@@ -7,7 +7,7 @@ MODULE subroutine_ns_with_m
 #include "petsc/finclude/petsc.h"
   USE petsc
   PUBLIC :: three_level_ns_tensor_sym_with_m, smb_explicit_diffu_sym, smb_surface_tension, &
-       smb_explicit_LES, momentum_dirichlet
+       smb_explicit_LES, momentum_dirichlet, smb_buoyancy
   PRIVATE
 CONTAINS
 
@@ -52,7 +52,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: Hn_p2, Bn_p2
     REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode)) :: Hn_p2_aux
     REAL(KIND=8), DIMENSION(:,:),     INTENT(OUT)         :: visc_entro_level
-    REAL(KIND=8), DIMENSION(:,:,:,:),        INTENT(IN)    :: level_set_reg
+    REAL(KIND=8), DIMENSION(:,:,:,:),        INTENT(IN)   :: level_set_reg
     INTEGER,                                         SAVE :: m_max_c
     TYPE(dyn_real_line),DIMENSION(:), ALLOCATABLE,   SAVE :: pp_global_D
     TYPE(dyn_int_line), DIMENSION(:), POINTER,       SAVE :: pp_mode_global_js_D
@@ -88,6 +88,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6)                 :: visc_grad_vel_ext
     REAL(KIND=8), DIMENSION(3,vv_mesh%np,6)                                       :: tensor_ext
     REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode))                         :: uext, momentumext, momentum_exact
+    REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode))                         :: buoyancy
     REAL(KIND=8), DIMENSION(inputs%nb_fluid-1, vv_mesh%np, 2, SIZE(list_mode))    :: level_set_FEM_P2
     REAL(KIND=8), DIMENSION(vv_mesh%np)                      :: vel_loc, vel_tot
     REAL(KIND=8), DIMENSION(SIZE(list_mode))                 :: normalization_mt
@@ -375,22 +376,30 @@ CONTAINS
        ELSE
           tensor_surface_gauss = 0.d0
        END IF
+
+       !===Compute buoyancy force heat_grav*density*T e_z
+       IF (inputs%if_temperature) THEN
+          CALL smb_buoyancy(comm_one_d, vv_mesh, pp_mesh, list_mode, level_set_p1, tempn, buoyancy)
+       ELSE
+          buoyancy = 0.d0
+       END IF
     ELSE
        visc_grad_vel        = 0.d0
        tensor_surface_gauss = 0.d0
+       buoyancy = 0.d0 !Defined in condlim.F90
     END IF
 
     !===Compute tensor product of momentum by velocity
     CALL FFT_TENSOR_DCL(comm_one_d(2), momentum, un, tensor, nb_procs, bloc_size, m_max_pad)
 
     !===PREPARE BOUNDARY CONDITION FOR MOMENTUM
-    CALL momentum_dirichlet(comm_one_d(2), vv_mesh, list_mode, time, nb_procs,density_p1, &
+    CALL momentum_dirichlet(comm_one_d(2), vv_mesh, list_mode, time, nb_procs, density_p1, &
          momentum_exact, vv_js_D)
 
     tps = user_time() - tps; tps_cumul=tps_cumul+tps
     !WRITE(*,*) ' Tps fft vitesse', tps
 
-    !------------DEBUT BOUCLE SUR LES MODES----------------
+    !------------BEGINING LOOP ON FOURIER MODES------------------
     DO i = 1, m_max_c
        mode = list_mode(i)
        !===Compute phi
@@ -410,9 +419,9 @@ CONTAINS
        ENDDO
 
        !===Prediction step
-       DO k=1,6
+       DO k = 1, 6
           src(:,k) = source_in_NS_momentum(k, vv_mesh%rr, mode, i, time, Re, 'ns', &
-               density_p1, tempn, concn)
+               density_p1, tempn, concn) + buoyancy(:,k,i)
        END DO
 
        IF (inputs%if_moment_bdf2) THEN
@@ -1078,6 +1087,45 @@ CONTAINS
     END DO
 
   END SUBROUTINE smb_surface_tension
+
+  SUBROUTINE smb_buoyancy(communicator, mesh_P2, mesh_P1, list_mode, level_set, temperature, V_out)
+    !=================================
+    USE Gauss_points
+    USE sft_parallele
+    USE chaine_caractere
+    USE boundary
+    USE subroutine_mass
+    USE input_data
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    TYPE(mesh_type), TARGET                       :: mesh_P2, mesh_P1
+    INTEGER,      DIMENSION(:),       INTENT(IN)  :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:,:), INTENT(IN)  :: level_set
+    REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)  :: temperature
+    REAL(KIND=8), DIMENSION(:,:,:),   INTENT(OUT) :: V_out
+    REAL(KIND=8), DIMENSION(mesh_P2%np,2,SIZE(list_mode)) :: grav_density
+    REAL(KIND=8)                                :: tps
+    REAL(KIND=8), DIMENSION(3)                  :: temps
+    INTEGER                                     :: code, m_max_pad, bloc_size, nb_procs
+    !MPI_Comm       :: communicator
+    MPI_Comm, DIMENSION(:), POINTER  :: communicator
+
+    !===Set buoyancy to zero (for radial and azimuthal components)
+    V_out = 0.d0
+
+    !===Compute gravity_temp*density using level_set
+    CALL reconstruct_variable(communicator, list_mode, mesh_P1, mesh_P2, level_set, &
+         inputs%heat_grav_fluid*inputs%density_fluid, grav_density)
+
+    !===Compute vertical component of buoyancy using FFT
+    temps=0.d0
+    CALL MPI_COMM_SIZE(communicator(2), nb_procs, code)
+    m_max_pad = 3*SIZE(list_mode)*nb_procs/2
+    bloc_size = SIZE(temperature,1)/nb_procs+1
+    CALL FFT_PAR_PROD_DCL(communicator(2), grav_density, temperature, V_out(:,5:6,:), nb_procs, bloc_size, m_max_pad, temps)
+
+  END SUBROUTINE smb_buoyancy
 
   SUBROUTINE momentum_dirichlet(communicator, mesh, list_mode, t, nb_procs, density, momentum_exact, vv_js_D)
     USE Gauss_points

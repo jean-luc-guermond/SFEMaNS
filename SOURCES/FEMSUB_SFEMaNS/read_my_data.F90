@@ -138,6 +138,7 @@ MODULE my_data_module
      LOGICAL                                 :: variation_temp_param_fluid
      REAL(KIND=8), DIMENSION(:), POINTER     :: heat_capacity_fluid
      REAL(KIND=8), DIMENSION(:), POINTER     :: heat_diffu_fluid
+     REAL(KIND=8), DIMENSION(:), POINTER     :: heat_grav_fluid
      LOGICAL                                 :: if_surface_tension
      REAL(KIND=8), DIMENSION(:), POINTER     :: coeff_surface
      LOGICAL                                 :: if_mass_correction
@@ -1334,7 +1335,8 @@ CONTAINS
        IF(.NOT.inputs%if_temperature_with_T) THEN
           ALLOCATE(inputs%heat_capacity_fluid(inputs%nb_fluid))
           ALLOCATE(inputs%heat_diffu_fluid(inputs%nb_fluid))
-          CALL find_string(21, '===Heat Capacity of fluid 0, fluid 1, ...', test)
+          ALLOCATE(inputs%heat_grav_fluid(inputs%nb_fluid))
+          CALL find_string(21, '===Heat capacity of fluid 0, fluid 1, ...', test)
           IF (test) THEN
              inputs%variation_temp_param_fluid=.TRUE.
              READ(21,*) inputs%heat_capacity_fluid
@@ -1342,17 +1344,32 @@ CONTAINS
              inputs%variation_temp_param_fluid=.FALSE.
              inputs%heat_capacity_fluid=1.d0
           END IF
-          CALL find_string(21, '===Heat Diffusivity of fluid 0, fluid 1, ...', test)
+          CALL find_string(21, '===Thermal conductivity of fluid 0, fluid 1, ...', test)
           IF (test) THEN
              IF(.NOT. inputs%variation_temp_param_fluid) THEN
-                CALL error_petsc('BUG in read_my_data: if define Heat Diffusivity in fluid, &
-                     & one also needs to define Heat capacity in fluid')
+                CALL error_petsc('BUG in read_my_data: if define Thermal Conductivity in fluid,' // &
+                     ' one also needs to define Heat capacity in fluid')
              ELSE
                 READ(21,*) inputs%heat_diffu_fluid
              END IF
           ELSE
              inputs%heat_diffu_fluid=1.d0
           END IF
+          CALL find_string(21, '===Thermal expansion coefficient of fluid 0, fluid 1, ...', test)
+          IF (test) THEN
+             IF(.NOT. inputs%variation_temp_param_fluid) THEN
+                CALL error_petsc('BUG in read_my_data: if define Thermal Expansion in fluid,' // &
+                     ' one also needs to define Heat capacity in fluid')
+             ELSE
+                READ(21,*) inputs%heat_grav_fluid
+             END IF
+          ELSE
+             inputs%heat_grav_fluid=0.d0
+          END IF
+       ELSE
+          ALLOCATE(inputs%heat_capacity_fluid(0))
+          ALLOCATE(inputs%heat_diffu_fluid(0))
+          ALLOCATE(inputs%heat_grav_fluid(0))
        END IF
        !==========Surface tension=========================!
        CALL find_string(21, '===Is there a surface tension?', test)

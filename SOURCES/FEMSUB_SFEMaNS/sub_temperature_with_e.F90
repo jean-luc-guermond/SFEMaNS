@@ -185,7 +185,8 @@ CONTAINS
           stab_bar = MAX(stab_bar,inputs%heat_diffu_fluid(n) / &
                (inputs%heat_capacity_fluid(n)*inputs%density_fluid(n)))
        END DO
-       stab_bar=2.d0*stab_bar
+       !stab_bar=2.d0*stab_bar
+       stab_bar=1.1d0*stab_bar
 
        IF (inputs%if_level_set.AND.inputs%variation_temp_param_fluid) THEN
           DO m = 1, temp_mesh%me
@@ -256,15 +257,19 @@ CONTAINS
     END IF
 
     !===PREPARE BOUNDARY CONDITION FOR INTERNAL ENERGY
-    !TEST AV TEST LC see sub_ns_with_momentum
     CALL e_dirichlet(comm_one_d(2), temp_mesh, list_mode, time, nb_procs, heat_density_p1, &
          e_exact, temp_js_D)
 
     !===Compute convection term at Gauss points
     tps = user_time()
-    CALL smb_ugradc_gauss_fft_par(comm_one_d(2),temp_mesh,list_mode,vol_heat_capacity,vel_field,2*en-en_m1,ff_conv)
+    IF (inputs%if_temp_bdf2) THEN
+       CALL smb_ugradc_gauss_fft_par(comm_one_d(2),temp_mesh,list_mode,vol_heat_capacity,vel_field, &
+            2*en-en_m1,ff_conv)
+    ELSE
+       CALL smb_ugradc_gauss_fft_par(comm_one_d(2),temp_mesh,list_mode,vol_heat_capacity,vel_field, &
+            en,ff_conv)
+    END IF
 
-    ! TEST AV 3/31/22
     !===Compute kgradT term at Gauss points
     CALL smb_kgradT_gauss_fft_par(comm_one_d(2),temp_mesh,list_mode, heat_diffusivity, tempn, kgradT)
 
@@ -293,7 +298,6 @@ CONTAINS
     DO i = 1, m_max_c
        mode = list_mode(i)
 
-       ! TEST AV 4/4/22
        !===RHS temperature
        IF (inputs%if_temp_bdf2) THEN
           ff = (2.d0/dt)*en(:,1,i) - 1.d0/(2.d0*dt)*en_m1(:,1,i)
@@ -486,6 +490,7 @@ CONTAINS
     bloc_size = SIZE(Div,1)/nb_procs+1
     CALL FFT_PAR_PROD_DCL(communicator, Div, Cgauss, cint, nb_procs, bloc_size, m_max_pad, temps)
     c_out = c_out + cint
+
     tps = user_time() - tps
     !WRITE(*,*) ' Time in FFT_PAR_PROD_VECT', tps
     !write(*,*) ' Communication time   ', temps(1)
@@ -793,7 +798,6 @@ CONTAINS
 
   END SUBROUTINE qs_00_temperature_gauss
 
-  !TEST AV 3/31/22
   SUBROUTINE smb_kgradT_gauss_fft_par(communicator, mesh, list_mode, k_in, c_in, V_out)
     !=================================
     USE Gauss_points

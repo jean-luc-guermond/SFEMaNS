@@ -3,21 +3,24 @@
 ===Directory and name of mesh file
 '../../MESHES' 'RECT10_MULTIPHASE_TEMP.FEM'
 ===Number of processors in meridian section
-1
+2
 ===Number of processors in Fourier space
-5
+3
 ===Number of Fourier modes
-5
+6
 ===Select Fourier modes? (true/false)
 .f.
-===Problem type: (nst, mxw, mhd, fhd, mhs)
+===Problem type: (nst, mxw, mhd, fhd)
 'nst'
 ===Restart on velocity (true/false)
 .f.
 ===Time step and number of time iterations
-.0025d0, 20
-xx===Frequency to write energies
-xx20
+.0025d0, 40
+===Frequency to write energies
+40
+xx===Compute L2 and H1 relative errors (true/false)
+xx.t.
+
 ===Do we apply mass correction? (true/false)
 .f.
 ===Do we kill level set overshoot? (true/false)
@@ -55,7 +58,7 @@ xx1.0d0
 ===Solve Navier-Stokes with u (true) or m (false)?
 .f.
 ===Reynolds number
-250.d0
+1.d0
 
 ============================================
               LES-NAVIER-STOKES
@@ -63,7 +66,7 @@ xx1.0d0
 ===Use LES? (true/false)
 .t.
 ===Use LES in momentum? (true/false)
-.t.
+.f.
 ===Coefficient multiplying residual
 1.0d0
 
@@ -119,9 +122,11 @@ MUMPS
 ===Compression factor for level set
 0.d0
 ===Density of fluid 0, fluid 1, ...
-1.d0 5.d0
+1.d0 100.d0
+1.d0 10.d0
 ===Dynamic viscosity of fluid 0, fluid 1, ...
-1.d0 5.d0
+0.01d0 1.d0
+0.1d0 1.d0
 ===multiplier for h_min for level set
 1.d0
 ===How are the variables reconstructed from the level set function? (lin, reg)
@@ -153,19 +158,24 @@ MUMPS
 ===Solve Temperature with T (true) or e (false)?
 .f.
 ===Do we solve heat equation with bdf2 (true/false)?
-.t.
-===Heat Capacity of fluid 0, fluid 1, ...
+.f.
+===Heat capacity of fluid 0, fluid 1, ...
+0.1d0 1.d0
 1.d0 5.d0
-===Heat Diffusivity of fluid 0, fluid 1, ...
+===Thermal conductivity of fluid 0, fluid 1, ...
+0.01d0 1.d0
 1.d0 5.d0
+===Thermal expansion coefficient of fluid 0, fluid 1, ...
+1.d0 10.d0
+2.d0 10.d0
 ===Number of subdomains in temperature mesh
 1
 ===List of subdomains for temperature mesh
 1
 ===Diffusivity coefficient for temperature (1:nb_dom_temp)
-1.d-1
-===Non-dimensional gravity coefficient
-10.d0
+1.d0
+xx===Non-dimensional gravity coefficient
+xx1.d0
 ===How many boundary pieces for Dirichlet BCs on temperature?
 3
 ===List of boundary pieces for Dirichlet BCs on temperature
@@ -193,8 +203,8 @@ MUMPS
 
 ============================================
 (RECT10_MULTIPHASE_TEMP.FEM)
-===Reference results
-4.4468802705164364E-004  L2 error on velocity
-3.8659012727872031E-003  L2 error on pressure
-2.8254787852456174E-006  L2 error on level set
-1.2970633191433203E-003  L2 error on temperature
+===Reference results Tend=0.5
+6.5749690147327436E-003  L2 error on velocity
+0.61424956828780564      L2 error on pressure
+1.3593500573073805E-003  L2 error on level set
+6.0463926388414600E-003  L2 error on temperature

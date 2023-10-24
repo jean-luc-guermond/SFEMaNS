@@ -95,6 +95,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6)                 :: visc_grad_vel_ext
     REAL(KIND=8), DIMENSION(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6)                 :: tensor_gauss_ext
     REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode)) :: uext, momentumext, momentum_exact, momentumext_div
+    REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode))                         :: buoyancy
     REAL(KIND=8), DIMENSION(inputs%nb_fluid-1, vv_mesh%np, 2, SIZE(list_mode))    :: level_set_FEM_P2
 
     REAL(KIND=8), DIMENSION(vv_mesh%np) :: vel_loc, vel_tot
@@ -160,7 +161,7 @@ CONTAINS
        END IF
        !===End Momentum Initialization
 
-       !===Tensors_m1 allocation and intialization
+       !===Tensors_m1 allocation and initialization
        ALLOCATE(tensor_m1_gauss(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)))
        CALL smb_compute_tensor_gauss(comm_one_d(2), vv_mesh, list_mode, un_m1, momentum_m1, &
             nb_procs, bloc_size, m_max_pad, tensor, tensor_m1_gauss)
@@ -168,7 +169,7 @@ CONTAINS
        ALLOCATE(visc_grad_vel_m1(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)))
        CALL smb_explicit_diffu_sym(comm_one_d(2), vv_mesh, list_mode, nb_procs, &
             visco_dyn/Re, un_m1, visc_grad_vel_m1)
-       !===End Tensors_m1 allocation and intialization
+       !===End Tensors_m1 allocation and initialization
 
        !===Allocation entropy visc
        CALL MPI_COMM_SIZE(comm_one_d(2), nb_procs_LES, code)
@@ -383,11 +384,18 @@ CONTAINS
        ELSE
           tensor_surface_gauss = 0.d0
        END IF
+       !===Compute buoyancy force heat_grav*density*T e_z
+       IF (inputs%if_temperature) THEN
+          CALL smb_buoyancy(comm_one_d, vv_mesh, pp_mesh, list_mode, level_set_p1, tempn, buoyancy)
+       ELSE
+          buoyancy = 0.d0
+       END IF
     ELSE
        visc_grad_vel = 0.d0
        stab_grad_mom = 0.d0
        stab_div_vel  = 0.d0
        tensor_surface_gauss = 0.d0
+       buoyancy = 0.d0 !Defined in condlim.F90
     END IF
     !===End Compute diffusion/ artificial compression corrections and surface tension
 
@@ -415,10 +423,12 @@ CONTAINS
     !===Computation of rhs at Gauss points for every mode
     IF (inputs%if_moment_bdf2) THEN
        CALL rhs_ns_gauss_3x3_art_comp_mom(vv_mesh, pp_mesh, comm_one_d(2), list_mode, time, &
-            (4*momentum-momentum_m1)/(2*inputs%dt), pn, -rotb_b, rhs_gauss, tempn, concn, density_p1)
+            (4*momentum-momentum_m1)/(2*inputs%dt), pn, -rotb_b, rhs_gauss, tempn, concn, density_p1, &
+            buoyancy)
     ELSE
        CALL rhs_ns_gauss_3x3_art_comp_mom(vv_mesh, pp_mesh, comm_one_d(2), list_mode, time, &
-            (momentum)/(inputs%dt), pn, -rotb_b, rhs_gauss, tempn, concn, density_p1)
+            (momentum)/(inputs%dt), pn, -rotb_b, rhs_gauss, tempn, concn, density_p1, &
+            buoyancy)
     END IF
     !===End Computation of rhs at Gauss points for every mode
 
