@@ -57,8 +57,9 @@ export SFEMaNS_DIR= the_path_to_SFEMaNS
 3) Rename and update variables_template.cmake
 	mv variables_template.cmake variables.cmake
 
-4) Update the *.F90 in the directory LOCAL_SOURCES
-(see online documentation)
+4) Rename condlim.F90_REF into condlim.F90
+   Update the *.F90 in the directory LOCAL_SOURCES
+   (see online documentation)
 
 Remark: a second main.F90 (see main.F90_updated_output) 
 is made available to the user in LOCAL_SOURCES. It is a modified version
