@@ -101,7 +101,7 @@ CONTAINS
     DO j = 1, SIZE(list_h_in)
        IF (MINVAL(ABS(list_h_in(j)-list_T_in))==0) CYCLE
        IF (MINVAL(ABS(list_h_in(j)-list_u_in))==0) CYCLE
-       IF (MINVAL(ABS(list_T_in(j)-list_conc))==0) CYCLE
+       IF (MINVAL(ABS(list_h_in(j)-list_conc))==0) CYCLE
        nb = nb + 1
     END DO
     ALLOCATE(list_h(nb))
@@ -109,7 +109,7 @@ CONTAINS
     DO j = 1, SIZE(list_h_in)
        IF (MINVAL(ABS(list_h_in(j)-list_T_in))==0) CYCLE
        IF (MINVAL(ABS(list_h_in(j)-list_u_in))==0) CYCLE
-       IF (MINVAL(ABS(list_T_in(j)-list_conc))==0) CYCLE
+       IF (MINVAL(ABS(list_h_in(j)-list_conc))==0) CYCLE
        nb = nb + 1
        list_h(nb) = list_h_in(j)
     END DO

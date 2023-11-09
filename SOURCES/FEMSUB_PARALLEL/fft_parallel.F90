@@ -185,7 +185,7 @@ CONTAINS
     np_tot = nb_procs*bloc_size
 
     IF (MOD(nb_field,2)/=0 .OR. m_max_c==0) THEN
-       WRITE(*,*) ' BUG '
+       WRITE(*,*) ' BUG in FFT_PAR_CROSS_PROD_DCL '
        STOP
     END IF
 
@@ -368,7 +368,7 @@ CONTAINS
     N_r_pad=2*m_max_pad-1
 
     IF (MOD(nb_field,2)/=0 .OR. m_max_c==0) THEN
-       WRITE(*,*) ' BUG '
+       WRITE(*,*) ' BUG in FFT_PAR_DOT_PROD_DCL '
        STOP
     END IF
 
@@ -539,7 +539,7 @@ CONTAINS
     N_r_pad=2*m_max_pad-1
 
     IF (m_max_c==0) THEN
-       WRITE(*,*) ' BUG '
+       WRITE(*,*) ' BUG FFT_PAR_PROD_DCL '
        STOP
     END IF
 
@@ -704,7 +704,7 @@ CONTAINS
     N_r_pad=2*m_max_pad-1
 
     IF (m_max_c==0) THEN
-       WRITE(*,*) ' BUG '
+       WRITE(*,*) ' BUG in FFT_PAR_DIV_DCL '
        STOP
     END IF
 
@@ -874,7 +874,7 @@ CONTAINS
     np_tot = nb_procs*bloc_size
 
     IF (MOD(nb_field,2)/=0 .OR. m_max_c==0) THEN
-       WRITE(*,*) ' BUG '
+       WRITE(*,*) ' BUG in FFT_HEAVISIDE_DCL '
        STOP
     END IF
 
@@ -1065,7 +1065,7 @@ CONTAINS
     np_tot = nb_procs*bloc_size
 
     IF (MOD(nb_field1,2)/=0 .OR. MOD(nb_field2,2)/=0 .OR. m_max_c==0) THEN
-       WRITE(*,*) ' BUG '
+       WRITE(*,*) ' BUG in FFT_SCALAR_VECT_DCL '
        STOP
     END IF
 
@@ -1267,7 +1267,7 @@ CONTAINS
     np_tot = nb_procs*bloc_size
 
     IF (MOD(nb_field1,2)/=0 .OR. MOD(nb_field2,2)/=0 .OR. m_max_c==0) THEN
-       WRITE(*,*) ' BUG '
+       WRITE(*,*) ' BUG in FFT_SCALAR_VECT_NO_OVERSHOOT '
        STOP
     END IF
 
@@ -1457,7 +1457,7 @@ CONTAINS
     np_tot    = nb_procs*bloc_size
 
     IF (MOD(nb_field1,2)/=0 .OR. m_max_c==0) THEN
-       WRITE(*,*) ' BUG '
+       WRITE(*,*) ' BUG in FFT_MAX_VEL_DCL '
        STOP
     END IF
 
@@ -1588,7 +1588,7 @@ CONTAINS
     np_tot = nb_procs*bloc_size
 
     IF (MOD(nb_field,2)/=0 .OR. m_max_c==0) THEN
-       WRITE(*,*) ' BUG '
+       WRITE(*,*) ' BUG in FFT_TENSOR_DCL '
        STOP
     END IF
 
@@ -1857,7 +1857,7 @@ CONTAINS
     N_r_pad  = 2*m_max_pad-1
 
     IF (m_max_c==0) THEN
-       WRITE(*,*) ' BUG '
+       WRITE(*,*) ' BUG in FFT_PAR_VAR_ETA_PROD_T_DCL '
        STOP
     END IF
 
@@ -2076,7 +2076,7 @@ CONTAINS
     N_r_pad  = 2*m_max_pad-1
 
     IF (m_max_c==0) THEN
-       WRITE(*,*) ' BUG '
+       WRITE(*,*) ' BUG in FFT_PAR_VAR_ETA_PROD_GAUSS_DCL '
        STOP
     END IF
 
@@ -2304,7 +2304,7 @@ CONTAINS
     np_tot = nb_procs*bloc_size
 
     IF (MOD(nb_field,2)/=0 .OR. m_max_c==0) THEN
-       WRITE(*,*) ' BUG '
+       WRITE(*,*) ' BUG in FFT_CHECK_INTERFACE '
        STOP
     END IF
 
@@ -2476,7 +2476,7 @@ CONTAINS
     N_r_pad=2*m_max_pad-1
 
     IF (MOD(nb_field,2)/=0 .OR. m_max_c==0) THEN
-       WRITE(*,*) ' BUG '
+       WRITE(*,*) ' BUG in FFT_COMPUTE_ENTROPY_VISC '
        STOP
     END IF
 
@@ -2751,7 +2751,7 @@ CONTAINS
     N_r_pad   = 2*m_max_pad-1
 
     IF (MOD(nb_field,2)/=0 .OR. m_max_c==0) THEN
-       WRITE(*,*) ' BUG '
+       WRITE(*,*) ' BUG in FFT_COMPUTE_ENTROPY_VISC_MOM '
        STOP
     END IF
 
@@ -2991,7 +2991,7 @@ CONTAINS
     np_tot   = nb_procs*bloc_size
 
     IF (MOD(nb_field1,2)/=0 .OR. MOD(nb_field2,2)/=0 .OR. m_max_c==0) THEN
-       WRITE(*,*) ' BUG '
+       WRITE(*,*) ' BUG in FFT_COMPUTE_DIFFU_MOM '
        STOP
     END IF
 
@@ -3221,7 +3221,7 @@ CONTAINS
     np_tot   = nb_procs*bloc_size
 
     IF (MOD(nb_field1,2)/=0 .OR. MOD(nb_field2,2)/=0 .OR. m_max_c==0) THEN
-       WRITE(*,*) ' BUG '
+       WRITE(*,*) ' BUG in FFT_PAR_COMPR_ENTRO_VISC_DCL '
        STOP
     END IF
 
@@ -3468,7 +3468,7 @@ CONTAINS
     N_r_pad=2*m_max_pad-1
 
     IF (MOD(nb_field,2)/=0 .OR. m_max_c==0) THEN
-       WRITE(*,*) ' BUG '
+       WRITE(*,*) ' BUG in FFT_COMPUTE_ENTROPY_VISC_GRAD_MOM '
        STOP
     END IF
 
@@ -3691,7 +3691,7 @@ CONTAINS
     N_r_pad   = 2*m_max_pad-1
 
     IF (MOD(nb_field,2)/=0 .OR. m_max_c==0) THEN
-       WRITE(*,*) ' BUG '
+       WRITE(*,*) ' BUG in FFT_NO_OVERSHOOT_LEVEL_SET '
        STOP
     END IF
 
@@ -3875,7 +3875,7 @@ CONTAINS
     N_r_pad  = 2*m_max_pad-1
 
     IF (MOD(nb_field,2)/=0 .OR. MOD(nb_field2,2)/=0 .OR. m_max_c==0) THEN
-       WRITE(*,*) ' BUG '
+       WRITE(*,*) ' BUG in FFT_COMPRESSION_LEVEL_SET_DCL '
        STOP
     END IF
 
@@ -4116,7 +4116,7 @@ CONTAINS
     np_tot   = nb_procs*bloc_size
 
     IF (MOD(nb_field1,2)/=0 .OR. MOD(nb_field2,2)/=0 .OR. m_max_c==0) THEN
-       WRITE(*,*) ' BUG '
+       WRITE(*,*) ' BUG in FFT_PAR_ENTRO_VISC_DCL '
        STOP
     END IF
 
@@ -4345,7 +4345,7 @@ CONTAINS
     N_r_pad   = 2*m_max_pad-1
 
     IF (MOD(nb_field,2)/=0 .OR. m_max_c==0) THEN
-       WRITE(*,*) ' BUG '
+       WRITE(*,*) ' BUG in FFT_PAR_SCAL_FUNCT '
        STOP
     END IF
 
@@ -4498,7 +4498,7 @@ CONTAINS
     np_tot    = nb_procs*bloc_size
 
     IF (MOD(nb_field1,2)/=0 .OR. m_max_c==0) THEN
-       WRITE(*,*) ' BUG '
+       WRITE(*,*) ' BUG in FFT_MAX_MIN_VEL_DCL '
        STOP
     END IF
 
