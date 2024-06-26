@@ -714,8 +714,6 @@ CONTAINS
        CALL read_until(21, '===Preconditionner type for velocity solver (HYPRE, JACOBI, MUMPS...)')
        READ(21,*) inputs%my_par_vv%precond
 
-       inputs%my_par_pp%strong_thr = '0.7'
-
        !==========Solver parameters for pressure==========!
        CALL read_until(21, '===Maximum number of iterations for pressure solver')
        READ(21,*) inputs%my_par_pp%it_max
@@ -732,8 +730,6 @@ CONTAINS
        CALL read_until(21, '===Preconditionner type for pressure solver (HYPRE, JACOBI, MUMPS...)')
        READ(21,*) inputs%my_par_pp%precond
 
-       inputs%my_par_pp%strong_thr = '0.1'
-
        !==========Solver parameters for mass matrix=======!
        CALL read_until(21, '===Maximum number of iterations for mass matrix solver')
        READ(21,*) inputs%my_par_mass%it_max
@@ -749,8 +745,6 @@ CONTAINS
        READ(21,*) inputs%my_par_mass%solver
        CALL read_until(21, '===Preconditionner type for mass matrix solver (HYPRE, JACOBI, MUMPS...)')
        READ(21,*) inputs%my_par_mass%precond
-
-       inputs%my_par_mass%strong_thr = '0.1'
 
        !==========LES coefficients========================!
        CALL find_string(21, '===Use LES? (true/false)', test)

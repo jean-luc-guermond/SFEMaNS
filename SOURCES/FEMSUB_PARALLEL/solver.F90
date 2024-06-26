@@ -4,7 +4,6 @@ MODULE solve_petsc
      INTEGER:: it_max
      REAL(KIND=8) :: rel_tol, abs_tol
      CHARACTER(LEN=20) :: solver, precond
-     CHARACTER(LEN=20) :: strong_thr = '0.7'
      LOGICAL           :: verbose
   END TYPE solver_param
 
@@ -79,14 +78,7 @@ CONTAINS
        IF (precond(deb:fin)=='JACOBI') THEN
           CALL PCSetType(prec, PCBJACOBI, ierr)
        ELSE IF  (precond(deb:fin)=='HYPRE') THEN
-          CALL PetscOptionsSetValue(PETSC_NULL_OPTIONS, '-pc_type', 'hypre', ierr)
-          CALL PetscOptionsSetValue(PETSC_NULL_OPTIONS, '-pc_hypre_type', 'boomeramg', ierr)
-          CALL PetscOptionsSetValue(PETSC_NULL_OPTIONS, '-pc_hypre_boomeramg_strong_threshold', &
-               my_par%strong_thr, ierr)
-          CALL PetscOptionsSetValue(PETSC_NULL_OPTIONS, '-pc_hypre_boomeramg_coarsen_type', &
-               'Falgout', ierr)
-          CALL PetscOptionsSetValue(PETSC_NULL_OPTIONS, '-pc_hypre_boomeramg_relax_type_all', &
-               'Chebyshev', ierr)
+          CALL PCSetType(prec, PCHYPRE, ierr)
        ELSE IF  (precond(deb:fin)=='SSOR') THEN
           CALL PCSetType(prec, PCSOR, ierr)
        ELSE IF  (precond(deb:fin)=='MUMPS') THEN
