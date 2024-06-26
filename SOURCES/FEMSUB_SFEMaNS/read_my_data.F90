@@ -712,9 +712,13 @@ CONTAINS
        CALL read_until(21, '===Solver type for velocity (FGMRES, CG, ...)')
        READ(21,*) inputs%my_par_vv%solver
        CALL read_until(21, '===Preconditionner type for velocity solver (HYPRE, JACOBI, MUMPS...)')
-       READ(21,*) inputs%my_par_vv%precond
+       CALL find_string(21, '===Velocity solver strong threshold for HYPRE?',test)
+       IF (test) THEN
+          READ(21,*) inputs%my_par_pp%verbose
+       ELSE
+          inputs%my_par_pp%strong_thr = '0.7'
+       END IF
 
-       inputs%my_par_pp%strong_thr = '0.7'
 
        !==========Solver parameters for pressure==========!
        CALL read_until(21, '===Maximum number of iterations for pressure solver')
@@ -731,8 +735,13 @@ CONTAINS
        READ(21,*) inputs%my_par_pp%solver
        CALL read_until(21, '===Preconditionner type for pressure solver (HYPRE, JACOBI, MUMPS...)')
        READ(21,*) inputs%my_par_pp%precond
+       CALL find_string(21, '===Pressure solver strong threshold for HYPRE?',test)
+       IF (test) THEN
+          READ(21,*) inputs%my_par_pp%verbose
+       ELSE
+          inputs%my_par_pp%strong_thr = '0.1'
+       END IF
 
-       inputs%my_par_pp%strong_thr = '0.1'
 
        !==========Solver parameters for mass matrix=======!
        CALL read_until(21, '===Maximum number of iterations for mass matrix solver')
@@ -749,8 +758,13 @@ CONTAINS
        READ(21,*) inputs%my_par_mass%solver
        CALL read_until(21, '===Preconditionner type for mass matrix solver (HYPRE, JACOBI, MUMPS...)')
        READ(21,*) inputs%my_par_mass%precond
+       CALL find_string(21, '===Mass matrix solver strong threshold for HYPRE?',test)
+       IF (test) THEN
+          READ(21,*) inputs%my_par_pp%verbose
+       ELSE
+          inputs%my_par_pp%strong_thr = '0.1'
+       END IF
 
-       inputs%my_par_mass%strong_thr = '0.1'
 
        !==========LES coefficients========================!
        CALL find_string(21, '===Use LES? (true/false)', test)
