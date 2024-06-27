@@ -708,7 +708,7 @@ CONTAINS
        READ(21,*) inputs%my_par_vv_scal%abs_tol
        CALL find_string(21, '===Scalar velocity solver verbose? (true/false)', test)
        IF (test) THEN
-          READ(21,*) inputs%my_par_scal%verbose
+          READ(21,*) inputs%my_par_vv_scal%verbose
        END IF
        CALL read_until(21, '===Solver type for scalar velocity (FGMRES, CG, ...)')
        READ(21,*) inputs%my_par_vv_scal%solver
@@ -730,7 +730,7 @@ CONTAINS
        READ(21,*) inputs%my_par_vv_vect%abs_tol
        CALL find_string(21, '===Velocity solver verbose? (true/false)', test)
        IF (test) THEN
-          READ(21,*) inputs%my_par_scal%verbose
+          READ(21,*) inputs%my_par_vv_vect%verbose
        END IF
        CALL read_until(21, '===Solver type for velocity (FGMRES, CG, ...)')
        READ(21,*) inputs%my_par_vv_vect%solver
