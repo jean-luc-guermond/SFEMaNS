@@ -760,7 +760,7 @@ CONTAINS
        READ(21,*) inputs%my_par_pp%precond
        CALL find_string(21, '===Pressure solver strong threshold for HYPRE?',test)
        IF (test) THEN
-          READ(21,*) inputs%my_par_pp%verbose
+          READ(21,*) inputs%my_par_pp%strong_thr
        ELSE
           inputs%my_par_pp%strong_thr = '0.1'
        END IF
@@ -783,7 +783,7 @@ CONTAINS
        READ(21,*) inputs%my_par_mass%precond
        CALL find_string(21, '===Mass matrix solver strong threshold for HYPRE?',test)
        IF (test) THEN
-          READ(21,*) inputs%my_par_mass%verbose
+          READ(21,*) inputs%my_par_mass%strong_thr
        ELSE
           inputs%my_par_pp%strong_thr = '0.1'
        END IF
