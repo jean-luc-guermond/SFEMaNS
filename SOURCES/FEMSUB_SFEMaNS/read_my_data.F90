@@ -713,10 +713,10 @@ CONTAINS
        CALL read_until(21, '===Solver type for scalar velocity (FGMRES, CG, ...)')
        READ(21,*) inputs%my_par_vv_scal%solver
        CALL read_until(21, '===Preconditionner type for scalar velocity solver (HYPRE, JACOBI, MUMPS...)')
-       READ(21,*) inputs%my_par_vv_scal%strong_thr
+       READ(21,*) inputs%my_par_vv_scal%precond
        CALL find_string(21, '===Scalar velocity solver strong threshold for HYPRE?',test)
        IF (test) THEN
-          READ(21,*) inputs%my_par_vv_scal%verbose
+          READ(21,*) inputs%my_par_vv_scal%strong_thr
        ELSE
           inputs%my_par_vv_scal%strong_thr = '0.1'
        END IF
