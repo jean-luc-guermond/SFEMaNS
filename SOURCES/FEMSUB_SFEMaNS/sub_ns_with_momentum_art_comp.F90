@@ -265,8 +265,8 @@ CONTAINS
                   vel_mat(nu_mat), vv_3_LA)
           END IF
           CALL Dirichlet_M_parallel(vel_mat(nu_mat),vv_mode_global_js_D(i)%DIL)
-          CALL init_solver(inputs%my_par_vv,vel_ksp(nu_mat),vel_mat(nu_mat),comm_one_d(1),&
-               solver=inputs%my_par_vv%solver,precond=inputs%my_par_vv%precond)
+          CALL init_solver(inputs%my_par_vv_scal,vel_ksp(nu_mat),vel_mat(nu_mat),comm_one_d(1),&
+               solver=inputs%my_par_vv_scal%solver,precond=inputs%my_par_vv_scal%precond)
           nu_mat = nu_mat+1
           CALL create_local_petsc_matrix(comm_one_d(1), vv_3_LA, vel_mat(nu_mat), clean=.FALSE.)
           IF (inputs%if_moment_bdf2) THEN
@@ -283,8 +283,8 @@ CONTAINS
                   vel_mat(nu_mat), vv_3_LA)
           END IF
           CALL Dirichlet_M_parallel(vel_mat(nu_mat),vv_mode_global_js_D(i)%DIL)
-          CALL init_solver(inputs%my_par_vv,vel_ksp(nu_mat),vel_mat(nu_mat),comm_one_d(1),&
-               solver=inputs%my_par_vv%solver,precond=inputs%my_par_vv%precond)
+          CALL init_solver(inputs%my_par_vv_scal,vel_ksp(nu_mat),vel_mat(nu_mat),comm_one_d(1),&
+               solver=inputs%my_par_vv_scal%solver,precond=inputs%my_par_vv_scal%precond)
           !===End VELOCITY
        ENDDO
        !===End ASSEMBLING VELOCITY MATRICES
@@ -482,7 +482,7 @@ CONTAINS
        !===Solve linear system for momentum equation
        !===Solve system 1, ur_c, ut_s, uz_c
        nu_mat  =2*i-1
-       CALL solver(vel_ksp(nu_mat),vb_3_145,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
+       CALL solver(vel_ksp(nu_mat),vb_3_145,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv_scal%verbose)
        CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,un_p1(:,1))
@@ -490,7 +490,7 @@ CONTAINS
        CALL extract(vx_3_ghost,3,3,vv_3_LA,un_p1(:,5))
        !===Solve system 2, ur_s, ut_c, uz_s
        nu_mat = nu_mat + 1
-       CALL solver(vel_ksp(nu_mat),vb_3_236,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv%verbose)
+       CALL solver(vel_ksp(nu_mat),vb_3_236,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv_scal%verbose)
        CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(vx_3_ghost,1,1,vv_3_LA,un_p1(:,2))

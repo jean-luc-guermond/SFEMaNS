@@ -44,7 +44,7 @@ MODULE my_data_module
      INTEGER, DIMENSION(:), POINTER          :: list_dom_ns
      REAL(KIND=8)                            :: Re
      REAL(KIND=8)                            :: coeff_lorentz
-     TYPE(solver_param)                      :: my_par_vv, my_par_pp, my_par_mass
+     TYPE(solver_param)                      :: my_par_vv_scal, my_par_vv_vect, my_par_pp, my_par_mass
      INTEGER                                 :: pp_nb_dirichlet_sides
      INTEGER, DIMENSION(:), POINTER          :: pp_list_dirichlet_sides
      INTEGER, DIMENSION(3)                   :: vv_nb_dirichlet_sides
@@ -256,7 +256,8 @@ CONTAINS
     a%verbose_CFL=.FALSE.
     a%if_just_processing=.FALSE.
     a%if_post_proc_init=.FALSE.
-    a%my_par_vv%verbose=.FALSE.
+    a%my_par_vv_scal%verbose=.FALSE.
+    a%my_par_vv_vect%verbose=.FALSE.
     a%my_par_pp%verbose=.FALSE.
     a%my_par_mass%verbose=.FALSE.
     a%my_par_H_p_phi%verbose=.FALSE.
@@ -698,27 +699,49 @@ CONTAINS
           inputs%if_compute_momentum_pseudo_force = .FALSE.
        END IF
 
-       !==========Solver parameters for velocity==========!
-       CALL read_until(21, '===Maximum number of iterations for velocity solver')
-       READ(21,*) inputs%my_par_vv%it_max
-       CALL read_until(21, '===Relative tolerance for velocity solver')
-       READ(21,*) inputs%my_par_vv%rel_tol
-       CALL read_until(21, '===Absolute tolerance for velocity solver')
-       READ(21,*) inputs%my_par_vv%abs_tol
-       CALL find_string(21, '===Velocity solver verbose? (true/false)', test)
+       !==========Solver parameters for velocity scalar==========!
+       CALL read_until(21, '===Maximum number of iterations for scalar velocity solver')
+       READ(21,*) inputs%my_par_vv_scal%it_max
+       CALL read_until(21, '===Relative tolerance for scalar velocity solver')
+       READ(21,*) inputs%my_par_vv_scal%rel_tol
+       CALL read_until(21, '===Absolute tolerance for scalar velocity solver')
+       READ(21,*) inputs%my_par_vv_scal%abs_tol
+       CALL find_string(21, '===Scalar velocity solver verbose? (true/false)', test)
        IF (test) THEN
-          READ(21,*) inputs%my_par_vv%verbose
+          READ(21,*) inputs%my_par_scal%verbose
        END IF
-       CALL read_until(21, '===Solver type for velocity (FGMRES, CG, ...)')
-       READ(21,*) inputs%my_par_vv%solver
-       CALL read_until(21, '===Preconditionner type for velocity solver (HYPRE, JACOBI, MUMPS...)')
+       CALL read_until(21, '===Solver type for scalar velocity (FGMRES, CG, ...)')
+       READ(21,*) inputs%my_par_vv_scal%solver
+       CALL read_until(21, '===Preconditionner type for scalar velocity solver (HYPRE, JACOBI, MUMPS...)')
+       READ(21,*) inputs%my_par_vv_scal%precond
        CALL find_string(21, '===Velocity solver strong threshold for HYPRE?',test)
        IF (test) THEN
-          READ(21,*) inputs%my_par_pp%verbose
+          READ(21,*) inputs%my_par_vv_scal%verbose
        ELSE
-          inputs%my_par_pp%strong_thr = '0.7'
+          inputs%my_par_vv_scal%strong_thr = '0.1'
        END IF
 
+       !==========Solver parameters for velocity vectorial==========!
+       CALL read_until(21, '===Maximum number of iterations for velocity solver')
+       READ(21,*) inputs%my_par_vv_vect%it_max
+       CALL read_until(21, '===Relative tolerance for velocity solver')
+       READ(21,*) inputs%my_par_vv_vect%rel_tol
+       CALL read_until(21, '===Absolute tolerance for velocity solver')
+       READ(21,*) inputs%my_par_vv_vect%abs_tol
+       CALL find_string(21, '===Velocity solver verbose? (true/false)', test)
+       IF (test) THEN
+          READ(21,*) inputs%my_par_scal%verbose
+       END IF
+       CALL read_until(21, '===Solver type for velocity (FGMRES, CG, ...)')
+       READ(21,*) inputs%my_par_vv_vect%solver
+       CALL read_until(21, '===Preconditionner type for velocity solver (HYPRE, JACOBI, MUMPS...)')
+       READ(21,*) inputs%my_par_vv_vect%precond
+       CALL find_string(21, '===Velocity solver strong threshold for HYPRE?',test)
+       IF (test) THEN
+          READ(21,*) inputs%my_par_vv_vect%verbose
+       ELSE
+          inputs%my_par_vv_vect%strong_thr = '0.7'
+       END IF
 
        !==========Solver parameters for pressure==========!
        CALL read_until(21, '===Maximum number of iterations for pressure solver')
@@ -760,7 +783,7 @@ CONTAINS
        READ(21,*) inputs%my_par_mass%precond
        CALL find_string(21, '===Mass matrix solver strong threshold for HYPRE?',test)
        IF (test) THEN
-          READ(21,*) inputs%my_par_pp%verbose
+          READ(21,*) inputs%my_par_mass%verbose
        ELSE
           inputs%my_par_pp%strong_thr = '0.1'
        END IF
