@@ -1,7 +1,12 @@
 This directory is meant to run the regression tests.
 
+===First Step: update the file variables.cmake with your variable environment
+
+===Second Step: create a direction named BUILD
+mkdir BUILD
+
+===Third Step: run the ctest as follows
 cd BUILD
-cp ../variables_template.cmake ../variables.cmake
 cmake ..
 make
 ctest

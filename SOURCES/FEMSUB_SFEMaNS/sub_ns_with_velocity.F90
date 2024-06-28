@@ -13,7 +13,10 @@ CONTAINS
 
   SUBROUTINE BDF2_ns_stress_bc_with_u(comm_one_d, time, vv_3_LA, pp_1_LA, vvz_per, pp_per, dt, Re, list_mode, pp_mesh, &
        vv_mesh, incpn_m1, incpn, pn_m1, pn, un_m1, un,  &
-       chmp_mag, Bn_p2, density, tempn, concn)
+!       chmp_mag, Bn_p2, density, tempn, concn)
+!TEST LC 2024/02/26 (now initialize or read in initialization.F90)
+       chmp_mag, Bn_p2, density, tempn, concn, visco_entro_sym_grad_u)
+!TEST LC 2024/02/26 (now initialize or read in initialization.F90)
     !==============================
     USE def_type_mesh
     USE fem_M_axi
@@ -47,7 +50,10 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)     :: density
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)     :: concn
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)     :: tempn
-    REAL(KIND=8), DIMENSION(:,:,:),          INTENT(IN) :: chmp_mag, Bn_p2
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)     :: chmp_mag, Bn_p2
+!TEST LC 2024/02/26 (now initialize or read in initialization.F90)
+    REAL(KIND=8), DIMENSION(:,:,:,:), INTENT(INOUT):: visco_entro_sym_grad_u
+!TEST LC 2024/02/26 (now initialize or read in initialization.F90)
     REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode)):: chmp_mag_aux
     !===Saved variables
     INTEGER,                                       SAVE :: m_max_c
@@ -61,7 +67,9 @@ CONTAINS
     TYPE(dyn_real_line),DIMENSION(:), ALLOCATABLE, SAVE :: vel_global_D
     LOGICAL,                                       SAVE :: once = .TRUE.
     INTEGER,                                       SAVE :: my_petscworld_rank
-    REAL(KIND=8), DIMENSION(:,:,:,:),ALLOCATABLE,  SAVE :: visco_entro_sym_grad_u
+!TEST LC 2024/02/26 (now initialize or read in initialization.F90)
+!    REAL(KIND=8), DIMENSION(:,:,:,:),ALLOCATABLE,  SAVE :: visco_entro_sym_grad_u
+!TEST LC 2024/02/26 (now initialize or read in initialization.F90)
     !===End saved variables
 
     !----------Declaration sans save-------------------------------------------------------
@@ -175,8 +183,10 @@ CONTAINS
        !===END ASSEMBLE MASS MATRIX
 
        !===ASSEMBLING VELOCITY MATRICES
-       ALLOCATE(visco_entro_sym_grad_u(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)))
-       visco_entro_sym_grad_u = 0.d0
+!TEST LC 2024/02/26 (now initialize or read in initialization.F90)
+!       ALLOCATE(visco_entro_sym_grad_u(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)))
+!       visco_entro_sym_grad_u = 0.d0
+!TEST LC 2024/02/26
        ALLOCATE(vel_mat(2*m_max_c),vel_ksp(2*m_max_c))
        ALLOCATE(press_mat(m_max_c),press_ksp(m_max_c))
        DO i = 1, m_max_c

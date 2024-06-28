@@ -6,7 +6,10 @@ MODULE subroutine_level_set
   USE my_util
 #include "petsc/finclude/petsc.h"
   USE petsc
-  PUBLIC :: three_level_level_set
+!  PUBLIC :: three_level_level_set
+!TEST LC LES_SUITE 2024/06
+  PUBLIC :: three_level_level_set, smb_compr_visc_entro_gauss_fft_par, smb_visc_entro_gauss_fft_par, qs_regul_M
+!TEST LC LES_SUITE 2024/06
   PRIVATE
   REAL(KIND=8)  :: max_velocity_at_tn
   !===JLG Sept 27, 2016
@@ -17,7 +20,7 @@ CONTAINS
 
   SUBROUTINE three_level_level_set(comm_one_d,time, cc_1_LA, dt, list_mode, cc_mesh, cn_m1, cn, &
        chmp_vit, max_vel, my_par_cc, cc_list_dirichlet_sides, cc_per, nb_inter, &
-       visc_entro_level, cext_reg)
+       visc_entro_level, cext_reg, visc_LES_level)
     !==============================
     USE def_type_mesh
     USE fem_M_axi
@@ -48,9 +51,15 @@ CONTAINS
     REAL(KIND=8),                   INTENT(INOUT)       :: max_vel
     REAL(KIND=8), DIMENSION(:,:),   INTENT(IN)          :: visc_entro_level
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT)         :: cext_reg
+!TEST LC LES_SUITE 2024/06
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)          :: visc_LES_level
+!TEST LC LES_SUITE 2024/06
     TYPE(dyn_real_line),DIMENSION(:), ALLOCATABLE, SAVE :: cc_global_D
     TYPE(dyn_int_line), DIMENSION(:), POINTER,     SAVE :: cc_mode_global_js_D
     LOGICAL,                                       SAVE :: once = .TRUE., once_vel=.TRUE.
+!TEST LC LES_SUITE 2024/06
+    LOGICAL,                                       SAVE :: once_LES = .TRUE.
+!TEST LC LES_SUITE 2024/06
     LOGICAL,                                       SAVE :: re_init=.FALSE.
     INTEGER,                                       SAVE :: m_max_c
     INTEGER,     DIMENSION(:),   POINTER,          SAVE :: cc_js_D ! Dirichlet nodes
@@ -67,10 +76,10 @@ CONTAINS
     REAL(KIND=8), DIMENSION(cc_mesh%np)                      :: ff
     REAL(KIND=8), DIMENSION(cc_mesh%np, 2)                   :: cn_p1
     REAL(KIND=8), DIMENSION(cc_mesh%np,2,SIZE(list_mode))    :: cext
-    REAL(KIND=8), DIMENSION(cc_mesh%gauss%l_G*cc_mesh%me, 2, SIZE(list_mode)) :: ff_conv
-    REAL(KIND=8), DIMENSION(cc_mesh%gauss%l_G*cc_mesh%me, 2, SIZE(list_mode)) :: ff_comp
-    REAL(KIND=8), DIMENSION(cc_mesh%gauss%l_G*cc_mesh%me, 6, SIZE(list_mode)) :: ff_entro
-    REAL(KIND=8), DIMENSION(cc_mesh%gauss%l_G*cc_mesh%me, 2, SIZE(list_mode)) :: ff_phi_1mphi
+    REAL(KIND=8), DIMENSION(cc_mesh%gauss%l_G*cc_mesh%dom_me, 2, SIZE(list_mode)) :: ff_conv
+    REAL(KIND=8), DIMENSION(cc_mesh%gauss%l_G*cc_mesh%dom_me, 2, SIZE(list_mode)) :: ff_comp
+    REAL(KIND=8), DIMENSION(cc_mesh%gauss%l_G*cc_mesh%dom_me, 6, SIZE(list_mode)) :: ff_entro
+    REAL(KIND=8), DIMENSION(cc_mesh%gauss%l_G*cc_mesh%dom_me, 2, SIZE(list_mode)) :: ff_phi_1mphi
     REAL(KIND=8) :: int_mass_correct
     REAL(KIND=8) :: tps, tps_tot, tps_cumul
     REAL(KIND=8) :: one, zero, three
@@ -185,7 +194,7 @@ CONTAINS
     tps_cumul = 0
 
     IF (inputs%if_level_bdf2) THEN
-       cext = 2*cn-cn_m1
+       cext = 2.d0*cn-cn_m1
     ELSE
        cext = cn
     END IF
@@ -247,6 +256,17 @@ CONTAINS
        CALL smb_visc_entro_gauss_fft_par(comm_one_d, cc_mesh, list_mode, cext, visc_entro_level,&
             LES_coeff1_in_level, nb_procs, ff_entro, ff_phi_1mphi)
     END IF
+
+!TEST LC LES_SUITE 2024/06
+    !===Use restart to initialize ff_entro (if restart_LES=.t.)
+    IF (once_LES) THEN
+       once_LES = .FALSE.
+       IF (inputs%irestart_LES) THEN
+          ff_entro = visc_LES_level
+       END IF
+    END IF
+    !===End Use restart to initialize ff_entro (if restart_LES=.t.)
+!TEST LC LES_SUITE 2024/06
 
     IF (inputs%if_mass_correction) THEN
        CALL compute_int_mass_correct(comm_one_d, cc_mesh, list_mode, ff_conv, ff_phi_1mphi, int_mass_correct)
@@ -333,7 +353,6 @@ CONTAINS
        !WRITE(*,*) ' Tps  des updates', tps
        !-------------------------------------------------------------------------------------
     ENDDO
-
 
     bloc_size = SIZE(cn,1)/nb_procs+1
     m_max_pad = 3*SIZE(list_mode)*nb_procs/2

@@ -45,6 +45,8 @@ MODULE initialization
   REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:)            :: visc_entro_level
   !Maximum of velocity--------------------------------------------------------
   REAL(KIND=8)                                         :: max_vel
+  REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:,:):: visc_LES
+  REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:,:):: visc_LES_level
 
   !Fields for temperature-----------------------------------------------------
   ! (noeuds,type,mode) composante du champ de phase a deux instants sur vv_mesh
@@ -135,7 +137,7 @@ CONTAINS
        vol_heat_capacity_field_out, temperature_diffusivity_field_out, concentration_diffusivity_field_out, &
        mu_H_field_out, sigma_field_out, &
        time_out, m_max_c_out, comm_one_d_out, comm_one_d_ns_out, comm_one_d_temp_out, comm_one_d_conc_out, &
-       tempn_out, concn_out, level_set_out, density_out, der_un_out)
+       tempn_out, concn_out, level_set_out, density_out, der_un_out, visc_LES_out, visc_LES_level_out)
     USE fourier_to_real_for_vtu
 #include "petsc/finclude/petsc.h"
     USE petsc
@@ -153,6 +155,8 @@ CONTAINS
     REAL(KIND=8), POINTER,  DIMENSION(:,:,:,:):: level_set_out
     REAL(KIND=8), POINTER,  DIMENSION(:)      :: sigma_field_out, mu_H_field_out
     REAL(KIND=8), POINTER,  DIMENSION(:)      :: vol_heat_capacity_field_out, temperature_diffusivity_field_out
+    REAL(KIND=8), POINTER,  DIMENSION(:,:,:,:):: visc_LES_out
+    REAL(KIND=8), POINTER,  DIMENSION(:,:,:,:):: visc_LES_level_out
     REAL(KIND=8)                              :: time_out
     INTEGER                                   :: m_max_c_out
     MPI_Comm, DIMENSION(:), POINTER           :: comm_one_d_out, comm_one_d_ns_out
@@ -177,6 +181,8 @@ CONTAINS
     tempn_out   => tempn
     level_set_out => level_set
     density_out => density
+    visc_LES_out => visc_LES
+    visc_LES_level_out => visc_LES_level
     Hn_out   => Hn
     Bn_out   => Bn
     phin_out => phin
@@ -233,7 +239,7 @@ CONTAINS
 
        CALL three_level_mass(comm_one_d_ns, time, pp_1_LA, vv_1_LA, list_mode, pp_mesh, vv_mesh, &
             2*un-un_m1, max_vel, level_set_per, density_m2, density_m1, density, level_set_m1, level_set,&
-            visc_entro_level, level_set_reg)
+            visc_entro_level, level_set_reg, visc_LES_level)
        CALL reconstruct_variable(comm_one_d_ns, list_mode, pp_mesh, vv_mesh, level_set_m1, &
             inputs%dyna_visc_fluid, visco_dyn)
 
@@ -272,8 +278,8 @@ CONTAINS
             conc_mesh, concn_m1, concn, v_to_conc,& ! H_to_energy,&
             concentration_diffusivity_field, inputs%my_par_concentration,&
             inputs%concentration_list_dirichlet_sides, inputs%concentration_list_robin_sides, &
-            inputs%convection_coeff_conc_lhs, inputs%convection_coeff_conc_rhs,inputs%exterior_concentration, conc_per, &
-            j_H_to_conc)
+            inputs%convection_coeff_conc_lhs, inputs%convection_coeff_conc_rhs,inputs%exterior_concentration, &
+            conc_per, j_H_to_conc)
     END IF
 
     IF (if_energy) THEN
@@ -309,14 +315,14 @@ CONTAINS
        !===HF April 2019
        IF (inputs%if_navier_stokes_with_taylor) THEN
           CALL navier_stokes_taylor(comm_one_d_ns, time, vv_3_LA, pp_1_LA, &
-               list_mode, pp_mesh, vv_mesh, pn, der_pn, un, der_un, vvz_per, pp_per, density, tempn, concn)
-
+               list_mode, pp_mesh, vv_mesh, pn, der_pn, un, der_un, vvz_per, &
+               pp_per, density, tempn, concn)
        ELSE
           CALL navier_stokes_decouple(comm_one_d_ns,time, vv_3_LA, pp_1_LA, &
                list_mode, pp_mesh, vv_mesh, incpn_m1, incpn, &
                pn_m1, pn, un_m1, un, vvz_per, pp_per, H_to_NS, B_to_NS, &
-               density_m2, density_m1, density, visco_dyn, T_to_NS, conc_to_v,level_set_m1, level_set, &
-               visc_entro_level, level_set_reg)
+               density_m2, density_m1, density, visco_dyn, T_to_NS, conc_to_v, &
+               level_set_m1, level_set, visc_entro_level, level_set_reg, visc_LES)
        END IF
        !===HF April 2019
        !===JLG July 20, 2019, p3 mesh
@@ -568,8 +574,14 @@ CONTAINS
   !----------------SAVE RUN---------------------------------------------------
   SUBROUTINE save_run(it, freq_restart)
     USE restart
+!TEST LC LES_SUITE 2024/06
+    USE subroutine_compute_visc_LES_level
+!TEST LC LES_SUITE 2024/06
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: it, freq_restart
+!TEST LC LES_SUITE 2024/06
+    INTEGER :: n
+!TEST LC LES_SUITE 2024/06
 
     IF (if_momentum) THEN
        IF (pp_mesh%me /= 0) THEN
@@ -581,11 +593,44 @@ CONTAINS
                 CALL write_restart_ns(comm_one_d_ns, vv_mesh, pp_mesh, time, &
                      list_mode, un, un_m1, pn, pn_m1, &
                      incpn, incpn_m1, inputs%file_name, it, freq_restart)
+                IF (inputs%LES) THEN
+                   CALL write_restart_LES(comm_one_d_ns, vv_mesh, pp_mesh, time, &
+                        list_mode, inputs%file_name, it, freq_restart, &
+                        opt_LES_NS=visc_LES)
+                END IF
              ELSE
                 CALL write_restart_ns(comm_one_d_ns, vv_mesh, pp_mesh, time, &
                      list_mode, un, un_m1, pn, pn_m1, &
                      incpn, incpn_m1, inputs%file_name, it, freq_restart, &
                      opt_level_set=level_set, opt_level_set_m1=level_set_m1,opt_max_vel=max_vel)
+
+!TEST LC LES_SUITE 2024/06
+                IF (inputs%if_level_set_P2) THEN
+                   DO n = 1, inputs%nb_fluid-1
+                      CALL compute_visc_LES_level(comm_one_d_ns, time, vv_1_LA, list_mode, vv_mesh, &
+                           level_set_m1(n,:,:,:), level_set(n,:,:,:), inputs%my_par_level_set, &
+                           inputs%level_set_list_dirichlet_sides, level_set_per, n, &
+                           visc_entro_level, visc_LES_level(n,:,:,:))
+                   END DO
+                ELSE
+                   DO n = 1, inputs%nb_fluid-1
+                      CALL compute_visc_LES_level(comm_one_d_ns, time, pp_1_LA, list_mode, pp_mesh, &
+                           level_set_m1(n,:,:,:), level_set(n,:,:,:), inputs%my_par_level_set, &
+                           inputs%level_set_list_dirichlet_sides, level_set_per, n, &
+                           visc_entro_level, visc_LES_level(n,:,:,:))
+                   END DO
+                END IF
+
+                IF (inputs%LES .AND. inputs%if_LES_in_momentum) THEN
+                   CALL write_restart_LES(comm_one_d_ns, vv_mesh, pp_mesh, time, &
+                        list_mode, inputs%file_name, it, freq_restart, &
+                        opt_LES_NS=visc_LES, opt_LES_level=visc_LES_level)
+                ELSE
+                   CALL write_restart_LES(comm_one_d_ns, vv_mesh, pp_mesh, time, &
+                        list_mode, inputs%file_name, it, freq_restart, &
+                        opt_LES_level=visc_LES_level)
+                END IF
+!TEST LC LES_SUITE 2024/06
              END IF
           END IF
        END IF
@@ -1739,6 +1784,9 @@ CONTAINS
        END IF
        ALLOCATE(un         (vv_mesh%np, 6, m_max_c))
        ALLOCATE(pn         (pp_mesh%np, 2, m_max_c))
+       IF (inputs%LES) THEN
+          ALLOCATE(visc_LES(3, vv_mesh%gauss%l_G*vv_mesh%dom_me, 6, m_max_c))
+       END IF
        !===Allocate arrays for Level sets===========================================
        IF (if_mass) THEN
           IF (inputs%if_level_set_P2) THEN
@@ -1749,6 +1797,9 @@ CONTAINS
              bloc_size = vv_mesh%gauss%l_G*(bloc_size/vv_mesh%gauss%l_G)+vv_mesh%gauss%l_G
              m_max_pad = 3*SIZE(list_mode)*nb_procs/2
              ALLOCATE(visc_entro_level(2*m_max_pad-1,bloc_size))
+!TEST LC LES_SUITE 2024/06
+             ALLOCATE(visc_LES_level(inputs%nb_fluid-1, vv_mesh%gauss%l_G*vv_mesh%dom_me, 6, m_max_c))
+!TEST LC LES_SUITE 2024/06
           ELSE
              ALLOCATE(level_set_m1   (inputs%nb_fluid-1, pp_mesh%np, 2, m_max_c))
              ALLOCATE(level_set      (inputs%nb_fluid-1, pp_mesh%np, 2, m_max_c))
@@ -1757,6 +1808,9 @@ CONTAINS
              bloc_size = pp_mesh%gauss%l_G*(bloc_size/pp_mesh%gauss%l_G)+pp_mesh%gauss%l_G
              m_max_pad = 3*SIZE(list_mode)*nb_procs/2
              ALLOCATE(visc_entro_level(2*m_max_pad-1,bloc_size))
+!TEST LC LES_SUITE 2024/06
+             ALLOCATE(visc_LES_level(inputs%nb_fluid-1, pp_mesh%gauss%l_G*pp_mesh%dom_me, 6, m_max_c))
+!TEST LC LES_SUITE 2024/06
           END IF
        END IF
     END IF
@@ -1891,10 +1945,34 @@ CONTAINS
                 IF (.NOT. if_mass) THEN
                    CALL read_restart_ns(comm_one_d_ns, time_u, list_mode, un, un_m1, pn, pn_m1, &
                         incpn, incpn_m1, inputs%file_name)
+!TEST LC LES_SUITE 2024/06
+                   IF (inputs%LES) THEN
+                      IF (inputs%irestart_LES) THEN
+                         CALL read_restart_LES(comm_one_d_ns, time_u, list_mode, inputs%file_name, opt_LES_NS=visc_LES)
+                      ELSE
+                         visc_LES = 0.d0
+                      END IF
+                   END IF
+!TEST LC LES_SUITE 2024/06
                 ELSE
                    CALL read_restart_ns(comm_one_d_ns, time_u, list_mode, un, un_m1, pn, pn_m1, &
                         incpn, incpn_m1, inputs%file_name, opt_level_set=level_set, &
                         opt_level_set_m1=level_set_m1, opt_max_vel=max_vel)
+!TEST LC LES_SUITE 2024/06
+                   IF (inputs%irestart_LES) THEN !inputs%LES=.t. true when inputs%if_mass=.t.
+                      IF (inputs%if_LES_in_momentum) THEN
+                         CALL read_restart_LES(comm_one_d_ns, time_u, list_mode, inputs%file_name, &
+                             opt_LES_NS=visc_LES, opt_LES_level=visc_LES_level)
+                      ELSE
+                         CALL read_restart_LES(comm_one_d_ns, time_u, list_mode, inputs%file_name, &
+                             opt_LES_level=visc_LES_level)
+                         visc_LES = 0.d0
+                      END IF
+                   ELSE
+                      visc_LES = 0.d0
+                      visc_LES_level = 0.d0
+                   END IF
+!TEST LC LES_SUITE 2024/06
                 END IF
              END IF
           ELSE
@@ -1904,6 +1982,9 @@ CONTAINS
              ELSE
                 CALL init_velocity_pressure(vv_mesh, pp_mesh, time_u, &
                      inputs%dt, list_mode, un_m1, un, pn_m1, pn, incpn_m1, incpn)
+             END IF
+             IF (inputs%LES) THEN
+                visc_LES = 0.d0
              END IF
              IF (if_mass) THEN
                 IF (inputs%if_level_set_P2) THEN
@@ -1919,8 +2000,14 @@ CONTAINS
                 CALL MPI_ALLREDUCE(max_vel_S, max_vel, 1, MPI_DOUBLE_PRECISION, &
                      MPI_MAX, comm_one_d_ns(1), code)
                 max_vel = MAX(1.1d0*max_vel, 0.1d0)
+!TEST LC LES_SUITE 2024/06
+                IF (inputs%LES) THEN
+                   visc_LES_level = 0.d0
+                END IF
+!TEST LC LES_SUITE 2024/06
              END IF
           END IF
+
           IF (if_mass) THEN
              CALL reconstruct_variable(comm_one_d_ns, list_mode, pp_mesh, vv_mesh, level_set_m1, &
                   inputs%density_fluid, density_m1)
@@ -2014,6 +2101,10 @@ CONTAINS
        DEALLOCATE(pn)
        IF (if_mass) THEN
           IF (ALLOCATED(level_set)) DEALLOCATE(level_set,level_set_m1)
+          IF (ALLOCATED(visc_LES_level)) DEALLOCATE(visc_LES_level)
+       END IF
+       IF (inputs%LES) THEN
+          IF (ALLOCATED(visc_LES)) DEALLOCATE(visc_LES)
        END IF
     ENDIF
 

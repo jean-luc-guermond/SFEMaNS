@@ -13,7 +13,7 @@ CONTAINS
     USE def_type_mesh
     USE chaine_caractere
     IMPLICIT NONE
-    TYPE(mesh_type), TARGET                                    :: vv_mesh,pp_mesh
+    TYPE(mesh_type), TARGET                                    :: vv_mesh, pp_mesh
     REAL(KIND=8),                                   INTENT(IN) :: time
     INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator
     INTEGER,      DIMENSION(:),                     INTENT(IN) :: list_mode
@@ -105,8 +105,8 @@ CONTAINS
 
   SUBROUTINE read_restart_ns(communicator, time, list_mode, &
        un, un_m1, pn, pn_m1, incpn, incpn_m1, filename, val_init, interpol, &
-       opt_level_set, opt_level_set_m1, opt_max_vel, opt_mono &
-       , opt_it, opt_dt) !===HF may 2020
+       opt_level_set, opt_level_set_m1, opt_max_vel, opt_mono, &
+       opt_it, opt_dt) !===HF may 2020
 
     USE def_type_mesh
     USE chaine_caractere
@@ -295,9 +295,9 @@ CONTAINS
 
        IF (.NOT.trouve) THEN               !mode_cherche non trouve
           IF (PRESENT(val_init)) THEN ! not implemented yet
-             un(:,:,i)    = val_init  ; un_m1(:,:,i)    = val_init
+             un(:,:,i)    = val_init  ; un_m1(:,:,i)   = val_init
              pn(:,:,i)    = val_init ; pn_m1(:,:,i)    = val_init
-             incpn(:,:,i) = val_init ; incpn_m1(:,:,i) =  val_init
+             incpn(:,:,i) = val_init ; incpn_m1(:,:,i) = val_init
              IF (PRESENT(opt_level_set) .AND. PRESENT(opt_level_set_m1)) THEN
                 opt_level_set(:,:,:,i)    = val_init
                 opt_level_set_m1(:,:,:,i) = val_init
@@ -309,8 +309,8 @@ CONTAINS
              pn(:,:,i)    = 0.d0 ; pn_m1(:,:,i)    = 0.d0
              incpn(:,:,i) = 0.d0 ; incpn_m1(:,:,i) = 0.d0
              IF (PRESENT(opt_level_set) .AND. PRESENT(opt_level_set_m1)) THEN
-                opt_level_set(:,:,:,i)=0.d0
-                opt_level_set_m1(:,:,:,i)=0.d0
+                opt_level_set(:,:,:,i) = 0.d0
+                opt_level_set_m1(:,:,:,i) = 0.d0
              END IF
              WRITE(*,*) 'mode ns', mode_cherche, ' not found'
           ENDIF
@@ -341,6 +341,320 @@ CONTAINS
     END IF
 
   END SUBROUTINE read_restart_ns
+
+  SUBROUTINE write_restart_LES(communicator, vv_mesh, pp_mesh, time, list_mode, &
+       filename, it, freq_restart, opt_LES_NS, opt_LES_level, opt_mono, opt_dt)
+
+    USE def_type_mesh
+    USE chaine_caractere
+    IMPLICIT NONE
+    TYPE(mesh_type), TARGET                                    :: vv_mesh, pp_mesh
+    REAL(KIND=8),                                   INTENT(IN) :: time
+    INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator
+    INTEGER,      DIMENSION(:),                     INTENT(IN) :: list_mode
+    REAL(KIND=8),                     OPTIONAL,     INTENT(IN) :: opt_dt
+    REAL(KIND=8), DIMENSION(:,:,:,:), OPTIONAL,     INTENT(IN) :: opt_LES_NS
+    REAL(KIND=8), DIMENSION(:,:,:,:), OPTIONAL,     INTENT(IN) :: opt_LES_level
+    LOGICAL, OPTIONAL,                              INTENT(IN) :: opt_mono
+    CHARACTER(len=200),                             INTENT(IN) :: filename
+    INTEGER,                                        INTENT(IN) :: it, freq_restart
+    INTEGER                           :: code, n, i, rang_S, rang_F, nb_procs_S, nb_procs_F
+    INTEGER                           :: l, lblank
+    CHARACTER(len=3)                  :: tit, tit_S
+    LOGICAL                           :: mono=.FALSE.
+    LOGICAL                           :: skip
+    CHARACTER(len=250)                :: out_name
+
+    CALL MPI_COMM_SIZE(communicator(1),nb_procs_S,code)
+    CALL MPI_COMM_SIZE(communicator(2),nb_procs_F,code)
+    CALL MPI_COMM_RANK(communicator(1),rang_S,code)
+    CALL MPI_COMM_RANK(communicator(2),rang_F,code)
+
+    WRITE(tit,'(i3)') it/freq_restart
+    lblank = eval_blank(3,tit)
+    DO l = 1, lblank - 1
+       tit(l:l) = '0'
+    END DO
+    WRITE(tit_S,'(i3)') rang_S
+    lblank = eval_blank(3,tit_S)
+    DO l = 1, lblank - 1
+       tit_S(l:l) = '0'
+    END DO
+
+    IF (PRESENT(opt_mono)) THEN
+       mono = opt_mono
+    END IF
+
+    IF (mono) THEN
+       out_name = 'suite_LES_I'//tit//'.'//filename
+    ELSE
+       out_name = 'suite_LES_S'//tit_S//'_I'//tit//'.'//filename
+    END IF
+
+    skip = (mono .AND. rang_S /= 0)
+
+    DO n = 1, nb_procs_F
+       IF ( (rang_F == n-1) .AND. (.NOT. skip) ) THEN
+          IF (rang_F == 0) THEN
+             OPEN(UNIT = 10, FILE = out_name, POSITION='append', &
+                  FORM = 'unformatted', STATUS = 'replace')
+             IF (PRESENT(opt_dt)) THEN
+                IF (mono) THEN
+                   WRITE(10) time, vv_mesh%np , pp_mesh%np , nb_procs_F, SIZE(list_mode), opt_dt
+                ELSE
+                   WRITE(10) time, nb_procs_S, nb_procs_F, SIZE(list_mode), opt_dt
+                END IF
+             ELSE
+                IF (mono) THEN
+                   WRITE(10) time, vv_mesh%np , pp_mesh%np , nb_procs_F, SIZE(list_mode)
+                ELSE
+                   WRITE(10) time, nb_procs_S, nb_procs_F, SIZE(list_mode)
+                END IF
+             END IF
+          ELSE
+             OPEN(UNIT = 10, FILE = out_name, POSITION='append', &
+                  FORM = 'unformatted', STATUS = 'unknown')
+          END IF
+
+          DO i= 1, SIZE(list_mode)
+             WRITE(10) list_mode(i)
+             IF (PRESENT(opt_LES_NS)) THEN
+                WRITE(10) opt_LES_NS(:,:,:,i)
+             END IF
+             IF (PRESENT(opt_LES_level)) THEN
+                WRITE(10) opt_LES_level(:,:,:,i)
+             END IF
+          END DO
+          CLOSE(10)
+       END IF
+       CALL MPI_BARRIER(communicator(2),code)
+    END DO
+
+  END SUBROUTINE write_restart_LES
+
+  SUBROUTINE read_restart_LES(communicator, time, list_mode, &
+       filename, val_init, interpol, opt_LES_NS, opt_LES_level, &
+       opt_mono, opt_it, opt_dt)
+
+    USE def_type_mesh
+    USE chaine_caractere
+    USE my_util
+    IMPLICIT NONE
+    REAL(KIND=8),                                   INTENT(OUT):: time
+    INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator
+    INTEGER,      DIMENSION(:)                                 :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:,:), OPTIONAL,     INTENT(OUT):: opt_LES_NS
+    REAL(KIND=8), DIMENSION(:,:,:,:), OPTIONAL,     INTENT(OUT):: opt_LES_level
+    CHARACTER(len=200),                             INTENT(IN) :: filename
+    REAL(KIND=8), OPTIONAL,                         INTENT(IN) :: val_init
+    LOGICAL     , OPTIONAL,                         INTENT(IN) :: interpol
+    LOGICAL     , OPTIONAL,                         INTENT(IN) :: opt_mono
+    INTEGER     , OPTIONAL,                         INTENT(IN) :: opt_it
+    REAL(KIND=8),                     OPTIONAL,     INTENT(IN) :: opt_dt
+    REAL(KIND=8)                                               :: max_vel_loc, dt_read, dt_ratio
+    INTEGER     :: code, n, i, mode, j, rang_S, nb_procs_S, rang_F, nb_procs_F, nlignes, rank
+    INTEGER     :: m_max_cr, nb_procs_r, nb_procs_Sr
+    INTEGER     :: m_max_c, nb_mode_r, mode_cherche
+    LOGICAL     :: trouve, okay
+    INTEGER     :: npv, npp
+    INTEGER           :: l, lblank
+    CHARACTER(len=3)  :: tit_S
+    !===HF may 2020
+    CHARACTER(len=3)  :: tit
+    !===HF may 2020
+    LOGICAL           :: mono=.FALSE.
+    CHARACTER(len=250):: in_name
+    CALL MPI_COMM_RANK(communicator(2),rang_F,code)
+    CALL MPI_COMM_SIZE(communicator(2),nb_procs_F,code)
+    CALL MPI_COMM_RANK(communicator(1),rang_S,code)
+    CALL MPI_COMM_SIZE(communicator(1),nb_procs_S,code)
+    CALL MPI_COMM_RANK(MPI_COMM_WORLD,rank,code)
+
+    max_vel_loc = 0.d0
+
+    nlignes = 0
+    IF (PRESENT(opt_LES_NS)) THEN
+       nlignes = nlignes + 1
+    END IF
+    IF (PRESENT(opt_LES_level)) THEN
+       nlignes = nlignes + 1
+    END IF
+
+    !=== HF may 2020
+    IF (PRESENT(opt_it)) THEN
+       WRITE(tit,'(i3)') opt_it
+       lblank = eval_blank(3,tit)
+       DO l = 1, lblank - 1
+          tit(l:l) = '0'
+       END DO
+    END IF
+    !=== HF may 2020
+
+    WRITE(tit_S,'(i3)') rang_S
+    lblank = eval_blank(3,tit_S)
+    DO l = 1, lblank - 1
+       tit_S(l:l) = '0'
+    END DO
+
+    IF (PRESENT(opt_mono)) THEN
+       mono = opt_mono
+    END IF
+
+    IF (mono) THEN
+       !=== HF may 2020
+       IF (PRESENT(opt_it)) THEN
+          in_name = 'suite_LES_I'//tit//'.'//filename
+       ELSE
+          in_name = 'suite_LES.'//filename
+       END IF
+    ELSE
+       IF (PRESENT(opt_it)) THEN
+          in_name = 'suite_LES_S'//tit_S//'_I'//tit//'.'//filename
+       ELSE
+          in_name = 'suite_LES_S'//tit_S//'.'//filename
+       END IF
+       !=== HF may 2020
+    END IF
+
+    !=== HF may 2020
+    IF (PRESENT(opt_it)) THEN
+       WRITE(*,*) 'restart LES for it', opt_it
+    ELSE
+       WRITE(*,*) 'restart LES'
+    END IF
+    !=== HF may 2020
+    OPEN(UNIT = 10, FILE = in_name, FORM = 'unformatted', STATUS = 'unknown')
+
+    IF (PRESENT(opt_dt)) THEN
+       IF (mono) THEN
+          READ(10) time, npv, npp, nb_procs_r, m_max_cr, dt_read
+          nb_procs_Sr = -1
+       ELSE
+          READ(10) time, nb_procs_Sr, nb_procs_r, m_max_cr, dt_read
+       END IF
+    ELSE
+       IF (mono) THEN
+          READ(10) time, npv, npp, nb_procs_r, m_max_cr
+          nb_procs_Sr = -1
+       ELSE
+          READ(10) time, nb_procs_Sr, nb_procs_r, m_max_cr
+       END IF
+    END IF
+
+    CLOSE(10)
+
+    IF ((nb_procs_Sr /= nb_procs_S) .AND. (.NOT. mono)) THEN
+       CALL error_petsc('BUG in read_restart_LES: nb_procs_Sr /= nb_procs_S')
+       !STOP
+    END IF
+
+    IF (rang_F == 0) THEN
+       WRITE(*,*) 'File name ', trim(adjustl(in_name))
+       WRITE(*,*) 'Time = ', time
+       WRITE(*,*) 'Number of processors from restart file = ',nb_procs_r
+       WRITE(*,*) 'Number of modes per processor from restart file = ',m_max_cr
+    ENDIF
+
+    m_max_c   = SIZE(list_mode)      !nombre de modes par proc pour le calcul
+    nb_mode_r = nb_procs_r*m_max_cr  !nombre total de modes contenus dans le suite
+
+    !June 7 2007, JLG
+    IF (nb_procs_F*m_max_c /= nb_mode_r) THEN
+       !CALL error_petsc('Bug in read_restart_LES: nb_procs_F*m_max_c /= nb_mode_r')
+       WRITE(*,*) 'Warning in read_restart_LES: nb_procs_F*m_max_c /= nb_mode_r'
+       !STOP
+    END IF
+
+    okay = .FALSE.
+    IF (PRESENT(interpol)) THEN
+       IF (interpol) THEN
+          okay =.TRUE.
+       END IF
+    END IF
+    !June 7 2007, JLG
+
+    IF (rank==0) THEN
+       WRITE(*,*) 'Reading LES modes ...'
+    END IF
+    DO i=1, m_max_c
+       !Open restart file
+       OPEN(UNIT = 10, FILE = in_name, FORM = 'unformatted', STATUS = 'unknown')
+       !Skip first line (only contains data on mesh)
+       READ(10)
+       mode_cherche = list_mode(i)
+       !Find correct Fourier mode
+       trouve = .FALSE.
+       DO j=1, nb_mode_r
+          !Read Fourier mode
+          READ(10) mode
+          IF (okay) THEN
+             IF (j/=rang_F*m_max_c+i) THEN
+                DO n=1, nlignes
+                   READ(10)
+                ENDDO
+                CYCLE
+             ELSE
+                list_mode(i) = mode
+                mode_cherche = mode
+             END IF
+          END IF
+          !June 7 2007, JLG
+          IF (mode == mode_cherche) THEN
+             IF (PRESENT(opt_LES_NS)) THEN 
+                READ(10) opt_LES_NS(:,:,:,i)
+             END IF
+             IF (PRESENT(opt_LES_level)) THEN 
+                READ(10) opt_LES_level(:,:,:,i)
+             END IF
+             WRITE(*,'(A,i4,A)') 'mode ns ', mode_cherche,' found '
+             trouve = .TRUE.
+             EXIT
+          ELSE
+             DO n=1, nlignes !go to next mode by skypping nlignes number of lines
+                READ(10)
+             ENDDO
+          ENDIF
+       ENDDO
+
+       IF (.NOT.trouve) THEN               !mode_cherche non trouve
+          IF (PRESENT(val_init)) THEN ! not implemented yet
+             IF (PRESENT(opt_LES_NS)) THEN
+                opt_LES_NS(:,:,:,i) = val_init
+             END IF
+             IF (PRESENT(opt_LES_level)) THEN
+                opt_LES_level(:,:,:,i) = val_init
+             END IF
+             WRITE(*,'(A,i4,A)') 'mode ns', mode_cherche,' not found'
+          ELSE
+             IF (PRESENT(opt_LES_NS)) THEN
+                opt_LES_NS(:,:,:,i) = 0.d0
+             END IF
+             IF (PRESENT(opt_LES_level)) THEN
+                opt_LES_level(:,:,:,i) = 0.d0
+             END IF
+             WRITE(*,*) 'mode ns', mode_cherche, ' not found'
+          ENDIF
+       ENDIF
+       CLOSE(10)                          !fermeture du fichier suite
+    ENDDO
+
+    IF (PRESENT(opt_dt)) THEN
+       IF (ABS((opt_dt - dt_read)/opt_dt).GT.1d-4) THEN
+          dt_ratio = opt_dt/dt_read
+          IF (rank==0) THEN
+             WRITE(*,*) 'In LES restart, suite_time_step different from inputs%dt ...'
+             WRITE(*,*) 'opt_dt, dt_read =', opt_dt, dt_read
+          END IF
+          IF (PRESENT(opt_LES_NS)) THEN
+             opt_LES_NS = dt_ratio * opt_LES_NS +(1.d0 - dt_ratio)* opt_LES_NS
+          END IF
+          IF (PRESENT(opt_LES_level)) THEN
+             opt_LES_level = dt_ratio * opt_LES_level +(1.d0 - dt_ratio)* opt_LES_level
+          END IF
+       END IF
+    END IF
+
+  END SUBROUTINE read_restart_LES
 
   SUBROUTINE write_restart_ns_taylor(communicator, vv_mesh, pp_mesh, time, list_mode, &
        un, der_un, pn, der_pn, filename, it, freq_restart, &

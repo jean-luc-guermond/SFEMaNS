@@ -33,6 +33,9 @@ PROGRAM mhd_prog
   REAL(KIND=8), POINTER, DIMENSION(:,:,:,:)       :: level_set
   !===Density=====================================================================
   REAL(KIND=8), POINTER, DIMENSION(:,:,:)         :: density
+  !===LES=========================================================================
+  REAL(KIND=8), POINTER, DIMENSION(:,:,:,:)       :: visc_LES
+  REAL(KIND=8), POINTER, DIMENSION(:,:,:,:)       :: visc_LES_level
   !===Fourier modes===============================================================
   INTEGER                                         :: m_max_c
   INTEGER,      POINTER,      DIMENSION(:)        :: list_mode
@@ -62,7 +65,7 @@ PROGRAM mhd_prog
        concentration_diffusivity_field,mu_H_field, sigma_field, time, m_max_c, &
        comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc,temperature, &
        concentration, level_set, density, &
-       der_un)
+       der_un, visc_LES, visc_LES_level)
 
   !===============================================================================
   !                        VISUALIZATION WITHOUT COMPUTING                       !

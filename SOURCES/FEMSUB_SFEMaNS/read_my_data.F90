@@ -35,6 +35,7 @@ MODULE my_data_module
      LOGICAL                                 :: if_temp_bdf2
      LOGICAL                                 :: if_level_bdf2
      LOGICAL                                 :: irestart_u
+     LOGICAL                                 :: irestart_LES
      LOGICAL                                 :: if_variable_visco
      LOGICAL                                 :: if_navier_stokes_with_taylor !===JLG july 20, 2019, p3 mesh
      INTEGER                                 :: taylor_order !===JLG Dec 2020
@@ -213,6 +214,7 @@ CONTAINS
     a%if_temp_bdf2=.FALSE.
     a%if_level_bdf2=.FALSE.
     a%irestart_u=.FALSE.
+    a%irestart_LES=.FALSE.
     a%if_maxwell_with_H=.FALSE.
     a%irestart_h=.FALSE.
     a%irestart_T=.FALSE.
@@ -398,7 +400,6 @@ CONTAINS
     ELSE
        inputs%irestart_conc = .FALSE.
     END IF
-
 
     !===Mesh partitioning===========================================================
     CALL find_string(21, '===Do we read metis partition? (true/false)', test)
@@ -773,11 +774,23 @@ CONTAINS
           ELSE
              inputs%LES_coeff1 = 0.d0
           END IF
+          !===Check if LES in restart file
+          IF (inputs%irestart_u) THEN
+             CALL find_string(21, '===Restart on LES (true/false)',test)
+             IF (test) THEN
+                READ(21,*) inputs%irestart_LES
+             ELSE
+                inputs%irestart_LES = .FALSE.
+             END IF
+          ELSE
+             inputs%irestart_LES = .FALSE.
+          END IF
        ELSE
           inputs%LES_coeff1 = 0.d0
           inputs%LES_coeff2 = 0.d0
           inputs%LES_coeff3 = 0.d0
           inputs%LES_coeff4 = 0.d0
+          inputs%irestart_LES = .FALSE.
        END IF
     END IF
     IF (.NOT.inputs%if_navier_stokes_with_u) THEN

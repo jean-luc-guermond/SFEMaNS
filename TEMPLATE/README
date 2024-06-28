@@ -28,19 +28,10 @@ export PETSC_ARCH=linux-gnu-c
 ==================================================================
 !       Check installation
 ==================================================================
-0) Define the environement variable SFEMaNS_DIR in your ~/.bashrc file
-Example: edit ~/.bashrc and add one line 
-export SFEMaNS_DIR= the_path_to_SFEMaNS
 
-1) Create the executable a.exe as described above
+1) cd SFEMaNS/CTEST_SUITE
 
-2) Then type the command
-   	cp $SFEMaNS_DIR/TEMPLATE/debug_SFEMaNS_template .
-
-3) Run the shell debug_SFEMaNS_template (it checks the installation of the code over more than 30 tests)
-       ./debug_SFEMaNS_test
-
-4) If all the test are "OK", SFEMaNS is correctly installed.
+2) read README in CTEST_SUITE
 
 
 ==================================================================
@@ -59,7 +50,7 @@ export SFEMaNS_DIR= the_path_to_SFEMaNS
 
 4) mkdir LOCAL_SOURCES
    mv *.F90 LOCAL_SOURCES
-   Update the *.F90 in the directory LOCAL_SOURCES
+   Update the main, condlim, read_user_data in the directory LOCAL_SOURCES
    (see online documentation)
 
 Remark: a second main.F90 (see main.F90_updated_output) 

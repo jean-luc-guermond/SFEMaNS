@@ -12,7 +12,8 @@ CONTAINS
 
   SUBROUTINE BDF1_art_comp_with_m(comm_one_d, time, vv_3_LA, pp_1_LA, vvz_per, pp_per, &
        dt, Re, list_mode, pp_mesh, vv_mesh, pn_m1, pn, un_m1, un, Hn_p2, Bn_p2, tempn, concn, &
-       density_m1, density, density_p1, visco_dyn, level_set_p1, visc_entro_level, level_set_reg)
+       density_m1, density, density_p1, visco_dyn, level_set_p1, visc_entro_level, level_set_reg, &
+       visc_entro_grad_mom)
     !==============================
     USE def_type_mesh
     USE fem_M_axi
@@ -52,6 +53,9 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:),          INTENT(IN)    :: visco_dyn
     REAL(KIND=8), DIMENSION(:,:),            INTENT(OUT)   :: visc_entro_level
     REAL(KIND=8), DIMENSION(:,:,:,:),        INTENT(IN)    :: level_set_reg
+!TEST LC LES_SUITE 2024/06
+    REAL(KIND=8), DIMENSION(:,:,:,:),        INTENT(INOUT) :: visc_entro_grad_mom
+!TEST LC LES_SUITE 2024/06
     REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode))  :: Hn_p2_aux
     !===Saved variables
     INTEGER,                                       SAVE :: m_max_c
@@ -61,6 +65,9 @@ CONTAINS
     TYPE(dyn_int_line), DIMENSION(:), POINTER,     SAVE :: vv_mode_global_js_D
     TYPE(dyn_real_line),DIMENSION(:), ALLOCATABLE, SAVE :: vel_global_D
     LOGICAL,                                       SAVE :: once = .TRUE.
+!TEST LC LES_SUITE 2024/06
+    LOGICAL,                                       SAVE :: once_LES = .TRUE.
+!TEST LC LES_SUITE 2024/06
     INTEGER,                                       SAVE :: my_petscworld_rank
     REAL(KIND=8),                                  SAVE :: nu_bar
     REAL(KIND=8),                                  SAVE :: stab_bar
@@ -86,7 +93,9 @@ CONTAINS
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode))   :: rotb_b, rotb_b_aux
     REAL(KIND=8), DIMENSION(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: visc_grad_vel
     REAL(KIND=8), DIMENSION(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: stab_grad_mom
-    REAL(KIND=8), DIMENSION(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: visc_entro_grad_mom
+!TEST LC LES_SUITE 2024/06
+!    REAL(KIND=8), DIMENSION(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: visc_entro_grad_mom
+!TEST LC LES_SUITE 2024/06
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,2,SIZE(list_mode))   :: stab_div_vel
     REAL(KIND=8), DIMENSION(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: tensor_surface_gauss
     REAL(KIND=8), DIMENSION(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: tensor_gauss
@@ -399,14 +408,21 @@ CONTAINS
     END IF
     !===End Compute diffusion/ artificial compression corrections and surface tension
 
-    !===Compute entropy viscosity: (-LES_coeff1+visc_entro)*Grad(momentumext)
-    IF (inputs%LES.AND.inputs%if_LES_in_momentum) THEN
-       CALL smb_explicit_LES(comm_one_d(2), vv_mesh, list_mode, nb_procs, &
-            visc_entro_real, momentumext, visc_entro_grad_mom)
-    ELSE
-       visc_entro_grad_mom=0.d0
+!TEST LC LES_SUITE 2024/06
+    !===First iteration without restart: compute -LES_coeff1*Grad(momentumext)
+    IF (once_LES) THEN
+       once_LES = .FALSE.
+       IF (.NOT.inputs%irestart_LES) THEN
+          !visc_entro_grad_mom initialized to zero in initialization.F90
+          !visc_entro_real is set to zero in once
+          IF (inputs%LES.AND.inputs%if_LES_in_momentum) THEN
+             CALL smb_explicit_LES(comm_one_d(2), vv_mesh, list_mode, nb_procs, &
+               visc_entro_real, momentumext, visc_entro_grad_mom)
+          END IF
+       END IF
     END IF
-    !===End compute entropy viscosity: (-LES_coeff1+visc_entro)*Grad(momentumext)
+    !===End First iteration without restart: compute -LES_coeff1*Grad(momentumext)
+!TEST LC LES_SUITE 2024/06
 
     !===Compute tensor product of momentum by velocity
     CALL smb_compute_tensor_gauss(comm_one_d(2), vv_mesh, list_mode, un, momentum, &
@@ -659,6 +675,17 @@ CONTAINS
        !visc_entro_level not allocated so nothing to do
     END IF
     !===End Compute entropy viscosity
+
+!TEST LC LES_SUITE 2024/06
+    !===Compute entropy viscosity stablization: (-LES_coeff1+visc_entro)*Grad(momentumext)
+    IF (inputs%LES.AND.inputs%if_LES_in_momentum) THEN
+       CALL smb_explicit_LES(comm_one_d(2), vv_mesh, list_mode, nb_procs, &
+            visc_entro_real, momentumext, visc_entro_grad_mom)
+    ELSE
+       visc_entro_grad_mom=0.d0
+    END IF
+    !===End compute entropy viscosity stabilization: (-LES_coeff1+visc_entro)*Grad(momentumext)
+!TEST LC LES_SUITE 2024/06
 
   END SUBROUTINE BDF1_art_comp_with_m
   !============================================
