@@ -1025,27 +1025,19 @@ CONTAINS
       END IF
 
       !===Create meshes===============================================================
-      CALL construct_distributed_meshes()
-
       CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom, &
            list_inter, 1, p1_mesh_glob, inputs%iformatted)
-      CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom, &
-           list_inter, 2, p2_mesh_glob, inputs%iformatted)
 
-      !===JLG july 20, 2019, p3 mesh
-      IF (inputs%type_fe_velocity==3) THEN
-         CALL create_p3_mesh(p1_mesh_glob, p2_mesh_glob, p3_mesh_glob, 3)
-      END IF
       !===JLG july 20, 2019, p3 mesh
       IF (if_concentration) THEN
          !===MODIFICATION: Dirichlet nodes in temp_mesh not created if list_dom > list_dom_conc
          CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, inputs%list_dom_conc, &
-              list_inter_conc, 2, p2_c0_mesh_glob_conc, inputs%iformatted)
+              list_inter_conc, 1, p1_c0_mesh_glob_conc, inputs%iformatted)
       END IF
       IF (if_energy) THEN
          !===MODIFICATION: Dirichlet nodes in temp_mesh not created if list_dom > list_dom_temp
          CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom_temp, &
-              list_inter_temp, 2, p2_c0_mesh_glob_temp, inputs%iformatted)
+              list_inter_temp, 1, p1_c0_mesh_glob_temp, inputs%iformatted)
       END IF
       IF (if_induction) THEN
          ALLOCATE(list_dummy(0))
@@ -1074,6 +1066,7 @@ CONTAINS
       END IF
 
       !===Extract local meshes from global meshes=====================================
+
       !===Specific to momentum (velocity)
       IF (if_momentum .OR. inputs%type_pb=='mxx') THEN
          IF (inputs%type_fe_velocity==2) THEN !===JLG july 20, 2019, p3 mesh
