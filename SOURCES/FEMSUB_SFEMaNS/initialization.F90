@@ -1025,25 +1025,10 @@ CONTAINS
       END IF
 
       !===Create meshes===============================================================
+      !===Meshes using p1_mesh_glob
       CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom, &
            list_inter, 1, p1_mesh_glob, inputs%iformatted)
 
-      !===JLG july 20, 2019, p3 mesh
-      IF (if_concentration) THEN
-         !===MODIFICATION: Dirichlet nodes in temp_mesh not created if list_dom > list_dom_conc
-         CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, inputs%list_dom_conc, &
-              list_inter_conc, 1, p1_c0_mesh_glob_conc, inputs%iformatted)
-      END IF
-      IF (if_energy) THEN
-         !===MODIFICATION: Dirichlet nodes in temp_mesh not created if list_dom > list_dom_temp
-         CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom_temp, &
-              list_inter_temp, 1, p1_c0_mesh_glob_temp, inputs%iformatted)
-      END IF
-      IF (if_induction) THEN
-         ALLOCATE(list_dummy(0))
-         CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom, &
-              inputs%list_inter_H_phi, 1, p1_c0_mesh_glob, inputs%iformatted)
-      END IF
 
       !===Start Metis mesh generation=================================================
       ALLOCATE(part(p1_mesh_glob%me))
@@ -1069,15 +1054,12 @@ CONTAINS
 
       !===Specific to momentum (velocity)
       IF (if_momentum .OR. inputs%type_pb=='mxx') THEN
-         IF (inputs%type_fe_velocity==2) THEN !===JLG july 20, 2019, p3 mesh
-            CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_mesh_glob, part, list_dom_ns, pp_mesh_glob, pp_mesh)
-            CALL extract_mesh(comm_one_d(1), nb_procs_S, p2_mesh_glob, part, list_dom_ns, vv_mesh_glob, vv_mesh)
-         ELSE IF (inputs%type_fe_velocity==3) THEN
-            CALL extract_mesh(comm_one_d(1), nb_procs_S, p2_mesh_glob, part, list_dom_ns, pp_mesh_glob, pp_mesh)
-            CALL extract_mesh(comm_one_d(1), nb_procs_S, p3_mesh_glob, part, list_dom_ns, vv_mesh_glob, vv_mesh)
-         ELSE
-            CALL error_PETSC('Bug in INIT, inputs%type_fe_velocity not correct')
-         END IF
+         CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_mesh_glob, part, list_dom_ns, dummy_mesh_loc)
+
+         CALL create_iso_grid_distributed(temp_mesh_loc, vv_mesh, inputs%type_fe_velocity)
+         CALL create_iso_grid_distributed(temp_mesh_loc, pp_mesh, inputs%type_fe_velocity - 1)
+         CALL free_mesh(dummy_mesh_loc)
+
          !===JLG july 20, 2019, p3 mesh
          !===Use increasing vertex index enumeration
          !CALL incr_vrtx_indx_enumeration(vv_mesh,inputs%type_fe_velocity)
@@ -1120,22 +1102,19 @@ CONTAINS
 
          !===Create global csr structure==============================================
          IF (pp_mesh%me/=0) THEN
-            CALL st_aij_csr_glob_block(comm_one_d_ns(1), 1, vv_mesh_glob, vv_mesh, vv_1_LA, opt_per = vvz_per)
-            CALL st_aij_csr_glob_block(comm_one_d_ns(1), 3, vv_mesh_glob, vv_mesh, vv_3_LA, opt_per = vvrtz_per)
-            CALL st_aij_csr_glob_block(comm_one_d_ns(1), 1, pp_mesh_glob, pp_mesh, pp_1_LA, opt_per = pp_per)
+            CALL st_aij_csr_glob_block_with_extra_layer(comm_one_d_ns(1), 1, vv_mesh, vv_1_LA, opt_per = vvz_per)
+            CALL st_aij_csr_glob_block_with_extra_layer(comm_one_d_ns(1), 3, vv_mesh, vv_3_LA, opt_per = vvrtz_per)
+            CALL st_aij_csr_glob_block_with_extra_layer(comm_one_d_ns(1), 1, pp_mesh, pp_1_LA, opt_per = pp_per)
             !===Prepare csr structure for post processing curl_u==========================
-            CALL st_aij_csr_glob_block(comm_one_d_ns(1), 1, vv_mesh_glob, vv_mesh, vizu_rot_u_LA)
+            CALL st_aij_csr_glob_block_with_extra_layer(comm_one_d_ns(1), 1, vv_mesh, vizu_rot_u_LA)
          END IF
 
-         !===Create symmetric points==================================================
-         IF (inputs%is_mesh_symmetric) THEN
-            ALLOCATE(vv_mz_LA(vv_mesh%np))
-            CALL symmetric_points(vv_mesh, vv_mesh_glob, vv_mz_LA)
-         END IF
+         !TODO ===Create symmetric points==================================================
+         !IF (inputs%is_mesh_symmetric) THEN
+         !   ALLOCATE(vv_mz_LA(vv_mesh%np))
+         !   CALL symmetric_points(vv_mesh, vv_mesh_glob, vv_mz_LA)
+         !END IF
 
-         !===Deallocate global meshes=================================================
-         CALL free_mesh(vv_mesh_glob)
-         CALL free_mesh(pp_mesh_glob)
 
          !===Start Gauss points generation============================================
          !===JLG july 20, 2019, p3 mesh
@@ -1148,41 +1127,29 @@ CONTAINS
 
       !===Extract local meshes from global meshes for Maxwell=========================
       IF (if_induction) THEN
-         CALL  extract_mesh(comm_one_d(1), nb_procs_S, p1_c0_mesh_glob, part, list_dom_H, pmag_mesh_glob, pmag_mesh)
-         IF (inputs%type_fe_H==1) THEN
-            CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_mesh_glob, part, list_dom_H, H_mesh_glob, H_mesh)
-         ELSE
-            CALL extract_mesh(comm_one_d(1), nb_procs_S, p2_mesh_glob, part, list_dom_H, H_mesh_glob, H_mesh)
-         END IF
-         IF (inputs%type_fe_phi==1) THEN
-            CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_mesh_glob, part, inputs%list_dom_phi, phi_mesh_glob, phi_mesh)
-         ELSE
-            CALL extract_mesh(comm_one_d(1), nb_procs_S, p2_mesh_glob, part, inputs%list_dom_phi, phi_mesh_glob, phi_mesh)
-         END IF
-         !===JLG july 20, 2019, p3 mesh
-         !===Use increasing vertex index enumeration
-         !CALL incr_vrtx_indx_enumeration(pmag_mesh,1)
-         !CALL incr_vrtx_indx_enumeration(H_mesh,inputs%type_fe_H)
-         !CALL incr_vrtx_indx_enumeration(phi_mesh,inputs%type_fe_phi)
-         !===JLG july 20, 2019, p3 mesh
+         CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_mesh_glob, part, list_dom_H, dummy_mesh_loc)
+         CALL create_iso_grid_distributed(temp_mesh_loc, H_mesh, inputs%type_fe_H)
+         CALL free_mesh(dummy_mesh_loc)
+
+         CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_mesh_glob, part, inputs%list_dom_phi, dummy_mesh_loc)
+         CALL create_iso_grid_distributed(dummy_mesh_loc, phi_mesh, inputs%type_fe_phi)
+         CALL free_mesh(dummy_mesh_loc)
       END IF
 
-      !===Extract local meshes from global meshes for temperature=====================
-      IF (if_energy) THEN
-         CALL extract_mesh(comm_one_d(1), nb_procs_S, p2_c0_mesh_glob_temp, part, list_dom_temp, temp_mesh_glob, temp_mesh)
-         ALLOCATE(comm_one_d_temp(2))
-         CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_temp(2), code)
-         CALL MPI_COMM_RANK(comm_one_d(1), rank_S, code)
-         IF (temp_mesh%me/=0) THEN
-            CALL MPI_COMM_SPLIT (comm_one_d(1), 1, rank_S, comm_one_d_temp(1), code)
-         ELSE
-            CALL MPI_COMM_SPLIT (comm_one_d(1), MPI_UNDEFINED, rank_S, comm_one_d_temp(1), code)
-         END IF
-      END IF
+      !===Free p1_mesh_glob
+      CALL free_mesh(p1_mesh_glob)
 
-      !===Extract local meshes from global meshes for concentration=====================
+
+      !===Mesh for conc
       IF (if_concentration) THEN
-         CALL extract_mesh(comm_one_d(1), nb_procs_S, p2_c0_mesh_glob_conc, part, inputs%list_dom_conc, conc_mesh_glob, conc_mesh)
+         !===MODIFICATION: Dirichlet nodes in temp_mesh not created if list_dom > list_dom_conc
+         CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, inputs%list_dom_conc, &
+              list_inter_conc, 1, p1_c0_mesh_glob_conc, inputs%iformatted)
+
+         CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_c0_mesh_glob_conc, part, inputs%list_dom_conc, dummy_mesh_loc)
+         CALL create_iso_grid_distributed(dummy_mesh_loc, conc_mesh, 2)
+         CALL free_mesh(dummy_mesh_loc)
+
          ALLOCATE(comm_one_d_conc(2))
          CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_conc(2), code)
          CALL MPI_COMM_RANK(comm_one_d(1), rank_S, code)
@@ -1191,27 +1158,43 @@ CONTAINS
          ELSE
             CALL MPI_COMM_SPLIT (comm_one_d(1), MPI_UNDEFINED, rank_S, comm_one_d_conc(1), code)
          END IF
+
+         DEALLOCATE(list_inter_conc)
+         CALL free_mesh(p1_c0_mesh_glob_conc)
       END IF
 
-      !===Deallocate global meshes====================================================
-      CALL free_mesh(p1_mesh_glob)
-      CALL free_mesh(p2_mesh_glob)
-      !===JLG July 20, 2019, p3 mesh
-      IF (inputs%type_fe_velocity==3) THEN
-         CALL free_mesh(p3_mesh_glob)
+      !===Mesh for temp
+      IF (if_energy) THEN
+         !===MODIFICATION: Dirichlet nodes in temp_mesh not created if list_dom > list_dom_temp
+         CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom_temp, &
+              list_inter_temp, 1, p1_c0_mesh_glob_temp, inputs%iformatted)
+
+         CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_c0_mesh_glob_temp, part, list_dom_temp, dummy_mesh_loc)
+         CALL create_iso_grid_distributed(dummy_mesh_loc, temp_mesh, 2)
+         CALL free_mesh(dummy_mesh_loc)
+
+         ALLOCATE(comm_one_d_temp(2))
+         CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_temp(2), code)
+         CALL MPI_COMM_RANK(comm_one_d(1), rank_S, code)
+         IF (temp_mesh%me/=0) THEN
+            CALL MPI_COMM_SPLIT (comm_one_d(1), 1, rank_S, comm_one_d_temp(1), code)
+         ELSE
+            CALL MPI_COMM_SPLIT (comm_one_d(1), MPI_UNDEFINED, rank_S, comm_one_d_temp(1), code)
+         END IF
+
+         DEALLOCATE(list_inter_temp)
+         CALL free_mesh(p1_c0_mesh_glob_temp)
       END IF
-      !===JLG July 20, 2019, p3 mesh
+
+      !===Mesh for pmag in induction
       IF (if_induction) THEN
+         ALLOCATE(list_dummy(0))
+         CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom, &
+              inputs%list_inter_H_phi, 1, p1_c0_mesh_glob, inputs%iformatted)
+
+         CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_c0_mesh_glob, part, list_dom_H, pmag_mesh)
          DEALLOCATE(list_dummy)
          CALL free_mesh(p1_c0_mesh_glob)
-      END IF
-      IF (if_energy) THEN
-         DEALLOCATE(list_inter_temp)
-         CALL free_mesh(p2_c0_mesh_glob_temp)
-      END IF
-      IF (if_concentration) THEN
-         DEALLOCATE(list_inter_conc)
-         CALL free_mesh(p2_c0_mesh_glob_conc)
       END IF
 
       !===Specific to induction equation==============================================
@@ -1362,7 +1345,7 @@ CONTAINS
             END IF
          END IF
 
-         !===Create interface structures==============================================
+         !TODO ===Create interface structures==============================================
          CALL load_interface(H_mesh_glob, H_mesh_glob, inputs%list_inter_mu, interface_H_mu_glob, .FALSE.)
          CALL load_interface(H_mesh_glob, phi_mesh_glob, inputs%list_inter_H_phi, interface_H_phi_glob, .TRUE.)
 
@@ -1388,26 +1371,24 @@ CONTAINS
             WRITE(*, *) 'periodic MHD done'
          END IF
 
-         !===Create global csr structure==============================================
+         !===TODO Create global csr structure==============================================
          CALL st_scr_maxwell_mu_H_p_phi(comm_one_d(1), H_mesh_glob, H_mesh, pmag_mesh_glob, pmag_mesh, &
               phi_mesh_glob, phi_mesh, interface_H_phi_glob, interface_H_mu_glob, &
               LA_H, LA_pmag, LA_phi, LA_mhd, opt_per = H_phi_per)
 
          !===Prepare csr structure for post processing grad phi=======================+++
-         CALL st_aij_csr_glob_block(comm_one_d(1), 1, phi_mesh_glob, phi_mesh, vizu_grad_phi_LA)
+         CALL st_aij_csr_glob_block_with_extra_layer(comm_one_d(1), 1, phi_mesh, vizu_grad_phi_LA)
+
 
          !===Prepare csr structure for post processing rot !h==========================+++
-         CALL st_aij_csr_glob_block(comm_one_d(1), 1, H_mesh_glob, H_mesh, vizu_rot_h_LA)
+         CALL st_aij_csr_glob_block_with_extra_layer(comm_one_d(1), 1, H_mesh, vizu_rot_h_LA)
 
-         IF (inputs%is_mesh_symmetric) THEN
-            ALLOCATE(H_mz_LA(H_mesh%np))
-            CALL symmetric_points(H_mesh, H_mesh_glob, H_mz_LA)
-         END IF
+         !TODO IF (inputs%is_mesh_symmetric) THEN
+         !   ALLOCATE(H_mz_LA(H_mesh%np))
+         !   CALL symmetric_points(H_mesh, H_mesh_glob, H_mz_LA)
+         !END IF
 
          !===Deallocate global meshes=================================================
-         CALL free_mesh(H_mesh_glob)
-         CALL free_mesh(pmag_mesh_glob)
-         CALL free_mesh(phi_mesh_glob)
          CALL free_interface(interface_H_mu_glob)
          CALL free_interface(interface_H_phi_glob)
 
@@ -1550,10 +1531,7 @@ CONTAINS
          END IF
 
          !===Create csr structure for temperature=====================================
-         CALL st_aij_csr_glob_block(comm_one_d_temp(1), 1, temp_mesh_glob, temp_mesh, temp_1_LA, opt_per = temp_per)
-
-         !===Deallocate global meshes=================================================
-         CALL free_mesh(temp_mesh_glob)
+         CALL st_aij_csr_glob_block_with_extra_layer(comm_one_d_temp(1), 1, temp_mesh, temp_1_LA, opt_per = temp_per)
 
          !===Start Gauss points generation============================================
          !===JLG July 20, 2019, p3 mesh
@@ -1634,10 +1612,7 @@ CONTAINS
          END IF
 
          !===Create csr structure for concentration=====================================
-         CALL st_aij_csr_glob_block(comm_one_d_conc(1), 1, conc_mesh_glob, conc_mesh, conc_1_LA, opt_per = conc_per)
-
-         !===Deallocate global meshes=================================================
-         CALL free_mesh(conc_mesh_glob)
+         CALL st_aij_csr_glob_block_with_extra_layer(comm_one_d_conc(1), 1, conc_mesh, conc_1_LA, opt_per = conc_per)
 
          !===Start Gauss points generation============================================
          !===JLG July 20, 2019, p3 mesh

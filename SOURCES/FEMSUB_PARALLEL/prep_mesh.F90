@@ -1714,4 +1714,547 @@ CONTAINS
 
    END SUBROUTINE prep_interfaces
 
+
+   SUBROUTINE create_iso_grid_distributed(mesh_p1, mesh, type_fe)
+      !===jj(:, :)    nodes of the  volume_elements of the input grid
+      !===jjs(:, :)    nodes of the surface_elements of the input grid
+      !===rr(:, :)    cartesian coordinates of the nodes of the input grid
+      !===m_op(:,:)   volume element opposite to each node
+      !===neigh_el(:) volume element ajacent to the surface element
+      !===jj_f(:, :)  nodes of the  volume_elements of the output p2 grid
+      !===jjs_f(:, :)  nodes of the surface_elements of the output p2 grid
+      !===rr_f(:, :)  cartesian coordinates of the nodes of the output p2 grid
+      USE def_type_mesh
+      IMPLICIT NONE
+      TYPE(mesh_type) :: mesh_p1, mesh
+      INTEGER, INTENT(IN) :: type_fe
+      LOGICAL, DIMENSION(:), ALLOCATABLE :: virgin
+      INTEGER, DIMENSION(:, :), ALLOCATABLE :: j_mid, jjs_mid
+      INTEGER :: np, me, mes, nw, nws, kd, n, m, k, l, n_dof, dom_np
+      INTEGER :: n1, n2, n3, n4, ms, n_start, n_end, n1_g, n2_g
+      INTEGER :: n_k1, n_k2, m_op_k, kk, i, mm, ms_bord, p_e, p_c
+      REAL(KIND = 8), DIMENSION(:), ALLOCATABLE :: r_mid
+      INTEGER, DIMENSION(type_fe + 1) :: ns3
+      REAL(KIND = 8), DIMENSION(type_fe + 1) :: scos
+      REAL(KIND = 8) :: epsilon = 1.d-13, dist, d1, d2, s1, s2, s3, shalf, ref, scc, infinity
+      INTEGER :: ns, ns1, index, nb_angle, f_dof, edge_g, edge_l, n_new_start, proc, nb_proc, edges, p, cell_g, cell_l
+      LOGICAL :: iso
+
+      nw = SIZE(mesh_p1%jj, 1)   !===nodes in each volume element (3 in 2D)
+      me = SIZE(mesh_p1%jj, 2)   !===number of cells
+      kd = SIZE(mesh_p1%rr, 1)   !===space dimensions
+      np = mesh_p1%np            !===number of P1 vertices connected to grid
+      dom_np = mesh_p1%dom_np    !===number of P1 vertices attributed to proc
+      mes = SIZE(mesh_p1%jjs, 2)
+      nws = SIZE(mesh_p1%jjs, 1)
+      f_dof = type_fe - 1
+      nb_proc = SIZE(mesh_p1%domnp)
+
+      IF (type_fe==1) THEN
+         mesh%me = mesh_p1%me
+         mesh%mes = mesh_p1%mes
+         mesh%np = mesh_p1%np
+         mesh%medge = mesh_p1%medge
+         mesh%medges = mesh_p1%medges
+         mesh%mextra = mesh_p1%mextra
+
+         ALLOCATE(mesh%jj(nw, me))
+         mesh%jj = mesh_p1%jj
+         ALLOCATE(mesh%jjs(nws, mes))
+         mesh%jjs = mesh_p1%jjs
+         !ALLOCATE(mesh%iis(nws,mes))
+         !mesh%iis = mesh_p1%iis
+         ALLOCATE(mesh%extra_jj(nw, mesh%mextra))
+         mesh%extra_jj = mesh_p1%extra_jj
+         ALLOCATE(mesh%jce(nw, me))
+         mesh%jce = mesh_p1%jce
+         !ALLOCATE(mesh%jev(nw - 1, mesh%medge))
+         !mesh%jev = mesh_p1%jev
+         ALLOCATE(mesh%rr(kd, mesh%np))
+         mesh%rr = mesh_p1%rr
+         ALLOCATE(mesh%neigh(nw, mesh%me))
+         mesh%neigh = mesh_p1%neigh
+         ALLOCATE(mesh%sides(mesh%mes))
+         mesh%sides = mesh_p1%sides
+         ALLOCATE(mesh%neighs(mesh%mes))
+         mesh%neighs = mesh_p1%neighs
+         ALLOCATE(mesh%i_d(mesh%me))
+         mesh%i_d = mesh_p1%i_d
+         ALLOCATE(mesh%loc_to_glob(mesh%np))
+         mesh%loc_to_glob = mesh_p1%loc_to_glob
+
+         mesh%dom_me = mesh_p1%dom_me
+         mesh%dom_np = mesh_p1%dom_np
+         mesh%dom_mes = mesh_p1%dom_mes
+         ALLOCATE(mesh%disp(nb_proc + 1), mesh%domnp(nb_proc))
+         mesh%domnp = mesh_p1%domnp
+         mesh%disp = mesh_p1%disp
+         ALLOCATE(mesh%discell(nb_proc + 1), mesh%domcell(nb_proc))
+         mesh%domcell = mesh_p1%domcell
+         mesh%discell = mesh_p1%discell
+         ALLOCATE(mesh%disedge(nb_proc + 1), mesh%domedge(nb_proc))
+         mesh%domedge = mesh_p1%domedge
+         mesh%disedge = mesh_p1%disedge
+
+         mesh%nis = mesh_p1%nis
+         ALLOCATE(mesh%isolated_interfaces(mesh_p1%nis, 2))
+         mesh%isolated_interfaces = mesh_p1%isolated_interfaces
+         ALLOCATE(mesh%isolated_jjs(mesh_p1%nis))
+         mesh%isolated_jjs = mesh_p1%isolated_jjs
+         RETURN
+      ELSE IF (type_fe==2) THEN
+         mesh%me = mesh_p1%me
+         mesh%mes = mesh_p1%mes
+         mesh%np = mesh_p1%np + mesh_p1%medge + mesh_p1%medges
+         mesh%medge = mesh_p1%medge
+         mesh%medges = mesh_p1%medges
+         mesh%mextra = mesh_p1%mextra
+
+         ALLOCATE(mesh%jj(nw * (f_dof + 1), me))   !---->
+         ALLOCATE(mesh%jjs(nws + f_dof, mes))   !---->
+         ALLOCATE(mesh%extra_jj(nw * (f_dof + 1), mesh%mextra)) !---->
+         ALLOCATE(mesh%rr(kd, mesh%np))    !---->
+         ALLOCATE(mesh%loc_to_glob(mesh%np)) !---->
+
+         ALLOCATE(mesh%jce(nw, me))
+         mesh%jce = mesh_p1%jce
+         !ALLOCATE(mesh%jev(nw - 1, mesh%medge))
+         !mesh%jev = mesh_p1%jev
+         ALLOCATE(mesh%neigh(nw, mesh%me))
+         mesh%neigh = mesh_p1%neigh
+         ALLOCATE(mesh%sides(mesh%mes))
+         mesh%sides = mesh_p1%sides
+         ALLOCATE(mesh%neighs(mesh%mes))
+         mesh%neighs = mesh_p1%neighs
+         ALLOCATE(mesh%i_d(mesh%me))
+         mesh%i_d = mesh_p1%i_d
+
+         mesh%dom_me = mesh_p1%dom_me
+         mesh%dom_np = mesh_p1%dom_np + mesh_p1%medge
+         mesh%dom_mes = mesh_p1%dom_mes
+         ALLOCATE(mesh%disp(nb_proc + 1), mesh%domnp(nb_proc))
+         mesh%domnp = mesh_p1%domnp + mesh_p1%domedge
+         mesh%disp = mesh_p1%disp + mesh_p1%disedge - 1
+         ALLOCATE(mesh%discell(nb_proc + 1), mesh%domcell(nb_proc))
+         mesh%domcell = mesh_p1%domcell
+         mesh%discell = mesh_p1%discell
+         ALLOCATE(mesh%disedge(nb_proc + 1), mesh%domedge(nb_proc))
+         mesh%domedge = mesh_p1%domedge
+         mesh%disedge = mesh_p1%disedge
+
+         mesh%nis = mesh_p1%nis
+         ALLOCATE(mesh%isolated_interfaces(mesh_p1%nis, 2))
+         mesh%isolated_interfaces = mesh_p1%isolated_interfaces
+         ALLOCATE(mesh%isolated_jjs(mesh_p1%nis))
+      ELSE IF (type_fe==3) THEN
+         mesh%me = mesh_p1%me
+         mesh%mes = mesh_p1%mes
+         mesh%np = mesh_p1%np + 2 * mesh_p1%medge + 2 * mesh_p1%medges + mesh_p1%me
+         mesh%medge = mesh_p1%medge
+         mesh%mextra = mesh_p1%mextra
+
+         ALLOCATE(mesh%jj(nw * (f_dof + 1) + 1, me))   !----> done
+         ALLOCATE(mesh%jjs(nws + f_dof, mes))   !---->
+         ALLOCATE(mesh%extra_jj(nw * (f_dof + 1) + 1, mesh%mextra)) !---->
+         ALLOCATE(mesh%rr(kd, mesh%np))    !----> done
+         ALLOCATE(mesh%loc_to_glob(mesh%np)) !----> done
+
+         ALLOCATE(mesh%jce(nw, me))
+         mesh%jce = mesh_p1%jce
+         !ALLOCATE(mesh%jev(nw - 1, mesh%medge))
+         !mesh%jev = mesh_p1%jev
+         ALLOCATE(mesh%neigh(nw, mesh%me))
+         mesh%neigh = mesh_p1%neigh
+         ALLOCATE(mesh%sides(mesh%mes))
+         mesh%sides = mesh_p1%sides
+         ALLOCATE(mesh%neighs(mesh%mes))
+         mesh%neighs = mesh_p1%neighs
+         ALLOCATE(mesh%i_d(mesh%me))
+         mesh%i_d = mesh_p1%i_d
+
+         mesh%dom_me = mesh_p1%dom_me
+         mesh%dom_np = mesh_p1%dom_np + 2 * mesh_p1%medge + mesh_p1%me
+         mesh%dom_mes = mesh_p1%dom_mes
+         ALLOCATE(mesh%disp(nb_proc + 1), mesh%domnp(nb_proc))
+         mesh%domnp = mesh_p1%domnp + mesh_p1%domedge * 2 + mesh_p1%domcell
+         mesh%disp = mesh_p1%disp + mesh_p1%disedge * 2 + mesh_p1%discell - 3
+         ALLOCATE(mesh%discell(nb_proc + 1), mesh%domcell(nb_proc))
+         mesh%domcell = mesh_p1%domcell
+         mesh%discell = mesh_p1%discell
+         ALLOCATE(mesh%disedge(nb_proc + 1), mesh%domedge(nb_proc))
+         mesh%domedge = mesh_p1%domedge
+         mesh%disedge = mesh_p1%disedge
+
+         mesh%nis = mesh_p1%nis
+         ALLOCATE(mesh%isolated_interfaces(mesh_p1%nis, 2))
+         mesh%isolated_interfaces = mesh_p1%isolated_interfaces
+         ALLOCATE(mesh%isolated_jjs(mesh_p1%nis))
+      END IF
+
+      nb_angle = 0
+      ALLOCATE(virgin(mesh_p1%medge), j_mid(nw * f_dof, me), jjs_mid(f_dof, mes), r_mid(kd))
+
+      IF (kd == 3) THEN
+         WRITE(*, *) ' CREATE_GRID_Pk: 3D case not programmed yet !'
+         STOP
+      END IF
+
+      DO proc = 1, nb_proc
+         IF (mesh_p1%loc_to_glob(1) <= mesh_p1%disp(proc)) THEN
+            EXIT
+         END IF
+      END DO
+
+      !===GENERATION OF THE Pk GRID
+      mesh%rr(:, 1:dom_np) = mesh_p1%rr(:, 1:dom_np)
+      mesh%rr(:, mesh%dom_np + 1:mesh%dom_np + np - dom_np) = mesh_p1%rr(:, dom_np + 1:)
+      mesh%jj(1:nw, :) = mesh_p1%jj
+      mesh%extra_jj(1:nw, :) = mesh_p1%extra_jj
+      mesh%loc_to_glob(1:dom_np) = mesh_p1%loc_to_glob(1:dom_np) &
+           + (mesh_p1%disedge(proc) - 1) * f_dof + (mesh_p1%discell(proc) - 1) * (f_dof - 1)
+      mesh%isolated_jjs = mesh_p1%isolated_jjs &
+           + (mesh_p1%disedge(proc) - 1) * f_dof + (mesh_p1%discell(proc) - 1) * (f_dof - 1)
+
+      DO m = 1, mesh%me
+         DO n = 1, nw
+            IF (mesh_p1%jj(n, m) > mesh_p1%dom_np) THEN
+               mesh%jj(n, m) = mesh_p1%jj(n, m) + mesh_p1%medge * f_dof + mesh_p1%me * (f_dof - 1)
+            END IF
+         END DO
+      END DO
+
+      DO m = 1, np - dom_np
+         DO p = 1, nb_proc
+            IF (mesh_p1%loc_to_glob(dom_np + m) < mesh_p1%disp(p + 1)) THEN
+               EXIT
+            END IF
+         END DO
+         mesh%loc_to_glob(mesh%dom_np + m) = mesh_p1%loc_to_glob(dom_np + m) &
+              + (mesh_p1%disedge(p) - 1) * f_dof + (mesh_p1%discell(p) - 1) * (f_dof - 1)
+      END DO
+
+      DO m = 1, mesh_p1%mextra
+         DO n = 1, nw
+            DO p = 1, nb_proc
+               IF (mesh_p1%extra_jj(n, m) < mesh_p1%disp(p + 1)) THEN
+                  EXIT
+               END IF
+            END DO
+            mesh%extra_jj(n, m) = mesh_p1%extra_jj(n, m) &
+                 + (mesh_p1%disedge(p) - 1) * f_dof + (mesh_p1%discell(p) - 1) * (f_dof - 1)
+         END DO
+      END DO
+
+      virgin = .TRUE.
+
+      n_dof = 0
+      DO m = 1, me !===loop on the elements
+         DO k = 1, nw !===loop on the nodes (sides) of the element
+            edge_g = mesh_p1%jce(k, m)
+            edge_l = edge_g - mesh_p1%disedge(proc) + 1
+
+            IF (edge_l <= 0) CYCLE
+
+            n_new_start = (edge_l - 1) * f_dof + mesh_p1%dom_np
+
+            m_op_k = mesh_p1%neigh(k, m)
+            n_k1 = MODULO(k, nw) + 1
+            n_k2 = MODULO(k + 1, nw) + 1
+            n1 = mesh_p1%jj(n_k1, m)
+            n2 = mesh_p1%jj(n_k2, m)
+
+            IF (n_k1<n_k2) THEN !===Go from lowest global index to highest global index
+               n_start = n1
+               n_end = n2
+            ELSE
+               n_start = n2
+               n_end = n1
+            END IF
+
+            !IF (m_op_k == 0) THEN  !===the side is on the boundary
+            !   iso = .TRUE.
+            !ELSE
+            iso = .FALSE.
+            !END IF
+
+            IF (iso) THEN
+               DO ms = 1, SIZE(mesh_p1%jjs, 2)
+                  DO ns = 1, SIZE(mesh_p1%jjs, 1)
+                     dist = SQRT(SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, mesh_p1%jjs(ns, ms)))**2))
+                     IF (dist.LE.epsilon) THEN
+                        ns1 = MODULO(ns, SIZE(mesh_p1%jjs, 1)) + 1
+                        dist = SQRT(SUM((mesh_p1%rr(:, n2) - mesh_p1%rr(:, mesh_p1%jjs(ns1, ms)))**2))
+                        IF (dist.LE.epsilon) THEN
+                           ms_bord = ms
+                           GO TO 100
+                        END IF
+                     END IF
+                  END DO
+               END DO
+               WRITE(*, *) ' BUG in create_iso_grid'
+               !===Algorithm not designed yet for internal interfaces
+               STOP
+
+               100          index = 1
+               ref = SQRT(SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, n2))**2))
+               DO ms = 1, SIZE(mesh_p1%jjs, 2)
+                  IF (ms==ms_bord) CYCLE
+                  d1 = SQRT(SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, mesh_p1%jjs(1, ms)))**2)) / ref
+                  d2 = SQRT(SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, mesh_p1%jjs(2, ms)))**2)) / ref
+                  IF (d1.LE.epsilon .AND. d2.GT.2 * epsilon) THEN
+                     scc = SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, mesh_p1%jjs(2, ms))) &
+                          * (mesh_p1%rr(:, n1) - mesh_p1%rr(:, n2))) / &
+                          (SQRT(SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, mesh_p1%jjs(2, ms)))**2)) &
+                               * SQRT(SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, n2))**2)))
+                     IF (index.GE.3) THEN
+                        IF (scc .GE. MINVAL(scos)) CYCLE
+                        index = 2
+                     END IF
+                     ns3(index) = mesh_p1%jjs(2, ms)
+                     scos(index) = scc
+                     index = index + 1
+                  ELSE IF (d2.LE.epsilon .AND. d1.GT.2 * epsilon) THEN
+                     scc = SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, mesh_p1%jjs(1, ms))) &
+                          * (mesh_p1%rr(:, n1) - mesh_p1%rr(:, n2))) / &
+                          (SQRT(SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, mesh_p1%jjs(1, ms)))**2)) &
+                               * SQRT(SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, n2))**2)))
+                     IF (index.GE.3) THEN
+                        IF (scc .GE. MINVAL(scos)) CYCLE
+                        index = 2
+                     END IF
+                     ns3(index) = mesh_p1%jjs(1, ms)
+                     scos(index) = scc
+                     index = index + 1
+                  END IF
+                  d1 = SQRT(SUM((mesh_p1%rr(:, n2) - mesh_p1%rr(:, mesh_p1%jjs(1, ms)))**2)) / ref
+                  d2 = SQRT(SUM((mesh_p1%rr(:, n2) - mesh_p1%rr(:, mesh_p1%jjs(2, ms)))**2)) / ref
+                  IF (d1.LE.epsilon .AND. d2.GT.2 * epsilon) THEN
+                     scc = SUM((mesh_p1%rr(:, n2) - mesh_p1%rr(:, mesh_p1%jjs(2, ms))) &
+                          * (mesh_p1%rr(:, n2) - mesh_p1%rr(:, n1))) / &
+                          (SQRT(SUM((mesh_p1%rr(:, n2) - mesh_p1%rr(:, mesh_p1%jjs(2, ms)))**2))&
+                               * SQRT(SUM((mesh_p1%rr(:, n2) - mesh_p1%rr(:, n1))**2)))
+                     IF (index.GE.3) THEN
+                        IF (scc .GE. MINVAL(scos)) CYCLE
+                        index = 2
+                     END IF
+                     ns3(index) = mesh_p1%jjs(2, ms)
+                     scos(index) = scc
+                     index = index + 1
+                  ELSE IF (d2.LE.epsilon .AND. d1.GT.2 * epsilon) THEN
+                     scc = SUM((mesh_p1%rr(:, n2) - mesh_p1%rr(:, mesh_p1%jjs(1, ms))) &
+                          * (mesh_p1%rr(:, n2) - mesh_p1%rr(:, n1))) / &
+                          (SQRT(SUM((mesh_p1%rr(:, n2) - mesh_p1%rr(:, mesh_p1%jjs(1, ms)))**2))&
+                               * SQRT(SUM((mesh_p1%rr(:, n2) - mesh_p1%rr(:, n1))**2)))
+                     IF (index.GE.3) THEN
+                        IF (scc .GE. MINVAL(scos)) CYCLE
+                        index = 2
+                     END IF
+                     ns3(index) = mesh_p1%jjs(1, ms)
+                     scos(index) = scc
+                     index = index + 1
+                  END IF
+               END DO
+
+               IF (index.LT.2) THEN
+                  WRITE(*, *) SIZE(mesh_p1%jjs, 2), ms_bord
+                  WRITE(*, *) ' BUG: bad index', mesh_p1%rr(1, mesh_p1%jjs(1, ms_bord)), mesh_p1%rr(1, mesh_p1%jjs(2, ms_bord))
+                  WRITE(*, *) ' BUG: bad index', mesh_p1%rr(2, mesh_p1%jjs(1, ms_bord)), mesh_p1%rr(2, mesh_p1%jjs(2, ms_bord))
+                  STOP
+               END IF
+               IF (ABS(scos(1)) > ABS(scos(2))) THEN
+                  n3 = ns3(1)
+               ELSE
+                  n3 = ns3(2)
+               END IF
+               IF (MINVAL(ABS(scos)) < 0.95) THEN
+                  nb_angle = nb_angle + 1
+               END IF
+               d1 = SQRT(SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, n3))**2))
+               d2 = SQRT(SUM((mesh_p1%rr(:, n2) - mesh_p1%rr(:, n3))**2))
+               IF (d1 .LT. d2) THEN
+                  n4 = n2
+                  n2 = n1
+                  n1 = n4
+               END IF
+               d1 = SQRT(SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, n3))**2))
+               d2 = SQRT(SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, n2))**2))
+               s3 = d1 / d2
+               s2 = 1.d0
+               s1 = 0.d0
+               shalf = 0.5d0
+               r_mid = mesh_p1%rr(:, n1) * (shalf - s2) * (shalf - s3) / ((s1 - s2) * (s1 - s3)) &
+                    + mesh_p1%rr(:, n2) * (shalf - s3) * (shalf - s1) / ((s2 - s3) * (s2 - s1)) &
+                    + mesh_p1%rr(:, n3) * (shalf - s1) * (shalf - s2) / ((s3 - s1) * (s3 - s2))
+
+               DO l = 1, f_dof
+                  n_dof = n_dof + 1 !===New index created
+                  j_mid((k - 1) * f_dof + l, m) = l + n_new_start
+                  IF (n1<n2) THEN
+                     shalf = l / dble(type_fe)
+                  ELSE
+                     shalf = 1 - l / dble(type_fe)
+                  END IF
+                  mesh%rr(:, l + n_new_start) = &
+                       mesh_p1%rr(:, n1) * (shalf - s2) * (shalf - s3) / ((s1 - s2) * (s1 - s3)) &
+                            + mesh_p1%rr(:, n2) * (shalf - s3) * (shalf - s1) / ((s2 - s3) * (s2 - s1)) &
+                            + mesh_p1%rr(:, n3) * (shalf - s1) * (shalf - s2) / ((s3 - s1) * (s3 - s2))
+                  mesh%loc_to_glob(l + n_new_start) = l + n_new_start + mesh%disp(proc) - 1
+               END DO
+
+               !===End of iso-grid
+               !===Surface elements of the grid are defined later
+            ELSE !===the side is internal
+               IF (virgin(edge_l)) THEN !===This side is new
+                  DO l = 1, f_dof
+                     n_dof = n_dof + 1 !===New index created
+                     j_mid((k - 1) * f_dof + l, m) = l + n_new_start
+                     mesh%rr(:, l + n_new_start) = mesh_p1%rr(:, n_start) &
+                          + l * (mesh_p1%rr(:, n_end) - mesh_p1%rr(:, n_start)) / type_fe
+                     mesh%loc_to_glob(l + n_new_start) = l + n_new_start + mesh%disp(proc) - 1
+                  END DO
+               ELSE !===the side has been already considered
+                  mm = m_op_k
+                  DO i = 1, nw
+                     IF (mesh_p1%neigh(i, mm) == m) THEN
+                        kk = i
+                        EXIT
+                     END IF
+                  ENDDO
+                  DO l = 1, f_dof
+                     j_mid((k - 1) * f_dof + l, m) = j_mid((kk - 1) * f_dof + l, mm) !===New index created
+                  END DO
+               ENDIF
+            ENDIF
+            virgin(edge_l) = .FALSE.
+         ENDDO
+      ENDDO
+
+      IF (n_dof /= mesh_p1%medge * f_dof) THEN
+         WRITE(*, *) 'BUG in create_iso_grid_distributed, n_dof /= mesh_p1%medge * f_dof'
+         STOP
+      END IF
+
+      n_dof = 0
+      DO edges = 1, mesh_p1%medges
+         edge_g = mesh_p1%jees(edges)
+         m = mesh_p1%jecs(edges)
+         DO k = 1, nw
+            IF (mesh_p1%jce(k, m) == edge_g) THEN
+               EXIT
+            END IF
+         ENDDO
+
+         DO p = 1, nb_proc
+            IF (edge_g < mesh_p1%disedge(p + 1)) THEN
+               EXIT
+            END IF
+         END DO
+
+         n_k1 = MODULO(k, nw) + 1
+         n_k2 = MODULO(k + 1, nw) + 1
+         n1 = mesh_p1%jj(n_k1, m)
+         n2 = mesh_p1%jj(n_k2, m)
+         IF (n_k1<n_k2) THEN !===Go from lowest global index to highest global index
+            n_start = n1
+            n_end = n2
+         ELSE
+            n_start = n2
+            n_end = n1
+         END IF
+
+         edge_l = edge_g - mesh_p1%disedge(p) + 1
+         n_new_start = (edges - 1) * f_dof + mesh_p1%me * (f_dof - 1) + mesh_p1%medge * f_dof + mesh_p1%np
+
+         DO l = 1, f_dof
+            n_dof = n_dof + 1 !===New index created
+            j_mid((k - 1) * f_dof + l, m) = l + n_new_start
+            mesh%rr(:, n_new_start + l) = mesh_p1%rr(:, n_start) &
+                 + l * (mesh_p1%rr(:, n_end) - mesh_p1%rr(:, n_start)) / type_fe
+            mesh%loc_to_glob(n_new_start + l) = l + (edge_l - 1) * f_dof + mesh_p1%domnp(p) + mesh%disp(p) - 1
+         END DO
+
+      END DO
+
+      IF (n_dof /= mesh_p1%medges * f_dof) THEN
+         WRITE(*, *) 'BUG in create_iso_grid_distributed, n_dof /= mesh_p1%medge * f_dof'
+         STOP
+      END IF
+
+      n_dof = 0
+      !===connectivity array for iso grid
+      DO m = 1, me
+         DO n = 1, f_dof * nw
+            mesh%jj(nw + n, m) = j_mid(n, m)
+         END DO
+         IF (type_fe==3) THEN
+            n_dof = n_dof + 1
+            n_new_start = m + mesh_p1%dom_np + mesh_p1%medge * 2
+            mesh%jj(10, m) = n_new_start
+            mesh%rr(:, n_new_start) = &
+                 (mesh_p1%rr(:, mesh_p1%jj(1, m)) + mesh_p1%rr(:, mesh_p1%jj(2, m)) + mesh_p1%rr(:, mesh_p1%jj(3, m))) / 3
+            mesh%loc_to_glob(n_new_start) = m + mesh_p1%medge * 2 + mesh_p1%dom_np + mesh%disp(proc) - 1
+         END IF
+      END DO
+
+      IF (type_fe == 3 .and. n_dof /= mesh_p1%me) THEN
+         WRITE(*, *) 'BUG in create_iso_grid_distributed, type_fe == 3 .and. n_dof /= mesh_p1%me'
+         STOP
+      END IF
+
+      !==connectivity array the surface elements of the iso grid
+      DO ms = 1, mes
+         m = mesh_p1%neighs(ms)
+         DO n = 1, kd + 1 !===Simplices
+            IF (MINVAL(ABS(mesh_p1%jj(n, m) - mesh_p1%jjs(:, ms)))/=0) THEN
+               kk = n
+               EXIT
+            END IF
+         ENDDO
+         DO l = 1, f_dof
+            jjs_mid(l, ms) = j_mid((kk - 1) * f_dof + l, m) !===New index created
+         END DO
+      ENDDO
+      mesh%jjs(1:nws, :) = mesh_p1%jjs
+      DO i = 1, SIZE(mesh%jjs, 2)
+         DO n = 1, nws
+            IF (mesh%jjs(n, i) > mesh_p1%dom_np) THEN
+               mesh%jjs(n, i) = mesh_p1%jjs(n, i) + mesh_p1%medge * f_dof + mesh_p1%me * (f_dof - 1)
+            END IF
+         END DO
+      END DO
+
+      mesh%jjs(nws + 1:, :) = jjs_mid
+
+      DEALLOCATE(virgin, j_mid, jjs_mid, r_mid)
+
+      DO m = 1, mesh%mextra
+         DO k = 1, nw !===loop on the nodes (sides) of the element
+            edge_g = mesh_p1%extra_jce(k, m)
+            cell_g = mesh_p1%extra_jcc(m)
+            DO p_e = 1, nb_proc
+               IF (edge_g < mesh_p1%disedge(p_e + 1)) THEN
+                  EXIT
+               END IF
+            END DO
+
+            DO p_c = 1, nb_proc
+               IF (cell_g < mesh_p1%discell(p_c + 1)) THEN
+                  EXIT
+               END IF
+            END DO
+            edge_l = edge_g - mesh_p1%disedge(p_e) + 1
+            cell_l = cell_g - mesh_p1%discell(p_c) + 1
+
+            DO l = 1, f_dof
+               mesh%extra_jj(nw + (k - 1) * f_dof + l, m) = l &
+                    + (edge_l - 1) * f_dof + mesh_p1%domnp(p_e) + mesh%disp(p_e) - 1
+            END DO
+
+            IF (type_fe==3) THEN
+               mesh%extra_jj(10, m) = cell_l + mesh_p1%domedge(p_c) * 2 + mesh_p1%domnp(p_c) + mesh%disp(p_c) - 1
+            END IF
+         END DO
+      END DO
+   END SUBROUTINE  create_iso_grid_distributed
+
 END MODULE prep_maill
