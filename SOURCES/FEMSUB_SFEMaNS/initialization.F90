@@ -11,7 +11,6 @@ MODULE initialization
    USE symmetric_field
    USE input_data
    USE my_util
-   USE construct_meshes
 #include "petsc/finclude/petsc.h"
    USE petsc
    USE fourier_to_real_for_vtu

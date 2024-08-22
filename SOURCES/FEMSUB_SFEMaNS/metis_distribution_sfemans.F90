@@ -1409,11 +1409,12 @@ CONTAINS
       INTEGER, DIMENSION(:) :: part, list_dom
       INTEGER, DIMENSION(mesh_glob%me) :: bat
       INTEGER, DIMENSION(mesh_glob%np) :: i_old_to_new
+      INTEGER, DIMENSION(mesh_glob%medge) :: old_edge_to_new
       INTEGER, DIMENSION(mesh_glob%mes) :: parts
       INTEGER, DIMENSION(nb_proc) :: nblmt_per_proc, start, displ
       INTEGER, DIMENSION(2) :: np_loc, me_loc, mes_loc
       INTEGER, DIMENSION(:), ALLOCATABLE :: list_m, tab, tabs
-      INTEGER :: nb_proc, ms, i, index, m, mop, n
+      INTEGER :: nb_proc, ms, i, index, m, mop, n, j
       PetscErrorCode :: ierr
       PetscMPIInt    :: rank
       MPI_Comm       :: communicator
@@ -1807,8 +1808,6 @@ CONTAINS
       IMPLICIT NONE
       TYPE(mesh_type) :: mesh, mesh_loc
       INTEGER, DIMENSION(2), INTENT(IN) :: me_loc, mes_loc, np_loc
-      INTEGER, DIMENSION(:, :), INTENT(IN), OPTIONAL :: inter_news
-      INTEGER, OPTIONAL :: news
       INTEGER, DIMENSION(mesh%me) :: m_glob_to_loc, m_loc_to_glob
       INTEGER, DIMENSION(mesh%np) :: glob_to_loc, loc_to_glob
       LOGICAL, DIMENSION(mesh%np) :: virgin
@@ -1886,7 +1885,7 @@ CONTAINS
       dom_me = me_loc(2) - me_loc(1) + 1
       dom_mes = mes_loc(2) - mes_loc(1) + 1
       dom_np = np_loc(2) - np_loc(1) + 1
-      mesh_loc%me = dom_me + news
+      mesh_loc%me = dom_me
       mesh_loc%mes = dom_mes
       mesh_loc%dom_me = dom_me
       mesh_loc%dom_np = dom_np
