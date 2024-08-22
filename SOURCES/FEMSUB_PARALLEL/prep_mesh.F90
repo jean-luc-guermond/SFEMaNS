@@ -643,7 +643,7 @@ CONTAINS
       mesh%domedge = (/mesh%medge/)
       mesh%medges = 0
 
-      WRITE(*,*) 'medge', mesh%medge
+      WRITE(*,*) 'medge', mesh%medge, 'np ', mesh%np, 'me ', mesh%me, 'mes ', mesh%mes, 'nps ', mesh%nps
 
       ALLOCATE(mesh%jees(0), mesh%jecs(0))
       WRITE (20, *)  'np ', mesh%np, 'me ', mesh%me, 'mes ', mesh%mes, 'nps ', mesh%nps
