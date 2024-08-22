@@ -1047,16 +1047,16 @@ CONTAINS
             CLOSE(51)
          END IF
       END IF
-      print( 'partition created' )
+      WRITE(*, *) 'partition created'
       !===Extract local meshes from global meshes=====================================
 
       !===Specific to momentum (velocity)
       IF (if_momentum .OR. inputs%type_pb=='mxx') THEN
          CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_mesh_glob, part, list_dom_ns, dummy_mesh_loc)
-         print('mesh extracted')
+         WRITE(*, *)'mesh extracted'
          CALL create_iso_grid_distributed(dummy_mesh_loc, vv_mesh, inputs%type_fe_velocity)
          CALL create_iso_grid_distributed(dummy_mesh_loc, pp_mesh, inputs%type_fe_velocity - 1)
-                  print('p2/p1 created')
+         WRITE(*, *)'p2/p1 created'
          CALL free_mesh(dummy_mesh_loc)
 
          !===JLG july 20, 2019, p3 mesh
