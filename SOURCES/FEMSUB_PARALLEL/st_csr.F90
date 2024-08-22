@@ -4,7 +4,7 @@
 MODULE st_matrix
 
    PUBLIC :: st_aij_csr_glob_block, extract, create_my_ghost, st_aij_csr, tri_jlg, st_aij_csr_loc_block, &
-        st_csr, st_csr_block, st_csr_bloc
+        st_csr, st_csr_block, st_csr_bloc, st_aij_csr_glob_block_with_extra_layer
    PRIVATE
 #include "petsc/finclude/petsc.h"
 CONTAINS
