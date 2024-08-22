@@ -1283,11 +1283,13 @@ CONTAINS
             ALLOCATE(inputs%concentration_list_neumann_sides(0))
          END IF
          !==========Interfaces between vel and conc=========!
-         CALL find_string(21, '===Number of interfaces between velocity and concentration only domains (for nst applications)', test)
+         CALL find_string(21, '===Number of interfaces between velocity and concentration only domains &
+              (for nst applications)', test)
          IF (test) THEN
             READ(21, *) inputs%nb_inter_c_v
             ALLOCATE(inputs%list_inter_c_v(inputs%nb_inter_c_v))
-            CALL read_until(21, '===List of interfaces between velocity and concentration only domains (for nst applications)')
+            CALL read_until(21, '===List of interfaces between velocity and concentration only domains &
+                 (for nst applications)')
             READ(21, *) inputs%list_inter_c_v
          ELSE
             ALLOCATE(inputs%list_inter_c_v(0))
