@@ -1779,7 +1779,11 @@ CONTAINS
 
       !==We create the local mesh now
       mesh%edge_stab = .FALSE.
+      WRITE(*,*) 'g medge', mesh%medge, 'np ', mesh%np, 'me ', mesh%me, 'mes ', mesh%mes, 'nps ', mesh%nps
+
       CALL create_local_mesh(mesh, mesh_loc, me_loc, mes_loc, np_loc)
+      WRITE(*,*) 'l medge', mesh_loc%medge, 'np ', mesh_loc%np, 'me ', mesh_loc%me, 'mes ', &
+           mesh_loc%mes, 'nps ', mesh_loc%nps
 
       DEALLOCATE(list_m, tab, tabs)
 
