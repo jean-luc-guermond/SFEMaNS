@@ -613,10 +613,7 @@ CONTAINS
          WRITE(*, *) 'k_d==3 not programmed yet'
          STOP
       END IF
-      mesh%np = mesh_p1%np
       mesh%dom_np = mesh%np
-      nw_new = (type_fe + 1) * (type_fe + 2) / 2 !===3
-      nws_new = type_fe + 1 !===2
 
       ALLOCATE(mesh%disp(2), mesh%domnp(1))
       mesh%disp = (/1, mesh%np + 1/)
