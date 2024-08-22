@@ -641,9 +641,8 @@ CONTAINS
       TYPE(mesh_type) :: vv_mesh_glob, pp_mesh_glob
       TYPE(mesh_type) :: H_mesh_glob, phi_mesh_glob, pmag_mesh_glob, temp_mesh_glob
       TYPE(mesh_type) :: conc_mesh_glob
-      TYPE(mesh_type) :: p1_mesh_glob, p2_mesh_glob, p1_c0_mesh_glob, p2_c0_mesh_glob_temp
-      TYPE(mesh_type) :: p2_c0_mesh_glob_conc
-      TYPE(mesh_type) :: p3_mesh_glob !===JLG july 20, 2019, p3 mesh
+      TYPE(mesh_type) :: p1_mesh_glob, p1_c0_mesh_glob, p1_c0_mesh_glob_temp
+      TYPE(mesh_type) :: p1_c0_mesh_glob_conc, dummy_mesh_loc
       TYPE(interface_type) :: interface_H_phi_glob, interface_H_mu_glob
       INTEGER, DIMENSION(:), ALLOCATABLE :: list_dom_H, list_dom_H_ref
       INTEGER, DIMENSION(:), ALLOCATABLE :: list_dom_temp, list_dom_temp_ref
@@ -1488,7 +1487,8 @@ CONTAINS
                error = 0.d0
                DO k = 1, 2
                   DO n = 1, SIZE(temp_mesh%jj, 1)
-                     error = error + MAXVAL(ABS(conc_mesh%rr(k, conc_mesh%jj(n, :)) - temp_mesh%rr(k, temp_mesh%jj(n, 1:conc_mesh%me))))
+                     error = error + MAXVAL(ABS(conc_mesh%rr(k, conc_mesh%jj(n, :)) &
+                          - temp_mesh%rr(k, temp_mesh%jj(n, 1:conc_mesh%me))))
                   END DO
                END DO
                IF (error / MAXVAL(ABS(temp_mesh%rr(1, 1) - temp_mesh%rr(1, :))) .GE. 5.d-14) THEN
@@ -1496,17 +1496,23 @@ CONTAINS
                END IF
 
                error = error + MAXVAL(ABS(conc_mesh%rr(1, conc_mesh%jj(4, 1:conc_mesh%me)) &
-                    - (temp_mesh%rr(1, temp_mesh%jj(2, 1:conc_mesh%me)) + temp_mesh%rr(1, temp_mesh%jj(3, 1:conc_mesh%me))) / 2))&
+                    - (temp_mesh%rr(1, temp_mesh%jj(2, 1:conc_mesh%me)) &
+                         + temp_mesh%rr(1, temp_mesh%jj(3, 1:conc_mesh%me))) / 2))&
                     + MAXVAL(ABS(conc_mesh%rr(1, conc_mesh%jj(5, :)) &
-                         - (temp_mesh%rr(1, temp_mesh%jj(3, 1:conc_mesh%me)) + temp_mesh%rr(1, temp_mesh%jj(1, 1:conc_mesh%me))) / 2))&
+                         - (temp_mesh%rr(1, temp_mesh%jj(3, 1:conc_mesh%me)) &
+                              + temp_mesh%rr(1, temp_mesh%jj(1, 1:conc_mesh%me))) / 2))&
                     + MAXVAL(ABS(conc_mesh%rr(1, conc_mesh%jj(6, :)) &
-                         - (temp_mesh%rr(1, temp_mesh%jj(1, 1:conc_mesh%me)) + temp_mesh%rr(1, temp_mesh%jj(2, 1:conc_mesh%me))) / 2))&
+                         - (temp_mesh%rr(1, temp_mesh%jj(1, 1:conc_mesh%me)) &
+                              + temp_mesh%rr(1, temp_mesh%jj(2, 1:conc_mesh%me))) / 2))&
                     + MAXVAL(ABS(conc_mesh%rr(2, conc_mesh%jj(4, :)) &
-                         - (temp_mesh%rr(2, temp_mesh%jj(2, 1:conc_mesh%me)) + temp_mesh%rr(2, temp_mesh%jj(3, 1:conc_mesh%me))) / 2))&
+                         - (temp_mesh%rr(2, temp_mesh%jj(2, 1:conc_mesh%me)) &
+                              + temp_mesh%rr(2, temp_mesh%jj(3, 1:conc_mesh%me))) / 2))&
                     + MAXVAL(ABS(conc_mesh%rr(2, conc_mesh%jj(5, :)) &
-                         - (temp_mesh%rr(2, temp_mesh%jj(3, 1:conc_mesh%me)) + temp_mesh%rr(2, temp_mesh%jj(1, 1:conc_mesh%me))) / 2))&
+                         - (temp_mesh%rr(2, temp_mesh%jj(3, 1:conc_mesh%me)) &
+                              + temp_mesh%rr(2, temp_mesh%jj(1, 1:conc_mesh%me))) / 2))&
                     + MAXVAL(ABS(conc_mesh%rr(2, conc_mesh%jj(6, :)) &
-                         - (temp_mesh%rr(2, temp_mesh%jj(1, 1:conc_mesh%me)) + temp_mesh%rr(2, temp_mesh%jj(2, 1:conc_mesh%me))) / 2))
+                         - (temp_mesh%rr(2, temp_mesh%jj(1, 1:conc_mesh%me)) &
+                              + temp_mesh%rr(2, temp_mesh%jj(2, 1:conc_mesh%me))) / 2))
                IF (error / MAXVAL(ABS(temp_mesh%rr(1, 1) - temp_mesh%rr(1, :))) .GE. 5.d-14) THEN
                   WRITE(*, *) ' WARNING: conc_mesh and temp_mesh do not coincide on the conc domain.'
                   WRITE(*, *) ' WARNING: Either you use curved elements P2 elements or BUG, ', &
@@ -1516,7 +1522,8 @@ CONTAINS
                error = 0.d0
                DO k = 1, conc_mesh%me
                   DO n = 1, 2
-                     error = error + MAXVAL(ABS(conc_mesh%rr(n, conc_mesh%jj(1:3, k)) - temp_mesh%rr(n, temp_mesh%jj(1:3, k))))
+                     error = error + MAXVAL(ABS(conc_mesh%rr(n, conc_mesh%jj(1:3, k)) &
+                          - temp_mesh%rr(n, temp_mesh%jj(1:3, k))))
                   END DO
                END DO
                IF (error / MAXVAL(ABS(temp_mesh%rr(1, 1) - temp_mesh%rr(1, :))) .GE. 5.d-14) THEN
