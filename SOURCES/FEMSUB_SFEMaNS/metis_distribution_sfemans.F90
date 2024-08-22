@@ -1440,6 +1440,7 @@ CONTAINS
          list_m(i) = m
       END DO
       !End create list_m
+         WRITE(*, *)'1'
 
       ! Count elements on processors
       nblmt_per_proc = 0
@@ -1455,6 +1456,7 @@ CONTAINS
       me_loc(2) = start(rank + 1) + nblmt_per_proc(rank + 1)
       displ = start
       ! End count elements on processors
+         WRITE(*, *)'2'
 
       ! Re-order elements
       ALLOCATE(tab(mesh%me))
@@ -1466,6 +1468,7 @@ CONTAINS
          bat(m) = start(part(m))
       END DO
       ! Re-order elements
+         WRITE(*, *)'3'
 
       ! Create mesh%jj
       mesh%gauss%n_w = SIZE(mesh_glob%jj, 1)
@@ -1485,6 +1488,7 @@ CONTAINS
          END DO
       END DO
       ! End Create mesh%jj
+         WRITE(*, *)'4'
 
       ! Re-order edge
       ALLOCATE(mesh%jce(SIZE(mesh_glob%jce, 1), mesh%me))
@@ -1503,6 +1507,7 @@ CONTAINS
          END DO
       END DO
       ! End re-order edge
+         WRITE(*, *)'5'
 
       ! Create mesh%rr
       mesh%np = index
@@ -1512,6 +1517,7 @@ CONTAINS
          mesh%rr(:, i_old_to_new(i)) = mesh_glob%rr(:, i)
       END DO
       !End Create mesh%rr
+         WRITE(*, *)'6'
 
       ! Create mesh%neigh
       ALLOCATE(mesh%neigh(3, mesh%me))
@@ -1526,6 +1532,7 @@ CONTAINS
          END DO
       END DO
       ! End  Create mesh%neigh
+         WRITE(*, *)'7'
 
       ! Create mesh%i_d
       ALLOCATE(mesh%i_d(mesh%me))
@@ -1546,6 +1553,7 @@ CONTAINS
          np_loc(2) = np_loc(1) - 1
       END IF
       ! End create np_loc
+         WRITE(*, *)'8'
 
       ! Create mes_loc
       nblmt_per_proc = 0
@@ -1562,6 +1570,7 @@ CONTAINS
       mes_loc(2) = start(rank + 1) + nblmt_per_proc(rank + 1)
       mesh%mes = SUM(nblmt_per_proc)
       ! End create mes_loc
+         WRITE(*, *)'9'
 
       ! Create tabs and sbat
       ALLOCATE(tabs(mesh%mes))
@@ -1571,6 +1580,7 @@ CONTAINS
          tabs(start(parts(ms))) = ms
       END DO
       ! End create tabs and sbat
+         WRITE(*, *)'9'
 
       ! Create neighs
       ALLOCATE(mesh%neighs(mesh%mes))
@@ -1581,6 +1591,7 @@ CONTAINS
       ALLOCATE(mesh%sides(mesh%mes))
       mesh%sides = mesh_glob%sides(tabs)
       ! End re-order sides
+         WRITE(*, *)'10'
 
       ! Re-order jjs
       mesh%gauss%n_ws = SIZE(mesh_glob%jjs, 1)
@@ -1593,7 +1604,10 @@ CONTAINS
 
       !==We create the local mesh now
       mesh%edge_stab = .FALSE.
+               WRITE(*, *)'11'
+
       CALL create_local_mesh_with_extra_layer(mesh, mesh_loc, me_loc, mes_loc, np_loc)
+         WRITE(*, *)'12'
 
       CALL free_mesh(mesh)
       DEALLOCATE(list_m, tab, tabs)
