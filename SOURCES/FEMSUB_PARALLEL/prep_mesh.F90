@@ -8,7 +8,8 @@ MODULE prep_maill
 
    PUBLIC :: load_mesh, load_mesh_formatted, load_mesh_free_format, &
         load_dg_mesh_free_format, load_mesh_free_format_ordered, prep_interfaces, &
-        create_p3_mesh, incr_vrtx_indx_enumeration, incr_vrtx_indx_enumeration_for_interfaces
+        create_p3_mesh, incr_vrtx_indx_enumeration, incr_vrtx_indx_enumeration_for_interfaces, &
+        create_iso_grid_distributed
    PRIVATE
 
 CONTAINS
@@ -2253,5 +2254,92 @@ CONTAINS
          END DO
       END DO
    END SUBROUTINE  create_iso_grid_distributed
+
+   SUBROUTINE prep_jce_jev(mesh)
+      USE def_type_mesh
+      IMPLICIT NONE
+      TYPE(mesh_type) :: mesh
+      LOGICAL, DIMENSION(mesh%me) :: virgin
+      INTEGER :: m, mop, nw, me, l, lop, n, n1, n2, nmin, nmax, edge, nt, nws, f_dof, start, endf, nop
+      LOGICAL :: test
+      nw = SIZE(mesh%jj, 1)
+      nws = SIZE(mesh%jjs, 1)
+      me = mesh%me
+
+      IF (SIZE(mesh%rr, 1)==2) THEN
+         nt = 3
+         f_dof = nws - 2
+      ELSE
+         WRITE(*, *) ' BUG: prep_interfaces, 3D not programmed yet '
+         STOP
+         nt = 4
+      END IF
+      IF (nw.NE.nt) THEN
+         WRITE(*, *) ' BUG in prep_jce_jev, nw.NE.nt'
+         STOP
+      END IF
+      virgin = .TRUE.
+      edge = 0
+      DO m = 1, me
+         virgin(m) = .FALSE.
+         DO n = 1, nt
+            mop = mesh%neigh(n, m)
+            IF (mop>0) THEN
+               IF (.NOT.virgin(mop)) CYCLE !Edge already done
+            END IF
+            edge = edge + 1 !New edge
+         END DO
+      END DO
+      IF (SIZE(mesh%rr, 1)==2) THEN
+         IF (edge/=(3 * mesh%me - mesh%mes) / 2 + mesh%mes) THEN
+            WRITE(*, *) ' BUG in prep_interfaces, edge/=(3*mesh%me - mesh%mes)/2+mesh%mes'
+            WRITE(*, *) ' edge ', edge, (3 * mesh%me - mesh%mes) / 2 + mesh%mes
+            WRITE(*, *) ' mesh%mes ', mesh%mes, ' mesh%me ', mesh%me
+            STOP
+         END IF
+      END IF
+
+      mesh%medge = edge
+      !ALLOCATE(mesh%jev(nt - 1, mesh%medge))
+      ALLOCATE(mesh%jce(nt, mesh%me))
+
+      edge = 0
+      virgin = .TRUE.
+      DO m = 1, me
+         virgin(m) = .FALSE.
+         DO n = 1, nt
+            mop = mesh%neigh(n, m)
+            IF (mop>0) THEN
+               IF (.NOT.virgin(mop)) THEN
+                  n1 = MODULO(n, nt) + 1
+                  n2 = MODULO(n + 1, nt) + 1
+                  test = .false.
+                  DO nop = 1, nw
+                     IF (MIN(ABS(mesh%jj(nop, mop) - mesh%jj(n1, m)), ABS(mesh%jj(nop, mop) - mesh%jj(n2, m)))==0) THEN
+                        CYCLE
+                     ELSE
+                        test = .true.
+                        EXIT
+                     END IF
+                  END DO
+                  IF (.NOT.test) THEN
+                     WRITE(*, *) ' BUG in prep_jce_jev'
+                     STOP
+                  END IF
+                  mesh%jce(n, m) = mesh%jce(nop, mop)
+                  CYCLE !Edge already done
+               END IF
+            END IF
+            edge = edge + 1 !New edge
+            n1 = MODULO(n, nt) + 1
+            n2 = MODULO(n + 1, nt) + 1 ! Works in 2D only
+            nmin = MIN(n1, n2)
+            nmax = MAX(n1, n2)
+            !mesh%jev(1, edge) = mesh%jj(nmin, m)
+            !mesh%jev(2, edge) = mesh%jj(nmax, m)
+            mesh%jce(n, m) = edge
+         END DO
+      END DO
+   END SUBROUTINE prep_jce_jev
 
 END MODULE prep_maill
