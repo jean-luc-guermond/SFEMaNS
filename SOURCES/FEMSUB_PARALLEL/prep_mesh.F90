@@ -643,6 +643,8 @@ CONTAINS
       mesh%domedge = (/mesh%medge/)
       mesh%medges = 0
 
+      WRITE(*,*) 'medge', mesh%medge
+
       ALLOCATE(mesh%jees(0), mesh%jecs(0))
       WRITE (20, *)  'np ', mesh%np, 'me ', mesh%me, 'mes ', mesh%mes, 'nps ', mesh%nps
 
@@ -1904,7 +1906,7 @@ CONTAINS
       END DO
 
       !===GENERATION OF THE Pk GRID
-      WRITE(*,*) mesh%np, mesh_p1%np
+      WRITE(*,*) mesh%np, mesh_p1%np, mesh_p1%medge, mesh_p1%medges
       WRITE(*,*) mesh_p1%rr
       mesh%rr(:, 1:dom_np) = mesh_p1%rr(:, 1:dom_np)
       mesh%rr(:, mesh%dom_np + 1:mesh%dom_np + np - dom_np) = mesh_p1%rr(:, dom_np + 1:)
