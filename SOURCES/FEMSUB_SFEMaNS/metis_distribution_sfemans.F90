@@ -1421,6 +1421,10 @@ CONTAINS
       MPI_Comm       :: communicator
       CALL MPI_Comm_rank(communicator, rank, ierr)
 
+      ALLOCATE(mesh_loc%disp(nb_proc + 1), mesh_loc%domnp(nb_proc))
+      ALLOCATE(mesh_loc%discell(nb_proc + 1), mesh_loc%domcell(nb_proc))
+      ALLOCATE(mesh_loc%disedge(nb_proc + 1), mesh_loc%domedge(nb_proc))
+
       ! Create parts
       parts = part(mesh_glob%neighs)
       ! End create parts
@@ -1593,193 +1597,193 @@ CONTAINS
 
       !==We create the local mesh now
       mesh%edge_stab = .FALSE.
-               WRITE(*, *)'11'
+      WRITE(*, *)'11'
 
       CALL create_local_mesh_with_extra_layer(mesh, mesh_loc, me_loc, mes_loc, np_loc)
-         WRITE(*, *)'12'
+      WRITE(*, *)'12'
 
       CALL free_mesh(mesh)
       DEALLOCATE(list_m, tab, tabs)
 
    END SUBROUTINE extract_mesh
 
-   SUBROUTINE extract_mesh_deprecated(communicator,nb_proc,mesh_glob,part,list_dom,mesh,mesh_loc)
-    USE def_type_mesh
-    USE my_util
-    IMPLICIT NONE
-    TYPE(mesh_type)                          :: mesh_glob, mesh, mesh_loc
-    INTEGER, DIMENSION(:)                    :: part, list_dom
-    INTEGER, DIMENSION(mesh_glob%me)         :: bat
-    INTEGER, DIMENSION(mesh_glob%np)         :: i_old_to_new
-    INTEGER, DIMENSION(mesh_glob%mes)        :: parts
-    INTEGER, DIMENSION(nb_proc)              :: nblmt_per_proc, start, displ
-    INTEGER, DIMENSION(2)                    :: np_loc, me_loc, mes_loc
-    INTEGER, DIMENSION(:), ALLOCATABLE       :: list_m, tab, tabs
-    INTEGER                                  :: nb_proc, ms, i, index, m, mop, n
-    PetscErrorCode :: ierr
-    PetscMPIInt    :: rank
-    MPI_Comm       :: communicator
-    CALL MPI_Comm_rank(communicator,rank,ierr)
+   SUBROUTINE extract_mesh_deprecated(communicator, nb_proc, mesh_glob, part, list_dom, mesh, mesh_loc)
+      USE def_type_mesh
+      USE my_util
+      IMPLICIT NONE
+      TYPE(mesh_type) :: mesh_glob, mesh, mesh_loc
+      INTEGER, DIMENSION(:) :: part, list_dom
+      INTEGER, DIMENSION(mesh_glob%me) :: bat
+      INTEGER, DIMENSION(mesh_glob%np) :: i_old_to_new
+      INTEGER, DIMENSION(mesh_glob%mes) :: parts
+      INTEGER, DIMENSION(nb_proc) :: nblmt_per_proc, start, displ
+      INTEGER, DIMENSION(2) :: np_loc, me_loc, mes_loc
+      INTEGER, DIMENSION(:), ALLOCATABLE :: list_m, tab, tabs
+      INTEGER :: nb_proc, ms, i, index, m, mop, n
+      PetscErrorCode :: ierr
+      PetscMPIInt    :: rank
+      MPI_Comm       :: communicator
+      CALL MPI_Comm_rank(communicator, rank, ierr)
 
-    ! Create parts
-    parts = part(mesh_glob%neighs)
-    ! End create parts
+      ! Create parts
+      parts = part(mesh_glob%neighs)
+      ! End create parts
 
-    ! Create list_m
-    i = 0
-    DO m = 1, mesh_glob%me
-       IF (MINVAL(ABS(list_dom-mesh_glob%i_d(m)))/=0) CYCLE
-       i = i + 1
-    END DO
-    mesh%me = i
-    ALLOCATE (list_m(mesh%me))
-    i = 0
-    DO m = 1, mesh_glob%me
-       IF (MINVAL(ABS(list_dom-mesh_glob%i_d(m)))/=0) CYCLE
-       i = i + 1
-       list_m(i) = m
-    END DO
-    !End create list_m
+      ! Create list_m
+      i = 0
+      DO m = 1, mesh_glob%me
+         IF (MINVAL(ABS(list_dom - mesh_glob%i_d(m)))/=0) CYCLE
+         i = i + 1
+      END DO
+      mesh%me = i
+      ALLOCATE (list_m(mesh%me))
+      i = 0
+      DO m = 1, mesh_glob%me
+         IF (MINVAL(ABS(list_dom - mesh_glob%i_d(m)))/=0) CYCLE
+         i = i + 1
+         list_m(i) = m
+      END DO
+      !End create list_m
 
-    ! Count elements on processors
-    nblmt_per_proc = 0
-    DO i = 1, mesh%me
-       m = list_m(i)
-       nblmt_per_proc(part(m)) = nblmt_per_proc(part(m)) + 1
-    END DO
-    start(1) = 0
-    DO n = 2, nb_proc
-       start(n) = start(n-1) + nblmt_per_proc(n-1)
-    END DO
-    me_loc(1) = start(rank+1) + 1
-    me_loc(2) = start(rank+1) + nblmt_per_proc(rank+1)
-    displ = start
-    ! End count elements on processors
+      ! Count elements on processors
+      nblmt_per_proc = 0
+      DO i = 1, mesh%me
+         m = list_m(i)
+         nblmt_per_proc(part(m)) = nblmt_per_proc(part(m)) + 1
+      END DO
+      start(1) = 0
+      DO n = 2, nb_proc
+         start(n) = start(n - 1) + nblmt_per_proc(n - 1)
+      END DO
+      me_loc(1) = start(rank + 1) + 1
+      me_loc(2) = start(rank + 1) + nblmt_per_proc(rank + 1)
+      displ = start
+      ! End count elements on processors
 
-    ! Re-order elements
-    ALLOCATE(tab(mesh%me))
-    bat = 0
-    DO i = 1, mesh%me
-       m = list_m(i)
-       start(part(m)) = start(part(m)) + 1
-       tab(start(part(m))) = m
-       bat(m) = start(part(m))
-    END DO
-    ! Re-order elements
+      ! Re-order elements
+      ALLOCATE(tab(mesh%me))
+      bat = 0
+      DO i = 1, mesh%me
+         m = list_m(i)
+         start(part(m)) = start(part(m)) + 1
+         tab(start(part(m))) = m
+         bat(m) = start(part(m))
+      END DO
+      ! Re-order elements
 
-    ! Create mesh%jj
-    mesh%gauss%n_w = SIZE(mesh_glob%jj,1)
-    ALLOCATE(mesh%jj(SIZE(mesh_glob%jj,1),mesh%me))
-    i_old_to_new = 0
-    index = 0
-    DO m = 1, mesh%me
-       DO n = 1, SIZE(mesh_glob%jj,1)
-          i = mesh_glob%jj(n,tab(m))
-          IF (i_old_to_new(i)/=0) THEN
-             mesh%jj(n,m) = i_old_to_new(i)
-          ELSE
-             index = index + 1
-             i_old_to_new(i) = index
-             mesh%jj(n,m) = i_old_to_new(i)
-          END IF
-       END DO
-    END DO
-    ! End Create mesh%jj
+      ! Create mesh%jj
+      mesh%gauss%n_w = SIZE(mesh_glob%jj, 1)
+      ALLOCATE(mesh%jj(SIZE(mesh_glob%jj, 1), mesh%me))
+      i_old_to_new = 0
+      index = 0
+      DO m = 1, mesh%me
+         DO n = 1, SIZE(mesh_glob%jj, 1)
+            i = mesh_glob%jj(n, tab(m))
+            IF (i_old_to_new(i)/=0) THEN
+               mesh%jj(n, m) = i_old_to_new(i)
+            ELSE
+               index = index + 1
+               i_old_to_new(i) = index
+               mesh%jj(n, m) = i_old_to_new(i)
+            END IF
+         END DO
+      END DO
+      ! End Create mesh%jj
 
-    ! Create mesh%rr
-    mesh%np = index
-    ALLOCATE(mesh%rr(2,mesh%np))
-    DO i = 1, mesh_glob%np
-       IF (i_old_to_new(i)==0) CYCLE
-       mesh%rr(:,i_old_to_new(i)) = mesh_glob%rr(:,i)
-    END DO
-    !End Create mesh%rr
+      ! Create mesh%rr
+      mesh%np = index
+      ALLOCATE(mesh%rr(2, mesh%np))
+      DO i = 1, mesh_glob%np
+         IF (i_old_to_new(i)==0) CYCLE
+         mesh%rr(:, i_old_to_new(i)) = mesh_glob%rr(:, i)
+      END DO
+      !End Create mesh%rr
 
-    ! Create mesh%neigh
-    ALLOCATE(mesh%neigh(3,mesh%me))
-    DO m = 1, mesh%me
-       DO n = 1, 3
-          mop = mesh_glob%neigh(n,tab(m))
-          IF (mop==0) THEN
-             mesh%neigh(n,m) = 0
-          ELSE
-             mesh%neigh(n,m) = bat(mop)
-          END IF
-       END DO
-    END DO
-    ! End  Create mesh%neigh
+      ! Create mesh%neigh
+      ALLOCATE(mesh%neigh(3, mesh%me))
+      DO m = 1, mesh%me
+         DO n = 1, 3
+            mop = mesh_glob%neigh(n, tab(m))
+            IF (mop==0) THEN
+               mesh%neigh(n, m) = 0
+            ELSE
+               mesh%neigh(n, m) = bat(mop)
+            END IF
+         END DO
+      END DO
+      ! End  Create mesh%neigh
 
-    ! Create mesh%i_d
-    ALLOCATE(mesh%i_d(mesh%me))
-    mesh%i_d =  mesh_glob%i_d(tab)
-    ! End mesh%i_d
+      ! Create mesh%i_d
+      ALLOCATE(mesh%i_d(mesh%me))
+      mesh%i_d = mesh_glob%i_d(tab)
+      ! End mesh%i_d
 
-    ! Create np_loc
-    IF (displ(rank+1)/=0) THEN
-       np_loc(1) = MAXVAL(mesh%jj(:,1:displ(rank+1))) + 1
-    ELSE
-       np_loc(1) = 1
-    END IF
-    np_loc(2) = np_loc(1) - 1
-    IF (me_loc(1).LE.me_loc(2)) THEN
-       np_loc(2) = MAXVAL(mesh%jj(:,me_loc(1):me_loc(2)))
-    END IF
-    IF (np_loc(2) .LT. np_loc(1)-1) THEN
-       np_loc(2) = np_loc(1) - 1
-    END IF
-    ! End create np_loc
+      ! Create np_loc
+      IF (displ(rank + 1)/=0) THEN
+         np_loc(1) = MAXVAL(mesh%jj(:, 1:displ(rank + 1))) + 1
+      ELSE
+         np_loc(1) = 1
+      END IF
+      np_loc(2) = np_loc(1) - 1
+      IF (me_loc(1).LE.me_loc(2)) THEN
+         np_loc(2) = MAXVAL(mesh%jj(:, me_loc(1):me_loc(2)))
+      END IF
+      IF (np_loc(2) .LT. np_loc(1) - 1) THEN
+         np_loc(2) = np_loc(1) - 1
+      END IF
+      ! End create np_loc
 
-    ! Create mes_loc
-    nblmt_per_proc=0
-    DO ms = 1, mesh_glob%mes
-       IF (MINVAL(ABS(list_dom-mesh_glob%i_d(mesh_glob%neighs(ms))))/=0) CYCLE
-       n = parts(ms)
-       nblmt_per_proc(n) =  nblmt_per_proc(n) + 1
-    END DO
-    start(1) = 0
-    DO n = 2, nb_proc
-       start(n) = start(n-1) + nblmt_per_proc(n-1)
-    END DO
-    mes_loc(1) = start(rank+1) + 1
-    mes_loc(2) = start(rank+1) + nblmt_per_proc(rank+1)
-    mesh%mes = SUM(nblmt_per_proc)
-    ! End create mes_loc
+      ! Create mes_loc
+      nblmt_per_proc = 0
+      DO ms = 1, mesh_glob%mes
+         IF (MINVAL(ABS(list_dom - mesh_glob%i_d(mesh_glob%neighs(ms))))/=0) CYCLE
+         n = parts(ms)
+         nblmt_per_proc(n) = nblmt_per_proc(n) + 1
+      END DO
+      start(1) = 0
+      DO n = 2, nb_proc
+         start(n) = start(n - 1) + nblmt_per_proc(n - 1)
+      END DO
+      mes_loc(1) = start(rank + 1) + 1
+      mes_loc(2) = start(rank + 1) + nblmt_per_proc(rank + 1)
+      mesh%mes = SUM(nblmt_per_proc)
+      ! End create mes_loc
 
-    ! Create tabs and sbat
-    ALLOCATE(tabs(mesh%mes))
-    DO ms = 1, mesh_glob%mes
-       IF (MINVAL(ABS(list_dom-mesh_glob%i_d(mesh_glob%neighs(ms))))/=0) CYCLE
-       start(parts(ms)) = start(parts(ms)) + 1
-       tabs(start(parts(ms))) = ms
-    END DO
-    ! End create tabs and sbat
+      ! Create tabs and sbat
+      ALLOCATE(tabs(mesh%mes))
+      DO ms = 1, mesh_glob%mes
+         IF (MINVAL(ABS(list_dom - mesh_glob%i_d(mesh_glob%neighs(ms))))/=0) CYCLE
+         start(parts(ms)) = start(parts(ms)) + 1
+         tabs(start(parts(ms))) = ms
+      END DO
+      ! End create tabs and sbat
 
-    ! Create neighs
-    ALLOCATE(mesh%neighs(mesh%mes))
-    mesh%neighs = bat(mesh_glob%neighs(tabs))
-    ! End create neighs
+      ! Create neighs
+      ALLOCATE(mesh%neighs(mesh%mes))
+      mesh%neighs = bat(mesh_glob%neighs(tabs))
+      ! End create neighs
 
-    ! Re-order sides
-    ALLOCATE(mesh%sides(mesh%mes))
-    mesh%sides = mesh_glob%sides(tabs)
-    ! End re-order sides
+      ! Re-order sides
+      ALLOCATE(mesh%sides(mesh%mes))
+      mesh%sides = mesh_glob%sides(tabs)
+      ! End re-order sides
 
-    ! Re-order jjs
-    mesh%gauss%n_ws = SIZE(mesh_glob%jjs,1)
-    ALLOCATE(mesh%jjs(SIZE(mesh_glob%jjs,1),mesh%mes))
+      ! Re-order jjs
+      mesh%gauss%n_ws = SIZE(mesh_glob%jjs, 1)
+      ALLOCATE(mesh%jjs(SIZE(mesh_glob%jjs, 1), mesh%mes))
 
-    DO n = 1, SIZE(mesh%jjs,1)
-       mesh%jjs(n,:) = i_old_to_new(mesh_glob%jjs(n,tabs))
-    END DO
-    ! End re-order jjs
+      DO n = 1, SIZE(mesh%jjs, 1)
+         mesh%jjs(n, :) = i_old_to_new(mesh_glob%jjs(n, tabs))
+      END DO
+      ! End re-order jjs
 
-    !==We create the local mesh now
-    mesh%edge_stab = .FALSE.
-    CALL create_local_mesh(mesh, mesh_loc, me_loc, mes_loc, np_loc)
+      !==We create the local mesh now
+      mesh%edge_stab = .FALSE.
+      CALL create_local_mesh(mesh, mesh_loc, me_loc, mes_loc, np_loc)
 
-    DEALLOCATE(list_m, tab, tabs)
+      DEALLOCATE(list_m, tab, tabs)
 
-  END SUBROUTINE extract_mesh_deprecated
+   END SUBROUTINE extract_mesh_deprecated
 
    SUBROUTINE create_local_mesh(mesh, mesh_loc, me_loc, mes_loc, np_loc)
       USE def_type_mesh
@@ -2006,7 +2010,7 @@ CONTAINS
       nw = SIZE(mesh%jj, 1)
       nwc = SIZE(mesh%neigh, 1)
       nb_proc = SIZE(mesh_loc%domnp)
-         WRITE(*, *)'1'
+      WRITE(*, *)'1'
 
       !==Test if one proc only
       IF (me_loc(2) - me_loc(1) + 1==mesh%me) THEN
@@ -2063,7 +2067,7 @@ CONTAINS
          RETURN
       END IF
       !==End test if one proc only
-         WRITE(*, *)'2'
+      WRITE(*, *)'2'
 
       !==Create the new mesh
       dom_me = me_loc(2) - me_loc(1) + 1
@@ -2086,7 +2090,7 @@ CONTAINS
       DO n = 1, nb_proc
          mesh_loc%disp(n + 1) = mesh_loc%disp(n) + mesh_loc%domnp(n)
       END DO
-         WRITE(*, *)'3'
+      WRITE(*, *)'3'
 
       CALL MPI_ALLGATHER(mesh_loc%me, 1, MPI_INTEGER, mesh_loc%domcell, 1, &
            MPI_INTEGER, PETSC_COMM_WORLD, ierr)
@@ -2094,7 +2098,7 @@ CONTAINS
       DO n = 1, nb_proc
          mesh_loc%discell(n + 1) = mesh_loc%discell(n) + mesh_loc%domcell(n)
       END DO
-         WRITE(*, *)'4'
+      WRITE(*, *)'4'
 
       !==Re-order jj
       virgin = .TRUE.
@@ -2108,7 +2112,7 @@ CONTAINS
          END DO
       END DO
       ALLOCATE(mesh_loc%jj(nw, mesh_loc%me))
-         WRITE(*, *)'5'
+      WRITE(*, *)'5'
 
       m_glob_to_loc = 0
       virgin = .TRUE.
@@ -2134,7 +2138,7 @@ CONTAINS
          m_loc_to_glob(m - me_loc(1) + 1) = m
          m_glob_to_loc(m) = m - me_loc(1) + 1
       END DO
-         WRITE(*, *)'6'
+      WRITE(*, *)'6'
 
       IF (SIZE(mesh%jj, 1) == 6) THEn
          DO m = me_loc(1), me_loc(2)
@@ -2174,13 +2178,13 @@ CONTAINS
             END IF
          END DO
       END IF
-         WRITE(*, *)'6'
+      WRITE(*, *)'6'
 
       DO n = 1, nw
          mesh_loc%jj(n, 1:dom_me) = glob_to_loc(mesh%jj(n, me_loc(1):me_loc(2)))
       END DO
       !==End re-order jj
-         WRITE(*, *)'7'
+      WRITE(*, *)'7'
 
       !==Create mesh%loc_to_glob
       IF (MAXVAL(mesh_loc%jj)/=dof) THEN
@@ -2190,7 +2194,7 @@ CONTAINS
       ALLOCATE(mesh_loc%loc_to_glob(mesh_loc%np))
       mesh_loc%loc_to_glob = loc_to_glob(1:mesh_loc%np)
       !==End create mesh%loc_to_glob
-         WRITE(*, *)'8'
+      WRITE(*, *)'8'
 
       !==Re-order rr
       ALLOCATE(mesh_loc%rr(dim, mesh_loc%np))
@@ -2219,7 +2223,7 @@ CONTAINS
          END DO
       END DO
       !==End re-order neigh
-         WRITE(*, *)'9'
+      WRITE(*, *)'9'
 
       !==Re-order i_d
       ALLOCATE(mesh_loc%i_d(mesh_loc%me))
@@ -2236,7 +2240,7 @@ CONTAINS
       ALLOCATE(mesh_loc%sides(mesh_loc%mes))
       mesh_loc%sides = mesh%sides(mes_loc(1):mes_loc(2))
       !==End re-order sides
-         WRITE(*, *)'10'
+      WRITE(*, *)'10'
 
       !==Re-order jjs
       ALLOCATE(mesh_loc%jjs(nws, mesh_loc%mes))
@@ -2249,7 +2253,7 @@ CONTAINS
       ALLOCATE(mesh_loc%jce(SIZE(mesh%jce, 1), mesh_loc%me))
       mesh_loc%jce = mesh%jce(:, me_loc(1):me_loc(2))
       !==End re-order jce
-         WRITE(*, *)'11'
+      WRITE(*, *)'11'
 
       mesh_loc%medge = 0
       mesh_loc%medges = 0
@@ -2267,7 +2271,7 @@ CONTAINS
             END IF
          END DO
       END DO
-         WRITE(*, *)'12'
+      WRITE(*, *)'12'
 
       ALLOCATE(mesh_loc%jees(mesh_loc%medges))
       ALLOCATE(mesh_loc%jecs(mesh_loc%medges))
@@ -2290,7 +2294,7 @@ CONTAINS
             END IF
          END DO
       END DO
-         WRITE(*, *)'13'
+      WRITE(*, *)'13'
 
       CALL MPI_ALLGATHER(mesh_loc%medge, 1, MPI_INTEGER, mesh_loc%domedge, 1, &
            MPI_INTEGER, PETSC_COMM_WORLD, ierr)
@@ -2323,7 +2327,7 @@ CONTAINS
             nb_extra = nb_extra + 1
          END IF
       END DO
-         WRITE(*, *)'14'
+      WRITE(*, *)'14'
 
       mesh_loc%mextra = nb_extra
       ALLOCATE(mesh_loc%extra_jj(nw, nb_extra), mesh_loc%extra_jce(SIZE(mesh%jce, 1), nb_extra), mesh_loc%extra_jcc(nb_extra))
@@ -2349,7 +2353,7 @@ CONTAINS
       mesh_loc%edge_stab = .FALSE.
       mesh_loc%mi = 0
 
-         WRITE(*, *)'15'
+      WRITE(*, *)'15'
 
       !===Find the isolated points on the border
       nb_extra = 0
@@ -2373,7 +2377,7 @@ CONTAINS
       mesh_loc%nis = nb_extra
       ALLOCATE(mesh_loc%isolated_jjs(mesh_loc%nis), mesh_loc%isolated_interfaces(mesh_loc%nis, 2))
       mesh_loc%isolated_interfaces = -1
-         WRITE(*, *)'16'
+      WRITE(*, *)'16'
 
       nb_extra = 0
       virgin = .TRUE.
