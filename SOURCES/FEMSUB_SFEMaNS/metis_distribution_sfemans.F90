@@ -1,7 +1,8 @@
 MODULE metis_sfemans
 #include "petsc/finclude/petsc.h"
    USE petsc
-   PUBLIC :: part_mesh_mhd, free_mesh, extract_mesh, free_interface, part_mesh_mhd_bis, part_mesh_M_T_H_phi
+   PUBLIC :: part_mesh_mhd, free_mesh, extract_mesh, free_interface, part_mesh_mhd_bis, part_mesh_M_T_H_phi, &
+        extract_mesh_deprecated
    PRIVATE
    REAL(KIND = 8) :: epsilon = 1.d-10
    !!$ Dummy for metis...
@@ -1598,6 +1599,184 @@ CONTAINS
       DEALLOCATE(list_m, tab, tabs)
 
    END SUBROUTINE extract_mesh
+
+   SUBROUTINE extract_mesh_deprecated(communicator,nb_proc,mesh_glob,part,list_dom,mesh,mesh_loc)
+    USE def_type_mesh
+    USE my_util
+    IMPLICIT NONE
+    TYPE(mesh_type)                          :: mesh_glob, mesh, mesh_loc
+    INTEGER, DIMENSION(:)                    :: part, list_dom
+    INTEGER, DIMENSION(mesh_glob%me)         :: bat
+    INTEGER, DIMENSION(mesh_glob%np)         :: i_old_to_new
+    INTEGER, DIMENSION(mesh_glob%mes)        :: parts
+    INTEGER, DIMENSION(nb_proc)              :: nblmt_per_proc, start, displ
+    INTEGER, DIMENSION(2)                    :: np_loc, me_loc, mes_loc
+    INTEGER, DIMENSION(:), ALLOCATABLE       :: list_m, tab, tabs
+    INTEGER                                  :: nb_proc, ms, i, index, m, mop, n
+    PetscErrorCode :: ierr
+    PetscMPIInt    :: rank
+    MPI_Comm       :: communicator
+    CALL MPI_Comm_rank(communicator,rank,ierr)
+
+    ! Create parts
+    parts = part(mesh_glob%neighs)
+    ! End create parts
+
+    ! Create list_m
+    i = 0
+    DO m = 1, mesh_glob%me
+       IF (MINVAL(ABS(list_dom-mesh_glob%i_d(m)))/=0) CYCLE
+       i = i + 1
+    END DO
+    mesh%me = i
+    ALLOCATE (list_m(mesh%me))
+    i = 0
+    DO m = 1, mesh_glob%me
+       IF (MINVAL(ABS(list_dom-mesh_glob%i_d(m)))/=0) CYCLE
+       i = i + 1
+       list_m(i) = m
+    END DO
+    !End create list_m
+
+    ! Count elements on processors
+    nblmt_per_proc = 0
+    DO i = 1, mesh%me
+       m = list_m(i)
+       nblmt_per_proc(part(m)) = nblmt_per_proc(part(m)) + 1
+    END DO
+    start(1) = 0
+    DO n = 2, nb_proc
+       start(n) = start(n-1) + nblmt_per_proc(n-1)
+    END DO
+    me_loc(1) = start(rank+1) + 1
+    me_loc(2) = start(rank+1) + nblmt_per_proc(rank+1)
+    displ = start
+    ! End count elements on processors
+
+    ! Re-order elements
+    ALLOCATE(tab(mesh%me))
+    bat = 0
+    DO i = 1, mesh%me
+       m = list_m(i)
+       start(part(m)) = start(part(m)) + 1
+       tab(start(part(m))) = m
+       bat(m) = start(part(m))
+    END DO
+    ! Re-order elements
+
+    ! Create mesh%jj
+    mesh%gauss%n_w = SIZE(mesh_glob%jj,1)
+    ALLOCATE(mesh%jj(SIZE(mesh_glob%jj,1),mesh%me))
+    i_old_to_new = 0
+    index = 0
+    DO m = 1, mesh%me
+       DO n = 1, SIZE(mesh_glob%jj,1)
+          i = mesh_glob%jj(n,tab(m))
+          IF (i_old_to_new(i)/=0) THEN
+             mesh%jj(n,m) = i_old_to_new(i)
+          ELSE
+             index = index + 1
+             i_old_to_new(i) = index
+             mesh%jj(n,m) = i_old_to_new(i)
+          END IF
+       END DO
+    END DO
+    ! End Create mesh%jj
+
+    ! Create mesh%rr
+    mesh%np = index
+    ALLOCATE(mesh%rr(2,mesh%np))
+    DO i = 1, mesh_glob%np
+       IF (i_old_to_new(i)==0) CYCLE
+       mesh%rr(:,i_old_to_new(i)) = mesh_glob%rr(:,i)
+    END DO
+    !End Create mesh%rr
+
+    ! Create mesh%neigh
+    ALLOCATE(mesh%neigh(3,mesh%me))
+    DO m = 1, mesh%me
+       DO n = 1, 3
+          mop = mesh_glob%neigh(n,tab(m))
+          IF (mop==0) THEN
+             mesh%neigh(n,m) = 0
+          ELSE
+             mesh%neigh(n,m) = bat(mop)
+          END IF
+       END DO
+    END DO
+    ! End  Create mesh%neigh
+
+    ! Create mesh%i_d
+    ALLOCATE(mesh%i_d(mesh%me))
+    mesh%i_d =  mesh_glob%i_d(tab)
+    ! End mesh%i_d
+
+    ! Create np_loc
+    IF (displ(rank+1)/=0) THEN
+       np_loc(1) = MAXVAL(mesh%jj(:,1:displ(rank+1))) + 1
+    ELSE
+       np_loc(1) = 1
+    END IF
+    np_loc(2) = np_loc(1) - 1
+    IF (me_loc(1).LE.me_loc(2)) THEN
+       np_loc(2) = MAXVAL(mesh%jj(:,me_loc(1):me_loc(2)))
+    END IF
+    IF (np_loc(2) .LT. np_loc(1)-1) THEN
+       np_loc(2) = np_loc(1) - 1
+    END IF
+    ! End create np_loc
+
+    ! Create mes_loc
+    nblmt_per_proc=0
+    DO ms = 1, mesh_glob%mes
+       IF (MINVAL(ABS(list_dom-mesh_glob%i_d(mesh_glob%neighs(ms))))/=0) CYCLE
+       n = parts(ms)
+       nblmt_per_proc(n) =  nblmt_per_proc(n) + 1
+    END DO
+    start(1) = 0
+    DO n = 2, nb_proc
+       start(n) = start(n-1) + nblmt_per_proc(n-1)
+    END DO
+    mes_loc(1) = start(rank+1) + 1
+    mes_loc(2) = start(rank+1) + nblmt_per_proc(rank+1)
+    mesh%mes = SUM(nblmt_per_proc)
+    ! End create mes_loc
+
+    ! Create tabs and sbat
+    ALLOCATE(tabs(mesh%mes))
+    DO ms = 1, mesh_glob%mes
+       IF (MINVAL(ABS(list_dom-mesh_glob%i_d(mesh_glob%neighs(ms))))/=0) CYCLE
+       start(parts(ms)) = start(parts(ms)) + 1
+       tabs(start(parts(ms))) = ms
+    END DO
+    ! End create tabs and sbat
+
+    ! Create neighs
+    ALLOCATE(mesh%neighs(mesh%mes))
+    mesh%neighs = bat(mesh_glob%neighs(tabs))
+    ! End create neighs
+
+    ! Re-order sides
+    ALLOCATE(mesh%sides(mesh%mes))
+    mesh%sides = mesh_glob%sides(tabs)
+    ! End re-order sides
+
+    ! Re-order jjs
+    mesh%gauss%n_ws = SIZE(mesh_glob%jjs,1)
+    ALLOCATE(mesh%jjs(SIZE(mesh_glob%jjs,1),mesh%mes))
+
+    DO n = 1, SIZE(mesh%jjs,1)
+       mesh%jjs(n,:) = i_old_to_new(mesh_glob%jjs(n,tabs))
+    END DO
+    ! End re-order jjs
+
+    !==We create the local mesh now
+    mesh%edge_stab = .FALSE.
+    CALL create_local_mesh(mesh, mesh_loc, me_loc, mes_loc, np_loc)
+
+    DEALLOCATE(list_m, tab, tabs)
+
+  END SUBROUTINE extract_mesh_deprecated
 
    SUBROUTINE create_local_mesh(mesh, mesh_loc, me_loc, mes_loc, np_loc)
       USE def_type_mesh

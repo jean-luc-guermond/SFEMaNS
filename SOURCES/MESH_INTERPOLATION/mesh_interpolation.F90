@@ -704,7 +704,7 @@ CONTAINS
 
     !===Extract local meshes from global meshes
     IF (if_conc) THEN
-       CALL extract_mesh(comm_one_d(1),nb_S,p2_c0_mesh_glob_conc,part,list_dom_conc,conc_mesh_glob,conc_mesh)
+       CALL extract_mesh_deprecated(comm_one_d(1),nb_S,p2_c0_mesh_glob_conc,part,list_dom_conc,conc_mesh_glob,conc_mesh)
        ALLOCATE(comm_one_d_conc(2))
        CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_conc(2), code)
        CALL MPI_COMM_RANK(comm_one_d(1),rank_S,code)
@@ -716,8 +716,8 @@ CONTAINS
     END IF
 
     IF (if_momentum) THEN
-       CALL extract_mesh(comm_one_d(1),nb_S,p1_mesh_glob,part,list_dom_ns,pp_mesh_glob,pp_mesh)
-       CALL extract_mesh(comm_one_d(1),nb_S,p2_mesh_glob,part,list_dom_ns,vv_mesh_glob,vv_mesh)
+       CALL extract_mesh_deprecated(comm_one_d(1),nb_S,p1_mesh_glob,part,list_dom_ns,pp_mesh_glob,pp_mesh)
+       CALL extract_mesh_deprecated(comm_one_d(1),nb_S,p2_mesh_glob,part,list_dom_ns,vv_mesh_glob,vv_mesh)
        ALLOCATE(comm_one_d_ns(2))
        CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_ns(2), code)
        CALL MPI_COMM_RANK(comm_one_d(1),rank_S,code)
@@ -729,7 +729,7 @@ CONTAINS
     END IF
 
     IF (if_energy) THEN
-       CALL extract_mesh(comm_one_d(1),nb_S,p2_c0_mesh_glob_temp,part,list_dom_temp,temp_mesh_glob,temp_mesh)
+       CALL extract_mesh_deprecated(comm_one_d(1),nb_S,p2_c0_mesh_glob_temp,part,list_dom_temp,temp_mesh_glob,temp_mesh)
        ALLOCATE(comm_one_d_temp(2))
        CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_temp(2), code)
        CALL MPI_COMM_RANK(comm_one_d(1),rank_S,code)
@@ -742,14 +742,14 @@ CONTAINS
 
     IF (if_induction) THEN
        IF (type_fe_H==1) THEN
-          CALL extract_mesh(comm_one_d(1),nb_S,p1_mesh_glob,part,list_dom_H,H_mesh_glob,H_mesh)
+          CALL extract_mesh_deprecated(comm_one_d(1),nb_S,p1_mesh_glob,part,list_dom_H,H_mesh_glob,H_mesh)
        ELSE
-          CALL extract_mesh(comm_one_d(1),nb_S,p2_mesh_glob,part,list_dom_H,H_mesh_glob,H_mesh)
+          CALL extract_mesh_deprecated(comm_one_d(1),nb_S,p2_mesh_glob,part,list_dom_H,H_mesh_glob,H_mesh)
        END IF
        IF (type_fe_phi==1) THEN
-          CALL extract_mesh(comm_one_d(1),nb_S,p1_mesh_glob,part,list_dom_phi,phi_mesh_glob,phi_mesh)
+          CALL extract_mesh_deprecated(comm_one_d(1),nb_S,p1_mesh_glob,part,list_dom_phi,phi_mesh_glob,phi_mesh)
        ELSE
-          CALL extract_mesh(comm_one_d(1),nb_S,p2_mesh_glob,part,list_dom_phi,phi_mesh_glob,phi_mesh)
+          CALL extract_mesh_deprecated(comm_one_d(1),nb_S,p2_mesh_glob,part,list_dom_phi,phi_mesh_glob,phi_mesh)
        END IF
     END IF
 
