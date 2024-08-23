@@ -47,7 +47,6 @@ pkg_check_modules(FFTW fftw3)
 # Adding directory to build lib_f
 add_subdirectory(${SFEMaNS_DIR}/LIBS ${SFEMaNS_DIR}/LIBS)
 
-#
 add_subdirectory(${ROOT}/REGRESSION_SUITE/TEST1 ${ROOT}/REGRESSION_SUITE/TEST1/BUILD)
 add_subdirectory(${ROOT}/REGRESSION_SUITE/TEST2 ${ROOT}/REGRESSION_SUITE/TEST2/BUILD)
 add_subdirectory(${ROOT}/REGRESSION_SUITE/TEST3 ${ROOT}/REGRESSION_SUITE/TEST3/BUILD)
