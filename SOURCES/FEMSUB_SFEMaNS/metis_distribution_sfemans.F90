@@ -1603,6 +1603,7 @@ CONTAINS
       CALL create_local_mesh_with_extra_layer(mesh, mesh_loc, me_loc, mes_loc, np_loc)
             WRITE(*,*) 'l medge', mesh_loc%medge, 'np ', mesh_loc%np, 'me ', mesh_loc%me, 'mes ', mesh_loc%mes, &
                  'nps ', mesh_loc%nps
+      WRITE(*,*) 'c', mesh_loc%discell, 'p', mesh_loc%disp, 'e', mesh_loc%disedge
 
       WRITE(*, *)'12'
 
@@ -2028,6 +2029,7 @@ CONTAINS
          mesh_loc%medge = mesh%medge
          mesh_loc%medges = 0
          mesh_loc%nis = 0
+         mesh_loc%nps = 0
 
          ALLOCATE(mesh_loc%jees(mesh_loc%medges))
          ALLOCATE(mesh_loc%jecs(mesh_loc%medges))
