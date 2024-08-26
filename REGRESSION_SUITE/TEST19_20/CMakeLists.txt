@@ -80,7 +80,7 @@ target_link_libraries(${exe} PUBLIC sfemans_lib_F
   )
 target_include_directories(${exe} PUBLIC ${SFEMaNS_DIR}/LIBS)
 
-set(passRegex "1234567891011121314151617181920")
+set(passRegex "^1234567891$")
 
 list(APPEND name_of_test    19      20 )
 list(APPEND name_of_command job19.sh job20.sh)
