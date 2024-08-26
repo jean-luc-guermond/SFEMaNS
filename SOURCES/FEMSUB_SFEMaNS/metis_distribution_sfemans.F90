@@ -2420,18 +2420,19 @@ CONTAINS
       DEALLOCATE(mesh%sides)
       DEALLOCATE(mesh%neighs)
       DEALLOCATE(mesh%i_d)
-      DEALLOCATE(mesh%jce)
+      DEALLOACTE(mesh%jce)
 
       NULLIFY(mesh%loc_to_glob)
       NULLIFY(mesh%disp)
       NULLIFY(mesh%domnp)
       NULLIFY(mesh%j_s)
 
-      IF (mesh%edge_stab) THEN
-         NULLIFY(mesh%jji)
-         DEALLOCATE(mesh%jjsi)
-         DEALLOCATE(mesh%neighi)
-      END IF
+      !IF (mesh%edge_stab) THEN
+      !   DEALLOCATE(mesh%iis)
+      !   NULLIFY(mesh%jji)
+      !   DEALLOCATE(mesh%jjsi)
+      !   DEALLOCATE(mesh%neighi)
+      !END IF
 
       mesh%dom_me = 0
       mesh%dom_np = 0
