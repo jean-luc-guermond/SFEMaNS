@@ -1405,6 +1405,7 @@ CONTAINS
    SUBROUTINE extract_mesh(communicator, nb_proc, mesh_glob, part, list_dom, mesh_loc)
       USE def_type_mesh
       USE my_util
+      USE prep_maill
       IMPLICIT NONE
       TYPE(mesh_type) :: mesh_glob, mesh, mesh_loc
       INTEGER, DIMENSION(:) :: part, list_dom
@@ -1600,6 +1601,7 @@ CONTAINS
 
       !==We create the local mesh now
       mesh%edge_stab = .FALSE.
+      CALL prep_jce_jev(mesh)
       WRITE(*, *)'11'
       WRITE(*, *) 'g medge', mesh%medge, 'np ', mesh%np, 'me ', mesh%me, 'mes ', mesh%mes, 'nps ', mesh%nps
 WRITE(*, *)  'me', me_loc, 'mes', mes_loc, 'np', np_loc
