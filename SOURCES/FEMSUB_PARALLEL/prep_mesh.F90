@@ -9,7 +9,7 @@ MODULE prep_maill
    PUBLIC :: load_mesh, load_mesh_formatted, load_mesh_free_format, &
         load_dg_mesh_free_format, load_mesh_free_format_ordered, prep_interfaces, &
         create_p3_mesh, incr_vrtx_indx_enumeration, incr_vrtx_indx_enumeration_for_interfaces, &
-        create_iso_grid_distributed
+        create_iso_grid_distributed, prep_jce_jev
    PRIVATE
 
 CONTAINS
