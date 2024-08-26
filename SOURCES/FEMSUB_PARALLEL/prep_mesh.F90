@@ -2104,7 +2104,7 @@ CONTAINS
                !===End of iso-grid
                !===Surface elements of the grid are defined later
             ELSE !===the side is internal
-               if (prov == 1) write(*,*) edge_l
+               if (proc == 1) write(*,*) edge_l
                IF (virgin(edge_l)) THEN !===This side is new
                   DO l = 1, f_dof
                      n_dof = n_dof + 1 !===New index created
