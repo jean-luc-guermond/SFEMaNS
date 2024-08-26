@@ -109,7 +109,7 @@ CONTAINS
     ELSE IF (error_cumul/norm .GT. 1.d-7) THEN
        error_out = 2 !===Test Failed
     ELSE
-       error_out= 12345678910 !===Test Passed
+       error_out= 1234567891 !===Test Passed
     END IF
 
     CLOSE(21)
