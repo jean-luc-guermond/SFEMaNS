@@ -1488,7 +1488,16 @@ CONTAINS
             END IF
          END DO
       END DO
+      mesh%np = index
       ! End Create mesh%jj
+
+      ! Create mesh%rr
+      ALLOCATE(mesh%rr(2, mesh%np))
+      DO i = 1, mesh_glob%np
+         IF (i_old_to_new(i)==0) CYCLE
+         mesh%rr(:, i_old_to_new(i)) = mesh_glob%rr(:, i)
+      END DO
+      !End Create mesh%rr
 
       ! Re-order edge
       ALLOCATE(mesh%jce(SIZE(mesh_glob%jce, 1), mesh%me))
@@ -1506,16 +1515,10 @@ CONTAINS
             END IF
          END DO
       END DO
+      mesh%medge = index
       ! End re-order edge
 
-      ! Create mesh%rr
-      mesh%np = index
-      ALLOCATE(mesh%rr(2, mesh%np))
-      DO i = 1, mesh_glob%np
-         IF (i_old_to_new(i)==0) CYCLE
-         mesh%rr(:, i_old_to_new(i)) = mesh_glob%rr(:, i)
-      END DO
-      !End Create mesh%rr
+
 
       ! Create mesh%neigh
       ALLOCATE(mesh%neigh(3, mesh%me))
@@ -1598,7 +1601,7 @@ CONTAINS
       !==We create the local mesh now
       mesh%edge_stab = .FALSE.
       WRITE(*, *)'11'
-      WRITE(*,*) 'g medge', mesh%medge, 'np ', mesh%np, 'me ', mesh%me, 'mes ', mesh%mes, 'nps ', mesh%nps
+      WRITE(*, *) 'g medge', mesh%medge, 'np ', mesh%np, 'me ', mesh%me, 'mes ', mesh%mes, 'nps ', mesh%nps
 
       CALL create_local_mesh_with_extra_layer(mesh, mesh_loc, me_loc, mes_loc, np_loc)
             WRITE(*,*) 'l medge', mesh_loc%medge, 'np ', mesh_loc%np, 'me ', mesh_loc%me, 'mes ', mesh_loc%mes, &
