@@ -1906,7 +1906,6 @@ CONTAINS
       END DO
 
       !===GENERATION OF THE Pk GRID
-      WRITE(*,*) mesh%np, mesh_p1%np, mesh_p1%medge, mesh_p1%medges
       mesh%rr(:, 1:dom_np) = mesh_p1%rr(:, 1:dom_np)
       mesh%rr(:, mesh%dom_np + 1:mesh%dom_np + np - dom_np) = mesh_p1%rr(:, dom_np + 1:)
       mesh%jj(1:nw, :) = mesh_p1%jj
