@@ -109,6 +109,7 @@ CONTAINS
     ELSE IF (error_cumul/norm .GT. 1.d-7) THEN
        error_out = 2 !===Test Failed
     ELSE
+       WRITE(*,*) 1234567891
        error_out= 1234567891 !===Test Passed
     END IF
 
