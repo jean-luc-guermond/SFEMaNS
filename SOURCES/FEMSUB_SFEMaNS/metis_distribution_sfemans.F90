@@ -1506,7 +1506,7 @@ CONTAINS
       index = 0
       DO m = 1, mesh%me
          DO n = 1, SIZE(mesh%jce, 1)
-            j = mesh_glob%jce(n, m)
+            j = mesh_glob%jce(n, tab(m))
             IF (old_edge_to_new(j)/=0) THEN
                mesh%jce(n, m) = old_edge_to_new(j)
             ELSE
@@ -1518,7 +1518,6 @@ CONTAINS
       END DO
       mesh%medge = index
       ! End re-order edge
-
 
 
       ! Create mesh%neigh
