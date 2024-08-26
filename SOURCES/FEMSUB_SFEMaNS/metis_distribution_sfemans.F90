@@ -2420,6 +2420,7 @@ CONTAINS
       DEALLOCATE(mesh%sides)
       DEALLOCATE(mesh%neighs)
       DEALLOCATE(mesh%i_d)
+      DEALLOCATE(mesh%jce)
 
       NULLIFY(mesh%loc_to_glob)
       NULLIFY(mesh%disp)
@@ -2427,7 +2428,6 @@ CONTAINS
       NULLIFY(mesh%j_s)
 
       IF (mesh%edge_stab) THEN
-         DEALLOCATE(mesh%iis)
          NULLIFY(mesh%jji)
          DEALLOCATE(mesh%jjsi)
          DEALLOCATE(mesh%neighi)
