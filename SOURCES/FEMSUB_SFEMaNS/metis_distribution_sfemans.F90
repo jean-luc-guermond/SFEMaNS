@@ -1508,11 +1508,11 @@ CONTAINS
          DO n = 1, SIZE(mesh%jce, 1)
             j = mesh_glob%jce(n, m)
             IF (old_edge_to_new(j)/=0) THEN
-               mesh%jj(n, m) = old_edge_to_new(j)
+               mesh%jce(n, m) = old_edge_to_new(j)
             ELSE
                index = index + 1
                old_edge_to_new(j) = index
-               mesh%jj(n, m) = old_edge_to_new(j)
+               mesh%jce(n, m) = old_edge_to_new(j)
             END IF
          END DO
       END DO
@@ -1601,7 +1601,7 @@ CONTAINS
 
       !==We create the local mesh now
       mesh%edge_stab = .FALSE.
-      CALL prep_jce_jev(mesh)
+
       WRITE(*, *)'11'
       WRITE(*, *) 'g medge', mesh%medge, 'np ', mesh%np, 'me ', mesh%me, 'mes ', mesh%mes, 'nps ', mesh%nps
 WRITE(*, *)  'me', me_loc, 'mes', mes_loc, 'np', np_loc
