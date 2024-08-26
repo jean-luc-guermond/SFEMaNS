@@ -1971,7 +1971,6 @@ CONTAINS
                n_start = n2
                n_end = n1
             END IF
-            write(*,*) n_start, n_end
 
             !IF (m_op_k == 0) THEN  !===the side is on the boundary
             !   iso = .TRUE.

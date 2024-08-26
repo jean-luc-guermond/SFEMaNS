@@ -1602,15 +1602,7 @@ CONTAINS
       !==We create the local mesh now
       mesh%edge_stab = .FALSE.
 
-      WRITE(*, *)'11'
-      WRITE(*, *) 'g medge', mesh%medge, 'np ', mesh%np, 'me ', mesh%me, 'mes ', mesh%mes, 'nps ', mesh%nps
-WRITE(*, *)  'me', me_loc, 'mes', mes_loc, 'np', np_loc
       CALL create_local_mesh_with_extra_layer(mesh, mesh_loc, me_loc, mes_loc, np_loc)
-            WRITE(*,*) 'l medge', mesh_loc%medge, 'np ', mesh_loc%np, 'me ', mesh_loc%me, 'mes ', mesh_loc%mes, &
-                 'nps ', mesh_loc%nps
-      WRITE(*,*) 'c', mesh_loc%discell, 'p', mesh_loc%disp, 'e', mesh_loc%disedge
-
-      WRITE(*, *)'12'
 
       CALL free_mesh(mesh)
       DEALLOCATE(list_m, tab, tabs)
@@ -2338,7 +2330,6 @@ WRITE(*, *)  'me', me_loc, 'mes', mes_loc, 'np', np_loc
             nb_extra = nb_extra + 1
          END IF
       END DO
-      WRITE(*, *)'14'
 
       mesh_loc%mextra = nb_extra
       ALLOCATE(mesh_loc%extra_jj(nw, nb_extra), mesh_loc%extra_jce(SIZE(mesh%jce, 1), nb_extra), mesh_loc%extra_jcc(nb_extra))
@@ -2364,8 +2355,6 @@ WRITE(*, *)  'me', me_loc, 'mes', mes_loc, 'np', np_loc
       mesh_loc%edge_stab = .FALSE.
       mesh_loc%mi = 0
 
-      WRITE(*, *)'15'
-
       !===Find the isolated points on the border
       nb_extra = 0
       virgin = .TRUE.
@@ -2388,7 +2377,6 @@ WRITE(*, *)  'me', me_loc, 'mes', mes_loc, 'np', np_loc
       mesh_loc%nis = nb_extra
       ALLOCATE(mesh_loc%isolated_jjs(mesh_loc%nis), mesh_loc%isolated_interfaces(mesh_loc%nis, 2))
       mesh_loc%isolated_interfaces = -1
-      WRITE(*, *)'16'
 
       nb_extra = 0
       virgin = .TRUE.
