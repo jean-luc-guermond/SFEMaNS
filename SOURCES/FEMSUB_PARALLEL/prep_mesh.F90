@@ -2105,6 +2105,7 @@ CONTAINS
                !===Surface elements of the grid are defined later
             ELSE !===the side is internal
                if (proc == 1) write(*,*) edge_l
+               write(*,*) mesh_p1%neigh
                IF (virgin(edge_l)) THEN !===This side is new
                   DO l = 1, f_dof
                      n_dof = n_dof + 1 !===New index created
