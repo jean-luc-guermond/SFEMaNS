@@ -453,6 +453,7 @@ CONTAINS
        CALL MatAssemblyEnd(matrix,MAT_FINAL_ASSEMBLY,ierr)
 
     END DO
+    WRITE(*,*) 'Exiting periodic_matrix_petsc'
 
   END SUBROUTINE periodic_matrix_petsc
 
