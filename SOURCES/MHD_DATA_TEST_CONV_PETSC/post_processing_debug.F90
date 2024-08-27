@@ -110,7 +110,7 @@ CONTAINS
        error_out = 2 !===Test Failed
     ELSE
        WRITE(*,*) 1234567891
-       error_out= 1234567891 !===Test Passed
+       error_out= 123 !===Test Passed
     END IF
 
     CLOSE(21)

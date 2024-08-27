@@ -2011,7 +2011,6 @@ CONTAINS
       nw = SIZE(mesh%jj, 1)
       nwc = SIZE(mesh%neigh, 1)
       nb_proc = SIZE(mesh_loc%domnp)
-      WRITE(*, *)'1'
 
       !==Test if one proc only
       IF (me_loc(2) - me_loc(1) + 1==mesh%me) THEN
@@ -2069,7 +2068,6 @@ CONTAINS
          RETURN
       END IF
       !==End test if one proc only
-      WRITE(*, *)'2'
 
       !==Create the new mesh
       dom_me = me_loc(2) - me_loc(1) + 1
@@ -2092,7 +2090,6 @@ CONTAINS
       DO n = 1, nb_proc
          mesh_loc%disp(n + 1) = mesh_loc%disp(n) + mesh_loc%domnp(n)
       END DO
-      WRITE(*, *)'3'
 
       CALL MPI_ALLGATHER(mesh_loc%me, 1, MPI_INTEGER, mesh_loc%domcell, 1, &
            MPI_INTEGER, PETSC_COMM_WORLD, ierr)
@@ -2100,7 +2097,6 @@ CONTAINS
       DO n = 1, nb_proc
          mesh_loc%discell(n + 1) = mesh_loc%discell(n) + mesh_loc%domcell(n)
       END DO
-      WRITE(*, *)'4'
 
       !==Re-order jj
       virgin = .TRUE.
@@ -2114,7 +2110,6 @@ CONTAINS
          END DO
       END DO
       ALLOCATE(mesh_loc%jj(nw, mesh_loc%me))
-      WRITE(*, *)'5'
 
       m_glob_to_loc = 0
       virgin = .TRUE.
@@ -2140,7 +2135,6 @@ CONTAINS
          m_loc_to_glob(m - me_loc(1) + 1) = m
          m_glob_to_loc(m) = m - me_loc(1) + 1
       END DO
-      WRITE(*, *)'6'
 
       IF (SIZE(mesh%jj, 1) == 6) THEn
          DO m = me_loc(1), me_loc(2)
@@ -2180,13 +2174,11 @@ CONTAINS
             END IF
          END DO
       END IF
-      WRITE(*, *)'6'
 
       DO n = 1, nw
          mesh_loc%jj(n, 1:dom_me) = glob_to_loc(mesh%jj(n, me_loc(1):me_loc(2)))
       END DO
       !==End re-order jj
-      WRITE(*, *)'7'
 
       !==Create mesh%loc_to_glob
       IF (MAXVAL(mesh_loc%jj)/=dof) THEN
@@ -2196,7 +2188,6 @@ CONTAINS
       ALLOCATE(mesh_loc%loc_to_glob(mesh_loc%np))
       mesh_loc%loc_to_glob = loc_to_glob(1:mesh_loc%np)
       !==End create mesh%loc_to_glob
-      WRITE(*, *)'8'
 
       !==Re-order rr
       ALLOCATE(mesh_loc%rr(dim, mesh_loc%np))
@@ -2225,7 +2216,6 @@ CONTAINS
          END DO
       END DO
       !==End re-order neigh
-      WRITE(*, *)'9'
 
       !==Re-order i_d
       ALLOCATE(mesh_loc%i_d(mesh_loc%me))
@@ -2242,7 +2232,6 @@ CONTAINS
       ALLOCATE(mesh_loc%sides(mesh_loc%mes))
       mesh_loc%sides = mesh%sides(mes_loc(1):mes_loc(2))
       !==End re-order sides
-      WRITE(*, *)'10'
 
       !==Re-order jjs
       ALLOCATE(mesh_loc%jjs(nws, mesh_loc%mes))
@@ -2255,7 +2244,6 @@ CONTAINS
       ALLOCATE(mesh_loc%jce(SIZE(mesh%jce, 1), mesh_loc%me))
       mesh_loc%jce = mesh%jce(:, me_loc(1):me_loc(2))
       !==End re-order jce
-      WRITE(*, *)'11'
 
       mesh_loc%medge = 0
       mesh_loc%medges = 0
@@ -2273,7 +2261,6 @@ CONTAINS
             END IF
          END DO
       END DO
-      WRITE(*, *)'12'
 
       ALLOCATE(mesh_loc%jees(mesh_loc%medges))
       ALLOCATE(mesh_loc%jecs(mesh_loc%medges))
@@ -2296,7 +2283,6 @@ CONTAINS
             END IF
          END DO
       END DO
-      WRITE(*, *)'13'
 
       CALL MPI_ALLGATHER(mesh_loc%medge, 1, MPI_INTEGER, mesh_loc%domedge, 1, &
            MPI_INTEGER, PETSC_COMM_WORLD, ierr)

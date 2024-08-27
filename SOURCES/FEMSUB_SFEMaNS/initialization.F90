@@ -1047,7 +1047,6 @@ CONTAINS
             CLOSE(51)
          END IF
       END IF
-      WRITE(*, *) 'partition created'
       !===Extract local meshes from global meshes=====================================
 
       !===Specific to momentum (velocity)
