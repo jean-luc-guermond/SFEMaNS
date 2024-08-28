@@ -1127,7 +1127,7 @@ CONTAINS
       !===Extract local meshes from global meshes for Maxwell=========================
       IF (if_induction) THEN
          CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_mesh_glob, part, list_dom_H, dummy_mesh_loc)
-         write(*,*) p1_mesh_glob%domnp, dummy_mesh_loc%domnp
+         write(*,*) dummy_mesh_loc%loc_to_glob
          CALL create_iso_grid_distributed(dummy_mesh_loc, H_mesh, inputs%type_fe_H)
          CALL free_mesh(dummy_mesh_loc)
 
