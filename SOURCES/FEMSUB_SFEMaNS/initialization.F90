@@ -1107,6 +1107,8 @@ CONTAINS
             CALL st_aij_csr_glob_block_with_extra_layer(comm_one_d_ns(1), 1, vv_mesh, vizu_rot_u_LA)
          END IF
 
+         write(*,*) 'np', mesh_vv%disp, 'LA', SIZE(vv_3_LA%ia)
+
          !TODO ===Create symmetric points==================================================
          !IF (inputs%is_mesh_symmetric) THEN
          !   ALLOCATE(vv_mz_LA(vv_mesh%np))
@@ -2096,6 +2098,9 @@ CONTAINS
             CALL error_Petsc(' BUG in INIT : sigma reconstruct via level set not implemented with vacuum or variable mu')
          END IF
       END IF
+
+
+      write(*,*) 'init done'
 
    END SUBROUTINE INIT
 

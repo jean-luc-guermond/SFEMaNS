@@ -396,8 +396,6 @@ CONTAINS
     Mat                                          :: matrix
     PetscErrorCode                               :: ierr
 
-    WRITE(*,*) 'Entering periodic_matrix_petsc'
-
     CALL MatSetOption (matrix, MAT_ROW_ORIENTED, PETSC_FALSE, ierr)
     CALL MatSetOption (matrix, MAT_KEEP_NONZERO_PATTERN, PETSC_TRUE, ierr)
 
@@ -435,7 +433,6 @@ CONTAINS
           n_D = SIZE(list(n)%DIL)
           !CALL MatZeroRows(matrix, n_D, LA%loc_to_glob(k,list(n)%DIL(:))-1, 1.d0, &
           !     PETSC_NULL_OBJECT, PETSC_NULL_OBJECT, ierr) !petsc.3.7.4
-          write(*,*) LA%loc_to_glob(k,list(n)%DIL(:))-1
           CALL MatZeroRows(matrix, n_D, LA%loc_to_glob(k,list(n)%DIL(:))-1, 1.d0, &
                PETSC_NULL_VEC, PETSC_NULL_VEC, ierr) !(JLG) Feb 20, 2019, petsc.3.8.4
        END DO
@@ -453,7 +450,6 @@ CONTAINS
        CALL MatAssemblyEnd(matrix,MAT_FINAL_ASSEMBLY,ierr)
 
     END DO
-    WRITE(*,*) 'Exiting periodic_matrix_petsc'
 
   END SUBROUTINE periodic_matrix_petsc
 
