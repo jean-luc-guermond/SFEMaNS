@@ -1931,6 +1931,7 @@ CONTAINS
          END DO
          mesh%loc_to_glob(mesh%dom_np + m) = mesh_p1%loc_to_glob(dom_np + m) &
               + (mesh_p1%disedge(p) - 1) * f_dof + (mesh_p1%discell(p) - 1) * (f_dof - 1)
+         if (mesh%loc_to_glob(mesh%dom_np + m) > 291) write(*,*) '??', mesh%loc_to_glob(mesh%dom_np + m)
       END DO
 
       DO m = 1, mesh_p1%mextra
@@ -2100,6 +2101,7 @@ CONTAINS
                             + mesh_p1%rr(:, n3) * (shalf - s1) * (shalf - s2) / ((s3 - s1) * (s3 - s2))
                   mesh%loc_to_glob(l + n_new_start) = l + n_new_start + mesh%disp(proc) - 1
                END DO
+         if (mesh%loc_to_glob(l + n_new_start)  > 291) write(*,*) '???', mesh%loc_to_glob(l + n_new_start)
 
                !===End of iso-grid
                !===Surface elements of the grid are defined later
@@ -2173,6 +2175,7 @@ CONTAINS
                  + l * (mesh_p1%rr(:, n_end) - mesh_p1%rr(:, n_start)) / type_fe
             mesh%loc_to_glob(n_new_start + l) = l + (edge_l - 1) * f_dof + mesh_p1%domnp(p) + mesh%disp(p) - 1
          END DO
+         if (mesh%loc_to_glob(l + n_new_start)  > 291) write(*,*) '????', mesh%loc_to_glob(l + n_new_start)
 
       END DO
 
