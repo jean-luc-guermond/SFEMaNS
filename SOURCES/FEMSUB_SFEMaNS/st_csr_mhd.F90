@@ -260,14 +260,28 @@ CONTAINS
             DO ni = 1, SIZE(H_mesh%jj, 1)
                iglob = H_mesh%extra_jj(ni, m)
                DO nj = 1, SIZE(pmag_mesh%jj, 1)
-                  jglob = pmag_mesh%loc_to_glob(pmag_mesh%jj(nj, m))
-                  CALL search_index(pmag_mesh, jglob, nb_procs, jloc, proc, out)
+                  jglob = pmag_mesh%extra_jj(nj, m)
+                  jloc = jglob - pmag_mesh%loc_to_glob(1) + 1
+                  IF (jloc<1 .OR. jloc>np_pmag) THEN
+                     DO p = 2, nb_procs + 1
+                        IF (pmag_mesh%disp(p) > jglob) THEN
+                           proc = p - 1
+                           EXIT
+                        END IF
+                     END DO
+                     out = .TRUE.
+                     jloc = jglob - pmag_mesh%disp(proc) + 1
+                  ELSE
+                     out = .FALSE.
+                  END IF
+
                   IF (out) THEN
                      j = 3 * (H_mesh%disp(proc) - 1) + (pmag_mesh%disp(proc) - 1) + (phi_mesh%disp(proc) - 1) &
                           + 3 * H_mesh%domnp(proc) + jloc
                   ELSE
                      j = LA_pmag%loc_to_glob(1, jloc)
                   END IF
+
                   IF (iglob >= H_mesh%loc_to_glob(1) .AND. iglob <= H_mesh%loc_to_glob(1) + H_mesh%dom_np - 1) THEN
                      i = iglob - H_mesh%loc_to_glob(1) + 1
                      IF (MINVAL(ABS(ja_work(iloc, 1:nja_glob(i)) - j)) /= 0) THEN
@@ -282,7 +296,20 @@ CONTAINS
 
                   IF (.NOT.out) THEN
                      i = np_H + jloc
-                     CALL search_index(H_mesh, iglob, nb_procs, iloc, proc, out)
+                     iloc = iglob - H_mesh%loc_to_glob(1) + 1
+                     IF (iloc<1 .OR. iloc>np_m) THEN
+                        DO p = 2, nb_procs + 1
+                           IF (H_mesh%disp(p) > jglob) THEN
+                              proc = p - 1
+                              EXIT
+                           END IF
+                        END DO
+                        out = .TRUE.
+                        iloc = jglob - H_mesh%disp(proc) + 1
+                     ELSE
+                        out = .FALSE.
+                     END IF
+
                      DO k = 1, 3
                         IF (out) THEN
                            j = 3 * (H_mesh%disp(proc) - 1) + (pmag_mesh%disp(proc) - 1) + (phi_mesh%disp(proc) - 1) &
