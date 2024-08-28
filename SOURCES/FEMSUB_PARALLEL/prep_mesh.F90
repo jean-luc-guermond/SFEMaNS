@@ -2115,6 +2115,8 @@ CONTAINS
                      mesh%rr(:, l + n_new_start) = mesh_p1%rr(:, n_start) &
                           + l * (mesh_p1%rr(:, n_end) - mesh_p1%rr(:, n_start)) / type_fe
                      mesh%loc_to_glob(l + n_new_start) = l + n_new_start + mesh%disp(proc) - 1
+                                     if (mesh%loc_to_glob(l + n_new_start)  > 291) write(*,*) '?????', mesh%loc_to_glob(l + n_new_start)
+
                   END DO
                ELSE !===the side has been already considered
                   mm = m_op_k
@@ -2199,6 +2201,8 @@ CONTAINS
             mesh%rr(:, n_new_start) = &
                  (mesh_p1%rr(:, mesh_p1%jj(1, m)) + mesh_p1%rr(:, mesh_p1%jj(2, m)) + mesh_p1%rr(:, mesh_p1%jj(3, m))) / 3
             mesh%loc_to_glob(n_new_start) = m + mesh_p1%medge * 2 + mesh_p1%dom_np + mesh%disp(proc) - 1
+                                       if (mesh%loc_to_glob(n_new_start)  > 291) write(*,*) '???????', mesh%loc_to_glob(n_new_start)
+
          END IF
       END DO
 
