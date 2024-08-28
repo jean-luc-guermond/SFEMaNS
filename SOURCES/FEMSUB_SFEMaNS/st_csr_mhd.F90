@@ -174,7 +174,7 @@ CONTAINS
              iglob = jj_loc(ni)
 
              DO nj = 1, SIZE(pmag_mesh%jj,1)
-                jglob = pmag_mesh_glob%jj(nj,m)
+                jglob =  pmag_mesh%loc_to_glob(pmag_mesh%jj(nj,m))
                 CALL search_index(pmag_mesh,jglob,nb_procs,jloc,proc,out)
                 IF (out) THEN
                    j = 3*(H_mesh%disp(proc)-1)+(pmag_mesh%disp(proc)-1)+(phi_mesh%disp(proc)-1) + 3*H_mesh%domnp(proc) + jloc
