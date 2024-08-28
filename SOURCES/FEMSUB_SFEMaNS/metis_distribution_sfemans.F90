@@ -1601,7 +1601,7 @@ CONTAINS
       !==We create the local mesh now
       mesh%edge_stab = .FALSE.
 
-      CALL create_local_mesh_with_extra_layer(mesh, mesh_loc, me_loc, mes_loc, np_loc)
+      CALL create_local_mesh_with_extra_layer(communicator, mesh, mesh_loc, me_loc, mes_loc, np_loc)
 
       CALL free_mesh(mesh)
       DEALLOCATE(list_m, tab, tabs)
@@ -2005,6 +2005,7 @@ CONTAINS
       LOGICAL :: test
       INTEGER :: dim, nws, nw, m, ms, mop, msop, ns, msup, minf, dof, proc, &
            dom_me, nwc, dom_mes, dom_np, n, i, rank, ierr, dom_np_glob, nb_extra, nb_proc, e_glob, medge, medges, j
+      MPI_Comm       :: communicator
 
       dim = SIZE(mesh%rr, 1)
       nws = SIZE(mesh%jjs, 1)
@@ -2079,13 +2080,13 @@ CONTAINS
       mesh_loc%dom_np = dom_np
       mesh_loc%dom_mes = dom_mes
       CALL MPI_ALLREDUCE(dom_np, dom_np_glob, 1, MPI_INTEGER, &
-           MPI_MIN, PETSC_COMM_WORLD, ierr)
+           MPI_MIN, communicator, ierr)
       IF (dom_np_glob.LE.0) THEN
          CALL error_petsc('Pb in create_local_mesh, not enough cells per processors')
       END IF
 
       CALL MPI_ALLGATHER(mesh_loc%dom_np, 1, MPI_INTEGER, mesh_loc%domnp, 1, &
-           MPI_INTEGER, PETSC_COMM_WORLD, ierr)
+           MPI_INTEGER, communicator, ierr)
       write(*,*) 'p1 domnp', mesh_loc%domnp, dom_np, mesh_loc%dom_np, np_loc(2), np_loc(1)
       mesh_loc%disp(1) = 1
       DO n = 1, nb_proc
@@ -2093,7 +2094,7 @@ CONTAINS
       END DO
 
       CALL MPI_ALLGATHER(mesh_loc%me, 1, MPI_INTEGER, mesh_loc%domcell, 1, &
-           MPI_INTEGER, PETSC_COMM_WORLD, ierr)
+           MPI_INTEGER, communicator, ierr)
       mesh_loc%discell(1) = 1
       DO n = 1, nb_proc
          mesh_loc%discell(n + 1) = mesh_loc%discell(n) + mesh_loc%domcell(n)
@@ -2286,7 +2287,7 @@ CONTAINS
       END DO
 
       CALL MPI_ALLGATHER(mesh_loc%medge, 1, MPI_INTEGER, mesh_loc%domedge, 1, &
-           MPI_INTEGER, PETSC_COMM_WORLD, ierr)
+           MPI_INTEGER, communicator, ierr)
       mesh_loc%disedge(1) = 1
       DO n = 1, nb_proc
          mesh_loc%disedge(n + 1) = mesh_loc%disedge(n) + mesh_loc%domedge(n)
