@@ -167,8 +167,8 @@ CONTAINS
 
     ! Block Hxp and pxH
     IF (H_mesh%me /=0) THEN
-       DO m = 1, H_mesh_glob%me
-          jj_loc = H_mesh_glob%jj(:,m)
+       DO m = 1, H_mesh%me
+          jj_loc = H_mesh%loc_to_glob(H_mesh%jj(:,m))
           IF (MAXVAL(jj_loc)<H_mesh%loc_to_glob(1) .OR. MINVAL(jj_loc)>H_mesh%loc_to_glob(1) + H_mesh%dom_np -1) CYCLE
           DO ni = 1, SIZE(H_mesh%jj,1)
              iglob = jj_loc(ni)
@@ -220,11 +220,11 @@ CONTAINS
     ! Interface_H_mu
     IF (H_mesh%me /=0) THEN
        DO ms = 1, interface_H_mu_glob%mes
-          m1 = H_mesh_glob%neighs(interface_H_mu_glob%mesh1(ms))
-          m2 = H_mesh_glob%neighs(interface_H_mu_glob%mesh2(ms))
+          m1 = H_mesh%neighs(interface_H_mu_glob%mesh1(ms))
+          m2 = H_mesh%neighs(interface_H_mu_glob%mesh2(ms))
 
-          jj_loc1 = H_mesh_glob%jj(:,m1)
-          jj_loc2 = H_mesh_glob%jj(:,m2)
+          jj_loc1 = H_mesh%jj(:,m1)
+          jj_loc2 = H_mesh%jj(:,m2)
           jmin = MIN(MINVAL(jj_loc1),MINVAL(jj_loc2))
           jmax = MAX(MAXVAL(jj_loc1),MAXVAL(jj_loc2))
 
@@ -240,11 +240,11 @@ CONTAINS
              END IF
 
              DO ni = 1, SIZE(H_mesh%jj,1)
-                iglob = H_mesh_glob%jj(ni,mi)
+                iglob = H_mesh%loc_to_glob(H_mesh%jj(ni,mi))
                 IF (iglob < H_mesh%loc_to_glob(1) .OR. iglob > H_mesh%loc_to_glob(1) + H_mesh%dom_np -1) CYCLE
 
                 DO nj = 1, SIZE(H_mesh%jj,1)
-                   jglob = H_mesh_glob%jj(nj,mj)
+                   jglob =  H_mesh%loc_to_glob(H_mesh%jj(nj,mj))
                    CALL search_index(H_mesh,jglob,nb_procs,jloc,proc,out)
                    DO kj = 1, 3
                       IF (out) THEN
@@ -270,15 +270,15 @@ CONTAINS
     ! Interface_H_phi
     IF (H_mesh%me*phi_mesh%me /=0) THEN
        DO ms = 1, interface_glob%mes
-          m1 = H_mesh_glob%neighs(interface_glob%mesh1(ms))
-          m2 = phi_mesh_glob%neighs(interface_glob%mesh2(ms))
+          m1 = H_mesh%neighs(interface_glob%mesh1(ms))
+          m2 = phi_mesh%neighs(interface_glob%mesh2(ms))
 
           DO ni = 1, SIZE(H_mesh%jj,1)
-             iglob = H_mesh_glob%jj(ni,m1)
+             iglob =  H_mesh%loc_to_glob(H_mesh%jj(ni,m1))
              IF (iglob < H_mesh%loc_to_glob(1) .OR. iglob > H_mesh%loc_to_glob(1) + H_mesh%dom_np -1) CYCLE
 
              DO nj = 1, SIZE(phi_mesh%jj,1)
-                jglob =  phi_mesh_glob%jj(nj,m2)
+                jglob =   phi_mesh%loc_to_glob(phi_mesh%jj(nj,m2))
                 CALL search_index(phi_mesh,jglob,nb_procs,jloc,proc,out)
                 IF (out) THEN
                    j = 3*(H_mesh%disp(proc)-1)+(pmag_mesh%disp(proc)-1)+(phi_mesh%disp(proc)-1) &
@@ -296,11 +296,11 @@ CONTAINS
           END DO
 
           DO ni = 1, SIZE(phi_mesh%jj,1)
-             iglob = phi_mesh_glob%jj(ni,m2)
+             iglob =  phi_mesh%loc_to_glob(phi_mesh%jj(ni,m2))
              IF (iglob < phi_mesh%loc_to_glob(1) .OR. iglob > phi_mesh%loc_to_glob(1) + phi_mesh%dom_np -1) CYCLE
              i = iglob - phi_mesh%loc_to_glob(1) + 1 + np_H + np_pmag
              DO nj = 1, SIZE(H_mesh%jj,1)
-                jglob = H_mesh_glob%jj(nj,m1)
+                jglob =  H_mesh%loc_to_glob(H_mesh%jj(nj,m1))
                 CALL search_index(H_mesh,jglob,nb_procs,jloc,proc,out)
                 DO kj = 1, 3
                    IF (out) THEN
