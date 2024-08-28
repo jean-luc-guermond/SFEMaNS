@@ -1931,7 +1931,6 @@ CONTAINS
          END DO
          mesh%loc_to_glob(mesh%dom_np + m) = mesh_p1%loc_to_glob(dom_np + m) &
               + (mesh_p1%disedge(p) - 1) * f_dof + (mesh_p1%discell(p) - 1) * (f_dof - 1)
-         if (mesh%loc_to_glob(mesh%dom_np + m) > 291) write(*,*) '??', mesh%loc_to_glob(mesh%dom_np + m)
       END DO
 
       DO m = 1, mesh_p1%mextra
@@ -1943,6 +1942,7 @@ CONTAINS
             END DO
             mesh%extra_jj(n, m) = mesh_p1%extra_jj(n, m) &
                  + (mesh_p1%disedge(p) - 1) * f_dof + (mesh_p1%discell(p) - 1) * (f_dof - 1)
+if (mesh%extra_jj(n, m)  > 291) write(*,*) '??', mesh%extra_jj(n, m)
          END DO
       END DO
 
@@ -2100,8 +2100,6 @@ CONTAINS
                             + mesh_p1%rr(:, n2) * (shalf - s3) * (shalf - s1) / ((s2 - s3) * (s2 - s1)) &
                             + mesh_p1%rr(:, n3) * (shalf - s1) * (shalf - s2) / ((s3 - s1) * (s3 - s2))
                   mesh%loc_to_glob(l + n_new_start) = l + n_new_start + mesh%disp(proc) - 1
-                           if (mesh%loc_to_glob(l + n_new_start)  > 291) write(*,*) '???', mesh%loc_to_glob(l + n_new_start)
-
                END DO
 
                !===End of iso-grid
@@ -2115,8 +2113,6 @@ CONTAINS
                      mesh%rr(:, l + n_new_start) = mesh_p1%rr(:, n_start) &
                           + l * (mesh_p1%rr(:, n_end) - mesh_p1%rr(:, n_start)) / type_fe
                      mesh%loc_to_glob(l + n_new_start) = l + n_new_start + mesh%disp(proc) - 1
-                     if (mesh%loc_to_glob(l + n_new_start)  > 291) write(*,*) '?????', mesh%loc_to_glob(l + n_new_start)
-
                   END DO
                ELSE !===the side has been already considered
                   mm = m_op_k
@@ -2258,10 +2254,14 @@ CONTAINS
             DO l = 1, f_dof
                mesh%extra_jj(nw + (k - 1) * f_dof + l, m) = l &
                     + (edge_l - 1) * f_dof + mesh_p1%domnp(p_e) + mesh%disp(p_e) - 1
+               if (mesh%extra_jj(n, m)  > 291) write(*,*) '????', mesh%extra_jj(n, m)
+
             END DO
 
             IF (type_fe==3) THEN
                mesh%extra_jj(10, m) = cell_l + mesh_p1%domedge(p_c) * 2 + mesh_p1%domnp(p_c) + mesh%disp(p_c) - 1
+               if (mesh%extra_jj(10, m)  > 291) write(*,*) '?????', mesh%extra_jj(n, m)
+
             END IF
          END DO
       END DO
