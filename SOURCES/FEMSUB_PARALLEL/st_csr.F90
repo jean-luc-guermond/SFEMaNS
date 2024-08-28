@@ -413,6 +413,7 @@ CONTAINS
                      ELSE
                         j = LA%loc_to_glob(kj, jloc)
                      END IF
+                     if (j > 872) write(*,*) '?', j ,  kmax, mesh%disp(proc) - 1, mesh%domnp(proc), jloc, proc
                      IF (MINVAL(ABS(ja_work(i, 1:nja(i)) - j)) /= 0) THEN
                         nja(i) = nja(i) + 1
                         ja_work(i, nja(i)) = j
