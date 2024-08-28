@@ -118,7 +118,7 @@ CONTAINS
           END DO
        END DO
     END IF
-    ! Block HxH TODO extras
+    ! Block HxH
 
     ! Block pxp
     DO i = 1, np_pmag
