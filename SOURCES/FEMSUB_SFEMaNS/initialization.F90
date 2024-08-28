@@ -1371,8 +1371,8 @@ CONTAINS
          END IF
 
          !===TODO Create global csr structure==============================================
-         CALL st_scr_maxwell_mu_H_p_phi(comm_one_d(1), H_mesh_glob, H_mesh, pmag_mesh_glob, pmag_mesh, &
-              phi_mesh_glob, phi_mesh, interface_H_phi_glob, interface_H_mu_glob, &
+         CALL st_scr_maxwell_mu_H_p_phi(comm_one_d(1), H_mesh, pmag_mesh, &
+              phi_mesh, interface_H_phi_glob, interface_H_mu_glob, &
               LA_H, LA_pmag, LA_phi, LA_mhd, opt_per = H_phi_per)
 
          !===Prepare csr structure for post processing grad phi=======================+++

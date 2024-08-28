@@ -6,21 +6,20 @@ MODULE st_csr_mhd
 
 CONTAINS
 
-  SUBROUTINE st_scr_maxwell_mu_H_p_phi(communicator, H_mesh_glob, H_mesh, pmag_mesh_glob, pmag_mesh, &
-       phi_mesh_glob, phi_mesh, interface_glob, interface_H_mu_glob, &
+  SUBROUTINE st_scr_maxwell_mu_H_p_phi(communicator, H_mesh, pmag_mesh, &
+       phi_mesh, interface_glob, interface_H_mu_glob, &
        LA_H, LA_pmag, LA_phi, LA_mhd, opt_per)
     USE my_util
     USE def_type_mesh
     USE st_matrix
     IMPLICIT NONE
-    TYPE(mesh_type),           INTENT(IN) :: H_mesh_glob, pmag_mesh_glob, phi_mesh_glob
     TYPE(mesh_type),           INTENT(IN) :: H_mesh, pmag_mesh, phi_mesh
     TYPE(interface_type),      INTENT(IN) :: interface_glob, interface_H_mu_glob
     TYPE(periodic_type), OPTIONAL, INTENT(IN) :: opt_per
     TYPE(petsc_csr_LA),        INTENT(OUT):: LA_H, LA_pmag, LA_phi, LA_mhd
     INTEGER, PARAMETER                    :: param=200
     INTEGER, DIMENSION(param)             :: a_d
-    INTEGER, DIMENSION(SIZE(H_mesh_glob%jj,1)) :: jj_loc, jj_loc1, jj_loc2
+    INTEGER, DIMENSION(SIZE(H_mesh%jj,1)) :: jj_loc, jj_loc1, jj_loc2
     INTEGER, DIMENSION(:,:),   POINTER    :: ja_work
     INTEGER, DIMENSION(:),     POINTER    :: nja_glob
     INTEGER                               :: np_glob, np_H, np_pmag, np_phi, np_m, code, rank, dp, n_a_d, &
@@ -92,12 +91,12 @@ CONTAINS
 
     ! Block HxH
     IF (H_mesh%me /=0) THEN
-       DO m = 1, H_mesh_glob%me
+       DO m = 1, H_mesh%me
           DO ni = 1, SIZE(H_mesh%jj,1)
-             iglob = H_mesh_glob%jj(ni,m)
+             iglob = H_mesh%loc_to_glob(H_mesh%jj(ni,m))
              IF (iglob<H_mesh%loc_to_glob(1) .OR. iglob>H_mesh%loc_to_glob(1) + H_mesh%dom_np -1) CYCLE
              DO nj = 1, SIZE(H_mesh%jj,1)
-                jglob = H_mesh_glob%jj(nj,m)
+                jglob = H_mesh%loc_to_glob(H_mesh%jj(nj,m))
                 CALL search_index(H_mesh,jglob,nb_procs,jloc,proc,out)
                 DO kj = 1, 3
                    IF (out) THEN
@@ -119,7 +118,7 @@ CONTAINS
           END DO
        END DO
     END IF
-    ! Block HxH
+    ! Block HxH TODO extras
 
     ! Block pxp
     DO i = 1, np_pmag
