@@ -1941,7 +1941,6 @@ CONTAINS
             END DO
             mesh%extra_jj(n, m) = mesh_p1%extra_jj(n, m) &
                  + (mesh_p1%disedge(p) - 1) * f_dof + (mesh_p1%discell(p) - 1) * (f_dof - 1)
-if (mesh%extra_jj(n, m)  > 291) write(*,*) '??', mesh%extra_jj(n, m)
          END DO
       END DO
 
@@ -2172,8 +2171,6 @@ if (mesh%extra_jj(n, m)  > 291) write(*,*) '??', mesh%extra_jj(n, m)
             mesh%rr(:, n_new_start + l) = mesh_p1%rr(:, n_start) &
                  + l * (mesh_p1%rr(:, n_end) - mesh_p1%rr(:, n_start)) / type_fe
             mesh%loc_to_glob(n_new_start + l) = l + (edge_l - 1) * f_dof + mesh_p1%domnp(p) + mesh%disp(p) - 1
-                     if (mesh%loc_to_glob(l + n_new_start)  > 291) write(*,*) '????', mesh%loc_to_glob(l + n_new_start)
-
          END DO
 
       END DO
@@ -2196,8 +2193,6 @@ if (mesh%extra_jj(n, m)  > 291) write(*,*) '??', mesh%extra_jj(n, m)
             mesh%rr(:, n_new_start) = &
                  (mesh_p1%rr(:, mesh_p1%jj(1, m)) + mesh_p1%rr(:, mesh_p1%jj(2, m)) + mesh_p1%rr(:, mesh_p1%jj(3, m))) / 3
             mesh%loc_to_glob(n_new_start) = m + mesh_p1%medge * 2 + mesh_p1%dom_np + mesh%disp(proc) - 1
-                                       if (mesh%loc_to_glob(n_new_start)  > 291) write(*,*) '???????', mesh%loc_to_glob(n_new_start)
-
          END IF
       END DO
 
@@ -2253,15 +2248,10 @@ if (mesh%extra_jj(n, m)  > 291) write(*,*) '??', mesh%extra_jj(n, m)
             DO l = 1, f_dof
                mesh%extra_jj(nw + (k - 1) * f_dof + l, m) = l &
                     + (edge_l - 1) * f_dof + mesh_p1%domnp(p_e) + mesh%disp(p_e) - 1
-if (mesh%extra_jj(nw + (k - 1) * f_dof + l, m)  > 291) &
-     write(*,*) '????', mesh%extra_jj(nw + (k - 1) * f_dof + l, m), l, edge_l, edge_g, mesh_p1%domnp, mesh%disp(p_e)
-
             END DO
 
             IF (type_fe==3) THEN
                mesh%extra_jj(10, m) = cell_l + mesh_p1%domedge(p_c) * 2 + mesh_p1%domnp(p_c) + mesh%disp(p_c) - 1
-               if (mesh%extra_jj(10, m)  > 291) write(*,*) '?????', mesh%extra_jj(n, m)
-
             END IF
          END DO
       END DO
