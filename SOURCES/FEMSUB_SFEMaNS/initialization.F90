@@ -1108,6 +1108,7 @@ CONTAINS
          END IF
 
          write(*,*) 'np', vv_mesh%disp, 'LA', SIZE(vv_3_LA%ia), 'm', MAXVAL(vv_3_LA%ja)
+         write(*,*) vv_3_LA%ja
 
 
          !TODO ===Create symmetric points==================================================
