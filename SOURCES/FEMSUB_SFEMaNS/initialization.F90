@@ -1107,7 +1107,7 @@ CONTAINS
             CALL st_aij_csr_glob_block_with_extra_layer(comm_one_d_ns(1), 1, vv_mesh, vizu_rot_u_LA)
          END IF
 
-         write(*,*) 'np', vv_mesh%disp, 'LA', SIZE(vv_3_LA%ia), 'm', MAXVAL(SIZE(vv_3_LA%ia))
+         write(*,*) 'np', vv_mesh%disp, 'LA', SIZE(vv_3_LA%ia), 'm', MAXVAL(vv_3_LA%ia)
 
 
          !TODO ===Create symmetric points==================================================
