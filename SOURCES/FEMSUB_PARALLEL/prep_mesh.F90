@@ -1738,6 +1738,7 @@ CONTAINS
       INTEGER :: ns, ns1, index, nb_angle, f_dof, edge_g, edge_l, n_new_start, proc, nb_proc, edges, p, cell_g, cell_l
       LOGICAL :: iso
 
+
       nw = SIZE(mesh_p1%jj, 1)   !===nodes in each volume element (3 in 2D)
       me = SIZE(mesh_p1%jj, 2)   !===number of cells
       kd = SIZE(mesh_p1%rr, 1)   !===space dimensions
@@ -1748,7 +1749,7 @@ CONTAINS
       f_dof = type_fe - 1
       nb_proc = SIZE(mesh_p1%domnp)
 
-      IF (type_fe==1) THEN
+      IF (type_fe==1 .OR. mesh_p1%me == 0) THEN
          mesh%me = mesh_p1%me
          mesh%mes = mesh_p1%mes
          mesh%np = mesh_p1%np
