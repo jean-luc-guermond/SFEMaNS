@@ -35,9 +35,9 @@ CONTAINS
     CALL MPI_COMM_SIZE(communicator,nb_procs,code)
 
 
-    CALL st_aij_csr_glob_block_with_extra_layer(communicator,3,H_mesh_glob,H_mesh,LA_H)
-    CALL st_aij_csr_glob_block_with_extra_layer(communicator,1,pmag_mesh_glob,pmag_mesh,LA_pmag)
-    CALL st_aij_csr_glob_block_with_extra_layer(communicator,1,phi_mesh_glob,phi_mesh,LA_phi)
+    CALL st_aij_csr_glob_block_with_extra_layer(communicator,3,H_mesh,LA_H)
+    CALL st_aij_csr_glob_block_with_extra_layer(communicator,1,pmag_mesh,LA_pmag)
+    CALL st_aij_csr_glob_block_with_extra_layer(communicator,1,phi_mesh,LA_phi)
 
     np_H = 3*H_mesh%dom_np
     np_pmag = pmag_mesh%dom_np
