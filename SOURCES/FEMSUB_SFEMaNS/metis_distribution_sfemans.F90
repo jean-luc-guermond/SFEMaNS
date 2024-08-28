@@ -1989,7 +1989,7 @@ CONTAINS
 
    END SUBROUTINE create_local_mesh
 
-   SUBROUTINE create_local_mesh_with_extra_layer(mesh, mesh_loc, me_loc, mes_loc, np_loc)
+   SUBROUTINE create_local_mesh_with_extra_layer(communicator, mesh, mesh_loc, me_loc, mes_loc, np_loc)
       USE def_type_mesh
       USE my_util
       IMPLICIT NONE
