@@ -1404,6 +1404,7 @@ CONTAINS
          CALL gauss_points_2d(pmag_mesh, 1)
          IF (1.LE.inputs%type_fe_phi .AND. inputs%type_fe_phi.LE.2) THEN
             CALL gauss_points_2d(phi_mesh, inputs%type_fe_phi)
+            write(*,*) 'nw', phi_mesh%gauss%n_w
          END IF
          !===JLG july 20, 2019, p3 mesh
 
