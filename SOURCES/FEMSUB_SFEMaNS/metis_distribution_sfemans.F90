@@ -2087,7 +2087,6 @@ CONTAINS
 
       CALL MPI_ALLGATHER(mesh_loc%dom_np, 1, MPI_INTEGER, mesh_loc%domnp, 1, &
            MPI_INTEGER, communicator, ierr)
-      write(*,*) 'p1 domnp', mesh_loc%domnp, dom_np, mesh_loc%dom_np, np_loc(2), np_loc(1)
       mesh_loc%disp(1) = 1
       DO n = 1, nb_proc
          mesh_loc%disp(n + 1) = mesh_loc%disp(n) + mesh_loc%domnp(n)
