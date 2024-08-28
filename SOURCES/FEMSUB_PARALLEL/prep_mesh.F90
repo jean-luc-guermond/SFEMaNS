@@ -2255,7 +2255,7 @@ if (mesh%extra_jj(n, m)  > 291) write(*,*) '??', mesh%extra_jj(n, m)
                mesh%extra_jj(nw + (k - 1) * f_dof + l, m) = l &
                     + (edge_l - 1) * f_dof + mesh_p1%domnp(p_e) + mesh%disp(p_e) - 1
 if (mesh%extra_jj(nw + (k - 1) * f_dof + l, m)  > 291) &
-     write(*,*) '????', mesh%extra_jj(nw + (k - 1) * f_dof + l, m), l, edge_l, mesh_p1%domnp(p_e), mesh%disp(p_e)
+     write(*,*) '????', mesh%extra_jj(nw + (k - 1) * f_dof + l, m), l, edge_l, edge_g, mesh_p1%domnp(p_e), mesh%disp(p_e)
 
             END DO
 
