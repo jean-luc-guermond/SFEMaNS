@@ -126,7 +126,7 @@ CONTAINS
                   DO nj = 1, SIZE(H_mesh%jj, 1)
                      jglob = H_mesh%extra_jj(nj, m)
                      jloc = jglob - H_mesh%loc_to_glob(1) + 1
-                     IF (jloc<1 .OR. jloc>np) THEN
+                     IF (jloc<1 .OR. jloc>np_m) THEN
                         DO p = 2, nb_procs + 1
                            IF (H_mesh%disp(p) > jglob) THEN
                               proc = p - 1
@@ -145,7 +145,7 @@ CONTAINS
                         ELSE
                            j = LA_H%loc_to_glob(kj, jloc)
                         END IF
-                        IF (MINVAL(ABS(ja_work(i, 1:nja(i)) - j)) /= 0) THEN
+                        IF (MINVAL(ABS(ja_work(i, 1:nja_glob(i)) - j)) /= 0) THEN
                            nja_glob(i) = nja_glob(i) + 1
                            ja_work(i, nja_glob(i)) = j
                         END IF
