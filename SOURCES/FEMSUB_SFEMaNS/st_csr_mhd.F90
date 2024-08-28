@@ -122,8 +122,8 @@ CONTAINS
                IF (iglob<H_mesh%loc_to_glob(1) .OR. iglob>H_mesh%loc_to_glob(1) + H_mesh%dom_np - 1) CYCLE
                iloc = iglob - H_mesh%loc_to_glob(1) + 1
                DO ki = 1, 3
-                  i = iloc + (ki - 1) * np
-                  DO nj = 1, nw
+                  i = iloc + (ki - 1) * np_m
+                  DO nj = 1, SIZE(H_mesh%jj, 1)
                      jglob = H_mesh%extra_jj(nj, m)
                      jloc = jglob - H_mesh%loc_to_glob(1) + 1
                      IF (jloc<1 .OR. jloc>np) THEN
@@ -138,7 +138,7 @@ CONTAINS
                      ELSE
                         out = .FALSE.
                      END IF
-                     DO kj = 1, kmax
+                     DO kj = 1, 3
                         IF (out) THEN
                            j = 3 * (H_mesh%disp(proc) - 1) + (pmag_mesh%disp(proc) - 1) + (phi_mesh%disp(proc) - 1) &
                                 + (kj - 1) * H_mesh%domnp(proc) + jloc
@@ -146,8 +146,8 @@ CONTAINS
                            j = LA_H%loc_to_glob(kj, jloc)
                         END IF
                         IF (MINVAL(ABS(ja_work(i, 1:nja(i)) - j)) /= 0) THEN
-                           nja(i) = nja(i) + 1
-                           ja_work(i, nja(i)) = j
+                           nja_glob(i) = nja_glob(i) + 1
+                           ja_work(i, nja_glob(i)) = j
                         END IF
                      END DO
                   END DO
