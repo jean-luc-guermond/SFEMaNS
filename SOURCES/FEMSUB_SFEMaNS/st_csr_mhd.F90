@@ -254,6 +254,51 @@ CONTAINS
                END DO
             END DO
          END DO
+
+         !===Loop over the extra layer
+         DO m = 1, H_mesh%mextra
+            DO ni = 1, SIZE(H_mesh%jj, 1)
+               iglob = H_mesh%extra_jj(ni, m)
+               DO nj = 1, SIZE(pmag_mesh%jj, 1)
+                  jglob = pmag_mesh%loc_to_glob(pmag_mesh%jj(nj, m))
+                  CALL search_index(pmag_mesh, jglob, nb_procs, jloc, proc, out)
+                  IF (out) THEN
+                     j = 3 * (H_mesh%disp(proc) - 1) + (pmag_mesh%disp(proc) - 1) + (phi_mesh%disp(proc) - 1) &
+                          + 3 * H_mesh%domnp(proc) + jloc
+                  ELSE
+                     j = LA_pmag%loc_to_glob(1, jloc)
+                  END IF
+                  IF (iglob >= H_mesh%loc_to_glob(1) .AND. iglob <= H_mesh%loc_to_glob(1) + H_mesh%dom_np - 1) THEN
+                     i = iglob - H_mesh%loc_to_glob(1) + 1
+                     IF (MINVAL(ABS(ja_work(iloc, 1:nja_glob(i)) - j)) /= 0) THEN
+                        nja_glob(i) = nja_glob(i) + 1
+                        nja_glob(i + np_m) = nja_glob(i + np_m) + 1
+                        nja_glob(i + 2 * np_m) = nja_glob(i + 2 * np_m) + 1
+                        ja_work(i, nja_glob(i)) = j
+                        ja_work(i + np_m, nja_glob(i + np_m)) = j
+                        ja_work(i + 2 * np_m, nja_glob(i + 2 * np_m)) = j
+                     END IF
+                  END IF
+
+                  IF (.NOT.out) THEN
+                     i = np_H + jloc
+                     CALL search_index(H_mesh, iglob, nb_procs, iloc, proc, out)
+                     DO k = 1, 3
+                        IF (out) THEN
+                           j = 3 * (H_mesh%disp(proc) - 1) + (pmag_mesh%disp(proc) - 1) + (phi_mesh%disp(proc) - 1) &
+                                + (k - 1) * H_mesh%domnp(proc) + iloc
+                        ELSE
+                           j = LA_H%loc_to_glob(k, iloc)
+                        END IF
+                        IF (MINVAL(ABS(ja_work(i, 1:nja_glob(i)) - j)) /= 0) THEN
+                           nja_glob(i) = nja_glob(i) + 1
+                           ja_work(i, nja_glob(i)) = j
+                        END IF
+                     END DO
+                  END IF
+               END DO
+            END DO
+         END DO
       END IF
       ! End Block Hxp and pxH
 
