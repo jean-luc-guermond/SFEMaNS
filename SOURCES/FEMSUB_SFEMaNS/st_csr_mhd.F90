@@ -284,7 +284,7 @@ CONTAINS
 
                   IF (iglob >= H_mesh%loc_to_glob(1) .AND. iglob <= H_mesh%loc_to_glob(1) + H_mesh%dom_np - 1) THEN
                      i = iglob - H_mesh%loc_to_glob(1) + 1
-                     IF (MINVAL(ABS(ja_work(iloc, 1:nja_glob(i)) - j)) /= 0) THEN
+                     IF (MINVAL(ABS(ja_work(i, 1:nja_glob(i)) - j)) /= 0) THEN
                         nja_glob(i) = nja_glob(i) + 1
                         nja_glob(i + np_m) = nja_glob(i + np_m) + 1
                         nja_glob(i + 2 * np_m) = nja_glob(i + 2 * np_m) + 1
