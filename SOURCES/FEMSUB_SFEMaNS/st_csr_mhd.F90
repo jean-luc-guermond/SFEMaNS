@@ -493,7 +493,6 @@ CONTAINS
       DO i = 1, np_phi
          LA_mhd%loc_to_glob(1, np_H + np_pmag + i) = LA_phi%loc_to_glob(1, i)
       END DO
-
       DEALLOCATE (ja_work, nja_glob)
       DEALLOCATE (per_loc)
 

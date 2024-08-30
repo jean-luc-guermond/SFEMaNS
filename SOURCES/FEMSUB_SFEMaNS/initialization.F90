@@ -1194,6 +1194,10 @@ CONTAINS
          CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_c0_mesh_glob, part, list_dom_H, pmag_mesh)
          DEALLOCATE(list_dummy)
          CALL free_mesh(p1_c0_mesh_glob)
+
+         write(*,*) 'H', H_mesh%disp
+
+         write(*,*) 'p', pmag_mesh%disp
       END IF
 
       !===Specific to induction equation==============================================
