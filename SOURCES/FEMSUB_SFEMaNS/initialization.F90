@@ -1349,8 +1349,8 @@ CONTAINS
          END IF
 
          !TODO ===Create interface structures==============================================
-         CALL load_interface(H_mesh_glob, H_mesh_glob, inputs%list_inter_mu, interface_H_mu_glob, .FALSE.)
-         CALL load_interface(H_mesh_glob, phi_mesh_glob, inputs%list_inter_H_phi, interface_H_phi_glob, .TRUE.)
+         !CALL load_interface(H_mesh_glob, H_mesh_glob, inputs%list_inter_mu, interface_H_mu_glob, .FALSE.)
+         !CALL load_interface(H_mesh_glob, phi_mesh_glob, inputs%list_inter_H_phi, interface_H_phi_glob, .TRUE.)
 
          IF (H_mesh%me /=0) THEN
             CALL load_interface(H_mesh, H_mesh, inputs%list_inter_mu, interface_H_mu, .FALSE.)
@@ -1376,7 +1376,7 @@ CONTAINS
 
          !===TODO Create global csr structure==============================================
          CALL st_scr_maxwell_mu_H_p_phi(comm_one_d(1), H_mesh, pmag_mesh, &
-              phi_mesh, interface_H_phi_glob, interface_H_mu_glob, &
+              phi_mesh, interface_H_phi, interface_H_mu, &
               LA_H, LA_pmag, LA_phi, LA_mhd, opt_per = H_phi_per)
 
          !===Prepare csr structure for post processing grad phi=======================+++
