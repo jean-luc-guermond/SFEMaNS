@@ -268,6 +268,7 @@ CONTAINS
                DO nj = 1, SIZE(pmag_mesh%jj, 1)
                   jglob = pmag_mesh%extra_jj(nj, m)
                   jloc = jglob - pmag_mesh%loc_to_glob(1) + 1
+                  if (jglob == 10) write(*,*) 'a', jloc
                   IF (jloc<1 .OR. jloc>np_pmag) THEN
                      DO p = 2, nb_procs + 1
                         IF (pmag_mesh%disp(p) > jglob) THEN
@@ -315,7 +316,6 @@ CONTAINS
                      ELSE
                         out = .FALSE.
                      END IF
-
                      DO k = 1, 3
                         IF (out) THEN
                            j = 3 * (H_mesh%disp(proc) - 1) + (pmag_mesh%disp(proc) - 1) + (phi_mesh%disp(proc) - 1) &
@@ -323,6 +323,8 @@ CONTAINS
                         ELSE
                            j = LA_H%loc_to_glob(k, iloc)
                         END IF
+                        if (jglob == 10) write(*,*) 'a', jloc, i, iloc, j
+
                         IF (MINVAL(ABS(ja_work(i, 1:nja_glob(i)) - j)) /= 0) THEN
                            nja_glob(i) = nja_glob(i) + 1
                            ja_work(i, nja_glob(i)) = j
