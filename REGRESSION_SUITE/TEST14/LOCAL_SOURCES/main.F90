@@ -102,6 +102,7 @@ PROGRAM mhd_prog
      !     un, pn, Hn, Bn, phin, temperature, level_set, concentration, mu_H_field, &
      !     time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc)
      it= 123
+     write(*,*) 1234567891
      CALL PetscFinalize(ierr)
      CALL EXIT(it)
      CALL error_Petsc('End of convergence test')
