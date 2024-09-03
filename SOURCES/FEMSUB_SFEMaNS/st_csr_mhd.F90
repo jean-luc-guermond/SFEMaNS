@@ -89,7 +89,9 @@ CONTAINS
       DO m = 1, pmag_mesh%me
           write(*,*) LA_pmag%loc_to_glob(1,pmag_mesh%jj(:,m))
       END DO
-
+      DO m = 1, H_mesh%me
+          write(*,*) LA_H%loc_to_glob(1,H_mesh%jj(:,m))
+      END DO
       ! Block HxH
       IF (H_mesh%me /=0) THEN
          DO m = 1, H_mesh%me
