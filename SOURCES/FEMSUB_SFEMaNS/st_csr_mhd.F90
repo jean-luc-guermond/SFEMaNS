@@ -86,12 +86,7 @@ CONTAINS
       ALLOCATE(ja_work(np_glob, param), nja_glob(np_glob))
       ALLOCATE(per_loc(2 * param))
       nja_glob = 0
-      DO m = 1, pmag_mesh%me
-          write(*,*) LA_pmag%loc_to_glob(1,pmag_mesh%jj(:,m))
-      END DO
-      DO m = 1, H_mesh%me
-          write(*,*) LA_H%loc_to_glob(1,H_mesh%jj(:,m))
-      END DO
+
       ! Block HxH
       IF (H_mesh%me /=0) THEN
          DO m = 1, H_mesh%me
@@ -262,13 +257,11 @@ CONTAINS
 
          !===Loop over the extra layer
          DO m = 1, H_mesh%mextra
-            WRITE(*,*) 'here', H_mesh%extra_jj(:, m), pmag_mesh%extra_jj(:, m)
             DO ni = 1, SIZE(H_mesh%jj, 1)
                iglob = H_mesh%extra_jj(ni, m)
                DO nj = 1, SIZE(pmag_mesh%jj, 1)
                   jglob = pmag_mesh%extra_jj(nj, m)
                   jloc = jglob - pmag_mesh%loc_to_glob(1) + 1
-                  if (jglob == 10) write(*,*) 'a', jloc
                   IF (jloc<1 .OR. jloc>np_pmag) THEN
                      DO p = 2, nb_procs + 1
                         IF (pmag_mesh%disp(p) > jglob) THEN
@@ -323,7 +316,6 @@ CONTAINS
                         ELSE
                            j = LA_H%loc_to_glob(k, iloc)
                         END IF
-                        if (jglob == 10) write(*,*) 'a', jloc, i, iloc, j
 
                         IF (MINVAL(ABS(ja_work(i, 1:nja_glob(i)) - j)) /= 0) THEN
                            nja_glob(i) = nja_glob(i) + 1
