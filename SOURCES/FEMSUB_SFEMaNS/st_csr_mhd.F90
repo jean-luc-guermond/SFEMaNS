@@ -306,13 +306,13 @@ CONTAINS
                      iloc = iglob - H_mesh%loc_to_glob(1) + 1
                      IF (iloc<1 .OR. iloc>np_m) THEN
                         DO p = 2, nb_procs + 1
-                           IF (H_mesh%disp(p) > jglob) THEN
+                           IF (H_mesh%disp(p) > iglob) THEN
                               proc = p - 1
                               EXIT
                            END IF
                         END DO
                         out = .TRUE.
-                        iloc = jglob - H_mesh%disp(proc) + 1
+                        iloc = iglob - H_mesh%disp(proc) + 1
                      ELSE
                         out = .FALSE.
                      END IF
