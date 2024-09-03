@@ -1392,8 +1392,8 @@ CONTAINS
          !END IF
 
          !===Deallocate global meshes=================================================
-         CALL free_interface(interface_H_mu_glob)
-         CALL free_interface(interface_H_phi_glob)
+         CALL free_interface(interface_H_mu)
+         CALL free_interface(interface_H_phi)
 
          !===Start Gauss points generation============================================
          !===JLG july 20, 2019, p3 mesh
