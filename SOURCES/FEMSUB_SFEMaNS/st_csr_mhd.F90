@@ -265,6 +265,9 @@ CONTAINS
             DO ni = 1, SIZE(H_mesh%jj, 1)
                iglob = H_mesh%extra_jj(ni, m)
                DO nj = 1, SIZE(pmag_mesh%jj, 1)
+                  IF (iglon == 504) THEN
+                     WRITE(*,*) 'here', H_mesh%extra_jj(:, m), pmag_mesh%extra_jj(:, m)
+                  END IF
                   jglob = pmag_mesh%extra_jj(nj, m)
                   jloc = jglob - pmag_mesh%loc_to_glob(1) + 1
                   IF (jloc<1 .OR. jloc>np_pmag) THEN
