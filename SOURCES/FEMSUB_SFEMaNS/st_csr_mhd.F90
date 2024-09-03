@@ -86,6 +86,9 @@ CONTAINS
       ALLOCATE(ja_work(np_glob, param), nja_glob(np_glob))
       ALLOCATE(per_loc(2 * param))
       nja_glob = 0
+      DO m = 1, pmag_mesh%me
+          write(*,*) LA_pmag%loc_to_glob(1,pmag_mesh%jj(:,m))
+      END DO
 
       ! Block HxH
       IF (H_mesh%me /=0) THEN
