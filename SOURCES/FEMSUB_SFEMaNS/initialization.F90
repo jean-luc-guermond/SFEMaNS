@@ -1391,10 +1391,6 @@ CONTAINS
          !   CALL symmetric_points(H_mesh, H_mesh_glob, H_mz_LA)
          !END IF
 
-         !===Deallocate global meshes=================================================
-         CALL free_interface(interface_H_mu)
-         CALL free_interface(interface_H_phi)
-
          !===Start Gauss points generation============================================
          !===JLG july 20, 2019, p3 mesh
          H_mesh%edge_stab = .FALSE.
