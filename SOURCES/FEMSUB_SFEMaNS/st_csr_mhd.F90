@@ -118,13 +118,13 @@ CONTAINS
          !===Loop over the extra layer
          DO m = 1, H_mesh%mextra
             DO ni = 1, SIZE(H_mesh%jj, 1)
-               iglob = H_mesh%extra_jj(ni, m)
+               iglob = H_mesh%jj_extra(ni, m)
                IF (iglob<H_mesh%loc_to_glob(1) .OR. iglob>H_mesh%loc_to_glob(1) + H_mesh%dom_np - 1) CYCLE
                iloc = iglob - H_mesh%loc_to_glob(1) + 1
                DO ki = 1, 3
                   i = iloc + (ki - 1) * np_m
                   DO nj = 1, SIZE(H_mesh%jj, 1)
-                     jglob = H_mesh%extra_jj(nj, m)
+                     jglob = H_mesh%jj_extra(nj, m)
                      jloc = jglob - H_mesh%loc_to_glob(1) + 1
                      IF (jloc<1 .OR. jloc>np_m) THEN
                         DO p = 2, nb_procs + 1
@@ -258,9 +258,9 @@ CONTAINS
          !===Loop over the extra layer
          DO m = 1, H_mesh%mextra
             DO ni = 1, SIZE(H_mesh%jj, 1)
-               iglob = H_mesh%extra_jj(ni, m)
+               iglob = H_mesh%jj_extra(ni, m)
                DO nj = 1, SIZE(pmag_mesh%jj, 1)
-                  jglob = pmag_mesh%extra_jj(nj, m)
+                  jglob = pmag_mesh%jj_extra(nj, m)
                   jloc = jglob - pmag_mesh%loc_to_glob(1) + 1
                   IF (jloc<1 .OR. jloc>np_pmag) THEN
                      DO p = 2, nb_procs + 1

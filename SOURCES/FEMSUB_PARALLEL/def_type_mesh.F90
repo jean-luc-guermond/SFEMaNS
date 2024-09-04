@@ -73,8 +73,8 @@ MODULE def_type_mesh
 
    TYPE mesh_type
       INTEGER, POINTER, DIMENSION(:, :) :: jj, jjs, iis
-      INTEGER, POINTER, DIMENSION(:, :) :: extra_jj, extra_jce !(extra layer of cells not own by proc but with dofs own by proc)
-      INTEGER, POINTER, DIMENSION(:) :: extra_jcc
+      INTEGER, POINTER, DIMENSION(:, :) :: jj_extra, jce_extra, jjs_extra !(extra layer of cells not own by proc but with dofs own by proc)
+      INTEGER, POINTER, DIMENSION(:) :: jcc_extra
       INTEGER, POINTER, DIMENSION(:, :) :: jce! cell-> edge (JLG+MC Sept 2022)
       INTEGER, POINTER, DIMENSION(:) :: jees, jecs !edges belonging to another proc (MC Sept 2022)
       INTEGER, POINTER, DIMENSION(:, :) :: jevs
@@ -84,7 +84,7 @@ MODULE def_type_mesh
       REAL(KIND = 8), POINTER, DIMENSION(:, :) :: rr
       INTEGER, POINTER, DIMENSION(:, :) :: neigh
       INTEGER, POINTER, DIMENSION(:, :) :: neighi ! (JLG April 2009)
-      INTEGER, POINTER, DIMENSION(:) :: sides, neighs
+      INTEGER, POINTER, DIMENSION(:) :: sides, neighs, sides_extra, neighs_extra !interfaces
       INTEGER, POINTER, DIMENSION(:) :: i_d
       !==Parallel structure
       INTEGER, POINTER, DIMENSION(:) :: loc_to_glob ! (JLG+FL, January 2011)
@@ -98,7 +98,7 @@ MODULE def_type_mesh
       ! dom_me and dom_mes are obsolete structures.
       ! dom_np is the number of nodes owned by the processor: dom_np .LE. mesh%np
       !==End parallel structure
-      INTEGER :: me, mes, np, nps, mi, medge, medges, mextra
+      INTEGER :: me, mes, np, nps, mi, medge, medges, mextra, mes_extra
       LOGICAL :: edge_stab ! edge stab, yes/no, (JLG April 2009)
       TYPE(gauss_type) :: gauss
       TYPE(periodic_type) :: periodic
@@ -125,10 +125,15 @@ MODULE def_type_mesh
 
    TYPE interface_type
       INTEGER :: mes ! number of interface elements
+      INTEGER :: mes_extra ! number of interface elements on extra cells
       INTEGER, POINTER, DIMENSION(:) :: mesh1 ! list slave interface elements
       INTEGER, POINTER, DIMENSION(:) :: mesh2 ! list master interface elements
       INTEGER, POINTER, DIMENSION(:, :) :: jjs1 ! list of slave node on interface elements
       INTEGER, POINTER, DIMENSION(:, :) :: jjs2 ! list of master nodes on interface elements
+      INTEGER, POINTER, DIMENSION(:) :: mesh1_extra ! list slave interface elements on extra cells
+      INTEGER, POINTER, DIMENSION(:) :: mesh2_extra! list master interface elements on extra cells
+      INTEGER, POINTER, DIMENSION(:, :) :: jjs1 ! list of slave node on interface elements on extra cells
+      INTEGER, POINTER, DIMENSION(:, :) :: jjs2_extra ! list of master nodes on interface elements on extra cells
    END TYPE interface_type
 
 END MODULE def_type_mesh

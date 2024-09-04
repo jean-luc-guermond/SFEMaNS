@@ -387,13 +387,13 @@ CONTAINS
       !===Loop over the extra layer
       DO m = 1, mesh%mextra
          DO ni = 1, nw
-            iglob = mesh%extra_jj(ni, m)
+            iglob = mesh%jj_extra(ni, m)
             IF (iglob<mesh%loc_to_glob(1) .OR. iglob>mesh%loc_to_glob(1) + mesh%dom_np - 1) CYCLE
             iloc = iglob - mesh%loc_to_glob(1) + 1
             DO ki = 1, kmax
                i = iloc + (ki - 1) * np
                DO nj = 1, nw
-                  jglob = mesh%extra_jj(nj, m)
+                  jglob = mesh%jj_extra(nj, m)
                   jloc = jglob - mesh%loc_to_glob(1) + 1
                   IF (jloc<1 .OR. jloc>np) THEN
                      DO p = 2, nb_procs + 1

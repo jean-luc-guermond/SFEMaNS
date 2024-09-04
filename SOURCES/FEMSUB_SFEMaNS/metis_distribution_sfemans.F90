@@ -2022,6 +2022,7 @@ CONTAINS
          mesh_loc%dom_np = mesh%np
          mesh_loc%dom_mes = mesh%mes
          mesh_loc%mextra = 0
+         mesh_loc%mes_extra = 0
          mesh_loc%medge = mesh%medge
          mesh_loc%medges = 0
          mesh_loc%nis = 0
@@ -2049,9 +2050,13 @@ CONTAINS
          ALLOCATE(mesh_loc%jjs(nws, mesh_loc%mes))
          mesh_loc%jjs = mesh%jjs
 
-         ALLOCATE(mesh_loc%extra_jj(nw, mesh_loc%mextra))
-         ALLOCATE(mesh_loc%extra_jce(nw, mesh_loc%mextra))
-         ALLOCATE(mesh_loc%extra_jcc(mesh_loc%mextra))
+         ALLOCATE(mesh_loc%neighs_extra(mesh_loc%mes_extra))
+         ALLOCATE(mesh_loc%sides_extra(mesh_loc%mes_extra))
+         ALLOCATE(mesh_loc%jjs_extra(nws, mesh_loc%mes_extra))
+
+         ALLOCATE(mesh_loc%jj_extra(nw, mesh_loc%mextra))
+         ALLOCATE(mesh_loc%jce_extra(nw, mesh_loc%mextra))
+         ALLOCATE(mesh_loc%jcc_extra(mesh_loc%mextra))
 
          ALLOCATE(mesh_loc%isolated_interfaces(mesh_loc%nis, 2))
          ALLOCATE(mesh_loc%isolated_jjs(mesh_loc%nis))
@@ -2296,6 +2301,9 @@ CONTAINS
       !ALLOCATE(mesh_loc%jev(SIZE(mesh%jev, 1), mesh_loc%medge))
       !mesh_loc%jev = mesh%jev(:, mesh_loc%ltg_edge(1:mesh_loc%medge))
       !==End re-order jev
+
+
+      !==Building extra cells
       DO proc = 1, nb_proc
          IF (mesh_loc%loc_to_glob(1) <= mesh_loc%disp(proc))    EXIT
       END DO
@@ -2318,7 +2326,7 @@ CONTAINS
       END DO
 
       mesh_loc%mextra = nb_extra
-      ALLOCATE(mesh_loc%extra_jj(nw, nb_extra), mesh_loc%extra_jce(SIZE(mesh%jce, 1), nb_extra), mesh_loc%extra_jcc(nb_extra))
+      ALLOCATE(mesh_loc%jj_extra(nw, nb_extra), mesh_loc%jce_extra(SIZE(mesh%jce, 1), nb_extra), mesh_loc%jcc_extra(nb_extra))
       nb_extra = 0
       DO m = 1, mesh%me
          jglob = mesh%jj(:, m)
@@ -2332,14 +2340,39 @@ CONTAINS
          IF (MAXVAL(jglob) < 0  .and. MAXVAL(eglob) < 0) cycle
          IF (me_loc(2)<m) THEN
             nb_extra = nb_extra + 1
-            mesh_loc%extra_jj(:, nb_extra) = mesh%jj(:, m)
-            mesh_loc%extra_jce(:, nb_extra) = mesh%jce(:, m)
-            mesh_loc%extra_jcc(nb_extra) = m
+            mesh_loc%jj_extra(:, nb_extra) = mesh%jj(:, m)
+            mesh_loc%jce_extra(:, nb_extra) = mesh%jce(:, m)
+            mesh_loc%jcc_extra(nb_extra) = m
          END IF
       END DO
 
       mesh_loc%edge_stab = .FALSE.
       mesh_loc%mi = 0
+
+
+      !==Building extra edges along interfaces
+      nb_extra = 0
+      DO ms = 1, mesh%mes
+         m = mesh_p1%neighs(ms)
+         IF (MINVAL(ABS(mesh_loc%jcc_extra - m)) == 0) THEN
+            nb_extra = nb_extra + 1
+         END IF
+      END DO
+      mesh_loc%mes_extra = nb_extra
+
+      ALLOCATE(mesh_loc%jjs_extra(nws, nb_extra), mesh_loc%neighs_extra(SIZE(mesh%jce, 1), nb_extra), &
+           mesh_loc%sides_extra(nb_extra))
+      nb_extra = 0
+      DO ms = 1, mesh%mes
+         m = mesh%neighs(ms)
+         IF (MINVAL(ABS(mesh_loc%jcc_extra - m)) == 0) THEN
+            nb_extra = nb_extra + 1
+
+            mesh_loc%jjs_extra(:, nb_extra) = mesh%jjs(ms)
+            mesh_loc%sides_extra(nb_extra) = mesh%sides(ms)
+            mesh_loc%neighs_extra(nb_extra) = m
+         END IF
+      END DO
 
       !===Find the isolated points on the border
       nb_extra = 0

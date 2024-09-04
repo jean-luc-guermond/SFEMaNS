@@ -629,9 +629,14 @@ CONTAINS
       END DO
 
       mesh%mextra = 0
-      ALLOCATE(mesh%extra_jj(3, 0))
-      ALLOCATE(mesh%extra_jce(3, 0))
-      ALLOCATE(mesh%extra_jcc(0))
+      ALLOCATE(mesh%jj_extra(3, 0))
+      ALLOCATE(mesh%jce_extra(3, 0))
+      ALLOCATE(mesh%jcc_extra(0))
+
+      mesh%mes_extra = 0
+      ALLOCATE(mesh_loc%neighs_extra(0))
+      ALLOCATE(mesh_loc%sides_extra(0))
+      ALLOCATE(mesh_loc%jjs_extra(2, 0))
 
       mesh%nis = 0
       ALLOCATE(mesh%isolated_jjs(0), mesh%isolated_interfaces(0, 2))
@@ -1738,7 +1743,6 @@ CONTAINS
       INTEGER :: ns, ns1, index, nb_angle, f_dof, edge_g, edge_l, n_new_start, proc, nb_proc, edges, p, cell_g, cell_l
       LOGICAL :: iso
 
-
       nw = SIZE(mesh_p1%jj, 1)   !===nodes in each volume element (3 in 2D)
       me = SIZE(mesh_p1%jj, 2)   !===number of cells
       kd = SIZE(mesh_p1%rr, 1)   !===space dimensions
@@ -1763,8 +1767,8 @@ CONTAINS
          mesh%jjs = mesh_p1%jjs
          !ALLOCATE(mesh%iis(nws,mes))
          !mesh%iis = mesh_p1%iis
-         ALLOCATE(mesh%extra_jj(nw, mesh%mextra))
-         mesh%extra_jj = mesh_p1%extra_jj
+         ALLOCATE(mesh%jj_extra(nw, mesh%mextra))
+         mesh%jj_extra = mesh_p1%jj_extra
          ALLOCATE(mesh%jce(nw, me))
          mesh%jce = mesh_p1%jce
          !ALLOCATE(mesh%jev(nw - 1, mesh%medge))
@@ -1811,7 +1815,7 @@ CONTAINS
 
          ALLOCATE(mesh%jj(nw * (f_dof + 1), me))   !---->
          ALLOCATE(mesh%jjs(nws + f_dof, mes))   !---->
-         ALLOCATE(mesh%extra_jj(nw * (f_dof + 1), mesh%mextra)) !---->
+         ALLOCATE(mesh%jj_extra(nw * (f_dof + 1), mesh%mextra)) !---->
          ALLOCATE(mesh%rr(kd, mesh%np))    !---->
          ALLOCATE(mesh%loc_to_glob(mesh%np)) !---->
 
@@ -1854,7 +1858,7 @@ CONTAINS
 
          ALLOCATE(mesh%jj(nw * (f_dof + 1) + 1, me))   !----> done
          ALLOCATE(mesh%jjs(nws + f_dof, mes))   !---->
-         ALLOCATE(mesh%extra_jj(nw * (f_dof + 1) + 1, mesh%mextra)) !---->
+         ALLOCATE(mesh%jj_extra(nw * (f_dof + 1) + 1, mesh%mextra)) !---->
          ALLOCATE(mesh%rr(kd, mesh%np))    !----> done
          ALLOCATE(mesh%loc_to_glob(mesh%np)) !----> done
 
@@ -1908,7 +1912,7 @@ CONTAINS
       mesh%rr(:, 1:dom_np) = mesh_p1%rr(:, 1:dom_np)
       mesh%rr(:, mesh%dom_np + 1:mesh%dom_np + np - dom_np) = mesh_p1%rr(:, dom_np + 1:)
       mesh%jj(1:nw, :) = mesh_p1%jj
-      mesh%extra_jj(1:nw, :) = mesh_p1%extra_jj
+      mesh%jj_extra(1:nw, :) = mesh_p1%jj_extra
       mesh%loc_to_glob(1:dom_np) = mesh_p1%loc_to_glob(1:dom_np) &
            + (mesh_p1%disedge(proc) - 1) * f_dof + (mesh_p1%discell(proc) - 1) * (f_dof - 1)
       mesh%isolated_jjs = mesh_p1%isolated_jjs &
@@ -1935,11 +1939,11 @@ CONTAINS
       DO m = 1, mesh_p1%mextra
          DO n = 1, nw
             DO p = 1, nb_proc
-               IF (mesh_p1%extra_jj(n, m) < mesh_p1%disp(p + 1)) THEN
+               IF (mesh_p1%jj_extra(n, m) < mesh_p1%disp(p + 1)) THEN
                   EXIT
                END IF
             END DO
-            mesh%extra_jj(n, m) = mesh_p1%extra_jj(n, m) &
+            mesh%jj_extra(n, m) = mesh_p1%jj_extra(n, m) &
                  + (mesh_p1%disedge(p) - 1) * f_dof + (mesh_p1%discell(p) - 1) * (f_dof - 1)
          END DO
       END DO
@@ -2229,8 +2233,8 @@ CONTAINS
 
       DO m = 1, mesh%mextra
          DO k = 1, nw !===loop on the nodes (sides) of the element
-            edge_g = mesh_p1%extra_jce(k, m)
-            cell_g = mesh_p1%extra_jcc(m)
+            edge_g = mesh_p1%jce_extra(k, m)
+            cell_g = mesh_p1%jcc_extra(m)
             DO p_e = 1, nb_proc
                IF (edge_g < mesh_p1%disedge(p_e + 1)) THEN
                   EXIT
@@ -2246,12 +2250,12 @@ CONTAINS
             cell_l = cell_g - mesh_p1%discell(p_c) + 1
 
             DO l = 1, f_dof
-               mesh%extra_jj(nw + (k - 1) * f_dof + l, m) = l &
+               mesh%jj_extra(nw + (k - 1) * f_dof + l, m) = l &
                     + (edge_l - 1) * f_dof + mesh_p1%domnp(p_e) + mesh%disp(p_e) - 1
             END DO
 
             IF (type_fe==3) THEN
-               mesh%extra_jj(10, m) = cell_l + mesh_p1%domedge(p_c) * 2 + mesh_p1%domnp(p_c) + mesh%disp(p_c) - 1
+               mesh%jj_extra(10, m) = cell_l + mesh_p1%domedge(p_c) * 2 + mesh_p1%domnp(p_c) + mesh%disp(p_c) - 1
             END IF
          END DO
       END DO
