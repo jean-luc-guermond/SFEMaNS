@@ -175,7 +175,7 @@ CONTAINS
                   n2_ks = (/MODULO(k2 + 1, nw) + 1, MODULO(k2, nw) + 1/)
                END IF
 
-               IF (MAXVAL(ABS(mesh_master%rrs_extra(:, n1_ks, ms1) - mesh_slave%rr(:, n2_ks, ms2))).GT.epsilon) CYCLE
+               IF (MAXVAL(ABS(mesh_master%rrs_extra(:, n1_ks, ms1) - mesh_slave%rrs_extra(:, n2_ks, ms2))).GT.epsilon) CYCLE
 
                IF(.NOT.virgin_elem(ms2)) THEN
                   Okay = .TRUE.
