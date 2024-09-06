@@ -2426,6 +2426,7 @@ CONTAINS
          END DO
       END DO
       !===END Find the isolated points on the border
+      write(*,*) SIZE(mesh_loc%rrs_extra,1), SIZE(mesh_loc%rrs_extra,2), SIZE(mesh_loc%rrs_extra,3)
 
    END SUBROUTINE create_local_mesh_with_extra_layer
 
