@@ -385,7 +385,7 @@ CONTAINS
 
             cell_g = H_mesh%neighs_extra(interface_H_mu_glob%mesh2_extra(ms))
             DO m2 = 1, H_mesh%mextra !find associated extra cell
-               IF (H_mesh%jcc_extra(m1) == cell_g) EXIT
+               IF (H_mesh%jcc_extra(m2) == cell_g) EXIT
             END DO
 
             jj_loc1 = H_mesh%jj_extra(:, m1)
@@ -503,7 +503,7 @@ CONTAINS
 
             cell_g = phi_mesh%neighs_extra(interface_glob%mesh2_extra(ms))
             DO m2 = 1, phi_mesh%mextra !find associated extra cell
-               IF (phi_mesh%jcc_extra(m1) == cell_g) EXIT
+               IF (phi_mesh%jcc_extra(m2) == cell_g) EXIT
             END DO
 
             DO ni = 1, SIZE(H_mesh%jj, 1)
