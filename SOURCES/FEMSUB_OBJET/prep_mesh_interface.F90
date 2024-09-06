@@ -22,7 +22,7 @@ CONTAINS
       TYPE(interface_type), INTENT(OUT) :: mesh_INTERFACE
       LOGICAL, INTENT(IN) :: disjoint
 
-      INTEGER :: dim, ms, ms1, ms2, ns, k, nws_master, nws_slave, m1, m2, k1 ,k2, cell_g
+      INTEGER :: dim, ms, ms1, ms2, ns, k, nws_master, nws_slave, m1, m2, k1, k2, cell_g, m, n, nw
       INTEGER, DIMENSION(:), ALLOCATABLE :: list, interface_mesh1, interface_mesh2
       INTEGER, DIMENSION(:, :), ALLOCATABLE :: interface_jjs1, interface_jjs2
       REAL(KIND = 8) :: eps_ref = 1.d-7, r_norm, epsilon
@@ -128,7 +128,7 @@ CONTAINS
            interface_jjs2(nws_slave, mesh_slave%mes_extra))
 
       virgin_elem = .TRUE.
-
+      nw = SIZE(mesh_master%rrs_extra(1, :, 1))
       ms = 0
       DO ms1 = 1, mesh_master%mes
          IF(MINVAL(ABS(list_inter - mesh_master%sides_extra(ms1))) /= 0) CYCLE !not on interface
@@ -139,7 +139,7 @@ CONTAINS
          END DO
 
          DO n = 1, dim + 1 !===find side in cell
-            IF (MINVAL(ABS(mesh_master%jj_extra(n, m) - mesh_master%jjs_extra(:, ms)))/=0) THEN
+            IF (MINVAL(ABS(mesh_master%jj_extra(n, m1) - mesh_master%jjs_extra(:, ms)))/=0) THEN
                k1 = n
                EXIT
             END IF
