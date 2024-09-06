@@ -378,12 +378,12 @@ CONTAINS
          END DO
 
          DO ms = 1, interface_H_mu_glob%mes_extra
-            cell_g = H_mesh%neighs_extra(interface_H_mu_glob%mesh1(ms))
+            cell_g = H_mesh%neighs_extra(interface_H_mu_glob%mesh1_extra(ms))
             DO m1 = 1, H_mesh%mextra !find associated extra cell
                IF (H_mesh%jcc_extra(m1) == cell_g) EXIT
             END DO
 
-            cell_g = H_mesh%neighs_extra(interface_H_mu_glob%mesh2(ms))
+            cell_g = H_mesh%neighs_extra(interface_H_mu_glob%mesh2_extra(ms))
             DO m2 = 1, H_mesh%mextra !find associated extra cell
                IF (H_mesh%jcc_extra(m1) == cell_g) EXIT
             END DO
@@ -496,12 +496,12 @@ CONTAINS
          END DO
 
          DO ms = 1, interface_glob%mes_extra
-            cell_g = H_mesh%neighs_extra(interface_glob%mesh1(ms))
+            cell_g = H_mesh%neighs_extra(interface_glob%mesh1_extra(ms))
             DO m1 = 1, H_mesh%mextra !find associated extra cell
                IF (H_mesh%jcc_extra(m1) == cell_g) EXIT
             END DO
 
-            cell_g = phi_mesh%neighs_extra(interface_glob%mesh2(ms))
+            cell_g = phi_mesh%neighs_extra(interface_glob%mesh2_extra(ms))
             DO m2 = 1, phi_mesh%mextra !find associated extra cell
                IF (phi_mesh%jcc_extra(m1) == cell_g) EXIT
             END DO

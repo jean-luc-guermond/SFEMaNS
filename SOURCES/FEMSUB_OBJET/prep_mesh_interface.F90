@@ -218,12 +218,10 @@ CONTAINS
       ALLOCATE(mesh_interface%mesh1_extra(ms), mesh_interface%mesh2_extra(ms), &
            mesh_interface%jjs1_extra(nws_master, ms), mesh_interface%jjs2_extra(nws_slave, ms))
       IF (ms > 0) THEN
-         write(*,*) 'ms', ms
          mesh_interface%mesh1_extra = interface_mesh1(1:ms)
          mesh_interface%mesh2_extra = interface_mesh2(1:ms)
          mesh_interface%jjs1_extra = interface_jjs1(1:nws_master, 1:ms)
          mesh_interface%jjs2_extra = interface_jjs2(1:nws_slave, 1:ms)
-         write(*,*) 'aak'
       END IF
 
       DEALLOCATE(virgin_elem, list, interface_mesh1, interface_mesh2, &
