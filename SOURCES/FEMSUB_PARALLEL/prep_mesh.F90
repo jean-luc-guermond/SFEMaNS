@@ -1943,6 +1943,7 @@ CONTAINS
       mesh%jj(1:nw, :) = mesh_p1%jj
       mesh%jj_extra(1:nw, :) = mesh_p1%jj_extra
       mesh%jjs_extra(1:nws, :) = mesh_p1%jjs_extra
+      write(*,*) SIZE(mesh_p1%rrs_extra,1), SIZE(mesh_p1%rrs_extra,2), SIZE(mesh_p1%rrs_extra,3)
       mesh%rrs_extra(:, 1:nw, :) = mesh_p1%rrs_extra
       mesh%loc_to_glob(1:dom_np) = mesh_p1%loc_to_glob(1:dom_np) &
            + (mesh_p1%disedge(proc) - 1) * f_dof + (mesh_p1%discell(proc) - 1) * (f_dof - 1)
