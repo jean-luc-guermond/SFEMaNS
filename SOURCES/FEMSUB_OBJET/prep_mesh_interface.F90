@@ -138,8 +138,8 @@ CONTAINS
             IF (mesh_master%jcc_extra(m1) == cell_g) EXIT
          END DO
          write(*,*)  'side', mesh_master%sides_extra(ms1), cell_g, list_inter
-         write(*, *) 'jj_extra', mesh_master%rrs_extra(:, :, ms1)
-         write(*, *) 'rr_extra', mesh_slave%rrs_extra(:, :, :)
+         write(*, *) 'jj_extra', mesh_master%rrs_extra(:, 1:3, ms1)
+         write(*, *) 'rr_extra', mesh_slave%rrs_extra(:, 1:3, :)
          DO n = 1, dim + 1 !===find side in cell
             IF (MINVAL(ABS(mesh_master%jj_extra(n, m1) - mesh_master%jjs_extra(:, ms1)))/=0) THEN
                k1 = n
