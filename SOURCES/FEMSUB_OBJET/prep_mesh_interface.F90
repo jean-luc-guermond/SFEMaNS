@@ -154,7 +154,7 @@ CONTAINS
          okay = .FALSE.
          write(*,*) 's', mesh_slave%mes_extra, mesh_slave%sides_extra
          lp3 : DO ms2 = 1, mesh_slave%mes_extra
-            IF(MINVAL(ABS(list_inter - mesh_slave%sides(ms2))) /= 0) CYCLE !not on interface
+            IF(MINVAL(ABS(list_inter - mesh_slave%sides_extra(ms2))) /= 0) CYCLE !not on interface
 
                      write(*,*)  'side2', mesh_slave%sides_extra(ms2), cell_g, list_inter
          write(*, *) 'jj_extra2', mesh_slave%rrs_extra(:, 1:3, ms2)
