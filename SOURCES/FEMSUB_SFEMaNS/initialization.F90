@@ -1195,11 +1195,11 @@ CONTAINS
          DEALLOCATE(list_dummy)
          CALL free_mesh(p1_c0_mesh_glob)
 
-         write(*,*) 'H', H_mesh%disp
+         write(*, *) 'H', H_mesh%disp
 
-         write(*,*) 'p', pmag_mesh%disp
+         write(*, *) 'p', pmag_mesh%disp
 
-         write(*,*) 'phi', phi_mesh%disp
+         write(*, *) 'phi', phi_mesh%disp
 
       END IF
 
@@ -2101,8 +2101,7 @@ CONTAINS
          END IF
       END IF
 
-
-      write(*,*) 'init done'
+      write(*, *) 'init done'
 
    END SUBROUTINE INIT
 

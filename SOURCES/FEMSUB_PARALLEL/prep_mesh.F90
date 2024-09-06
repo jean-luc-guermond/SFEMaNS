@@ -1760,11 +1760,14 @@ CONTAINS
          mesh%medge = mesh_p1%medge
          mesh%medges = mesh_p1%medges
          mesh%mextra = mesh_p1%mextra
+         mesh%mes_extra = mesh_p1%mes_extra
 
          ALLOCATE(mesh%jj(nw, me))
          mesh%jj = mesh_p1%jj
          ALLOCATE(mesh%jjs(nws, mes))
          mesh%jjs = mesh_p1%jjs
+         ALLOCATE(mesh%jjs_extra(nws, mesh%mes_extra))
+         mesh%jjs_extra = mesh_p1%jjs_extra
          !ALLOCATE(mesh%iis(nws,mes))
          !mesh%iis = mesh_p1%iis
          ALLOCATE(mesh%jj_extra(nw, mesh%mextra))
@@ -1781,6 +1784,12 @@ CONTAINS
          mesh%sides = mesh_p1%sides
          ALLOCATE(mesh%neighs(mesh%mes))
          mesh%neighs = mesh_p1%neighs
+         ALLOCATE(mesh%sides_extra(mesh%mes_extra))
+         mesh%sides_extra = mesh_p1%sides_extra
+         ALLOCATE(mesh%neighs_extra(mesh%mes_extra))
+         mesh%neighs_extra = mesh_p1%neighs_extra
+         ALLOCATE(mesh%rrs_extra(kd, nw, mesh%mes_extra))
+         mesh%rrs_extra = mesh_p1%rrs_extra
          ALLOCATE(mesh%i_d(mesh%me))
          mesh%i_d = mesh_p1%i_d
          ALLOCATE(mesh%loc_to_glob(mesh%np))
@@ -1812,10 +1821,13 @@ CONTAINS
          mesh%medge = mesh_p1%medge
          mesh%medges = mesh_p1%medges
          mesh%mextra = mesh_p1%mextra
+         mesh%mes_extra = mesh_p1%mes_extra
 
          ALLOCATE(mesh%jj(nw * (f_dof + 1), me))   !---->
          ALLOCATE(mesh%jjs(nws + f_dof, mes))   !---->
+         ALLOCATE(mesh%jjs_extra(nws + f_dof, mesh%mes_extra))
          ALLOCATE(mesh%jj_extra(nw * (f_dof + 1), mesh%mextra)) !---->
+         ALLOCATE(mesh%rrs_extra(kd, nw * (f_dof + 1), mesh%mes_extra))
          ALLOCATE(mesh%rr(kd, mesh%np))    !---->
          ALLOCATE(mesh%loc_to_glob(mesh%np)) !---->
 
@@ -1829,6 +1841,10 @@ CONTAINS
          mesh%sides = mesh_p1%sides
          ALLOCATE(mesh%neighs(mesh%mes))
          mesh%neighs = mesh_p1%neighs
+         ALLOCATE(mesh%sides_extra(mesh%mes_extra))
+         mesh%sides_extra = mesh_p1%sides_extra
+         ALLOCATE(mesh%neighs_extra(mesh%mes_extra))
+         mesh%neighs_extra = mesh_p1%neighs_extra
          ALLOCATE(mesh%i_d(mesh%me))
          mesh%i_d = mesh_p1%i_d
 
@@ -1855,11 +1871,14 @@ CONTAINS
          mesh%np = mesh_p1%np + 2 * mesh_p1%medge + 2 * mesh_p1%medges + mesh_p1%me
          mesh%medge = mesh_p1%medge
          mesh%mextra = mesh_p1%mextra
+         mesh%mes_extra = mesh_p1%mes_extra
 
          ALLOCATE(mesh%jj(nw * (f_dof + 1) + 1, me))   !----> done
          ALLOCATE(mesh%jjs(nws + f_dof, mes))   !---->
+         ALLOCATE(mesh%jjs_extra(nws + f_dof, mesh%mextra))   !---->
          ALLOCATE(mesh%jj_extra(nw * (f_dof + 1) + 1, mesh%mextra)) !---->
          ALLOCATE(mesh%rr(kd, mesh%np))    !----> done
+         ALLOCATE(mesh%rrs_extra(kd, nw * (f_dof + 1) + 1, mesh%mes_extra))
          ALLOCATE(mesh%loc_to_glob(mesh%np)) !----> done
 
          ALLOCATE(mesh%jce(nw, me))
@@ -1872,6 +1891,10 @@ CONTAINS
          mesh%sides = mesh_p1%sides
          ALLOCATE(mesh%neighs(mesh%mes))
          mesh%neighs = mesh_p1%neighs
+         ALLOCATE(mesh%sides_extra(mesh%mes_extra))
+         mesh%sides_extra = mesh_p1%sides_extra
+         ALLOCATE(mesh%neighs_extra(mesh%mes_extra))
+         mesh%neighs_extra = mesh_p1%neighs_extra
          ALLOCATE(mesh%i_d(mesh%me))
          mesh%i_d = mesh_p1%i_d
 
@@ -1913,6 +1936,8 @@ CONTAINS
       mesh%rr(:, mesh%dom_np + 1:mesh%dom_np + np - dom_np) = mesh_p1%rr(:, dom_np + 1:)
       mesh%jj(1:nw, :) = mesh_p1%jj
       mesh%jj_extra(1:nw, :) = mesh_p1%jj_extra
+      mesh%jjs_extra(1:nws, :) = mesh_p1%jjs_extra
+      mesh%rrs_extra(:, 1:nw, :) = mesh_p1%rrs_extra
       mesh%loc_to_glob(1:dom_np) = mesh_p1%loc_to_glob(1:dom_np) &
            + (mesh_p1%disedge(proc) - 1) * f_dof + (mesh_p1%discell(proc) - 1) * (f_dof - 1)
       mesh%isolated_jjs = mesh_p1%isolated_jjs &
@@ -2231,6 +2256,7 @@ CONTAINS
 
       DEALLOCATE(virgin, j_mid, jjs_mid, r_mid)
 
+      !===new vertices on extra cells
       DO m = 1, mesh%mextra
          DO k = 1, nw !===loop on the nodes (sides) of the element
             edge_g = mesh_p1%jce_extra(k, m)
@@ -2259,6 +2285,46 @@ CONTAINS
             END IF
          END DO
       END DO
+
+      !==connectivity array the surface elements of the iso grid for extras
+      DO ms = 1, mesh%mes_extra
+         cell_g = mesh%neighs_extra(ms)
+         DO m = 1, mesh%mextra !find associated extra cell
+            IF (mesh%jcc_extra(m) == cell_g) EXIT
+         END DO
+         DO n = 1, kd + 1 !===find side in cell
+            IF (MINVAL(ABS(mesh%jj_extra(n, m) - mesh_p1%jjs_extra(:, ms)))/=0) THEN
+               kk = n
+               EXIT
+            END IF
+         ENDDO
+
+         DO l = 1, f_dof
+            mesh%jjs_extra(nws + l, ms) = mesh%jj_extra(nw + (kk - 1) * f_dof + l, m)
+         END DO
+
+         DO k = 1, kd + 1
+            n_k1 = MODULO(k, nw) + 1
+            n_k2 = MODULO(k + 1, nw) + 1
+            IF (n_k1<n_k2) THEN !===Go from lowest index to highest index
+               n_start = n_k1
+               n_end = n_k2
+            ELSE
+               n_start = n_k2
+               n_end = n_k1
+            END IF
+
+            DO l = 1, f_dof
+               mesh%rrs_extra(:, nw + (k - 1) * f_dof + l, ms) = mesh_p1%rrs_extra(:, n_start, ms) &
+                    + l * (mesh_p1%rrs_extra(:, n_end, ms) - mesh_p1%rrs_extra(:, n_start, ms)) / type_fe
+            END DO
+         END DO
+
+         IF (type_fe==3) THEN
+            mesh%rrs_extra(:, 10, ms) = &
+                 (mesh_p1%rrs_extra(:, 1, ms) + mesh_p1%rrs_extra(:, 2, ms) + mesh_p1%rrs_extra(:, 3, ms)) / 3
+         END IF
+      ENDDO
    END SUBROUTINE  create_iso_grid_distributed
 
    SUBROUTINE prep_jce_jev(mesh)

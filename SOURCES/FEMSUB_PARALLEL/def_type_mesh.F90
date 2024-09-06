@@ -82,6 +82,7 @@ MODULE def_type_mesh
       INTEGER, POINTER, DIMENSION(:, :) :: jjsi ! (JLG April 2009)
       INTEGER, POINTER, DIMENSION(:) :: j_s  ! boundary nodes --> volume numbering
       REAL(KIND = 8), POINTER, DIMENSION(:, :) :: rr
+      REAL(KIND = 8), POINTER, DIMENSION(:, :, :) :: rrs_extra  ! coordinates for cells at interfaces
       INTEGER, POINTER, DIMENSION(:, :) :: neigh
       INTEGER, POINTER, DIMENSION(:, :) :: neighi ! (JLG April 2009)
       INTEGER, POINTER, DIMENSION(:) :: sides, neighs, sides_extra, neighs_extra !interfaces

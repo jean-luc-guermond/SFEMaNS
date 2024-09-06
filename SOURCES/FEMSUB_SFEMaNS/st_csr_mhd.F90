@@ -335,8 +335,8 @@ CONTAINS
             m1 = H_mesh%neighs(interface_H_mu_glob%mesh1(ms))
             m2 = H_mesh%neighs(interface_H_mu_glob%mesh2(ms))
 
-            jj_loc1 = H_mesh%jj(:, m1)
-            jj_loc2 = H_mesh%jj(:, m2)
+            jj_loc1 = H_mesh%loc_to_glob(H_mesh%jj(:, m1))
+            jj_loc2 = H_mesh%loc_to_glob(H_mesh%jj(:, m2))
             jmin = MIN(MINVAL(jj_loc1), MINVAL(jj_loc2))
             jmax = MAX(MAXVAL(jj_loc1), MAXVAL(jj_loc2))
 
@@ -358,6 +358,72 @@ CONTAINS
                   DO nj = 1, SIZE(H_mesh%jj, 1)
                      jglob = H_mesh%loc_to_glob(H_mesh%jj(nj, mj))
                      CALL search_index(H_mesh, jglob, nb_procs, jloc, proc, out)
+                     DO kj = 1, 3
+                        IF (out) THEN
+                           j = 3 * (H_mesh%disp(proc) - 1) + (pmag_mesh%disp(proc) - 1) + (phi_mesh%disp(proc) - 1) &
+                                + (kj - 1) * H_mesh%domnp(proc) + jloc
+                        ELSE
+                           j = LA_H%loc_to_glob(kj, jloc)
+                        END IF
+                        DO ki = 1, 3
+                           i = iglob - H_mesh%loc_to_glob(1) + 1 + (ki - 1) * np_m
+                           IF (MINVAL(ABS(ja_work(i, 1:nja_glob(i)) - j)) == 0) CYCLE
+                           nja_glob(i) = nja_glob(i) + 1
+                           ja_work(i, nja_glob(i)) = j
+                        END DO
+                     END DO
+                  END DO
+               END DO
+            END DO
+         END DO
+
+         DO ms = 1, interface_H_mu_glob%mes_extra
+            cell_g = H_mesh%neighs_extra(interface_H_mu_glob%mesh1(ms))
+            DO m1 = 1, H_mesh%mextra !find associated extra cell
+               IF (H_mesh%jcc_extra(m1) == cell_g) EXIT
+            END DO
+
+            cell_g = H_mesh%neighs_extra(interface_H_mu_glob%mesh2(ms))
+            DO m2 = 1, H_mesh%mextra !find associated extra cell
+               IF (H_mesh%jcc_extra(m1) == cell_g) EXIT
+            END DO
+
+            jj_loc1 = H_mesh%jj_extra(:, m1)
+            jj_loc2 = H_mesh%jj_extra(:, m2)
+            jmin = MIN(MINVAL(jj_loc1), MINVAL(jj_loc2))
+            jmax = MAX(MAXVAL(jj_loc1), MAXVAL(jj_loc2))
+
+            IF (jmax<H_mesh%loc_to_glob(1) .OR. jmin>H_mesh%loc_to_glob(1) + H_mesh%dom_np - 1) CYCLE
+
+            DO ci = 1, 2
+               IF (ci==1) THEN
+                  mi = m1
+                  mj = m2
+               ELSE
+                  mi = m2
+                  mj = m1
+               END IF
+
+               DO ni = 1, SIZE(H_mesh%jj, 1)
+                  iglob = H_mesh%jj_extra(ni, mi)
+                  IF (iglob < H_mesh%loc_to_glob(1) .OR. iglob > H_mesh%loc_to_glob(1) + H_mesh%dom_np - 1) CYCLE
+
+                  DO nj = 1, SIZE(H_mesh%jj, 1)
+                     jglob = H_mesh%loc_to_glob(H_mesh%jj(nj, mj))
+                     jloc = jglob - H_mesh%loc_to_glob(1) + 1
+                     IF (jloc<1 .OR. jloc>np_m) THEN
+                        DO p = 2, nb_procs + 1
+                           IF (H_mesh%disp(p) > jglob) THEN
+                              proc = p - 1
+                              EXIT
+                           END IF
+                        END DO
+                        out = .TRUE.
+                        jloc = jglob - H_mesh%disp(proc) + 1
+                     ELSE
+                        out = .FALSE.
+                     END IF
+
                      DO kj = 1, 3
                         IF (out) THEN
                            j = 3 * (H_mesh%disp(proc) - 1) + (pmag_mesh%disp(proc) - 1) + (phi_mesh%disp(proc) - 1) &
@@ -414,6 +480,86 @@ CONTAINS
                DO nj = 1, SIZE(H_mesh%jj, 1)
                   jglob = H_mesh%loc_to_glob(H_mesh%jj(nj, m1))
                   CALL search_index(H_mesh, jglob, nb_procs, jloc, proc, out)
+                  DO kj = 1, 3
+                     IF (out) THEN
+                        j = 3 * (H_mesh%disp(proc) - 1) + (pmag_mesh%disp(proc) - 1) + (phi_mesh%disp(proc) - 1) &
+                             + (kj - 1) * H_mesh%domnp(proc) + jloc
+                     ELSE
+                        j = LA_H%loc_to_glob(kj, jloc)
+                     END IF
+                     IF (MINVAL(ABS(ja_work(i, 1:nja_glob(i)) - j)) == 0) CYCLE
+                     nja_glob(i) = nja_glob(i) + 1
+                     ja_work(i, nja_glob(i)) = j
+                  END DO
+               END DO
+            END DO
+         END DO
+
+         DO ms = 1, interface_glob%mes_extra
+            cell_g = H_mesh%neighs_extra(interface_glob%mesh1(ms))
+            DO m1 = 1, H_mesh%mextra !find associated extra cell
+               IF (H_mesh%jcc_extra(m1) == cell_g) EXIT
+            END DO
+
+            cell_g = phi_mesh%neighs_extra(interface_glob%mesh2(ms))
+            DO m2 = 1, phi_mesh%mextra !find associated extra cell
+               IF (phi_mesh%jcc_extra(m1) == cell_g) EXIT
+            END DO
+
+            DO ni = 1, SIZE(H_mesh%jj, 1)
+               iglob = H_mesh%jj_extra(ni, m1)
+               IF (iglob < H_mesh%loc_to_glob(1) .OR. iglob > H_mesh%loc_to_glob(1) + H_mesh%dom_np - 1) CYCLE
+
+               DO nj = 1, SIZE(phi_mesh%jj, 1)
+                  jglob = phi_mesh%jj_extra(nj, m2)
+                  jloc = jglob - phi_mesh%loc_to_glob(1) + 1
+                  IF (jloc<1 .OR. jloc>np_phi) THEN
+                     DO p = 2, nb_procs + 1
+                        IF (phi_mesh%disp(p) > jglob) THEN
+                           proc = p - 1
+                           EXIT
+                        END IF
+                     END DO
+                     out = .TRUE.
+                     jloc = jglob - phi_mesh%disp(proc) + 1
+                  ELSE
+                     out = .FALSE.
+                  END IF
+                  IF (out) THEN
+                     j = 3 * (H_mesh%disp(proc) - 1) + (pmag_mesh%disp(proc) - 1) + (phi_mesh%disp(proc) - 1) &
+                          + 3 * H_mesh%domnp(proc) + pmag_mesh%domnp(proc) + jloc
+                  ELSE
+                     j = LA_phi%loc_to_glob(1, jloc)
+                  END IF
+                  DO ki = 1, 3
+                     i = iglob - H_mesh%loc_to_glob(1) + 1 + (ki - 1) * np_m
+                     IF (MINVAL(ABS(ja_work(i, 1:nja_glob(i)) - j)) == 0) CYCLE
+                     nja_glob(i) = nja_glob(i) + 1
+                     ja_work(i, nja_glob(i)) = j
+                  END DO
+               END DO
+            END DO
+
+            DO ni = 1, SIZE(phi_mesh%jj, 1)
+               iglob = phi_mesh_extra%jj(ni, m2)
+               IF (iglob < phi_mesh%loc_to_glob(1) .OR. iglob > phi_mesh%loc_to_glob(1) + phi_mesh%dom_np - 1) CYCLE
+               i = iglob - phi_mesh%loc_to_glob(1) + 1 + np_H + np_pmag
+               DO nj = 1, SIZE(H_mesh%jj, 1)
+                  jglob = H_mesh%jj_extra(nj, m1)
+                  jloc = jglob - H_mesh%loc_to_glob(1) + 1
+                  IF (jloc<1 .OR. jloc>np_m) THEN
+                     DO p = 2, nb_procs + 1
+                        IF (H_mesh%disp(p) > jglob) THEN
+                           proc = p - 1
+                           EXIT
+                        END IF
+                     END DO
+                     out = .TRUE.
+                     jloc = jglob - H_mesh%disp(proc) + 1
+                  ELSE
+                     out = .FALSE.
+                  END IF
+
                   DO kj = 1, 3
                      IF (out) THEN
                         j = 3 * (H_mesh%disp(proc) - 1) + (pmag_mesh%disp(proc) - 1) + (phi_mesh%disp(proc) - 1) &

@@ -2326,7 +2326,8 @@ CONTAINS
       END DO
 
       mesh_loc%mextra = nb_extra
-      ALLOCATE(mesh_loc%jj_extra(nw, nb_extra), mesh_loc%jce_extra(SIZE(mesh%jce, 1), nb_extra), mesh_loc%jcc_extra(nb_extra))
+      ALLOCATE(mesh_loc%jj_extra(nw, nb_extra), mesh_loc%jce_extra(SIZE(mesh%jce, 1), nb_extra), &
+           mesh_loc%jcc_extra(nb_extra))
       nb_extra = 0
       DO m = 1, mesh%me
          jglob = mesh%jj(:, m)
@@ -2361,7 +2362,7 @@ CONTAINS
       mesh_loc%mes_extra = nb_extra
 
       ALLOCATE(mesh_loc%jjs_extra(nws, nb_extra), mesh_loc%neighs_extra(SIZE(mesh%jce, 1), nb_extra), &
-           mesh_loc%sides_extra(nb_extra))
+           mesh_loc%sides_extra(nb_extra), mesh_loc%rrs_extra(2, nw, nb_extra) )
       nb_extra = 0
       DO ms = 1, mesh%mes
          m = mesh%neighs(ms)
@@ -2371,6 +2372,8 @@ CONTAINS
             mesh_loc%jjs_extra(:, nb_extra) = mesh%jjs(ms)
             mesh_loc%sides_extra(nb_extra) = mesh%sides(ms)
             mesh_loc%neighs_extra(nb_extra) = m
+            mesh_loc%rrs_extra(1, :, nb_extra) = mesh%rr(1, mesh%jj(:, m))
+            mesh_loc%rrs_extra(2, :, nb_extra) = mesh%rr(2, mesh%jj(:, m))
          END IF
       END DO
 
