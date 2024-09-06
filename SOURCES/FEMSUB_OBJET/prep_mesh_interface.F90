@@ -183,7 +183,8 @@ CONTAINS
                END IF
                write(*,*) k2, n2_ks, k1, n1_ks
                IF (MAXVAL(ABS(mesh_master%rrs_extra(:, n1_ks, ms1) - mesh_slave%rrs_extra(:, n2_ks, ms2))).GT.epsilon) THEN
-                  write(*,*) mesh_master%rrs_extra(:, n1_ks, ms1), mesh_slave%rrs_extra(:, n2_ks, ms2)
+                  write(*,*)  'n1' ,mesh_master%rrs_extra(:, n1_ks, ms1)
+                  write(*,*) 'n2' , mesh_slave%rrs_extra(:, n2_ks, ms2)
                   CYCLE
                END IF
 
