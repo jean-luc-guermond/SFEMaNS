@@ -1980,7 +1980,7 @@ CONTAINS
       END DO
 
       DO m = 1, mesh_p1%mes_extra
-         DO n = 1, nw
+         DO n = 1, nws
             DO p = 1, nb_proc
                IF (mesh_p1%jjs_extra(n, m) < mesh_p1%disp(p + 1)) THEN
                   EXIT
