@@ -2354,14 +2354,14 @@ CONTAINS
       !==Building extra edges along interfaces
       nb_extra = 0
       DO ms = 1, mesh%mes
-         m = mesh_p1%neighs(ms)
+         m = mesh%neighs(ms)
          IF (MINVAL(ABS(mesh_loc%jcc_extra - m)) == 0) THEN
             nb_extra = nb_extra + 1
          END IF
       END DO
       mesh_loc%mes_extra = nb_extra
 
-      ALLOCATE(mesh_loc%jjs_extra(nws, nb_extra), mesh_loc%neighs_extra(SIZE(mesh%jce, 1), nb_extra), &
+      ALLOCATE(mesh_loc%jjs_extra(nws, nb_extra), mesh_loc%neighs_extra(nb_extra), &
            mesh_loc%sides_extra(nb_extra), mesh_loc%rrs_extra(2, nw, nb_extra) )
       nb_extra = 0
       DO ms = 1, mesh%mes
@@ -2369,7 +2369,7 @@ CONTAINS
          IF (MINVAL(ABS(mesh_loc%jcc_extra - m)) == 0) THEN
             nb_extra = nb_extra + 1
 
-            mesh_loc%jjs_extra(:, nb_extra) = mesh%jjs(ms)
+            mesh_loc%jjs_extra(:, nb_extra) = mesh%jjs(:, ms)
             mesh_loc%sides_extra(nb_extra) = mesh%sides(ms)
             mesh_loc%neighs_extra(nb_extra) = m
             mesh_loc%rrs_extra(1, :, nb_extra) = mesh%rr(1, mesh%jj(:, m))
