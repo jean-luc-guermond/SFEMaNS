@@ -178,7 +178,7 @@ CONTAINS
                ELSE
                   n2_ks = (/MODULO(k2 + 1, nw) + 1, MODULO(k2, nw) + 1/)
                END IF
-
+               write(*,*) k2, n2_ks, k1, n1_ks
                IF (MAXVAL(ABS(mesh_master%rrs_extra(:, n1_ks, ms1) - mesh_slave%rrs_extra(:, n2_ks, ms2))).GT.epsilon) THEN
                   write(*,*) mesh_master%rrs_extra(:, n1_ks, ms1), mesh_slave%rrs_extra(:, n2_ks, ms2)
                   CYCLE
@@ -190,10 +190,7 @@ CONTAINS
                ENDIF
 
                r_norm = SUM(ABS(mesh_master%rrs_extra(:, 1:3, ms1)) - mesh_slave%rrs_extra(:, 1:3, ms2))
-               IF (r_norm .LE. 1d-9) THEN
-                  write(*,*) '????'
-                  CYCLE
-               END IF  ! two identical triangles
+               IF (r_norm .LE. 1d-9) CYCLE ! two identical triangles
 
                ms = ms + 1
                interface_mesh1(ms) = ms1
