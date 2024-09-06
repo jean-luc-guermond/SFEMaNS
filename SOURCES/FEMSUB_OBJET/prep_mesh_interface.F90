@@ -137,7 +137,7 @@ CONTAINS
          DO m1 = 1, mesh_master%mextra !find associated extra cell
             IF (mesh_master%jcc_extra(m1) == cell_g) EXIT
          END DO
-         write(*,*)  'side', mesh_master%sides_extra(ms1), cell_g, list_inter
+         write(*, *)  'side', mesh_master%sides_extra(ms1), cell_g, list_inter
          write(*, *) 'jj_extra', mesh_master%rrs_extra(:, 1:3, ms1)
          DO n = 1, dim + 1 !===find side in cell
             IF (MINVAL(ABS(mesh_master%jj_extra(n, m1) - mesh_master%jjs_extra(:, ms1)))/=0) THEN
@@ -152,12 +152,12 @@ CONTAINS
          r_norm = SUM(ABS(mesh_master%rrs_extra(:, n1_ks(1), ms1) - mesh_master%rrs_extra(:, n1_ks(2), ms1)))
          epsilon = eps_ref * r_norm
          okay = .FALSE.
-         write(*,*) 's', mesh_slave%mes_extra, mesh_slave%sides_extra
+         write(*, *) 's', mesh_slave%mes_extra, mesh_slave%sides_extra
          lp3 : DO ms2 = 1, mesh_slave%mes_extra
             IF(MINVAL(ABS(list_inter - mesh_slave%sides_extra(ms2))) /= 0) CYCLE !not on interface
 
-                     write(*,*)  'side2', mesh_slave%sides_extra(ms2), cell_g, list_inter
-         write(*, *) 'jj_extra2', mesh_slave%rrs_extra(:, 1:3, ms2)
+            write(*, *)  'side2', mesh_slave%sides_extra(ms2), cell_g, list_inter
+            write(*, *) 'jj_extra2', mesh_slave%rrs_extra(:, 1:3, ms2)
 
             cell_g = mesh_master%neighs_extra(ms2)
             DO m2 = 1, mesh_master%mextra !find associated extra cell
@@ -179,7 +179,10 @@ CONTAINS
                   n2_ks = (/MODULO(k2 + 1, nw) + 1, MODULO(k2, nw) + 1/)
                END IF
 
-               IF (MAXVAL(ABS(mesh_master%rrs_extra(:, n1_ks, ms1) - mesh_slave%rrs_extra(:, n2_ks, ms2))).GT.epsilon) CYCLE
+               IF (MAXVAL(ABS(mesh_master%rrs_extra(:, n1_ks, ms1) - mesh_slave%rrs_extra(:, n2_ks, ms2))).GT.epsilon) THEN
+                  write(*,*) mesh_master%rrs_extra(:, n1_ks, ms1), mesh_slave%rrs_extra(:, n2_ks, ms2)
+                  CYCLE
+               END IF
 
                IF(.NOT.virgin_elem(ms2)) THEN
                   Okay = .TRUE.
@@ -187,7 +190,10 @@ CONTAINS
                ENDIF
 
                r_norm = SUM(ABS(mesh_master%rrs_extra(:, 1:3, ms1)) - mesh_slave%rrs_extra(:, 1:3, ms2))
-               IF (r_norm .LE. 1d-9) CYCLE  ! two identical triangles
+               IF (r_norm .LE. 1d-9) THEN
+                  write(*,*) '????'
+                  CYCLE
+               END IF  ! two identical triangles
 
                ms = ms + 1
                interface_mesh1(ms) = ms1
