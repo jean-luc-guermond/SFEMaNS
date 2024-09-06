@@ -204,7 +204,7 @@ CONTAINS
                ms = ms + 1
                interface_mesh1(ms) = ms1
                interface_mesh2(ms) = ms2
-               interface_jjs1(1:2, ms) = mesh_master%jjs(:, ms1)
+               interface_jjs1(1:2, ms) = mesh_master%jjs(1:2, ms1)
                interface_jjs2(:, ms) = mesh_slave%jjs(:, ms2)
                IF (nws_master==3) THEN !P2 in two dimensions
                   interface_jjs1(3, ms) = mesh_master%jjs(3, ms1)
