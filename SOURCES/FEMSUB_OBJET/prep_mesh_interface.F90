@@ -142,7 +142,7 @@ CONTAINS
          write(*,*) 'jj_extra', mesh_master%jj_extra(:,m1)
 
          DO n = 1, dim + 1 !===find side in cell
-            IF (MINVAL(ABS(mesh_master%jj_extra(n, m1) - mesh_master%jjs_extra(:, ms)))/=0) THEN
+            IF (MINVAL(ABS(mesh_master%jj_extra(n, m1) - mesh_master%jjs_extra(:, ms1)))/=0) THEN
                k1 = n
                EXIT
             END IF
@@ -164,7 +164,7 @@ CONTAINS
             END DO
 
             DO n = 1, dim + 1 !===find side in cell
-               IF (MINVAL(ABS(mesh_master%jj_extra(n, m2) - mesh_master%jjs_extra(:, ms)))/=0) THEN
+               IF (MINVAL(ABS(mesh_master%jj_extra(n, m2) - mesh_master%jjs_extra(:, ms2)))/=0) THEN
                   k2 = n
                   EXIT
                END IF
