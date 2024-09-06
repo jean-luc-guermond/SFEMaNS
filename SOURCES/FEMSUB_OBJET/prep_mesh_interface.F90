@@ -138,7 +138,7 @@ CONTAINS
             IF (mesh_master%jcc_extra(m1) == cell_g) EXIT
          END DO
 
-         write(*,*) 'jj_extra', mesh_master%jj_extra(:,m1)
+         write(*, *) 'jj_extra', mesh_master%jj_extra(:, m1)
 
          DO n = 1, dim + 1 !===find side in cell
             IF (MINVAL(ABS(mesh_master%jj_extra(n, m1) - mesh_master%jjs_extra(:, ms1)))/=0) THEN
@@ -210,9 +210,11 @@ CONTAINS
       END DO
 
       mesh_interface%mes_extra = ms
-      write(*,*) 'm1', ms,  mesh_master%mes_extra, mesh_master%mextra
-      write(*,*) 'jcc', mesh_master%jcc_extra
-      write(*,*) 'jneighs', mesh_master%neighs_extra
+      write(*, *) 'm1', ms, mesh_master%mes_extra, mesh_master%mextra
+      write(*, *) 'jcc', mesh_master%jcc_extra
+      write(*, *) 'jneighs', mesh_master%neighs_extra
+      write(*, *) 'jcc s', mesh_slave%jcc_extra
+      write(*, *) 'jneighs s', mesh_slave%neighs_extra
       ALLOCATE(mesh_interface%mesh1(ms), mesh_interface%mesh2(ms), &
            mesh_interface%jjs1(nws_master, ms), mesh_interface%jjs2(nws_slave, ms))
       IF (ms > 0) THEN
