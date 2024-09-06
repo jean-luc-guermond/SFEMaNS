@@ -133,7 +133,7 @@ MODULE def_type_mesh
       INTEGER, POINTER, DIMENSION(:, :) :: jjs2 ! list of master nodes on interface elements
       INTEGER, POINTER, DIMENSION(:) :: mesh1_extra ! list slave interface elements on extra cells
       INTEGER, POINTER, DIMENSION(:) :: mesh2_extra! list master interface elements on extra cells
-      INTEGER, POINTER, DIMENSION(:, :) :: jjs1 ! list of slave node on interface elements on extra cells
+      INTEGER, POINTER, DIMENSION(:, :) :: jjs1_extra ! list of slave node on interface elements on extra cells
       INTEGER, POINTER, DIMENSION(:, :) :: jjs2_extra ! list of master nodes on interface elements on extra cells
    END TYPE interface_type
 
