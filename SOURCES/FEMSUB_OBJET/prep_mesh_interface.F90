@@ -208,14 +208,15 @@ CONTAINS
       END DO
 
       mesh_interface%mes_extra = ms
-
+      write(*, *) 'ms', ms
       ALLOCATE(mesh_interface%mesh1(ms), mesh_interface%mesh2(ms), &
            mesh_interface%jjs1(nws_master, ms), mesh_interface%jjs2(nws_slave, ms))
-
-      mesh_interface%mesh1_extra = interface_mesh1(1:ms)
-      mesh_interface%mesh2_extra = interface_mesh2(1:ms)
-      mesh_interface%jjs1_extra = interface_jjs1(1:nws_master, 1:ms)
-      mesh_interface%jjs2_extra = interface_jjs2(1:nws_slave, 1:ms)
+      IF (ms > 0) THEN
+         mesh_interface%mesh1_extra = interface_mesh1(1:ms)
+         mesh_interface%mesh2_extra = interface_mesh2(1:ms)
+         mesh_interface%jjs1_extra = interface_jjs1(1:nws_master, 1:ms)
+         mesh_interface%jjs2_extra = interface_jjs2(1:nws_slave, 1:ms)
+      END IF
 
       DEALLOCATE(virgin_elem, list, interface_mesh1, interface_mesh2, &
            interface_jjs1, interface_jjs2)
