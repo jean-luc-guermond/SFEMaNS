@@ -1368,6 +1368,7 @@ CONTAINS
          ELSE
             interface_H_phi%mes = 0
          END IF
+         write(*,*) 'int done'
          !===JLG july 20, 2019, p3 mesh
          !===Use increasing vertex index enumeration
          !CALL incr_vrtx_indx_enumeration_for_interfaces(interface_H_phi,inputs%type_fe_H+1,inputs%type_fe_phi+1)
@@ -1383,6 +1384,7 @@ CONTAINS
          CALL st_scr_maxwell_mu_H_p_phi(comm_one_d(1), H_mesh, pmag_mesh, &
               phi_mesh, interface_H_phi, interface_H_mu, &
               LA_H, LA_pmag, LA_phi, LA_mhd, opt_per = H_phi_per)
+         write(*,*) 'st csr mhd done'
 
          !===Prepare csr structure for post processing grad phi=======================+++
          CALL st_aij_csr_glob_block_with_extra_layer(comm_one_d(1), 1, phi_mesh, vizu_grad_phi_LA)
