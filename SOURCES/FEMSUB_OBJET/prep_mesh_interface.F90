@@ -215,8 +215,8 @@ CONTAINS
       !write(*, *) 'm1', ms, mesh_master%mes_extra, mesh_master%mextra
       !write(*, *) 'jcc', mesh_master%neighs_extra
       !write(*, *) 'side', mesh_master%sides_extra
-      ALLOCATE(mesh_interface%mesh1(ms), mesh_interface%mesh2(ms), &
-           mesh_interface%jjs1(nws_master, ms), mesh_interface%jjs2(nws_slave, ms))
+      ALLOCATE(mesh_interface%mesh1_extra(ms), mesh_interface%mesh2_extra(ms), &
+           mesh_interface%jjs1_extra(nws_master, ms), mesh_interface%jjs2_extra(nws_slave, ms))
       IF (ms > 0) THEN
          write(*,*) 'ms', ms
          mesh_interface%mesh1_extra = interface_mesh1(1:ms)
