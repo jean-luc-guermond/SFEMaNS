@@ -128,7 +128,7 @@ CONTAINS
            interface_jjs2(nws_slave, mesh_slave%mes_extra))
 
       virgin_elem = .TRUE.
-      nw = SIZE(mesh_master%rrs_extra(1, :, 1))
+      nw = 3
       ms = 0
       DO ms1 = 1, mesh_master%mes_extra
          IF(MINVAL(ABS(list_inter - mesh_master%sides_extra(ms1))) /= 0) CYCLE !not on interface
