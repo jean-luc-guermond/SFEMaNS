@@ -197,7 +197,7 @@ CONTAINS
 
                r_norm = SUM(ABS(mesh_master%rrs_extra(:, 1:3, ms1) - mesh_slave%rrs_extra(:, 1:3, ms2)))
                IF (r_norm .LE. 1d-9) THEN
-                  write(*,*) '?????',
+                  write(*,*) '?????'
                   CYCLE
                END IF ! two identical triangles
 
