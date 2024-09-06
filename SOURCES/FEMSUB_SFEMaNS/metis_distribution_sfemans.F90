@@ -2053,6 +2053,7 @@ CONTAINS
          ALLOCATE(mesh_loc%neighs_extra(mesh_loc%mes_extra))
          ALLOCATE(mesh_loc%sides_extra(mesh_loc%mes_extra))
          ALLOCATE(mesh_loc%jjs_extra(nws, mesh_loc%mes_extra))
+         ALLOCATE(mesh_loc%rrs_extra(dim, nw, mesh_loc%mes_extra))
 
          ALLOCATE(mesh_loc%jj_extra(nw, mesh_loc%mextra))
          ALLOCATE(mesh_loc%jce_extra(nw, mesh_loc%mextra))
@@ -2426,7 +2427,6 @@ CONTAINS
          END DO
       END DO
       !===END Find the isolated points on the border
-      write(*,*) SIZE(mesh_loc%rrs_extra,1), SIZE(mesh_loc%rrs_extra,2), SIZE(mesh_loc%rrs_extra,3)
 
    END SUBROUTINE create_local_mesh_with_extra_layer
 
