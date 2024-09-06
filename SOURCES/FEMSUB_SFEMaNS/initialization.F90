@@ -1053,6 +1053,7 @@ CONTAINS
       IF (if_momentum .OR. inputs%type_pb=='mxx') THEN
          CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_mesh_glob, part, list_dom_ns, dummy_mesh_loc)
          WRITE(*, *)'mesh extracted'
+               write(*,*) SIZE(dummy_mesh_loc%rrs_extra,1), SIZE(dummy_mesh_loc%rrs_extra,2), SIZE(dummy_mesh_loc%rrs_extra,3)
          CALL create_iso_grid_distributed(dummy_mesh_loc, vv_mesh, inputs%type_fe_velocity)
          CALL create_iso_grid_distributed(dummy_mesh_loc, pp_mesh, inputs%type_fe_velocity - 1)
          WRITE(*, *)'p2/p1 created'
