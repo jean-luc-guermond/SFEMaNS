@@ -139,7 +139,6 @@ CONTAINS
          END DO
          write(*,*)  'side', mesh_master%sides_extra(ms1), cell_g, list_inter
          write(*, *) 'jj_extra', mesh_master%rrs_extra(:, 1:3, ms1)
-         write(*, *) 'rr_extra', mesh_slave%rrs_extra(:, 1:3, :)
          DO n = 1, dim + 1 !===find side in cell
             IF (MINVAL(ABS(mesh_master%jj_extra(n, m1) - mesh_master%jjs_extra(:, ms1)))/=0) THEN
                k1 = n
@@ -156,6 +155,9 @@ CONTAINS
 
          lp3 : DO ms2 = 1, mesh_slave%mes_extra
             IF(MINVAL(ABS(list_inter - mesh_slave%sides(ms2))) /= 0) CYCLE !not on interface
+
+                     write(*,*)  'side2', mesh_slave%sides_extra(ms1), cell_g, list_inter
+         write(*, *) 'jj_extra2', mesh_slave%rrs_extra(:, 1:3, ms1)
 
             cell_g = mesh_master%neighs_extra(ms2)
             DO m2 = 1, mesh_master%mextra !find associated extra cell
