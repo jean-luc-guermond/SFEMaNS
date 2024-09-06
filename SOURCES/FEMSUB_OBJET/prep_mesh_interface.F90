@@ -218,6 +218,7 @@ CONTAINS
       ALLOCATE(mesh_interface%mesh1(ms), mesh_interface%mesh2(ms), &
            mesh_interface%jjs1(nws_master, ms), mesh_interface%jjs2(nws_slave, ms))
       IF (ms > 0) THEN
+         write(*,*) 'ms', ms
          mesh_interface%mesh1_extra = interface_mesh1(1:ms)
          mesh_interface%mesh2_extra = interface_mesh2(1:ms)
          mesh_interface%jjs1_extra = interface_jjs1(1:nws_master, 1:ms)
