@@ -24,7 +24,7 @@ CONTAINS
       INTEGER, DIMENSION(:), POINTER :: nja_glob
       INTEGER :: np_glob, np_H, np_pmag, np_phi, np_m, code, rank, dp, n_a_d, &
            iglob, jglob, iloc, jloc, ni, nj, ci, m, mi, mj, m1, m2, i, j, k, ki, kj, &
-           jmin, jmax, p, nnz, p_i, p_f, ms, nb_procs, proc
+           jmin, jmax, p, nnz, p_i, p_f, ms, nb_procs, proc, cell_g
       LOGICAL :: out
       INTEGER, DIMENSION(:), ALLOCATABLE :: per_loc
       INTEGER :: njt, i1, i2
@@ -541,7 +541,7 @@ CONTAINS
             END DO
 
             DO ni = 1, SIZE(phi_mesh%jj, 1)
-               iglob = phi_mesh_extra%jj(ni, m2)
+               iglob = phi_mesh%jj_extra(ni, m2)
                IF (iglob < phi_mesh%loc_to_glob(1) .OR. iglob > phi_mesh%loc_to_glob(1) + phi_mesh%dom_np - 1) CYCLE
                i = iglob - phi_mesh%loc_to_glob(1) + 1 + np_H + np_pmag
                DO nj = 1, SIZE(H_mesh%jj, 1)
