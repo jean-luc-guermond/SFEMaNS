@@ -137,7 +137,7 @@ CONTAINS
          DO m1 = 1, mesh_master%mextra !find associated extra cell
             IF (mesh_master%jcc_extra(m1) == cell_g) EXIT
          END DO
-         write(*,*)  'side', mesh_master%sides(ms1), cell_g
+         write(*,*)  'side', mesh_master%sides(ms1), cell_g, list_inter
          write(*, *) 'jj_extra', mesh_master%rrs_extra(:, :, ms1)
 
          DO n = 1, dim + 1 !===find side in cell
