@@ -152,22 +152,22 @@ CONTAINS
          r_norm = SUM(ABS(mesh_master%rrs_extra(:, n1_ks(1), ms1) - mesh_master%rrs_extra(:, n1_ks(2), ms1)))
          epsilon = eps_ref * r_norm
          okay = .FALSE.
-         write(*, *) 's', mesh_slave%mes_extra, mesh_slave%sides_extra
+
          lp3 : DO ms2 = 1, mesh_slave%mes_extra
             IF(MINVAL(ABS(list_inter - mesh_slave%sides_extra(ms2))) /= 0) CYCLE !not on interface
 
 
 
-            cell_g = mesh_master%neighs_extra(ms2)
-            DO m2 = 1, mesh_master%mextra !find associated extra cell
-               IF (mesh_master%jcc_extra(m2) == cell_g) EXIT
+            cell_g = mesh_slave%neighs_extra(ms2)
+            DO m2 = 1, mesh_slave%mextra !find associated extra cell
+               IF (mesh_slave%jcc_extra(m2) == cell_g) EXIT
             END DO
             write(*, *)  'side2', mesh_slave%sides_extra(ms2), cell_g, list_inter
             write(*, *) 'jj_extra2', mesh_slave%rrs_extra(:, 1:3, ms2)
 
 
             DO n = 1, dim + 1 !===find side in cell
-               IF (MINVAL(ABS(mesh_master%jj_extra(n, m2) - mesh_master%jjs_extra(:, ms2)))/=0) THEN
+               IF (MINVAL(ABS(mesh_slave%jj_extra(n, m2) - mesh_slave%jjs_extra(:, ms2)))/=0) THEN
                   k2 = n
                   EXIT
                END IF
