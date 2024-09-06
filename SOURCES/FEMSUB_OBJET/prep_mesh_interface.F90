@@ -210,9 +210,9 @@ CONTAINS
       END DO
 
       mesh_interface%mes_extra = ms
-      write(*, *) 'm1', ms, mesh_master%mes_extra, mesh_master%mextra
-      write(*, *) 'jcc', mesh_master%neighs_extra
-      write(*, *) 'side', mesh_master%sides_extra
+      !write(*, *) 'm1', ms, mesh_master%mes_extra, mesh_master%mextra
+      !write(*, *) 'jcc', mesh_master%neighs_extra
+      !write(*, *) 'side', mesh_master%sides_extra
       ALLOCATE(mesh_interface%mesh1(ms), mesh_interface%mesh2(ms), &
            mesh_interface%jjs1(nws_master, ms), mesh_interface%jjs2(nws_slave, ms))
       IF (ms > 0) THEN

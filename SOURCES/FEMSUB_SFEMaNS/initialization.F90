@@ -1356,15 +1356,15 @@ CONTAINS
          !CALL load_interface(H_mesh_glob, phi_mesh_glob, inputs%list_inter_H_phi, interface_H_phi_glob, .TRUE.)
 
          IF (H_mesh%me /=0) THEN
-            write(*,*) 'H inter'
             CALL load_interface(H_mesh, H_mesh, inputs%list_inter_mu, interface_H_mu, .FALSE.)
+            write(*,*) 'H inter', interface_H_mu%mes_extra
          ELSE
             interface_H_mu%mes = 0
          END IF
 
          IF (H_mesh%me * phi_mesh%me /=0) THEN
-                        write(*,*) 'phi inter'
             CALL load_interface(H_mesh, phi_mesh, inputs%list_inter_H_phi, interface_H_phi, .TRUE.)
+            write(*,*) 'phi inter', interface_H_phi%mes_extra
          ELSE
             interface_H_phi%mes = 0
          END IF
