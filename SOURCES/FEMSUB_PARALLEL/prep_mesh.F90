@@ -1979,6 +1979,18 @@ CONTAINS
          END DO
       END DO
 
+      DO m = 1, mesh_p1%mes_extra
+         DO n = 1, nw
+            DO p = 1, nb_proc
+               IF (mesh_p1%jjs_extra(n, m) < mesh_p1%disp(p + 1)) THEN
+                  EXIT
+               END IF
+            END DO
+            mesh%jjs_extra(n, m) = mesh_p1%jjs_extra(n, m) &
+                 + (mesh_p1%disedge(p) - 1) * f_dof + (mesh_p1%discell(p) - 1) * (f_dof - 1)
+         END DO
+      END DO
+
       virgin = .TRUE.
 
       n_dof = 0
