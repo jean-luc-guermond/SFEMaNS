@@ -223,6 +223,7 @@ CONTAINS
          mesh_interface%mesh2_extra = interface_mesh2(1:ms)
          mesh_interface%jjs1_extra = interface_jjs1(1:nws_master, 1:ms)
          mesh_interface%jjs2_extra = interface_jjs2(1:nws_slave, 1:ms)
+         write(*,*) 'aak'
       END IF
 
       DEALLOCATE(virgin_elem, list, interface_mesh1, interface_mesh2, &
