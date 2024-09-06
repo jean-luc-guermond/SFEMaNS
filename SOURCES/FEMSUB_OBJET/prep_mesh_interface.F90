@@ -130,7 +130,7 @@ CONTAINS
       virgin_elem = .TRUE.
       nw = SIZE(mesh_master%rrs_extra(1, :, 1))
       ms = 0
-      DO ms1 = 1, mesh_master%mes
+      DO ms1 = 1, mesh_master%mes_extra
          IF(MINVAL(ABS(list_inter - mesh_master%sides_extra(ms1))) /= 0) CYCLE !not on interface
 
          cell_g = mesh_master%neighs_extra(ms1)
@@ -152,7 +152,7 @@ CONTAINS
          epsilon = eps_ref * r_norm
          okay = .FALSE.
 
-         lp3 : DO ms2 = 1, mesh_slave%mes
+         lp3 : DO ms2 = 1, mesh_slave%mes_extra
             IF(MINVAL(ABS(list_inter - mesh_slave%sides(ms2))) /= 0) CYCLE !not on interface
 
             cell_g = mesh_master%neighs_extra(ms2)
