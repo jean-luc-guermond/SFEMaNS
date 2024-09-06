@@ -1794,6 +1794,8 @@ CONTAINS
          mesh%i_d = mesh_p1%i_d
          ALLOCATE(mesh%loc_to_glob(mesh%np))
          mesh%loc_to_glob = mesh_p1%loc_to_glob
+         ALLOCATE(mesh%jcc_extra(mesh%mextra))
+         mesh%jcc_extra = mesh_p1%jcc_extra
 
          mesh%dom_me = mesh_p1%dom_me
          mesh%dom_np = mesh_p1%dom_np
@@ -1847,6 +1849,8 @@ CONTAINS
          mesh%neighs_extra = mesh_p1%neighs_extra
          ALLOCATE(mesh%i_d(mesh%me))
          mesh%i_d = mesh_p1%i_d
+         ALLOCATE(mesh%jcc_extra(mesh%mextra))
+         mesh%jcc_extra = mesh_p1%jcc_extra
 
          mesh%dom_me = mesh_p1%dom_me
          mesh%dom_np = mesh_p1%dom_np + mesh_p1%medge
@@ -1897,6 +1901,8 @@ CONTAINS
          mesh%neighs_extra = mesh_p1%neighs_extra
          ALLOCATE(mesh%i_d(mesh%me))
          mesh%i_d = mesh_p1%i_d
+         ALLOCATE(mesh%jcc_extra(mesh%mextra))
+         mesh%jcc_extra = mesh_p1%jcc_extra
 
          mesh%dom_me = mesh_p1%dom_me
          mesh%dom_np = mesh_p1%dom_np + 2 * mesh_p1%medge + mesh_p1%me
@@ -2290,7 +2296,7 @@ CONTAINS
       DO ms = 1, mesh%mes_extra
          cell_g = mesh%neighs_extra(ms)
          DO m = 1, mesh%mextra !find associated extra cell
-            IF (mesh%jcc_extra(m) == cell_g) EXIT
+            IF (mesh_p1%jcc_extra(m) == cell_g) EXIT
          END DO
          DO n = 1, kd + 1 !===find side in cell
             IF (MINVAL(ABS(mesh%jj_extra(n, m) - mesh_p1%jjs_extra(:, ms)))/=0) THEN
