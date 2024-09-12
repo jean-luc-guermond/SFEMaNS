@@ -1133,6 +1133,11 @@ CONTAINS
          CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_mesh_glob, part, inputs%list_dom_phi, dummy_mesh_loc)
          CALL create_iso_grid_distributed(dummy_mesh_loc, phi_mesh, inputs%type_fe_phi)
          CALL free_mesh(dummy_mesh_loc)
+
+         DO m = 1, H_mesh%me
+            IF (MINVAL(ABS(H_mesh%jj(:,m) - 24))) write(*,*) 'm', m, H_mesh%jj(:,m)
+         END DO
+
       END IF
 
       !===Free p1_mesh_glob
