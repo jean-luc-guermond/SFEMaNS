@@ -1135,7 +1135,7 @@ CONTAINS
          CALL free_mesh(dummy_mesh_loc)
 
          DO m = 1, H_mesh%me
-            IF (MINVAL(ABS(H_mesh%jj(:,m) - 24))) write(*,*) 'm', m, H_mesh%jj(:,m)
+            IF (MINVAL(ABS(H_mesh%jj(:,m) - 24)) == 0) write(*,*) 'm', m, H_mesh%jj(:,m)
          END DO
 
       END IF
