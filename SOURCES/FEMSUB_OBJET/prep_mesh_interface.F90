@@ -192,8 +192,6 @@ CONTAINS
 
                r_norm = SUM(ABS(mesh_master%rrs_extra(:, 1:3, ms1) - mesh_slave%rrs_extra(:, 1:3, ms2)))
                IF (r_norm .LE. 1d-9) CYCLE ! two identical triangles
-             write(*,*) mesh_master%jjs_extra(1:2, ms1), mesh_master%jj_extra(1:3, m1), &
-                  mesh_master%jjs_extra(1:2, ms2), mesh_master%jj_extra(1:3, m2), cell_g, m1, m2
 
                ms = ms + 1
                interface_mesh1(ms) = ms1
