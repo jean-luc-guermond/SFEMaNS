@@ -328,11 +328,15 @@ CONTAINS
                IF (if_momentum) THEN
                   CALL projection_velocity(H_mesh, un, jj_v_to_H, .FALSE., v_to_Max)
                END IF
+                  write(*,*) 'check 3'
+
                CALL maxwell_decouple(comm_one_d, H_mesh, pmag_mesh, phi_mesh, &
                     interface_H_phi, interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, v_to_Max, &
                     inputs%stab, inputs%stab_jump_h, sigma_field, R_fourier, index_fourier, mu_H_field, inputs%mu_phi, &
                     time, inputs%dt, inputs%Rem, list_mode, H_phi_per, LA_H, LA_pmag, LA_phi, &
                     LA_mhd, one_over_sigma_ns_p1, jj_v_to_H, conc_to_H)
+                  write(*,*) 'check 4'
+
                Hn1 = Hn
                Bn1 = Bn
                phin1 = phin
