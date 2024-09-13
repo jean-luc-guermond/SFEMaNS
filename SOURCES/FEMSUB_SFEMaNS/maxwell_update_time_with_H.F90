@@ -3845,9 +3845,6 @@ CONTAINS
                          jx = nj + n_ws2*((kj-1) + 3*(cj-1))
                          jdxn(jx) = jb-1
 
-
-                               write(*,*) 'here', ib-1, jb-1
-
                          IF  ((ki == 1) .AND. (kj == 1)) THEN
                             mat_loc1(ix,jx) = Hsij(1,ni,nj,ci,cj)
                             mat_loc2(ix,jx) = Hsij(1,ni,nj,ci,cj)
@@ -3976,7 +3973,6 @@ CONTAINS
                          jb = LA_H%loc_to_glob(kj,j)
                          jx = nj + n_wsj*((kj-1) + 3*(cj-1))
                          jdxn(jx) = jb - 1
-                                                        write(*,*) 'here', ib-1, jb-1
 
                          IF  ((ki == 2) .AND. (kj == 1)) THEN
                             mat_loc1(ix,jx) = Hsij(2,ni,nj,ci,cj)
@@ -4116,7 +4112,6 @@ CONTAINS
                          jb = LA_H%loc_to_glob(kj,j)
                          jx = nj + n_wj*((kj-1) + 3*(cj-1))
                          jdxn(jx) = jb - 1
-                                                        write(*,*) 'here', ib-1, jb-1
 
                          IF      ((ki == 1) .AND. (kj == 1)) THEN
                             mat_loc1(ix,jx) = Hsij(1,ni,nj,ci,cj)
