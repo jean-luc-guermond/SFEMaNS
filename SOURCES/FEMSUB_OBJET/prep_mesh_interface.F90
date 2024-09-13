@@ -143,7 +143,7 @@ CONTAINS
                EXIT
             END IF
          ENDDO
-         write(*,*) mesh_master%jjs_extra(1:2, ms1), mesh_master%jj_extra(1:3, m1), cell_g, ms1, ms2
+         write(*,*) mesh_master%jjs_extra(1:2, ms1), mesh_master%jj_extra(1:3, m1), cell_g, m1, m2
          !==cell index of edge
          n1_ks = (/MODULO(k1, nw) + 1, MODULO(k1 + 1, nw) + 1/)
 
