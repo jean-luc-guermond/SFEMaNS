@@ -455,6 +455,7 @@ CONTAINS
 
           tps = user_time() - tps
 !!$          WRITE(*,*) ' Tps create_local_petsc_matrix', tps
+   write(*,*) 'check 12.3.1'
 
           tps = user_time()
           CALL mat_H_p_phi_maxwell(H_mesh,pmag_mesh,phi_mesh,interface_H_phi, &
@@ -478,6 +479,7 @@ CONTAINS
 
 !!$          tps = user_time() - tps
 !!$          WRITE(*,*) ' Tps mat_dirichlet_maxwell', tps
+   write(*,*) 'check 12.3.2'
 
 !!$          IF (per) THEN
           IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
@@ -500,6 +502,7 @@ CONTAINS
           tps = user_time() - tps
 
 !!$          WRITE(*,*) ' Tps Dirichlet_M_parallel', tps
+   write(*,*) 'check 12.3.3'
 
           tps = user_time()
           CALL init_solver(inputs%my_par_H_p_phi,H_p_phi_ksp1(i),H_p_phi_mat1(i),comm_one_d(1),&
