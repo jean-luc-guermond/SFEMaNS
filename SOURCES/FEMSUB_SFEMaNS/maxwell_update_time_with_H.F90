@@ -4167,7 +4167,7 @@ CONTAINS
                          jx = nj + n_wsj*((kj-1) + 3*(cj-1))
                          jdxn(jx) = jb-1
                          IF (ib == 224) THEN
-                         write(*,*) 'here', ib-1, jb-1, m1, m2, cj, kj, nj, ms, H_mesh%loc_to_glob(1)
+                         write(*,*) 'here', ib-1, jb-1, ms, ms1, ms2, m1, m2, H_mesh%loc_to_glob(1)
                          END IF
                          IF      ((ki == 1) .AND. (kj == 1)) THEN
                             mat_loc1(ix,jx) = Gsij(1,ni,nj,ci,cj)
