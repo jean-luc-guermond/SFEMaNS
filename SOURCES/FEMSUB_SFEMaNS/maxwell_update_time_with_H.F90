@@ -461,6 +461,7 @@ CONTAINS
           CALL mat_H_p_phi_maxwell(H_mesh,pmag_mesh,phi_mesh,interface_H_phi, &
                mode,mu_H_field, mu_phi, one_and_half/dt, stab, R_fourier, index_fourier, &
                LA_H, LA_pmag, LA_phi, H_p_phi_mat1(i), H_p_phi_mat2(i), sigma_nj_m, sigma)
+   write(*,*) 'check 12.3.1.1'
 
           tps = user_time() - tps
 !!$          WRITE(*,*) ' Tps mat_H_p_phi_maxwell', tps
@@ -471,7 +472,8 @@ CONTAINS
                mu_H_field, sigma, LA_H, H_p_phi_mat1(i), H_p_phi_mat2(i), sigma_np)
           tps = user_time() - tps
 !!$          WRITE(*,*) ' Tps mat_maxwell_mu', tps
-          !JLG, FL, Feb 10, 2011
+          write(*,*) 'check 12.3.1.2'
+   !JLG, FL, Feb 10, 2011
 
           tps = user_time()
           CALL mat_dirichlet_maxwell(H_mesh, jj_v_to_H, Dirichlet_bdy_H_sides, &
