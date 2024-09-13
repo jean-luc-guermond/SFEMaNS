@@ -99,7 +99,7 @@ CONTAINS
                END IF
                IF (ms == 18) THEN
                write(*,*) ms1, ms2, m1, m2, mesh_master%jjs(:, ms1), mesh_slave%jjs(:, ms2)
-               write(*,*) 'jj',  mesh_master%jj(:, m1), mesh_slave%jj(:, m2)
+               write(*,*) 'jj',  mesh_master%loc_to_glob(mesh_master%jj(:, m1)), mesh_slave%loc_to_glob(mesh_slave%jj(:, m2))
 
                END IF
                virgin_elem(ms2) = .FALSE.
