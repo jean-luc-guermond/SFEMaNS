@@ -96,7 +96,7 @@ PROGRAM mhd_prog
   !IF (rank==0) WRITE(*,*) 'END OF ARPACK, EXITING PRGM'
   !   !RETURN
   !END IF
-
+   write(*,*) 'check 1'
   !===============================================================================
   !                        TIME INTEGRATION                                      !
   !===============================================================================
@@ -107,6 +107,7 @@ PROGRAM mhd_prog
      time = time + inputs%dt
 
      CALL run_SFEMaNS(time, it)
+   write(*,*) 'check 2'
 
      !===My postprocessing
      IF (.NOT.inputs%test_de_convergence) THEN

@@ -1134,10 +1134,6 @@ CONTAINS
          CALL create_iso_grid_distributed(dummy_mesh_loc, phi_mesh, inputs%type_fe_phi)
          CALL free_mesh(dummy_mesh_loc)
 
-         DO m = 1, H_mesh%me
-write(*,*) 'm', MINVAL(ABS(H_mesh%loc_to_glob(H_mesh%jj(:,m))- 224)), m , H_mesh%loc_to_glob(H_mesh%jj(:,m))
-         END DO
-
       END IF
 
       !===Free p1_mesh_glob
