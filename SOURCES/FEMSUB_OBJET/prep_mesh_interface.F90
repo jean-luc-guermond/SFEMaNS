@@ -101,7 +101,6 @@ CONTAINS
                write(*,*) ms1, ms2, m1, m2, mesh_master%jjs(:, ms1), mesh_slave%jjs(:, ms2)
                write(*,*) 'jj',  mesh_master%jj(:, m1), mesh_slave%jj(:, m2)
 
-               )
                END IF
                virgin_elem(ms2) = .FALSE.
                IF (.NOT.disjoint) virgin_elem(ms1) = .FALSE.
