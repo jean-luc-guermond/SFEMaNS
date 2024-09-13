@@ -88,6 +88,7 @@ CONTAINS
                   CYCLE  ! two identical triangles
                END IF
 
+
                ms = ms + 1
                interface_mesh1(ms) = ms1
                interface_mesh2(ms) = ms2
@@ -96,7 +97,10 @@ CONTAINS
                IF (nws_master==3) THEN !P2 in two dimensions
                   interface_jjs1(3, ms) = mesh_master%jjs(3, ms1)
                END IF
+               IF (ms == 18) THEN
+               write(*,*) ms1, ms2, mesh_master%jjs(:, ms1), mesh_slave%jjs(:, ms2)
 
+               END IF
                virgin_elem(ms2) = .FALSE.
                IF (.NOT.disjoint) virgin_elem(ms1) = .FALSE.
                okay = .TRUE.
