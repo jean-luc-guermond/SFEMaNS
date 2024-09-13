@@ -4166,8 +4166,9 @@ CONTAINS
                          jb = LA_H%loc_to_glob(kj,j)
                          jx = nj + n_wsj*((kj-1) + 3*(cj-1))
                          jdxn(jx) = jb-1
-                                                        write(*,*) 'here', ib-1, jb-1
-
+                         IF (ib == 224) THEN
+                         write(*,*) 'here', ib-1, jb-1, m1, m2, cj, kj, nj, ms
+                         END IF
                          IF      ((ki == 1) .AND. (kj == 1)) THEN
                             mat_loc1(ix,jx) = Gsij(1,ni,nj,ci,cj)
                             mat_loc2(ix,jx) = Gsij(1,ni,nj,ci,cj)
