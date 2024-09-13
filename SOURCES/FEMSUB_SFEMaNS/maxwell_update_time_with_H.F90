@@ -3844,11 +3844,10 @@ CONTAINS
                          jb = LA_H%loc_to_glob(kj,j)
                          jx = nj + n_ws2*((kj-1) + 3*(cj-1))
                          jdxn(jx) = jb-1
-                         IF (ib - 1 == 23 ) THEN
-                            IF (jb - 1 == 223 ) THEN
+
+
                                write(*,*) 'here', ib, jb
-                            END IF
-                         END IF
+
                          IF  ((ki == 1) .AND. (kj == 1)) THEN
                             mat_loc1(ix,jx) = Hsij(1,ni,nj,ci,cj)
                             mat_loc2(ix,jx) = Hsij(1,ni,nj,ci,cj)
