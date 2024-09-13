@@ -167,6 +167,7 @@ CONTAINS
        ! FL, 31/03/11
        CALL MPI_ALLREDUCE(MINVAL(sigma),sigma_min,1,MPI_DOUBLE_PRECISION, MPI_MIN,comm_one_d(1), ierr)
        ! FL, 31/03/11
+   write(*,*) 'check 9'
 
        !------------------------------------------------------------------------------
 
@@ -244,6 +245,7 @@ CONTAINS
           END DO
        END DO
        !------------------------------------------------------------------------------
+   write(*,*) 'check 10'
 
        !---------------BOUNDARY CONDITIONS FOR pmag-----------------------------------
        ! Creation of Dirichlet boundary conditions for the magnetic pressure
@@ -361,6 +363,7 @@ CONTAINS
           Neumann_bdy_phi_sides(count) = ms
        END DO
        !===End Neuman BC for H
+   write(*,*) 'check 11'
 
        !---------------BOUNDARY CONDITIONS FOR Hxn------------------------------------
        !===Compute sides that are on Dirichlet boundary (H-H_D)xn=0
@@ -397,6 +400,7 @@ CONTAINS
           phi_global_D(i)%DRL = 0.d0
        END DO
        !------------------------------------------------------------------------------
+   write(*,*) 'check 12'
 
        !-------------MATRIX ALLOCATION------------------------------------------------
        ALLOCATE(H_p_phi_mat1(m_max_c),H_p_phi_ksp1(m_max_c))
@@ -513,6 +517,7 @@ CONTAINS
     tps_tot = user_time()
     tps_cumul = 0
     CALL MPI_COMM_RANK(PETSC_COMM_WORLD, my_petscworld_rank, code)
+   write(*,*) 'check 13'
 
     !-------------TRANSPORT TERM---------------------------------------------------
     tps = user_time()
@@ -601,6 +606,7 @@ CONTAINS
        J_over_sigma_gauss_inter_mu= 0.d0
        sigma_tot_gauss_Neumann    = 0.d0
     END IF
+   write(*,*) 'check 14'
 
     tps = user_time() - tps; tps_cumul=tps_cumul+tps
     !WRITE(*,*) ' Tps NLS_SFT Maxwell', tps
@@ -786,6 +792,7 @@ CONTAINS
        !------------------------------------------------------------------------------
 
     ENDDO
+   write(*,*) 'check 15'
 
     !===Verbose divergence of velocity
     IF (inputs%verbose_divergence) THEN
