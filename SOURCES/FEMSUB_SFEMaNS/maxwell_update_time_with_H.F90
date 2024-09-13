@@ -415,6 +415,7 @@ CONTAINS
           sigma_curl_gauss_bdy = 0.d0
           J_over_sigma_gauss_bdy = 0.d0
        END IF
+   write(*,*) 'check 12.1'
 
        IF (interface_H_mu%mes.GE.1) THEN
           ALLOCATE(sigma_curl_gauss_inter_mu(2*H_mesh%gauss%l_Gs*interface_H_mu%mes,6,SIZE(list_mode)))
@@ -425,6 +426,7 @@ CONTAINS
           sigma_curl_gauss_inter_mu = 0.d0
           J_over_sigma_gauss_inter_mu = 0.d0
        END IF
+   write(*,*) 'check 12.2'
 
        IF (SIZE(Neumann_bdy_H_sides).GE.1) THEN
           IF(my_petscworld_rank==0) THEN
@@ -436,6 +438,7 @@ CONTAINS
           sigma_tot_gauss_Neumann = 0.d0
        END IF
        !------------------------------------------------------------------------------
+   write(*,*) 'check 12.3'
 
        DO i = 1, m_max_c !Boucle sur les modes
           mode = list_mode(i)
