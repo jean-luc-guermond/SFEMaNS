@@ -2003,6 +2003,7 @@ CONTAINS
       LOGICAL, DIMENSION(mesh%me) :: not_my_cells
       INTEGER, DIMENSION(SIZE(mesh%jj, 1)) :: jglob, eglob
       LOGICAL :: test
+      REAL(KIND=8), DIMENSION(mesh%me) :: part
       INTEGER :: dim, nws, nw, m, ms, mop, msop, ns, msup, minf, dof, proc, m2, &
            dom_me, nwc, dom_mes, dom_np, n, i, rank, ierr, dom_np_glob, nb_extra, nb_proc, e_glob, medge, medges, j
       MPI_Comm       :: communicator
@@ -2447,6 +2448,15 @@ CONTAINS
          END DO
       END DO
       !===END Find the isolated points on the border
+
+      IF (proc==1) THEN
+         part = 0.d0
+         part(811) = 1.d0
+         part(839) = 2.d0
+         part(838) = 3.d0
+         part(812) = 4.d0
+         CALL plot_const_p1_label(mesh%jj, mesh%rr, 1.d0 * part, 'dd.plt')
+      END IF
 
    END SUBROUTINE create_local_mesh_with_extra_layer
 
