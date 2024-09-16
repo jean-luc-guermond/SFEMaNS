@@ -257,10 +257,15 @@ CONTAINS
 
          !===Loop over the extra layer
          DO m = 1, H_mesh%mextra
-            DO ni = 1, SIZE(H_mesh%jj, 1)
+            lp3 : DO ni = 1, SIZE(H_mesh%jj, 1)
                iglob = H_mesh%jj_extra(ni, m)
+               DO m2 = 1, pmag_mesh%mextra
+                  IF (pmag_mesh%jcc(m2) == H_mesh%jcc(m)) EXIT
+                  IF (m2 == pmag_mesh%mextra) EXIT lp3
+               END DO
+
                DO nj = 1, SIZE(pmag_mesh%jj, 1)
-                  jglob = pmag_mesh%jj_extra(nj, m)
+                  jglob = pmag_mesh%jj_extra(nj, m2)
                   jloc = jglob - pmag_mesh%loc_to_glob(1) + 1
                   IF (jloc<1 .OR. jloc>np_pmag) THEN
                      DO p = 2, nb_procs + 1
@@ -324,7 +329,7 @@ CONTAINS
                      END DO
                   END IF
                END DO
-            END DO
+            END DO lp3
          END DO
       END IF
       ! End Block Hxp and pxH
