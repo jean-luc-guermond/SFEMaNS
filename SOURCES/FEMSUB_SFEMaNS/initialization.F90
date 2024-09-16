@@ -328,14 +328,14 @@ CONTAINS
                IF (if_momentum) THEN
                   CALL projection_velocity(H_mesh, un, jj_v_to_H, .FALSE., v_to_Max)
                END IF
-                  write(*,*) 'check 3'
+               write(*, *) 'check 3'
 
                CALL maxwell_decouple(comm_one_d, H_mesh, pmag_mesh, phi_mesh, &
                     interface_H_phi, interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, v_to_Max, &
                     inputs%stab, inputs%stab_jump_h, sigma_field, R_fourier, index_fourier, mu_H_field, inputs%mu_phi, &
                     time, inputs%dt, inputs%Rem, list_mode, H_phi_per, LA_H, LA_pmag, LA_phi, &
                     LA_mhd, one_over_sigma_ns_p1, jj_v_to_H, conc_to_H)
-                  write(*,*) 'check 4'
+               write(*, *) 'check 4'
 
                Hn1 = Hn
                Bn1 = Bn
@@ -352,14 +352,14 @@ CONTAINS
             IF (if_concentration) THEN
                CALL projection_concentration(H_mesh, 2 * concn - concn_m1, jj_c_to_H, conc_to_H)
             END IF
-               write(*,*) 'check 5'
+            write(*, *) 'check 5'
 
             CALL maxwell_decouple(comm_one_d, H_mesh, pmag_mesh, phi_mesh, &
                  interface_H_phi, interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, v_to_Max, &
                  inputs%stab, inputs%stab_jump_h, sigma_field, R_fourier, index_fourier, mu_H_field, inputs%mu_phi, &
                  time, inputs%dt, inputs%Rem, list_mode, H_phi_per, LA_H, LA_pmag, LA_phi, LA_mhd, one_over_sigma_ns_p1, &
                  jj_v_to_H, conc_to_H)
-               write(*,*) 'check 6'
+            write(*, *) 'check 6'
 
          END IF
       END IF
@@ -658,6 +658,7 @@ CONTAINS
       INTEGER, DIMENSION(:), ALLOCATABLE :: H_in_to_new, H_in_to_new_ref
       INTEGER, DIMENSION(:), ALLOCATABLE :: temp_in_to_new, temp_in_to_new_ref
       INTEGER, DIMENSION(:), ALLOCATABLE :: vv_in_to_new
+      REAL(KIND = 8), DIMENSION(:), ALLOCATABLE :: parts
       !!$    CHARACTER(len=200)                      :: data_file
       CHARACTER(len = 200) :: data_directory
       CHARACTER(len = 200) :: tit_part, mesh_part_name
@@ -1029,12 +1030,17 @@ CONTAINS
       IF (if_concentration) THEN
          ALLOCATE(list_inter_conc(0))
       END IF
-      write(*,*) 'inter',  list_inter, 'H', inputs%list_inter_mu
+      write(*, *) 'inter', list_inter, 'H', inputs%list_inter_mu
       !===Create meshes===============================================================
       !===Meshes using p1_mesh_glob
       CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom, &
            list_inter, 1, p1_mesh_glob, inputs%iformatted)
-
+ ALLOCATE(parts(p1_mesh_glob%me))
+      IF (proc==1) THEN
+         parts = -1.d0
+         parts(p1_mesh_glob%neighs) = p1_mesh_glob%sides
+         CALL plot_const_p1_label(p1_mesh_glob%jj, p1_mesh_glob%rr, parts, 'dd1.plt')
+      END IF
 
       !===Start Metis mesh generation=================================================
       ALLOCATE(part(p1_mesh_glob%me))
@@ -1205,7 +1211,7 @@ CONTAINS
          CALL free_mesh(p1_c0_mesh_glob)
 
          write(*, *) 'H', H_mesh%disp, H_mesh%discell
-         write(*,*)  'extra m' , H_mesh%jcc_extra
+         write(*, *)  'extra m', H_mesh%jcc_extra
          write(*, *) 'p', pmag_mesh%disp, H_mesh%discell
 
          write(*, *) 'phi', phi_mesh%disp, H_mesh%discell
@@ -1366,18 +1372,18 @@ CONTAINS
 
          IF (H_mesh%me /=0) THEN
             CALL load_interface(H_mesh, H_mesh, inputs%list_inter_mu, interface_H_mu, .FALSE.)
-            write(*,*) 'H inter', interface_H_mu%mes_extra
+            write(*, *) 'H inter', interface_H_mu%mes_extra
          ELSE
             interface_H_mu%mes = 0
          END IF
 
          IF (H_mesh%me * phi_mesh%me /=0) THEN
             CALL load_interface(H_mesh, phi_mesh, inputs%list_inter_H_phi, interface_H_phi, .TRUE.)
-            write(*,*) 'phi inter', interface_H_phi%mes_extra
+            write(*, *) 'phi inter', interface_H_phi%mes_extra
          ELSE
             interface_H_phi%mes = 0
          END IF
-         write(*,*) 'int done'
+         write(*, *) 'int done'
          !===JLG july 20, 2019, p3 mesh
          !===Use increasing vertex index enumeration
          !CALL incr_vrtx_indx_enumeration_for_interfaces(interface_H_phi,inputs%type_fe_H+1,inputs%type_fe_phi+1)
@@ -1393,7 +1399,7 @@ CONTAINS
          CALL st_scr_maxwell_mu_H_p_phi(comm_one_d(1), H_mesh, pmag_mesh, &
               phi_mesh, interface_H_phi, interface_H_mu, &
               LA_H, LA_pmag, LA_phi, LA_mhd, opt_per = H_phi_per)
-         write(*,*) 'st csr mhd done'
+         write(*, *) 'st csr mhd done'
 
          !===Prepare csr structure for post processing grad phi=======================+++
          CALL st_aij_csr_glob_block_with_extra_layer(comm_one_d(1), 1, phi_mesh, vizu_grad_phi_LA)
