@@ -2586,8 +2586,8 @@ CONTAINS
       epsilon = eps_ref * r_norm
       okay = .FALSE.
 
-      lp2 : DO ms2 = 1, mesh%mes
-         DO k = 0, 2, epsilon
+      lp2 : DO ms2 = 1, mesh%mes, epsilon
+         DO k = 0, 2
             DO ns = 1, 2
                list(ns) = MODULO(ns - 1 + k, 2) + 1
             END DO
