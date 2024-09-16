@@ -2329,9 +2329,11 @@ CONTAINS
             virginss(m) = .FALSE.
             IF (MINVAL(ABS(mesh%neighs - m)) == 0) THEN
                CALL find_cell_interface(mesh, m, m2)
-               IF (m2 > me_loc(2) .AND. virginss(m2)) THEN
-                  nb_extra = nb_extra + 1
-                  virginss(m2) = .FALSE.
+               IF (m2 > me_loc(2)) THEN
+                  IF (virginss(m2)) THEN
+                     nb_extra = nb_extra + 1
+                     virginss(m2) = .FALSE.
+                  END IF
                END IF
             END IF
          END IF
@@ -2360,13 +2362,14 @@ CONTAINS
             virginss(m) = .FALSE.
             IF (MINVAL(ABS(mesh%neighs - m)) == 0) THEN
                CALL find_cell_interface(mesh, m, m2)
-               write(*,*) 'test', m, m2
                IF (m2 > me_loc(2) .AND. virginss(m2)) THEN
-                  nb_extra = nb_extra + 1
-                  mesh_loc%jj_extra(:, nb_extra) = mesh%jj(:, m2)
-                  mesh_loc%jce_extra(:, nb_extra) = mesh%jce(:, m2)
-                  mesh_loc%jcc_extra(nb_extra) = m2
-                  virginss(m2) = .FALSE.
+                  IF (virginss(m2)) THEN
+                     nb_extra = nb_extra + 1
+                     mesh_loc%jj_extra(:, nb_extra) = mesh%jj(:, m2)
+                     mesh_loc%jce_extra(:, nb_extra) = mesh%jce(:, m2)
+                     mesh_loc%jcc_extra(nb_extra) = m2
+                     virginss(m2) = .FALSE.
+                  END IF
                END IF
             END IF
          END IF
@@ -2584,18 +2587,15 @@ CONTAINS
       r_norm = SUM(ABS(mesh%rr(:, mesh%jjs(1, ms1)) - mesh%rr(:, mesh%jjs(2, ms1))))
       epsilon = eps_ref * r_norm
       okay = .FALSE.
-      write(*,*) ' ms1', m1, ms1, epsilon
 
       lp2 : DO ms2 = 1, mesh%mes
          DO k = 0, 2
             DO ns = 1, 2
                list(ns) = MODULO(ns - 1 + k, 2) + 1
             END DO
-            write(*,*) 'rr', mesh%rr(:, mesh%jjs(list, ms1)), mesh%rr(:, mesh%jjs(1:2, ms2))
             IF (MAXVAL(ABS(mesh%rr(:, mesh%jjs(list, ms1)) - mesh%rr(:, mesh%jjs(1:2, ms2)))) >= epsilon) CYCLE
 
             m2 = mesh%neighs(ms2)
-             write(*,*) ' ms2', m2, ms2
             r_norm = SUM(ABS(mesh%rr(:, mesh%jj(1:3, m1)) - mesh%rr(:, mesh%jj(1:3, m2))))
             IF (r_norm <= 1d-9) THEN
                CYCLE
