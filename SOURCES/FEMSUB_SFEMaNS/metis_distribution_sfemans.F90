@@ -2573,12 +2573,11 @@ CONTAINS
       okay = .FALSE.
 
       DO ms2 = 1, mesh%mes
-         IF (MAXVAL(ABS(mesh_master%rr(:, mesh_master%jjs(list, ms1))&
-              - mesh_slave%rr(:, mesh_slave%jjs(1:dim, ms2)))).GT.epsilon) CYCLE
+         IF (MAXVAL(ABS(mesh%rr(:, mesh%jjs(list, ms1)) - mesh%rr(:, mesh%jjs(1:dim, ms2)))) <= epsilon) CYCLE
 
          m2 = mesh%neighs(ms2)
-         r_norm = SUM(ABS(mesh%rr(:, mesh_master%jj(1:3, m1)) - mesh%rr(:, mesh_slave%jj(1:3, m2))))
-         IF (r_norm .LE. 1d-9) THEN
+         r_norm = SUM(ABS(mesh%rr(:, mesh%jj(1:3, m1)) - mesh%rr(:, mesh%jj(1:3, m2))))
+         IF (r_norm <= 1d-9) THEN
             EXIT
          END IF
          okay = .TRUE.
