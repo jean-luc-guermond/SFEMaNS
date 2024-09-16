@@ -2460,6 +2460,7 @@ CONTAINS
 
          part(me_loc(1) : me_loc(2)) = 0.d0
          part(mesh_loc%jcc_extra) = 1.d0
+         part(mesh%neighs) = 3.d0
          part(mesh_loc%neighs_extra) = 2.d0
          CALL plot_const_p1_label(mesh%jj, mesh%rr, 1.d0 * part, 'dd.plt')
       END IF
