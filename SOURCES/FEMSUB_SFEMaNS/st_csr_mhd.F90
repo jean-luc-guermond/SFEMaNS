@@ -260,7 +260,7 @@ CONTAINS
             lp3 : DO ni = 1, SIZE(H_mesh%jj, 1)
                iglob = H_mesh%jj_extra(ni, m)
                DO m2 = 1, pmag_mesh%mextra
-                  IF (pmag_mesh%jcc(m2) == H_mesh%jcc(m)) EXIT
+                  IF (pmag_mesh%jcc_extra(m2) == H_mesh%jcc_extra(m)) EXIT
                   IF (m2 == pmag_mesh%mextra) EXIT lp3
                END DO
 
