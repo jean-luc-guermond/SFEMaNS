@@ -2342,6 +2342,7 @@ CONTAINS
       ALLOCATE(mesh_loc%jj_extra(nw, nb_extra), mesh_loc%jce_extra(SIZE(mesh%jce, 1), nb_extra), &
            mesh_loc%jcc_extra(nb_extra))
       nb_extra = 0
+      virginss = .TRUE.
       DO m = 1, mesh%me
          jglob = mesh%jj(:, m)
          eglob = mesh%jce(:, m)
