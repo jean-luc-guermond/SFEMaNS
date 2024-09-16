@@ -2452,9 +2452,9 @@ CONTAINS
 
       IF (proc==1) THEN
          part = 0.d0
-         part(mesh_loc%jcc_extra) = 1.d0
-         write(*,*) 'uhm ?', mesh_loc%mextra
+                  write(*,*) 'uhm ?', mesh_loc%mextra
          write(*,*) 'uhm ?', mesh_loc%jcc_extra
+         part(mesh_loc%jcc_extra) = 1.d0
          CALL plot_const_p1_label(mesh%jj, mesh%rr, 1.d0 * part, 'dd.plt')
       END IF
 
