@@ -1198,9 +1198,7 @@ CONTAINS
          CALL free_mesh(p1_c0_mesh_glob)
 
          write(*, *) 'H', H_mesh%disp, H_mesh%discell
-         write(*, *)  'extra m', H_mesh%jcc_extra
          write(*, *) 'p', pmag_mesh%disp, H_mesh%discell
-
          write(*, *) 'phi', phi_mesh%disp, H_mesh%discell
 
       END IF
