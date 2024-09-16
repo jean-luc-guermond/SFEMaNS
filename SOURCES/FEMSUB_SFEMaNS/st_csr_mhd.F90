@@ -410,7 +410,7 @@ CONTAINS
                   IF (iglob < H_mesh%loc_to_glob(1) .OR. iglob > H_mesh%loc_to_glob(1) + H_mesh%dom_np - 1) CYCLE
 
                   DO nj = 1, SIZE(H_mesh%jj, 1)
-                     jglob = H_mesh%loc_to_glob(H_mesh%jj(nj, mj))
+                     jglob = H_mesh%loc_to_glob(H_mesh%jj_extra(nj, mj))
                      jloc = jglob - H_mesh%loc_to_glob(1) + 1
                      IF (jloc<1 .OR. jloc>np_m) THEN
                         DO p = 2, nb_procs + 1
