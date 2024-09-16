@@ -2451,20 +2451,14 @@ CONTAINS
       END DO
       !===END Find the isolated points on the border
 
-!      IF (proc==1) THEN
-!         part = -1.d0
-!         part(me_loc(1):me_loc(2)) = 0.d0
-!         part(mesh_loc%jcc_extra) = -2.d0
-!         part(mesh%neighs) = mesh%sides
-!         part(mesh_loc%neighs_extra) = -3.d0
-!         DO m = 1, mesh%me
-!            IF (MINVAL(ABS(mesh%jj(:,m) - 24)) == 0) part(m) = 4.d0
-!            IF (MINVAL(ABS(mesh%jj(:,m) - 224)) == 0) part(m) = 5.d0
-!         END DO
-!         part(811) = 6.d0
-!         part(1007) = 7.d0
-!         CALL plot_const_p1_label(mesh%jj, mesh%rr, 1.d0 * part, 'dd.plt')
-!      END IF
+      IF (proc==1) THEN
+         part = -1.d0
+         part(me_loc(1):me_loc(2)) = 0.d0
+         part(mesh_loc%jcc_extra) = -2.d0
+         part(mesh%neighs) = mesh%sides
+         part(mesh_loc%neighs_extra) = -3.d0
+         CALL plot_const_p1_label(mesh%jj, mesh%rr, 1.d0 * part, 'dd.plt')
+      END IF
 
    END SUBROUTINE create_local_mesh_with_extra_layer
 
