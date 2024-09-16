@@ -2581,12 +2581,12 @@ CONTAINS
       DO ms1 = 1, mesh%mes
          IF (mesh%neighs(ms1) == m1) EXIT
       END DO
-      write(*,*) ' ms1', m1, ms1
       r_norm = SUM(ABS(mesh%rr(:, mesh%jjs(1, ms1)) - mesh%rr(:, mesh%jjs(2, ms1))))
       epsilon = eps_ref * r_norm
       okay = .FALSE.
+      write(*,*) ' ms1', m1, ms1, epsilon
 
-      lp2 : DO ms2 = 1, mesh%mes, epsilon
+      lp2 : DO ms2 = 1, mesh%mes
          DO k = 0, 2
             DO ns = 1, 2
                list(ns) = MODULO(ns - 1 + k, 2) + 1
