@@ -2464,7 +2464,7 @@ CONTAINS
          part(mesh_loc%neighs_extra) = -3.d0
          DO m = 1, mesh%me
             IF (MINVAL(ABS(mesh%jj(:,m) - 24)) == 0) part(m) = 4.d0
-            IF (MINVAL(ABS(mesh%jj(:,m) - 224)) == 0) part(m) = 4.d0
+            IF (MINVAL(ABS(mesh%jj(:,m) - 224)) == 0) part(m) = 5.d0
          END DO
          CALL plot_const_p1_label(mesh%jj, mesh%rr, 1.d0 * part, 'dd.plt')
       END IF
