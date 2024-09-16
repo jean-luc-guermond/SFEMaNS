@@ -2566,7 +2566,7 @@ CONTAINS
       INTEGER, DIMENSION(2) :: list
 
       DO ms1 = 1, mesh%mes
-         IF (mesh%neighs(ms1) /= m1) CYCLE
+         IF (mesh%neighs(ms1) == m1) EXIT
       END DO
 
       r_norm = SUM(ABS(mesh%rr(:, mesh%jjs(1, ms1)) - mesh%rr(:, mesh%jjs(2, ms1))))
