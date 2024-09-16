@@ -328,14 +328,12 @@ CONTAINS
                IF (if_momentum) THEN
                   CALL projection_velocity(H_mesh, un, jj_v_to_H, .FALSE., v_to_Max)
                END IF
-               write(*, *) 'check 3'
 
                CALL maxwell_decouple(comm_one_d, H_mesh, pmag_mesh, phi_mesh, &
                     interface_H_phi, interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, v_to_Max, &
                     inputs%stab, inputs%stab_jump_h, sigma_field, R_fourier, index_fourier, mu_H_field, inputs%mu_phi, &
                     time, inputs%dt, inputs%Rem, list_mode, H_phi_per, LA_H, LA_pmag, LA_phi, &
                     LA_mhd, one_over_sigma_ns_p1, jj_v_to_H, conc_to_H)
-               write(*, *) 'check 4'
 
                Hn1 = Hn
                Bn1 = Bn
@@ -352,14 +350,12 @@ CONTAINS
             IF (if_concentration) THEN
                CALL projection_concentration(H_mesh, 2 * concn - concn_m1, jj_c_to_H, conc_to_H)
             END IF
-            write(*, *) 'check 5'
 
             CALL maxwell_decouple(comm_one_d, H_mesh, pmag_mesh, phi_mesh, &
                  interface_H_phi, interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, v_to_Max, &
                  inputs%stab, inputs%stab_jump_h, sigma_field, R_fourier, index_fourier, mu_H_field, inputs%mu_phi, &
                  time, inputs%dt, inputs%Rem, list_mode, H_phi_per, LA_H, LA_pmag, LA_phi, LA_mhd, one_over_sigma_ns_p1, &
                  jj_v_to_H, conc_to_H)
-            write(*, *) 'check 6'
 
          END IF
       END IF
@@ -1030,7 +1026,6 @@ CONTAINS
       IF (if_concentration) THEN
          ALLOCATE(list_inter_conc(0))
       END IF
-      write(*, *) 'inter', list_inter, 'H', inputs%list_inter_mu
       !===Create meshes===============================================================
       !===Meshes using p1_mesh_glob
       CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom, &

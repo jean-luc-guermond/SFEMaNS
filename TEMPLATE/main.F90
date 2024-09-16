@@ -96,7 +96,6 @@ PROGRAM mhd_prog
   !IF (rank==0) WRITE(*,*) 'END OF ARPACK, EXITING PRGM'
   !   !RETURN
   !END IF
-   write(*,*) 'check 1'
   !===============================================================================
   !                        TIME INTEGRATION                                      !
   !===============================================================================
@@ -107,19 +106,16 @@ PROGRAM mhd_prog
      time = time + inputs%dt
 
      CALL run_SFEMaNS(time, it)
-   write(*,*) 'check 2'
 
      !===My postprocessing
      IF (.NOT.inputs%test_de_convergence) THEN
         CALL my_post_processing(it)
      END IF
-   write(*,*) 'check 2.1'
 
      !===Write restart file
      IF (MOD(it, inputs%freq_restart) == 0) THEN
         CALL  save_run(it,inputs%freq_restart)
      ENDIF
-   write(*,*) 'check 2.2'
 
      !===Timing
      tploc = user_time() - tploc
@@ -136,7 +132,6 @@ PROGRAM mhd_prog
      CALL regression(conc_mesh, vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
           un, pn, Hn, Bn, phin, temperature, level_set, concentration, mu_H_field, &
           time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc)
-        write(*,*) 'check 2.3'
 
      CALL error_Petsc('End of convergence test')
   END IF

@@ -167,7 +167,6 @@ CONTAINS
        ! FL, 31/03/11
        CALL MPI_ALLREDUCE(MINVAL(sigma),sigma_min,1,MPI_DOUBLE_PRECISION, MPI_MIN,comm_one_d(1), ierr)
        ! FL, 31/03/11
-   write(*,*) 'check 9'
 
        !------------------------------------------------------------------------------
 
@@ -245,7 +244,6 @@ CONTAINS
           END DO
        END DO
        !------------------------------------------------------------------------------
-   write(*,*) 'check 10'
 
        !---------------BOUNDARY CONDITIONS FOR pmag-----------------------------------
        ! Creation of Dirichlet boundary conditions for the magnetic pressure
@@ -363,7 +361,6 @@ CONTAINS
           Neumann_bdy_phi_sides(count) = ms
        END DO
        !===End Neuman BC for H
-   write(*,*) 'check 11'
 
        !---------------BOUNDARY CONDITIONS FOR Hxn------------------------------------
        !===Compute sides that are on Dirichlet boundary (H-H_D)xn=0
@@ -400,7 +397,6 @@ CONTAINS
           phi_global_D(i)%DRL = 0.d0
        END DO
        !------------------------------------------------------------------------------
-   write(*,*) 'check 12'
 
        !-------------MATRIX ALLOCATION------------------------------------------------
        ALLOCATE(H_p_phi_mat1(m_max_c),H_p_phi_ksp1(m_max_c))
@@ -415,7 +411,6 @@ CONTAINS
           sigma_curl_gauss_bdy = 0.d0
           J_over_sigma_gauss_bdy = 0.d0
        END IF
-   write(*,*) 'check 12.1'
 
        IF (interface_H_mu%mes.GE.1) THEN
           ALLOCATE(sigma_curl_gauss_inter_mu(2*H_mesh%gauss%l_Gs*interface_H_mu%mes,6,SIZE(list_mode)))
@@ -426,7 +421,6 @@ CONTAINS
           sigma_curl_gauss_inter_mu = 0.d0
           J_over_sigma_gauss_inter_mu = 0.d0
        END IF
-   write(*,*) 'check 12.2'
 
        IF (SIZE(Neumann_bdy_H_sides).GE.1) THEN
           IF(my_petscworld_rank==0) THEN
@@ -438,7 +432,6 @@ CONTAINS
           sigma_tot_gauss_Neumann = 0.d0
        END IF
        !------------------------------------------------------------------------------
-   write(*,*) 'check 12.3'
 
        DO i = 1, m_max_c !Boucle sur les modes
           mode = list_mode(i)
@@ -455,13 +448,11 @@ CONTAINS
 
           tps = user_time() - tps
 !!$          WRITE(*,*) ' Tps create_local_petsc_matrix', tps
-   write(*,*) 'check 12.3.1'
 
           tps = user_time()
           CALL mat_H_p_phi_maxwell(H_mesh,pmag_mesh,phi_mesh,interface_H_phi, &
                mode,mu_H_field, mu_phi, one_and_half/dt, stab, R_fourier, index_fourier, &
                LA_H, LA_pmag, LA_phi, H_p_phi_mat1(i), H_p_phi_mat2(i), sigma_nj_m, sigma)
-   write(*,*) 'check 12.3.1.1'
 
           tps = user_time() - tps
 !!$          WRITE(*,*) ' Tps mat_H_p_phi_maxwell', tps
@@ -472,7 +463,6 @@ CONTAINS
                mu_H_field, sigma, LA_H, H_p_phi_mat1(i), H_p_phi_mat2(i), sigma_np)
           tps = user_time() - tps
 !!$          WRITE(*,*) ' Tps mat_maxwell_mu', tps
-          write(*,*) 'check 12.3.1.2'
    !JLG, FL, Feb 10, 2011
 
           tps = user_time()
@@ -481,7 +471,6 @@ CONTAINS
 
 !!$          tps = user_time() - tps
 !!$          WRITE(*,*) ' Tps mat_dirichlet_maxwell', tps
-   write(*,*) 'check 12.3.2'
 
 !!$          IF (per) THEN
           IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
@@ -504,7 +493,6 @@ CONTAINS
           tps = user_time() - tps
 
 !!$          WRITE(*,*) ' Tps Dirichlet_M_parallel', tps
-   write(*,*) 'check 12.3.3'
 
           tps = user_time()
           CALL init_solver(inputs%my_par_H_p_phi,H_p_phi_ksp1(i),H_p_phi_mat1(i),comm_one_d(1),&
@@ -525,7 +513,6 @@ CONTAINS
     tps_tot = user_time()
     tps_cumul = 0
     CALL MPI_COMM_RANK(PETSC_COMM_WORLD, my_petscworld_rank, code)
-   write(*,*) 'check 13'
 
     !-------------TRANSPORT TERM---------------------------------------------------
     tps = user_time()
@@ -614,7 +601,6 @@ CONTAINS
        J_over_sigma_gauss_inter_mu= 0.d0
        sigma_tot_gauss_Neumann    = 0.d0
     END IF
-   write(*,*) 'check 14'
 
     tps = user_time() - tps; tps_cumul=tps_cumul+tps
     !WRITE(*,*) ' Tps NLS_SFT Maxwell', tps
@@ -800,7 +786,6 @@ CONTAINS
        !------------------------------------------------------------------------------
 
     ENDDO
-   write(*,*) 'check 15'
 
     !===Verbose divergence of velocity
     IF (inputs%verbose_divergence) THEN
@@ -4167,8 +4152,6 @@ CONTAINS
                          jx = nj + n_wsj*((kj-1) + 3*(cj-1))
                          jdxn(jx) = jb-1
                          IF (ib == 224) THEN
-                         write(*,*) 'here', ib-1, jb-1, ms, ms1, ms2, m1, m2, H_mesh%loc_to_glob(1), &
-                              H_mesh%loc_to_glob(H_mesh%jj(1:3,m1)), H_mesh%loc_to_glob(H_mesh%jj(1:3,m2))
                          END IF
                          IF      ((ki == 1) .AND. (kj == 1)) THEN
                             mat_loc1(ix,jx) = Gsij(1,ni,nj,ci,cj)

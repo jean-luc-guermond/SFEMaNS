@@ -382,12 +382,10 @@ CONTAINS
             DO m1 = 1, H_mesh%mextra !find associated extra cell
                IF (H_mesh%jcc_extra(m1) == cell_g) EXIT
             END DO
-            write(*,*) 'cell 1', cell_g
             cell_g = H_mesh%neighs_extra(interface_H_mu_glob%mesh2_extra(ms))
             DO m2 = 1, H_mesh%mextra !find associated extra cell
                IF (H_mesh%jcc_extra(m2) == cell_g) EXIT
             END DO
-            write(*,*) 'cell 2', cell_g
 
             jj_loc1 = H_mesh%jj_extra(:, m1)
             jj_loc2 = H_mesh%jj_extra(:, m2)
@@ -395,7 +393,6 @@ CONTAINS
             jmax = MAX(MAXVAL(jj_loc1), MAXVAL(jj_loc2))
 
             IF (jmax<H_mesh%loc_to_glob(1) .OR. jmin>H_mesh%loc_to_glob(1) + H_mesh%dom_np - 1) CYCLE
-            write(*,*) 'ok1'
             DO ci = 1, 2
                IF (ci==1) THEN
                   mi = m1
@@ -437,7 +434,6 @@ CONTAINS
                            IF (MINVAL(ABS(ja_work(i, 1:nja_glob(i)) - j)) == 0) CYCLE
                            nja_glob(i) = nja_glob(i) + 1
                            ja_work(i, nja_glob(i)) = j
-                           write(*,*) iglob, jglob
                         END DO
                      END DO
                   END DO

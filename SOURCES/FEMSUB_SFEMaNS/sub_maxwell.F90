@@ -49,14 +49,12 @@ CONTAINS
        ENDIF
     ELSE
        IF (inputs%if_maxwell_with_H) THEN
-             write(*,*) 'check 7'
 
           CALL maxwell_decouple_with_H(comm_one_d, H_mesh, pmag_mesh, phi_mesh, interface_H_phi, &
                interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, vel, stab_in, sigma_in, &
                R_fourier, index_fourier, mu_H_field, mu_phi, time, dt, Rem, list_mode, &
                H_phi_per, LA_H, LA_pmag, LA_phi, LA_mhd, one_over_sigma_ns, jj_v_to_H)
        ELSE
-             write(*,*) 'check 8'
 
           CALL maxwell_decouple_with_B(comm_one_d, H_mesh, pmag_mesh, phi_mesh, interface_H_phi, &
                interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, vel, stab_in, sigma_in, &
