@@ -2581,7 +2581,7 @@ CONTAINS
       DO ms1 = 1, mesh%mes
          IF (mesh%neighs(ms1) == m1) EXIT
       END DO
-
+      write(*,*) ' ms1', m1, ms1
       r_norm = SUM(ABS(mesh%rr(:, mesh%jjs(1, ms1)) - mesh%rr(:, mesh%jjs(2, ms1))))
       epsilon = eps_ref * r_norm
       okay = .FALSE.
@@ -2594,6 +2594,7 @@ CONTAINS
             IF (MAXVAL(ABS(mesh%rr(:, mesh%jjs(list, ms1)) - mesh%rr(:, mesh%jjs(1:2, ms2)))) <= epsilon) CYCLE
 
             m2 = mesh%neighs(ms2)
+             write(*,*) ' ms2', m2, ms2
             r_norm = SUM(ABS(mesh%rr(:, mesh%jj(1:3, m1)) - mesh%rr(:, mesh%jj(1:3, m2))))
             IF (r_norm <= 1d-9) THEN
                CYCLE
