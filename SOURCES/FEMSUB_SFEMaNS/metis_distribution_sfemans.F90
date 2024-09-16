@@ -2463,6 +2463,8 @@ CONTAINS
             IF (MINVAL(ABS(mesh%jj(:,m) - 24)) == 0) part(m) = 4.d0
             IF (MINVAL(ABS(mesh%jj(:,m) - 224)) == 0) part(m) = 5.d0
          END DO
+         part(811) = 6.d0
+         part(1007) = 7.d0
          CALL plot_const_p1_label(mesh%jj, mesh%rr, 1.d0 * part, 'dd.plt')
       END IF
 
