@@ -1029,7 +1029,7 @@ CONTAINS
       IF (if_concentration) THEN
          ALLOCATE(list_inter_conc(0))
       END IF
-
+      write(*,*) 'inter',  list_inter, 'H', inputs%list_inter_mu
       !===Create meshes===============================================================
       !===Meshes using p1_mesh_glob
       CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom, &
