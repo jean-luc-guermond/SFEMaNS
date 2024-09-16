@@ -1036,11 +1036,9 @@ CONTAINS
       CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom, &
            list_inter, 1, p1_mesh_glob, inputs%iformatted)
  ALLOCATE(parts(p1_mesh_glob%me))
-      IF (proc==1) THEN
          parts = -1.d0
          parts(p1_mesh_glob%neighs) = p1_mesh_glob%sides
          CALL plot_const_p1_label(p1_mesh_glob%jj, p1_mesh_glob%rr, parts, 'dd1.plt')
-      END IF
 
       !===Start Metis mesh generation=================================================
       ALLOCATE(part(p1_mesh_glob%me))
