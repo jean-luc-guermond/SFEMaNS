@@ -1035,10 +1035,6 @@ CONTAINS
       !===Meshes using p1_mesh_glob
       CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom, &
            list_inter, 1, p1_mesh_glob, inputs%iformatted)
- ALLOCATE(parts(p1_mesh_glob%me))
-         parts = -1.d0
-         parts(p1_mesh_glob%neighs) = p1_mesh_glob%sides
-         CALL plot_const_p1_label(p1_mesh_glob%jj, p1_mesh_glob%rr, parts, 'dd1.plt')
 
       !===Start Metis mesh generation=================================================
       ALLOCATE(part(p1_mesh_glob%me))
@@ -1138,9 +1134,16 @@ CONTAINS
 
       !===Extract local meshes from global meshes for Maxwell=========================
       IF (if_induction) THEN
+         ALLOCATE(parts(p1_mesh_glob%me))
+         parts = -1.d0
+         parts(p1_mesh_glob%neighs) = p1_mesh_glob%sides
+         CALL plot_const_p1_label(p1_mesh_glob%jj, p1_mesh_glob%rr, parts, 'dd1.plt')
+
          CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_mesh_glob, part, list_dom_H, dummy_mesh_loc)
          CALL create_iso_grid_distributed(dummy_mesh_loc, H_mesh, inputs%type_fe_H)
          CALL free_mesh(dummy_mesh_loc)
+
+         CALL ERROR_PETSC(STOP)
 
          CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_mesh_glob, part, inputs%list_dom_phi, dummy_mesh_loc)
          CALL create_iso_grid_distributed(dummy_mesh_loc, phi_mesh, inputs%type_fe_phi)
