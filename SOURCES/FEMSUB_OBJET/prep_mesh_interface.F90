@@ -97,11 +97,7 @@ CONTAINS
                IF (nws_master==3) THEN !P2 in two dimensions
                   interface_jjs1(3, ms) = mesh_master%jjs(3, ms1)
                END IF
-               IF (ms == 18) THEN
-               write(*,*) ms1, ms2, m1, m2, mesh_master%jjs(:, ms1), mesh_slave%jjs(:, ms2)
-               write(*,*) 'jj',  mesh_master%loc_to_glob(mesh_master%jj(:, m1)), mesh_slave%loc_to_glob(mesh_slave%jj(:, m2))
 
-               END IF
                virgin_elem(ms2) = .FALSE.
                IF (.NOT.disjoint) virgin_elem(ms1) = .FALSE.
                okay = .TRUE.
@@ -148,7 +144,6 @@ CONTAINS
                EXIT
             END IF
          ENDDO
-         write(*,*) mesh_master%jjs_extra(1:2, ms1), mesh_master%jj_extra(1:3, m1), cell_g
          !==cell index of edge
          n1_ks = (/MODULO(k1, nw) + 1, MODULO(k1 + 1, nw) + 1/)
 
