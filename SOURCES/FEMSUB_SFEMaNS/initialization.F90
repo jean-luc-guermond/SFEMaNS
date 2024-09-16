@@ -1366,7 +1366,7 @@ CONTAINS
 
          IF (H_mesh%me /=0) THEN
             CALL load_interface(H_mesh, H_mesh, inputs%list_inter_mu, interface_H_mu, .FALSE.)
-            write(*, *) 'H inter', interface_H_mu%mes_extra, interface_H_mu%mesh1, interface_H_mu%mesh2
+            write(*, *) 'H inter', interface_H_mu%mes_extra, interface_H_mu%mesh1_extra, interface_H_mu%mesh2_extra
          ELSE
             interface_H_mu%mes = 0
          END IF
