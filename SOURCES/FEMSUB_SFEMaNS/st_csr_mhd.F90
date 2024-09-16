@@ -382,11 +382,12 @@ CONTAINS
             DO m1 = 1, H_mesh%mextra !find associated extra cell
                IF (H_mesh%jcc_extra(m1) == cell_g) EXIT
             END DO
-
+            write(*,*) 'cell 1', cell_g
             cell_g = H_mesh%neighs_extra(interface_H_mu_glob%mesh2_extra(ms))
             DO m2 = 1, H_mesh%mextra !find associated extra cell
                IF (H_mesh%jcc_extra(m2) == cell_g) EXIT
             END DO
+            write(*,*) 'cell 2', cell_g
 
             jj_loc1 = H_mesh%jj_extra(:, m1)
             jj_loc2 = H_mesh%jj_extra(:, m2)
