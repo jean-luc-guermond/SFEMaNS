@@ -2560,9 +2560,10 @@ CONTAINS
    SUBROUTINE find_cell_interface(mesh, m1, m2)
       USE def_type_mesh
       TYPE(mesh_type), INTENT(IN) :: mesh
-      INTEGER :: m1, m2, ms1, ms2
+      INTEGER :: m1, m2, ms1, ms2, k, ns
       REAL(KIND = 8) :: eps_ref = 1.d-7, r_norm, epsilon
       LOGICAL :: okay
+      INTEGER, DIMENSION(2) :: list
 
       DO ms1 = 1, mesh%mes
          IF (mesh%neighs(ms1) /= m1) CYCLE
@@ -2572,17 +2573,23 @@ CONTAINS
       epsilon = eps_ref * r_norm
       okay = .FALSE.
 
-      DO ms2 = 1, mesh%mes
-         IF (MAXVAL(ABS(mesh%rr(:, mesh%jjs(list, ms1)) - mesh%rr(:, mesh%jjs(1:dim, ms2)))) <= epsilon) CYCLE
+      lp2 : DO ms2 = 1, mesh%mes
+         DO k = 0, 2
+            DO ns = 1, 2
+               list(ns) = MODULO(ns - 1 + k, 2) + 1
+            END DO
+            IF (MAXVAL(ABS(mesh%rr(:, mesh%jjs(list, ms1)) - mesh%rr(:, mesh%jjs(1:dim, ms2)))) <= epsilon) CYCLE
 
-         m2 = mesh%neighs(ms2)
-         r_norm = SUM(ABS(mesh%rr(:, mesh%jj(1:3, m1)) - mesh%rr(:, mesh%jj(1:3, m2))))
-         IF (r_norm <= 1d-9) THEN
-            EXIT
-         END IF
-         okay = .TRUE.
-         EXIT
-      END DO
+            m2 = mesh%neighs(ms2)
+            r_norm = SUM(ABS(mesh%rr(:, mesh%jj(1:3, m1)) - mesh%rr(:, mesh%jj(1:3, m2))))
+            IF (r_norm <= 1d-9) THEN
+               CYCLE
+            END IF
+            okay = .TRUE.
+            EXIT lp2
+
+         END DO
+      END DO lp2
 
       IF (.NOT. okay) m2 = -1
 
