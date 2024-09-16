@@ -2328,6 +2328,7 @@ CONTAINS
             nb_extra = nb_extra + 1
             virginss(m) = .FALSE.
             IF (MINVAL(ABS(mesh%neighs - m)) == 0) THEN
+               write(*,*) 'ahhhhhhhhh'
                CALL find_cell_interface(mesh, m, m2)
                IF (m2 > 0 .AND. virginss(m2)) THEN
                   nb_extra = nb_extra + 1
@@ -2360,6 +2361,7 @@ CONTAINS
             IF (MINVAL(ABS(mesh%neighs - m)) == 0) THEN
                CALL find_cell_interface(mesh, m, m2)
                IF (m2 > 0 .AND. virginss(m2)) THEN
+                                 write(*,*) 'ahhhhhhhhh2'
                   nb_extra = nb_extra + 1
                   mesh_loc%jj_extra(:, nb_extra) = mesh%jj(:, m2)
                   mesh_loc%jce_extra(:, nb_extra) = mesh%jce(:, m2)
