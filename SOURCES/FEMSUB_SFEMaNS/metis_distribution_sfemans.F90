@@ -2329,7 +2329,7 @@ CONTAINS
             virginss(m) = .FALSE.
             IF (MINVAL(ABS(mesh%neighs - m)) == 0) THEN
                CALL find_cell_interface(mesh, m, m2)
-               IF (m2 > -1 .AND. virginss(m2)) THEN
+               IF (m2 > 0 .AND. virginss(m2)) THEN
                   nb_extra = nb_extra + 1
                   virginss(m2) = .FALSE.
                END IF
