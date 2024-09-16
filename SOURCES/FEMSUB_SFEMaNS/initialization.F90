@@ -654,7 +654,6 @@ CONTAINS
       INTEGER, DIMENSION(:), ALLOCATABLE :: H_in_to_new, H_in_to_new_ref
       INTEGER, DIMENSION(:), ALLOCATABLE :: temp_in_to_new, temp_in_to_new_ref
       INTEGER, DIMENSION(:), ALLOCATABLE :: vv_in_to_new
-      REAL(KIND = 8), DIMENSION(:), ALLOCATABLE :: parts
       !!$    CHARACTER(len=200)                      :: data_file
       CHARACTER(len = 200) :: data_directory
       CHARACTER(len = 200) :: tit_part, mesh_part_name
