@@ -1999,7 +1999,7 @@ CONTAINS
       INTEGER, DIMENSION(mesh%np) :: glob_to_loc, loc_to_glob
       LOGICAL, DIMENSION(mesh%np) :: virgin
       LOGICAL, DIMENSION(mesh%medge) :: virgins
-      LOGICAL, ALLOCATABLE, DIMENSION(:) :: virginss
+      LOGICAL, ALLOCATABLE(mesh%me) :: virginss
       LOGICAL, DIMENSION(mesh%me) :: not_my_cells
       INTEGER, DIMENSION(SIZE(mesh%jj, 1)) :: jglob, eglob
       LOGICAL :: test
@@ -2305,6 +2305,7 @@ CONTAINS
 
 
       !==Building extra cells
+      virginss = .TRUE.
       DO proc = 1, nb_proc
          IF (mesh_loc%loc_to_glob(1) <= mesh_loc%disp(proc))    EXIT
       END DO
@@ -2323,6 +2324,14 @@ CONTAINS
             CALL ERROR_PETSC('BUG  create_local_mesh_with_extra_layer')
          ELSE IF (me_loc(2)<m) THEN
             nb_extra = nb_extra + 1
+            virginss(m) = .FALSE.
+            IF (MINVAL(ABS(mesh%neighs - m)) == 0) THEN
+               CALL find_cell_interface(mesh, m, m2)
+               IF (virginss(m2)) THEN
+                  nb_extra = nb_extra + 1
+                  virginss(m2) = .FALSE.
+               END IF
+            END IF
          END IF
       END DO
 
@@ -2345,6 +2354,17 @@ CONTAINS
             mesh_loc%jj_extra(:, nb_extra) = mesh%jj(:, m)
             mesh_loc%jce_extra(:, nb_extra) = mesh%jce(:, m)
             mesh_loc%jcc_extra(nb_extra) = m
+            virginss(m) = .FALSE.
+            IF (MINVAL(ABS(mesh%neighs - m)) == 0) THEN
+               CALL find_cell_interface(mesh, m, m2)
+               IF (virginss(m2)) THEN
+                  nb_extra = nb_extra + 1
+                  mesh_loc%jj_extra(:, nb_extra) = mesh%jj(:, m2)
+                  mesh_loc%jce_extra(:, nb_extra) = mesh%jce(:, m2)
+                  mesh_loc%jcc_extra(nb_extra) = m2
+                  virginss(m2) = .FALSE.
+               END IF
+            END IF
          END IF
       END DO
 
@@ -2363,7 +2383,7 @@ CONTAINS
       mesh_loc%mes_extra = nb_extra
 
       ALLOCATE(mesh_loc%jjs_extra(nws, nb_extra), mesh_loc%neighs_extra(nb_extra), &
-           mesh_loc%sides_extra(nb_extra), mesh_loc%rrs_extra(2, nw, nb_extra) )
+           mesh_loc%sides_extra(nb_extra), mesh_loc%rrs_extra(2, nw, nb_extra))
       nb_extra = 0
       DO ms = 1, mesh%mes
          m = mesh%neighs(ms)
