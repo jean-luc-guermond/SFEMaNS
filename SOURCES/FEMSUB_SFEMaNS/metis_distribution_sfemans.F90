@@ -2003,7 +2003,7 @@ CONTAINS
       LOGICAL, DIMENSION(mesh%me) :: not_my_cells
       INTEGER, DIMENSION(SIZE(mesh%jj, 1)) :: jglob, eglob
       LOGICAL :: test
-      INTEGER :: dim, nws, nw, m, ms, mop, msop, ns, msup, minf, dof, proc, m2,&
+      INTEGER :: dim, nws, nw, m, ms, mop, msop, ns, msup, minf, dof, proc, m2, &
            dom_me, nwc, dom_mes, dom_np, n, i, rank, ierr, dom_np_glob, nb_extra, nb_proc, e_glob, medge, medges, j
       MPI_Comm       :: communicator
 
@@ -2327,7 +2327,7 @@ CONTAINS
             virginss(m) = .FALSE.
             IF (MINVAL(ABS(mesh%neighs - m)) == 0) THEN
                CALL find_cell_interface(mesh, m, m2)
-               IF (virginss(m2)) THEN
+               IF (m2 > -1 .AND. virginss(m2)) THEN
                   nb_extra = nb_extra + 1
                   virginss(m2) = .FALSE.
                END IF
@@ -2357,7 +2357,7 @@ CONTAINS
             virginss(m) = .FALSE.
             IF (MINVAL(ABS(mesh%neighs - m)) == 0) THEN
                CALL find_cell_interface(mesh, m, m2)
-               IF (virginss(m2)) THEN
+               IF (m2 > -1 .AND. virginss(m2)) THEN
                   nb_extra = nb_extra + 1
                   mesh_loc%jj_extra(:, nb_extra) = mesh%jj(:, m2)
                   mesh_loc%jce_extra(:, nb_extra) = mesh%jce(:, m2)
@@ -2557,5 +2557,35 @@ CONTAINS
 
    END SUBROUTINE reassign_per_pts
 
+   SUBROUTINE find_cell_interface(mesh, m1, m2)
+      USE def_type_mesh
+      TYPE(mesh_type), INTENT(IN) :: mesh
+      INTEGER :: m1, m2, ms1, ms2
+      REAL(KIND = 8) :: eps_ref = 1.d-7, r_norm, epsilon
+      LOGICAL :: okay
 
+      DO ms1 = 1, mesh%mes
+         IF (mesh%neighs(ms1) /= m1) CYCLE
+      END DO
+
+      r_norm = SUM(ABS(mesh%rr(:, mesh%jjs(1, ms1)) - mesh%rr(:, mesh%jjs(2, ms1))))
+      epsilon = eps_ref * r_norm
+      okay = .FALSE.
+
+      DO ms2 = 1, mesh%mes
+         IF (MAXVAL(ABS(mesh_master%rr(:, mesh_master%jjs(list, ms1))&
+              - mesh_slave%rr(:, mesh_slave%jjs(1:dim, ms2)))).GT.epsilon) CYCLE
+
+         m2 = mesh%neighs(ms2)
+         r_norm = SUM(ABS(mesh%rr(:, mesh_master%jj(1:3, m1)) - mesh%rr(:, mesh_slave%jj(1:3, m2))))
+         IF (r_norm .LE. 1d-9) THEN
+            EXIT
+         END IF
+         okay = .TRUE.
+         EXIT
+      END DO
+
+      IF (.NOT. okay) m2 = -1
+
+   END SUBROUTINE find_cell_interface
 END MODULE metis_sfemans
