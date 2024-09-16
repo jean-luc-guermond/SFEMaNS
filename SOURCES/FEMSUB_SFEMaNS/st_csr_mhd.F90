@@ -395,7 +395,7 @@ CONTAINS
             jmax = MAX(MAXVAL(jj_loc1), MAXVAL(jj_loc2))
 
             IF (jmax<H_mesh%loc_to_glob(1) .OR. jmin>H_mesh%loc_to_glob(1) + H_mesh%dom_np - 1) CYCLE
-
+            write(*,*) 'ok1'
             DO ci = 1, 2
                IF (ci==1) THEN
                   mi = m1
@@ -437,6 +437,7 @@ CONTAINS
                            IF (MINVAL(ABS(ja_work(i, 1:nja_glob(i)) - j)) == 0) CYCLE
                            nja_glob(i) = nja_glob(i) + 1
                            ja_work(i, nja_glob(i)) = j
+                           write(*,*) iglob, jglob
                         END DO
                      END DO
                   END DO
