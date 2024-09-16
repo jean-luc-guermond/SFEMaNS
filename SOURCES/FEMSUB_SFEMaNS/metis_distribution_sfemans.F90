@@ -2454,9 +2454,9 @@ CONTAINS
       IF (proc==1) THEN
          part = -1.d0
          part(me_loc(1):me_loc(2)) = 0.d0
-         part(mesh_loc%jcc_extra) = -2.d0
-         part(mesh%neighs) = mesh%sides
-         part(mesh_loc%neighs_extra) = -3.d0
+         !part(mesh_loc%jcc_extra) = -2.d0
+         !part(mesh%neighs) = mesh%sides
+         !part(mesh_loc%neighs_extra) = -3.d0
          CALL plot_const_p1_label(mesh%jj, mesh%rr, 1.d0 * part, 'dd.plt')
       END IF
 
