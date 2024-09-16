@@ -1999,11 +1999,11 @@ CONTAINS
       INTEGER, DIMENSION(mesh%np) :: glob_to_loc, loc_to_glob
       LOGICAL, DIMENSION(mesh%np) :: virgin
       LOGICAL, DIMENSION(mesh%medge) :: virgins
-      LOGICAL, ALLOCATABLE(mesh%me) :: virginss
+      LOGICAL, DIMENSION(mesh%me) :: virginss
       LOGICAL, DIMENSION(mesh%me) :: not_my_cells
       INTEGER, DIMENSION(SIZE(mesh%jj, 1)) :: jglob, eglob
       LOGICAL :: test
-      INTEGER :: dim, nws, nw, m, ms, mop, msop, ns, msup, minf, dof, proc, &
+      INTEGER :: dim, nws, nw, m, ms, mop, msop, ns, msup, minf, dof, proc, m2,&
            dom_me, nwc, dom_mes, dom_np, n, i, rank, ierr, dom_np_glob, nb_extra, nb_proc, e_glob, medge, medges, j
       MPI_Comm       :: communicator
 
