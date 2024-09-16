@@ -1134,16 +1134,9 @@ CONTAINS
 
       !===Extract local meshes from global meshes for Maxwell=========================
       IF (if_induction) THEN
-         ALLOCATE(parts(p1_mesh_glob%me))
-         parts = -1.d0
-         parts(p1_mesh_glob%neighs) = p1_mesh_glob%sides
-         CALL plot_const_p1_label(p1_mesh_glob%jj, p1_mesh_glob%rr, parts, 'dd1.plt')
-
          CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_mesh_glob, part, list_dom_H, dummy_mesh_loc)
          CALL create_iso_grid_distributed(dummy_mesh_loc, H_mesh, inputs%type_fe_H)
          CALL free_mesh(dummy_mesh_loc)
-
-         CALL ERROR_PETSC('STOP')
 
          CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_mesh_glob, part, inputs%list_dom_phi, dummy_mesh_loc)
          CALL create_iso_grid_distributed(dummy_mesh_loc, phi_mesh, inputs%type_fe_phi)
@@ -1373,7 +1366,7 @@ CONTAINS
 
          IF (H_mesh%me /=0) THEN
             CALL load_interface(H_mesh, H_mesh, inputs%list_inter_mu, interface_H_mu, .FALSE.)
-            write(*, *) 'H inter', interface_H_mu%mes_extra
+            write(*, *) 'H inter', interface_H_mu%mes_extra, interface_H_mu%mesh1, interface_H_mu%mesh2
          ELSE
             interface_H_mu%mes = 0
          END IF
