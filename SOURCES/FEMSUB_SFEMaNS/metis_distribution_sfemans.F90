@@ -2591,6 +2591,7 @@ CONTAINS
             DO ns = 1, 2
                list(ns) = MODULO(ns - 1 + k, 2) + 1
             END DO
+            write(*,*) 'rr', mesh%rr(:, mesh%jjs(list, ms1), mesh%rr(:, mesh%jjs(1:2, ms2)
             IF (MAXVAL(ABS(mesh%rr(:, mesh%jjs(list, ms1)) - mesh%rr(:, mesh%jjs(1:2, ms2)))) <= epsilon) CYCLE
 
             m2 = mesh%neighs(ms2)
