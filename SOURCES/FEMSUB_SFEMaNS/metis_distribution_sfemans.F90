@@ -2360,6 +2360,7 @@ CONTAINS
             virginss(m) = .FALSE.
             IF (MINVAL(ABS(mesh%neighs - m)) == 0) THEN
                CALL find_cell_interface(mesh, m, m2)
+               write(*,*) 'test', m, m2
                IF (m2 > me_loc(2) .AND. virginss(m2)) THEN
                   nb_extra = nb_extra + 1
                   mesh_loc%jj_extra(:, nb_extra) = mesh%jj(:, m2)
@@ -2454,9 +2455,9 @@ CONTAINS
       IF (proc==1) THEN
          part = -1.d0
          part(me_loc(1):me_loc(2)) = 0.d0
-         !part(mesh_loc%jcc_extra) = -2.d0
+         part(mesh_loc%jcc_extra) = -2.d0
          !part(mesh%neighs) = mesh%sides
-         !part(mesh_loc%neighs_extra) = -3.d0
+         part(mesh_loc%neighs_extra) = -3.d0
          CALL plot_const_p1_label(mesh%jj, mesh%rr, 1.d0 * part, 'dd.plt')
       END IF
 
