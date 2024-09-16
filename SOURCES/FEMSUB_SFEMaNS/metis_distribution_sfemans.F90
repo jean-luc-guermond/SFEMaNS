@@ -1992,6 +1992,7 @@ CONTAINS
    SUBROUTINE create_local_mesh_with_extra_layer(communicator, mesh, mesh_loc, me_loc, mes_loc, np_loc)
       USE def_type_mesh
       USE my_util
+      USE sub_plot
       IMPLICIT NONE
       TYPE(mesh_type) :: mesh, mesh_loc
       INTEGER, DIMENSION(2), INTENT(IN) :: me_loc, mes_loc, np_loc
@@ -2003,7 +2004,7 @@ CONTAINS
       LOGICAL, DIMENSION(mesh%me) :: not_my_cells
       INTEGER, DIMENSION(SIZE(mesh%jj, 1)) :: jglob, eglob
       LOGICAL :: test
-      REAL(KIND=8), DIMENSION(mesh%me) :: part
+      REAL(KIND = 8), DIMENSION(mesh%me) :: part
       INTEGER :: dim, nws, nw, m, ms, mop, msop, ns, msup, minf, dof, proc, m2, &
            dom_me, nwc, dom_mes, dom_np, n, i, rank, ierr, dom_np_glob, nb_extra, nb_proc, e_glob, medge, medges, j
       MPI_Comm       :: communicator
