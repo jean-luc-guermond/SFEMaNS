@@ -274,6 +274,7 @@ CONTAINS
           !June 7 2007, JLG
           IF (mode == mode_cherche) THEN   !on a trouve le bon mode
              WRITE(*,*) 'mode', mode, list_mode, SIZE(un(:,1,1)), SIZE(un(1,:,1))
+             WRITE(*,*) READ(10)
              READ(10) un(:,:,i)
              READ(10) un_m1(:,:,i)
              READ(10) pn(:,:,i)
