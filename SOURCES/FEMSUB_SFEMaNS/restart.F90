@@ -270,6 +270,7 @@ CONTAINS
                 mode_cherche = mode
              END IF
           END IF
+          WRITE(*,*) 'mode', mode, list_mode, SIZE(un(:,1,1)), SIZE(un(1,:,1))
           !June 7 2007, JLG
           IF (mode == mode_cherche) THEN   !on a trouve le bon mode
              READ(10) un(:,:,i)
