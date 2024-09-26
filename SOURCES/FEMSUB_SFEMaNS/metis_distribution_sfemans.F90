@@ -2479,7 +2479,6 @@ CONTAINS
       DEALLOCATE(mesh%sides)
       DEALLOCATE(mesh%neighs)
       DEALLOCATE(mesh%i_d)
-      DEALLOCATE(mesh%jce)
 
       NULLIFY(mesh%loc_to_glob)
       NULLIFY(mesh%disp)
