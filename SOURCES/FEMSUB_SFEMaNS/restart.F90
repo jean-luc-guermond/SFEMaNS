@@ -277,10 +277,9 @@ CONTAINS
              DO n = 1, SIZE(un(:,1,1))
                 DO k = 1, SIZE(un(1,:,1))
                 READ(10, *) dt_read
-                WRITE(*,*) dt_readd
+                WRITE(*,*) dt_read
                 END DO
              END DO
-             WRITE(*,*) READ(10)
              READ(10) un(:,:,i)
              READ(10) un_m1(:,:,i)
              READ(10) pn(:,:,i)
