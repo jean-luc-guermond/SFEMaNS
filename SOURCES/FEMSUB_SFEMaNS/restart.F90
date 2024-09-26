@@ -277,8 +277,8 @@ CONTAINS
              IF (rank == 0) THEN
                 DO n = 1, SIZE(un(:,1,1))
                    DO k = 1, SIZE(un(1,:,1))
-                     READ(10) dt_read
-                     WRITE(*,*) dt_read
+                     READ(10) un(:,1,1)
+                     WRITE(*,*) un(:,1,1)
                    END DO
                 END DO
              END IF
