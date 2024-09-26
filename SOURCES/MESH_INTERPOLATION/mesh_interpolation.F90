@@ -1666,8 +1666,10 @@ CONTAINS
     CALL getarg(1,inline)
     IF (TRIM(ADJUSTL(inline)) == 'petsc_nonpetsc') THEN
        is_in = .TRUE.
+       write(*,*) 'petsc_nonpetsc'
     ELSE IF (TRIM(ADJUSTL(inline)) == 'nonpetsc_petsc') THEN
        is_in = .FALSE.
+       write(*,*) 'nonpetsc_petsc'
     ELSE
        CALL error_Petsc('BUG in which_pb')
     END IF
