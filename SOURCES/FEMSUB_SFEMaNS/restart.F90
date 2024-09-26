@@ -275,8 +275,10 @@ CONTAINS
           IF (mode == mode_cherche) THEN   !on a trouve le bon mode
              WRITE(*,*) 'mode', rank , mode, list_mode, SIZE(un(:,1,1)), SIZE(un(1,:,1))
              IF (rank == 1) THEN
-             READ(10) un(:,1:5,i)
+             READ(10) un(:,:,i)
+             write(*,*)  'un'
              READ(10) un_m1(:,:,i)
+                          write(*,*)  'un_m1'
              READ(10) pn(:,:,i)
              READ(10) pn_m1(:,:,i)
              READ(10) incpn(:,:,i)
