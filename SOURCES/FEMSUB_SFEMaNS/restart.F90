@@ -127,7 +127,7 @@ CONTAINS
     REAL(KIND=8),                     OPTIONAL,     INTENT(IN) :: opt_dt
     REAL(KIND=8)                                               :: max_vel_loc, dt_read, dt_ratio
     INTEGER     :: code, n, i, mode, j, rang_S, nb_procs_S, rang_F, nb_procs_F, nlignes, rank
-    INTEGER     :: m_max_cr, nb_procs_r, nb_procs_Sr
+    INTEGER     :: m_max_cr, nb_procs_r, nb_procs_Sr, k
     INTEGER     :: m_max_c, nb_mode_r, mode_cherche
     LOGICAL     :: trouve, okay
     INTEGER     :: npv, npp
@@ -275,7 +275,7 @@ CONTAINS
           IF (mode == mode_cherche) THEN   !on a trouve le bon mode
              WRITE(*,*) 'mode', mode, list_mode, SIZE(un(:,1,1)), SIZE(un(1,:,1))
              DO n = 1, SIZE(un(:,1,1))
-                DO j = 1, SIZE(un(1,:,1))
+                DO k = 1, SIZE(un(1,:,1))
                 READ(10, *) dt_read
                 WRITE(*,*) dt_readd
                 END DO
