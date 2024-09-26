@@ -276,7 +276,7 @@ CONTAINS
              WRITE(*,*) 'mode', mode, list_mode, SIZE(un(:,1,1)), SIZE(un(1,:,1))
              DO n = 1, SIZE(un(:,1,1))
                 DO k = 1, SIZE(un(1,:,1))
-                READ(10, *) dt_read
+                READ(10) dt_read
                 WRITE(*,*) dt_read
                 END DO
              END DO
