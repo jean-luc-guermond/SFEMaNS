@@ -274,6 +274,7 @@ CONTAINS
           !June 7 2007, JLG
           IF (mode == mode_cherche) THEN   !on a trouve le bon mode
              WRITE(*,*) 'mode', rank , mode, list_mode, SIZE(un(:,1,1)), SIZE(un(1,:,1))
+             IF (rank == 1) THEN
              READ(10) un(:,:,i)
              READ(10) un_m1(:,:,i)
              READ(10) pn(:,:,i)
@@ -287,6 +288,7 @@ CONTAINS
              END IF
              WRITE(*,'(A,i4,A)') 'mode ns ', mode_cherche,' found '
              trouve = .TRUE.
+             END IF
              EXIT                        !car on a trouve le bon mode
           ELSE                             !on passe au mode suivant en sautant 6 lignes
              DO n=1, nlignes
