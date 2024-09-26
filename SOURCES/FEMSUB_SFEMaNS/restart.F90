@@ -278,7 +278,7 @@ CONTAINS
                 DO n = 1, SIZE(un(:,1,1))
                    DO k = 1, SIZE(un(1,:,1))
                      READ(10) un(:,1,1)
-                     WRITE(*,*) n, k, un(:,1,1)
+                     WRITE(*,*) n, k, un(:,1:3,1)
                    END DO
                 END DO
              END IF
