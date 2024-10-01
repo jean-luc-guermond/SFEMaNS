@@ -104,12 +104,12 @@ PROGRAM mhd_prog
   DO it = 1, inputs%nb_iteration
      tploc =  user_time()
      time = time + inputs%dt
-     IF (i ==  1) THEN
-         CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 1), 'uui.plt')
+     IF (it ==  1) THEN
+         CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 1, 1), 'uui.plt')
      END IF
      CALL run_SFEMaNS(time, it)
-     IF (i ==  inputs%nb_iteration) THEN
-         CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 1), 'uuf.plt')
+     IF (it ==  inputs%nb_iteration) THEN
+         CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 1, 1), 'uuf.plt')
      END IF
      !===My postprocessing
      IF (.NOT.inputs%test_de_convergence) THEN
