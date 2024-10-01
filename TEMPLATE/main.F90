@@ -8,6 +8,7 @@ PROGRAM mhd_prog
   USE user_data
   USE post_processing_debug
   USE verbose
+  USE sub_plot
 #include "petsc/finclude/petsc.h"
   USE petsc
   IMPLICIT NONE
