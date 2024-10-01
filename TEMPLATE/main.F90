@@ -106,9 +106,11 @@ PROGRAM mhd_prog
      tploc =  user_time()
      time = time + inputs%dt
      IF (it ==  1) THEN
+        IF (rank == 0) THEN
          CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 1, 1), 'uui1.plt')
          CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 2, 1), 'uui2.plt')
          CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 3, 1), 'uui3.plt')
+        END IF
      END IF
      CALL run_SFEMaNS(time, it)
      IF (it ==  inputs%nb_iteration) THEN
