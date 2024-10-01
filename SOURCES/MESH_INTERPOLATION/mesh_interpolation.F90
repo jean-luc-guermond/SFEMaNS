@@ -671,7 +671,6 @@ CONTAINS
 
     !===Prepare meshes and pointers
     CALL load_dg_mesh_free_format(directory, file_name, list_dom, list_inter, 1, p1_mesh_glob, iformatted)
-    CALL create_iso_grid_distributed(p1_mesh_glob, p2_mesh_glob, 2)
     IF (if_conc) THEN
 !       CALL load_dg_mesh_free_format(directory, file_name, list_dom, &
        CALL load_dg_mesh_free_format(directory, file_name, list_dom_conc, & !TEST LC
@@ -1228,6 +1227,10 @@ CONTAINS
              CALL interp_mesh(pp_mesh_in, pp_mesh_out, pn_m1_in, pn_m1_out, controle_pp, 1)
              CALL interp_mesh(pp_mesh_in, pp_mesh_out, incpn_in, incpn_out, controle_pp, 1)
              CALL interp_mesh(pp_mesh_in, pp_mesh_out, incpn_m1_in, incpn_m1_out, controle_pp, 1)
+             IF (rank == 0) THEN
+             CALL plot_scalar_field(vv_mesh_in%jj, vv_mesh_in%rr, un_in(:, 3, 1), 'int_uui.plt')
+             CALL plot_scalar_field(vv_mesh_out%jj, vv_mesh_out%rr, un_out(:, 3, 1), 'int_uuf.plt')
+             END IF
              IF (if_level_set) THEN
                 IF (if_level_set_P2) THEN
                    DO k = 1, nb_fluid-1
