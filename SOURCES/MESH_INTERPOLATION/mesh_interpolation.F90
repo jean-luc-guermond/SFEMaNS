@@ -23,7 +23,7 @@ CONTAINS
     TYPE(mesh_type)                       :: p1_c0_mesh_glob_conc, p2_c0_mesh_glob_conc
 
     TYPE(mesh_type), TARGET               :: H_mesh, phi_mesh
-    TYPE(mesh_type), TARGET               :: H_mesh_glob, phi_mesh_glob
+    TYPE(mesh_type), TARGET               :: p1_H_mesh_glob, H_mesh_glob, phi_mesh_glob
     TYPE(mesh_type), POINTER              :: H_mesh_in, H_mesh_out, phi_mesh_in, phi_mesh_out
 
     TYPE(mesh_type), TARGET               :: vv_mesh, pp_mesh
@@ -797,7 +797,8 @@ CONTAINS
     IF (if_induction) THEN
        CALL free_mesh(H_mesh_glob)
        CALL free_mesh(phi_mesh_glob)
-       CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_H, list_inter_mu,  type_fe_H, H_mesh_glob, is_form_m)
+       CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_H, list_inter_mu,  type_fe_H, p1_H_mesh_glob, is_form_m)
+       CALL create_iso_grid_distributed(p1_H_mesh_glob, H_mesh_glob, type_fe_H)
        CALL load_mesh_free_format(directory_m, file_name_m, list_dom_phi, type_fe_phi, phi_mesh_glob, is_form_m)
        IF (check_plt) THEN
           CALL plot_const_p1_label(H_mesh_glob%jj, H_mesh_glob%rr, 1.d0*H_mesh_glob%i_d, 'HH.plt')
