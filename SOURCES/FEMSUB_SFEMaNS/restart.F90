@@ -67,14 +67,18 @@ CONTAINS
              IF (PRESENT(opt_dt)) THEN
                 IF (mono) THEN
                    WRITE(10) time, vv_mesh%np , pp_mesh%np , nb_procs_F, SIZE(list_mode), opt_dt
+                   WRITE(*,*) 'out1', time, vv_mesh%np , pp_mesh%np , nb_procs_F, SIZE(list_mode), opt_dt
                 ELSE
                    WRITE(10) time, nb_procs_S, nb_procs_F, SIZE(list_mode), opt_dt
+                   WRITE(*,*) 'out2', time, nb_procs_S, nb_procs_F, SIZE(list_mode), opt_dt
                 END IF
              ELSE
                 IF (mono) THEN
                    WRITE(10) time, vv_mesh%np , pp_mesh%np , nb_procs_F, SIZE(list_mode)
+                   WRITE(*,*) 'out3',  time, vv_mesh%np , pp_mesh%np , nb_procs_F, SIZE(list_mode)
                 ELSE
                    WRITE(10) time, nb_procs_S, nb_procs_F, SIZE(list_mode)
+                   WRITE(*,*) 'out4',  time, nb_procs_S, nb_procs_F, SIZE(list_mode)
                 END IF
              END IF
           ELSE
