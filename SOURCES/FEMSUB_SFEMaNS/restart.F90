@@ -202,16 +202,20 @@ CONTAINS
 
     IF (PRESENT(opt_dt)) THEN
        IF (mono) THEN
+          WRITE(*,*) 'read1'
           READ(10) time, npv, npp, nb_procs_r, m_max_cr, dt_read
           nb_procs_Sr = -1
        ELSE
+          WRITE(*,*) 'read2'
           READ(10) time, nb_procs_Sr, nb_procs_r, m_max_cr, dt_read
        END IF
     ELSE
        IF (mono) THEN
+          WRITE(*,*) 'read3'
           READ(10) time, npv, npp, nb_procs_r, m_max_cr
           nb_procs_Sr = -1
        ELSE
+          WRITE(*,*) 'read4'
           READ(10) time, nb_procs_Sr, nb_procs_r, m_max_cr
        END IF
     END IF
