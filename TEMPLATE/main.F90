@@ -110,9 +110,9 @@ PROGRAM mhd_prog
       END IF
       CALL run_SFEMaNS(time, it)
       IF (it ==  inputs%nb_iteration) THEN
-         CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 1, 1), 'uuf.plt')
-         CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 2, 1), 'uuf.plt')
-         CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 3, 1), 'uuf.plt')
+         CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 1, 1), 'uuf1.plt')
+         CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 2, 1), 'uuf2.plt')
+         CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 3, 1), 'uuf3.plt')
       END IF
       !===My postprocessing
       IF (.NOT.inputs%test_de_convergence) THEN
