@@ -1025,7 +1025,11 @@ CONTAINS
           conc_mesh_out => conc_mesh
        END IF
     END IF
-
+             IF (rank == 0) THEN
+                write(*,*) 'what ?'
+             CALL plot_scalar_field(vv_mesh_in%jj, vv_mesh_in%rr, un_in(:, 3, 1), 'int_uui.plt')
+             CALL plot_scalar_field(vv_mesh_out%jj, vv_mesh_out%rr, un_out(:, 3, 1), 'int_uuf.plt')
+             END IF
     !===Interpolation for Maxwell
     IF (rw_mxw) THEN
        IF (rank==0) WRITE(*,*) 'Start interpolation Maxwell'
@@ -1221,18 +1225,13 @@ CONTAINS
              END IF
              controle_vv = 0
              controle_pp = 0
-             write(*,*) 'nw', vv_mesh_in%gauss%n_w, vv_mesh_in%gauss%n_ws
              CALL interp_mesh(vv_mesh_in, vv_mesh_out, un_in, un_out, controle_vv, 2)
              CALL interp_mesh(vv_mesh_in, vv_mesh_out, un_m1_in, un_m1_out, controle_vv, 2)
              CALL interp_mesh(pp_mesh_in, pp_mesh_out, pn_in, pn_out, controle_pp, 1)
              CALL interp_mesh(pp_mesh_in, pp_mesh_out, pn_m1_in, pn_m1_out, controle_pp, 1)
              CALL interp_mesh(pp_mesh_in, pp_mesh_out, incpn_in, incpn_out, controle_pp, 1)
              CALL interp_mesh(pp_mesh_in, pp_mesh_out, incpn_m1_in, incpn_m1_out, controle_pp, 1)
-             IF (rank == 0) THEN
-                write(*,*) 'what ?'
-             CALL plot_scalar_field(vv_mesh_in%jj, vv_mesh_in%rr, un_in(:, 3, 1), 'int_uui.plt')
-             CALL plot_scalar_field(vv_mesh_out%jj, vv_mesh_out%rr, un_out(:, 3, 1), 'int_uuf.plt')
-             END IF
+
              IF (if_level_set) THEN
                 IF (if_level_set_P2) THEN
                    DO k = 1, nb_fluid-1
