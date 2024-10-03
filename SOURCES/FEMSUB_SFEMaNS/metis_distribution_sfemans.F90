@@ -2673,11 +2673,11 @@ CONTAINS
       ALLOCATE(mesh2%domedge(SIZE(mesh1%domnp)))
       mesh2%domedge = mesh1%domedge
 
-      ALLOCATE(mesh2%extra_jj(SIZE(mesh1%extra_jj, 1), SIZE(mesh1%extra_jj, 2)))
-      mesh2%extra_jj = mesh1%extra_jj
-      ALLOCATE(mesh2%extra_jce(SIZE(mesh1%extra_jce, 1), SIZE(mesh1%extra_jce, 2)))
-      mesh2%extra_jce = mesh1%extra_jce
-      ALLOCATE(mesh2%extra_jcc(SIZE(mesh1%extra_jcc)))
-      mesh2%extra_jcc = mesh1%extra_jcc
+      ALLOCATE(mesh2%jj_extra(SIZE(mesh1%jj_extra, 1), SIZE(mesh1%jj_extra, 2)))
+      mesh2%jj_extra = mesh1%jj_extra
+      ALLOCATE(mesh2%jce_extra(SIZE(mesh1%jce_extra, 1), SIZE(mesh1%jce_extra, 2)))
+      mesh2%jce_extra = mesh1%jce_extra
+      ALLOCATE(mesh2%jcc_extra(SIZE(mesh1%jcc_extra)))
+      mesh2%jcc_extra = mesh1%jcc_extra
    END SUBROUTINE copy_mesh
 END MODULE metis_sfemans
