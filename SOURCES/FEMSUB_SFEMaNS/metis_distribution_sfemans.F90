@@ -2655,10 +2655,10 @@ CONTAINS
       ALLOCATE(mesh2%jce(SIZE(mesh1%jce, 1), SIZE(mesh1%jce, 2)))
       mesh2%jce = mesh1%jce
       !DEALLOCATE(mesh%jev)
-      ALLOCATE(mesh2%jees(SIZE(mesh1%jees)))
-      mesh2%jees = mesh1%jees
-      ALLOCATE(mesh2%jecs(SIZE(mesh1%jecs)))
-      mesh2%jecs = mesh1%jecs
+      !ALLOCATE(mesh2%jees(SIZE(mesh1%jees)))
+      !mesh2%jees = mesh1%jees
+      !ALLOCATE(mesh2%jecs(SIZE(mesh1%jecs)))
+      !mesh2%jecs = mesh1%jecs
 
       ALLOCATE(mesh2%disp(SIZE(mesh1%disp)))
       mesh2%disp = mesh1%disp
