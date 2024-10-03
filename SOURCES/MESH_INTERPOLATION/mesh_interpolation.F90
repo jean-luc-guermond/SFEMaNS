@@ -1406,6 +1406,8 @@ CONTAINS
                 write(*,*) 'what ?'
              CALL plot_scalar_field(vv_mesh_in%jj, vv_mesh_in%rr, un_in(:, 3, 1), 'int_uui.plt')
              CALL plot_scalar_field(vv_mesh_out%jj, vv_mesh_out%rr, un_out(:, 3, 1), 'int_uuf.plt')
+             CALL plot_scalar_field(pp_mesh_in%jj, pp_mesh_in%rr, pn_in(:, 1, 1), 'int_ppi.plt')
+             CALL plot_scalar_field(pp_mesh_out%jj, pp_mesh_out%rr, pn_out(:, 1, 1), 'int_ppf.plt')
              END IF
     !===Interpolation for temperature
     IF (rw_temp) THEN
