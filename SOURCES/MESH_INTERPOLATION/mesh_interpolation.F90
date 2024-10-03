@@ -272,7 +272,7 @@ CONTAINS
          IF (type_pb == 'nst') ALLOCATE(list_dom_H(0), list_dom_phi(0))
 
          CALL find_string(22, &
-         '===Number of interfaces between velocity and concentration only domains (for nst applications)'&, test)
+         '===Number of interfaces between velocity and concentration only domains (for nst applications)', test)
          IF (test) THEN
             READ(22, *) nb_inter_c_v
             ALLOCATE(list_inter_c_v(nb_inter_c_v))
@@ -1061,7 +1061,7 @@ CONTAINS
                   tit(l:l) = '0'
                END DO
 
-               IF (petsc_rank==0)
+               IF (petsc_rank==0) THEN
                   CALL system('mv suite_maxwell_I' // tit // '.' // old_filename // 'suite_maxwell.' // old_filename)
                END IF
                CALL MPI_Barrier(MPI_Comm_WORLD, code)
@@ -1633,7 +1633,7 @@ CONTAINS
                      CALL system('mv suite_conc_S' // tit_s // '_I' // tit // '.' &
                           // old_filename // 'suite_conc_S' // tit_s // '.' // old_filename)
                   ELSE
-                     IF (petsc_rank==0)
+                     IF (petsc_rank==0) THEN
                         CALL system('mv suite_conc_I' // tit // '.' // old_filename // 'suite_conc.' // old_filename)
                      END IF
                      CALL MPI_Barrier(MPI_Comm_WORLD, code)
