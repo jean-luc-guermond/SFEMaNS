@@ -22,20 +22,20 @@ CONTAINS
       TYPE(mesh_type) :: p1_c0_mesh_glob_temp, p2_c0_mesh_glob_temp
       TYPE(mesh_type) :: p1_c0_mesh_glob_conc, p2_c0_mesh_glob_conc
 
-      TYPE(mesh_type), TARGET :: H_mesh, phi_mesh
-      TYPE(mesh_type), TARGET :: p1_H_mesh_glob, H_mesh_glob, phi_mesh_glob
+      TYPE(mesh_type), TARGET :: p1_H_mesh, H_mesh, p1_phi_mesh, phi_mesh
+      TYPE(mesh_type), TARGET :: p1_H_mesh_glob, H_mesh_glob, p1_phi_mesh_glob, phi_mesh_glob
       TYPE(mesh_type), POINTER :: H_mesh_in, H_mesh_out, phi_mesh_in, phi_mesh_out
 
       TYPE(mesh_type), TARGET :: vv_mesh, pp_mesh
       TYPE(mesh_type), TARGET :: vv_mesh_glob, pp_mesh_glob
       TYPE(mesh_type), POINTER :: vv_mesh_in, vv_mesh_out, pp_mesh_in, pp_mesh_out
 
-      TYPE(mesh_type), TARGET :: temp_mesh
-      TYPE(mesh_type), TARGET :: temp_mesh_glob
+      TYPE(mesh_type), TARGET :: p1_temp_mesh, temp_mesh
+      TYPE(mesh_type), TARGET :: p1_temp_mesh_glob, temp_mesh_glob
       TYPE(mesh_type), POINTER :: temp_mesh_in, temp_mesh_out
 
-      TYPE(mesh_type), TARGET :: conc_mesh
-      TYPE(mesh_type), TARGET :: conc_mesh_glob
+      TYPE(mesh_type), TARGET :: p1_conc_mesh, conc_mesh
+      TYPE(mesh_type), TARGET :: p1_conc_mesh_glob, conc_mesh_glob
       TYPE(mesh_type), POINTER :: conc_mesh_in, conc_mesh_out
 
       CHARACTER(len = 200) :: old_filename, old_directory
@@ -272,7 +272,7 @@ CONTAINS
          IF (type_pb == 'nst') ALLOCATE(list_dom_H(0), list_dom_phi(0))
 
          CALL find_string(22, &
-         '===Number of interfaces between velocity and concentration only domains (for nst applications)', test)
+              '===Number of interfaces between velocity and concentration only domains (for nst applications)', test)
          IF (test) THEN
             READ(22, *) nb_inter_c_v
             ALLOCATE(list_inter_c_v(nb_inter_c_v))
@@ -709,8 +709,10 @@ CONTAINS
 
       !===Extract local meshes from global meshes
       IF (if_conc) THEN
-         CALL extract_mesh(comm_one_d(1), nb_S, p2_c0_mesh_glob_conc, part, list_dom_conc, conc_mesh, &
-              opt_mesh_glob = conc_mesh_glob)
+         CALL extract_mesh(comm_one_d(1), nb_S, p1_c0_mesh_glob_conc, part, list_dom_conc, p1_conc_mesh, &
+              opt_mesh_glob = p1_conc_mesh_glob)
+         CALL create_iso_grid_distributed(p1_conc_mesh, conc_mesh, 2)
+         CALL create_iso_grid_distributed(p1_conc_mesh_glob, conc_mesh_glob, 2)
          ALLOCATE(comm_one_d_conc(2))
          CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_conc(2), code)
          CALL MPI_COMM_RANK(comm_one_d(1), rank_S, code)
@@ -724,8 +726,8 @@ CONTAINS
       IF (if_momentum) THEN
          CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_ns, pp_mesh, &
               opt_mesh_glob = pp_mesh_glob)
-         CALL extract_mesh(comm_one_d(1), nb_S, p2_mesh_glob, part, list_dom_ns, vv_mesh, &
-              opt_mesh_glob = vv_mesh_glob)
+         CALL create_iso_grid_distributed(pp_mesh, vv_mesh, 2)
+         CALL create_iso_grid_distributed(pp_mesh_glob, vv_mesh_glob, 2)
          ALLOCATE(comm_one_d_ns(2))
          CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_ns(2), code)
          CALL MPI_COMM_RANK(comm_one_d(1), rank_S, code)
@@ -737,8 +739,10 @@ CONTAINS
       END IF
 
       IF (if_energy) THEN
-         CALL extract_mesh(comm_one_d(1), nb_S, p2_c0_mesh_glob_temp, part, list_dom_temp,  temp_mesh, &
-              opt_mesh_glob = temp_mesh_glob)
+         CALL extract_mesh(comm_one_d(1), nb_S, p1_c0_mesh_glob_temp, part, list_dom_temp, p1_temp_mesh, &
+              opt_mesh_glob = p1_temp_mesh_glob)
+         CALL create_iso_grid_distributed(p1_temp_mesh, temp_mesh, 2)
+         CALL create_iso_grid_distributed(p1_temp_mesh_glob, temp_mesh_glob, 2)
          ALLOCATE(comm_one_d_temp(2))
          CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_temp(2), code)
          CALL MPI_COMM_RANK(comm_one_d(1), rank_S, code)
@@ -750,20 +754,15 @@ CONTAINS
       END IF
 
       IF (if_induction) THEN
-         IF (type_fe_H==1) THEN
-            CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_H, H_mesh, &
-              opt_mesh_glob = H_mesh_glob)
-         ELSE
-            CALL extract_mesh(comm_one_d(1), nb_S, p2_mesh_glob, part, list_dom_H, H_mesh, &
-              opt_mesh_glob = H_mesh_glob)
-         END IF
-         IF (type_fe_phi==1) THEN
-            CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_phi, phi_mesh, &
-              opt_mesh_glob = phi_mesh_glob)
-         ELSE
-            CALL extract_mesh(comm_one_d(1), nb_S, p2_mesh_glob, part, list_dom_phi, phi_mesh, &
-              opt_mesh_glob = phi_mesh_glob)
-         END IF
+         CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_H, p1_H_mesh, &
+              opt_mesh_glob = p1_H_mesh_glob)
+         CALL create_iso_grid_distributed(p1_H_mesh, H_mesh, type_fe_H)
+         CALL create_iso_grid_distributed(p1_H_mesh_glob, H_mesh_glob, type_fe_H)
+
+         CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_phi, p1_phi_mesh, &
+              opt_mesh_glob = p1_phi_mesh_glob)
+         CALL create_iso_grid_distributed(p1_phi_mesh, phi_mesh, type_fe_phi)
+         CALL create_iso_grid_distributed(p1_phi_mesh_glob, phi_mesh_glob, type_fe_phi)
       END IF
 
       !===Cleanup
@@ -1200,7 +1199,7 @@ CONTAINS
       !===Interpolation for NS
       IF (rw_ns) THEN
          IF (rank==0) WRITE(*, *) 'Start interpolation NS'
-         IF (rank==0)      write(*,*) 'mesh', vv_mesh_in%jj
+         IF (rank==0)      write(*, *) 'mesh', vv_mesh_in%jj
 
          IF (inter_mesh) THEN
 
