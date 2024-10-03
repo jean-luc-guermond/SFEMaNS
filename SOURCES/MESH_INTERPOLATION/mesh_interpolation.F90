@@ -671,6 +671,7 @@ CONTAINS
 
     !===Prepare meshes and pointers
     CALL load_dg_mesh_free_format(directory, file_name, list_dom, list_inter, 1, p1_mesh_glob, iformatted)
+    CALL create_iso_grid_distributed(p1_mesh_glob, p2_mesh_glob, 2)
     IF (if_conc) THEN
 !       CALL load_dg_mesh_free_format(directory, file_name, list_dom, &
        CALL load_dg_mesh_free_format(directory, file_name, list_dom_conc, & !TEST LC
