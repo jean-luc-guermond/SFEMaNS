@@ -1025,11 +1025,7 @@ CONTAINS
           conc_mesh_out => conc_mesh
        END IF
     END IF
-             IF (rank == 0) THEN
-                write(*,*) 'what ?'
-             CALL plot_scalar_field(vv_mesh_in%jj, vv_mesh_in%rr, un_in(:, 3, 1), 'int_uui.plt')
-             CALL plot_scalar_field(vv_mesh_out%jj, vv_mesh_out%rr, un_out(:, 3, 1), 'int_uuf.plt')
-             END IF
+
     !===Interpolation for Maxwell
     IF (rw_mxw) THEN
        IF (rank==0) WRITE(*,*) 'Start interpolation Maxwell'
@@ -1406,7 +1402,11 @@ CONTAINS
        END IF
        IF (rank==0) WRITE(*,*) 'End interpolation NS'
     END IF
-
+             IF (rank == 0) THEN
+                write(*,*) 'what ?'
+             CALL plot_scalar_field(vv_mesh_in%jj, vv_mesh_in%rr, un_in(:, 3, 1), 'int_uui.plt')
+             CALL plot_scalar_field(vv_mesh_out%jj, vv_mesh_out%rr, un_out(:, 3, 1), 'int_uuf.plt')
+             END IF
     !===Interpolation for temperature
     IF (rw_temp) THEN
        IF (rank==0) WRITE(*,*) 'Start interpolation temperature'
