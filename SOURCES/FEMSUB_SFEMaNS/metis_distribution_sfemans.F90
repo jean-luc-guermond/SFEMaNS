@@ -1402,12 +1402,13 @@ CONTAINS
 
    END SUBROUTINE part_mesh_mhd_bis
 
-   SUBROUTINE extract_mesh(communicator, nb_proc, mesh_glob, part, list_dom, mesh_loc)
+   SUBROUTINE extract_mesh(communicator, nb_proc, mesh_glob, part, list_dom, mesh_loc, opt_mesh_glob)
       USE def_type_mesh
       USE my_util
       USE prep_maill
       IMPLICIT NONE
       TYPE(mesh_type) :: mesh_glob, mesh, mesh_loc
+      TYPE(mesh_type), OPTIONAL :: opt_mesh_glob
       INTEGER, DIMENSION(:) :: part, list_dom
       INTEGER, DIMENSION(mesh_glob%me) :: bat
       INTEGER, DIMENSION(mesh_glob%np) :: i_old_to_new
@@ -1602,6 +1603,11 @@ CONTAINS
       mesh%edge_stab = .FALSE.
 
       CALL create_local_mesh_with_extra_layer(communicator, mesh, mesh_loc, me_loc, mes_loc, np_loc)
+
+
+      IF (PRESENT(opt_mesh_glob)) THEN
+         CALL copy_mesh(mesh, opt_mesh_glob)
+      END IF
 
       CALL free_mesh(mesh)
       DEALLOCATE(list_m, tab, tabs)
@@ -2610,4 +2616,68 @@ CONTAINS
       IF (.NOT. okay) m2 = -1
 
    END SUBROUTINE find_cell_interface
+
+   SUBROUTINE copy_mesh(mesh1, mesh2)
+      USE def_type_mesh
+      USE my_util
+      IMPLICIT NONE
+      TYPE(mesh_type) :: mesh1, mesh2
+
+      mesh2%me = mesh1%me
+      mesh2%mes = mesh1%mes
+      mesh2%np = mesh1%np
+      mesh2%medge = mesh1%medge
+      mesh2%medges = mesh1%medges
+      mesh2%mextra = mesh1%mextra
+
+      mesh2%dom_me = mesh1%dom_me
+      mesh2%dom_np = mesh1%dom_np
+      mesh2%dom_mes = mesh1%dom_mes
+
+      ALLOCATE(mesh2%jj(SIZE(mesh1%jj, 1), SIZE(mesh1%jj, 2)))
+      mesh2%jj = mesh1%jj
+      ALLOCATE(mesh2%jjs(SIZE(mesh1%jjs, 1), SIZE(mesh1%jjs, 2)))
+      mesh2%jjs = mesh1%jjs
+      ALLOCATE(mesh2%rr(SIZE(mesh1%rr, 1), SIZE(mesh1%rr, 2)))
+      mesh2%rr = mesh1%rr
+      ALLOCATE(mesh2%loc_to_glob(SIZE(mesh1%loc_to_glob)))
+      mesh2%loc_to_glob = mesh1%loc_to_glob
+      ALLOCATE(mesh2%neigh(SIZE(mesh1%neigh, 1), SIZE(mesh1%neigh, 2)))
+      mesh2%neigh = mesh1%neigh
+
+      ALLOCATE(mesh2%sides(SIZE(mesh1%sides)))
+      mesh2%sides = mesh1%sides
+      ALLOCATE(mesh2%neighs(SIZE(mesh1%neighs)))
+      mesh2%neighs = mesh1%neighs
+      ALLOCATE(mesh2%i_d(SIZE(mesh1%i_d)))
+      mesh2%i_d = mesh1%i_d
+
+      ALLOCATE(mesh2%jce(SIZE(mesh1%jce, 1), SIZE(mesh1%jce, 2)))
+      mesh2%jce = mesh1%jce
+      !DEALLOCATE(mesh%jev)
+      ALLOCATE(mesh2%jees(SIZE(mesh1%jees)))
+      mesh2%jees = mesh1%jees
+      ALLOCATE(mesh2%jecs(SIZE(mesh1%jecs)))
+      mesh2%jecs = mesh1%jecs
+
+      ALLOCATE(mesh2%disp(SIZE(mesh1%disp)))
+      mesh2%disp = mesh1%disp
+      ALLOCATE(mesh2%domnp(SIZE(mesh1%domnp)))
+      mesh2%domnp = mesh1%domnp
+      ALLOCATE(mesh2%discell(SIZE(mesh1%disp)))
+      mesh2%discell = mesh1%discell
+      ALLOCATE(mesh2%domcell(SIZE(mesh1%domnp)))
+      mesh2%domcell = mesh1%domcell
+      ALLOCATE(mesh2%disedge(SIZE(mesh1%disp)))
+      mesh2%disedge = mesh1%disedge
+      ALLOCATE(mesh2%domedge(SIZE(mesh1%domnp)))
+      mesh2%domedge = mesh1%domedge
+
+      ALLOCATE(mesh2%extra_jj(SIZE(mesh1%extra_jj, 1), SIZE(mesh1%extra_jj, 2)))
+      mesh2%extra_jj = mesh1%extra_jj
+      ALLOCATE(mesh2%extra_jce(SIZE(mesh1%extra_jce, 1), SIZE(mesh1%extra_jce, 2)))
+      mesh2%extra_jce = mesh1%extra_jce
+      ALLOCATE(mesh2%extra_jcc(SIZE(mesh1%extra_jcc)))
+      mesh2%extra_jcc = mesh1%extra_jcc
+   END SUBROUTINE copy_mesh
 END MODULE metis_sfemans
