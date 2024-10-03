@@ -1200,6 +1200,7 @@ CONTAINS
       !===Interpolation for NS
       IF (rw_ns) THEN
          IF (rank==0) WRITE(*, *) 'Start interpolation NS'
+               write(*,*) 'mesh', vv_mesh_in%jj
 
          IF (inter_mesh) THEN
 
@@ -1246,7 +1247,6 @@ CONTAINS
                           pn_in, pn_m1_in, incpn_in, incpn_m1_in, old_filename, opt_mono = mono_in)
                   END IF
                END IF
-               write(*,*) 'mesh', vv_mesh_in%jj
                controle_vv = 0
                controle_pp = 0
                CALL interp_mesh(vv_mesh_in, vv_mesh_out, un_in, un_out, controle_vv, 2)
