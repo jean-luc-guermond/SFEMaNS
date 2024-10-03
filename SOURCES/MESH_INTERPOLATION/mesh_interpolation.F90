@@ -1228,6 +1228,7 @@ CONTAINS
              CALL interp_mesh(pp_mesh_in, pp_mesh_out, incpn_in, incpn_out, controle_pp, 1)
              CALL interp_mesh(pp_mesh_in, pp_mesh_out, incpn_m1_in, incpn_m1_out, controle_pp, 1)
              IF (rank == 0) THEN
+                write(*,*) 'what ?'
              CALL plot_scalar_field(vv_mesh_in%jj, vv_mesh_in%rr, un_in(:, 3, 1), 'int_uui.plt')
              CALL plot_scalar_field(vv_mesh_out%jj, vv_mesh_out%rr, un_out(:, 3, 1), 'int_uuf.plt')
              END IF
