@@ -1200,7 +1200,7 @@ CONTAINS
       !===Interpolation for NS
       IF (rw_ns) THEN
          IF (rank==0) WRITE(*, *) 'Start interpolation NS'
-               write(*,*) 'mesh', vv_mesh_in%jj
+         IF (rank==0)      write(*,*) 'mesh', vv_mesh_in%jj
 
          IF (inter_mesh) THEN
 
