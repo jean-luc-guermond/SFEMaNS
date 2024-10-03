@@ -271,7 +271,8 @@ CONTAINS
          END IF
          IF (type_pb == 'nst') ALLOCATE(list_dom_H(0), list_dom_phi(0))
 
-         CALL find_string(22, '===Number of interfaces between velocity and concentration only domains (for nst applications)', test)
+         CALL find_string(22, &
+         '===Number of interfaces between velocity and concentration only domains (for nst applications)'&, test)
          IF (test) THEN
             READ(22, *) nb_inter_c_v
             ALLOCATE(list_inter_c_v(nb_inter_c_v))
@@ -291,7 +292,8 @@ CONTAINS
          ALLOCATE(list_dom_temp_in(nb_dom_temp), list_dom_temp(nb_dom_temp), temp_in_to_new(nb_dom_temp))
          CALL read_until(22, '===List of subdomains for temperature mesh')
          READ (22, *)  list_dom_temp_in
-         CALL find_string(22, '===Number of interfaces between velocity and temperature only domains (for nst applications)', test)
+         CALL find_string(22, &
+              '===Number of interfaces between velocity and temperature only domains (for nst applications)', test)
          IF (test) THEN
             READ(22, *) nb_inter_v_T
             ALLOCATE(list_inter_v_T(nb_inter_v_T))
@@ -805,7 +807,8 @@ CONTAINS
       IF (if_induction) THEN
          CALL free_mesh(H_mesh_glob)
          CALL free_mesh(phi_mesh_glob)
-         CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_H, list_inter_mu, type_fe_H, p1_H_mesh_glob, is_form_m)
+         CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_H, list_inter_mu, type_fe_H, p1_H_mesh_glob, &
+              is_form_m)
          CALL create_iso_grid_distributed(p1_H_mesh_glob, H_mesh_glob, type_fe_H)
          CALL load_mesh_free_format(directory_m, file_name_m, list_dom_phi, type_fe_phi, phi_mesh_glob, is_form_m)
          IF (check_plt) THEN
@@ -1058,7 +1061,9 @@ CONTAINS
                   tit(l:l) = '0'
                END DO
 
-               IF (petsc_rank==0) CALL system('mv suite_maxwell_I' // tit // '.' // old_filename // 'suite_maxwell.' // old_filename)
+               IF (petsc_rank==0)
+                  CALL system('mv suite_maxwell_I' // tit // '.' // old_filename // 'suite_maxwell.' // old_filename)
+               END IF
                CALL MPI_Barrier(MPI_Comm_WORLD, code)
                CALL read_restart_maxwell(comm_one_d, H_mesh_in, phi_mesh_in, time_h, list_mode, Hn_in, Hn1_in, &
                     Bn_in, Bn1_in, phin_in, phin1_in, old_filename, interpol = .FALSE., opt_mono = mono_in)
@@ -1112,9 +1117,11 @@ CONTAINS
                   DO l = 1, lblank - 1
                      tit_s(l:l) = '0'
                   END DO
-                  CALL system('mv suite_maxwell_S' // tit_s // '_I' // tit // '.' // old_filename // 'suite_maxwell_S' // tit_s // '.' // old_filename)
+                  CALL system('mv suite_maxwell_S' // tit_s // '_I' // tit // '.' &
+                       // old_filename // 'suite_maxwell_S' // tit_s // '.' // old_filename)
                ELSE
-                  IF (petsc_rank==0) CALL system('mv suite_maxwell_I' // tit // '.' // old_filename // 'suite_maxwell.' // old_filename)
+                  IF (petsc_rank==0) CALL system('mv suite_maxwell_I' // tit // '.' &
+                       // old_filename // 'suite_maxwell.' // old_filename)
                   CALL MPI_Barrier(MPI_Comm_WORLD, code)
                END IF
                CALL read_restart_maxwell(comm_one_d, H_mesh_in, phi_mesh_in, time_h, list_mode, Hn_in, Hn1_in, &
@@ -1148,12 +1155,18 @@ CONTAINS
                   DO l = 1, lblank - 1
                      tit_m(l:l) = '0'
                   END DO
-                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, Hn(:, 1, i), 'H_r_cos_m=' // tit_m // '_' // tit_s // '_999.plt')
-                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, Hn(:, 2, i), 'H_r_sin_m=' // tit_m // '_' // tit_s // '_999.plt')
-                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, Hn(:, 3, i), 'H_t_cos_m=' // tit_m // '_' // tit_s // '_999.plt')
-                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, Hn(:, 4, i), 'H_t_sin_m=' // tit_m // '_' // tit_s // '_999.plt')
-                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, Hn(:, 5, i), 'H_z_cos_m=' // tit_m // '_' // tit_s // '_999.plt')
-                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, Hn(:, 6, i), 'H_z_sin_m=' // tit_m // '_' // tit_s // '_999.plt')
+                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, Hn(:, 1, i), &
+                       'H_r_cos_m=' // tit_m // '_' // tit_s // '_999.plt')
+                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, Hn(:, 2, i), &
+                       'H_r_sin_m=' // tit_m // '_' // tit_s // '_999.plt')
+                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, Hn(:, 3, i), &
+                       'H_t_cos_m=' // tit_m // '_' // tit_s // '_999.plt')
+                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, Hn(:, 4, i), &
+                       'H_t_sin_m=' // tit_m // '_' // tit_s // '_999.plt')
+                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, Hn(:, 5, i), &
+                       'H_z_cos_m=' // tit_m // '_' // tit_s // '_999.plt')
+                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, Hn(:, 6, i), &
+                       'H_z_sin_m=' // tit_m // '_' // tit_s // '_999.plt')
 
                END DO
 
@@ -1164,12 +1177,18 @@ CONTAINS
                      DO l = 1, lblank - 1
                         tit_m(l:l) = '0'
                      END DO
-                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, Hn_glob(:, 1, i), 'gH_r_cos_m=' // tit_m // '_999.plt')
-                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, Hn_glob(:, 2, i), 'gH_r_sin_m=' // tit_m // '_999.plt')
-                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, Hn_glob(:, 3, i), 'gH_t_cos_m=' // tit_m // '_999.plt')
-                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, Hn_glob(:, 4, i), 'gH_t_sin_m=' // tit_m // '_999.plt')
-                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, Hn_glob(:, 5, i), 'gH_z_cos_m=' // tit_m // '_999.plt')
-                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, Hn_glob(:, 6, i), 'gH_z_sin_m=' // tit_m // '_999.plt')
+                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, Hn_glob(:, 1, i), &
+                          'gH_r_cos_m=' // tit_m // '_999.plt')
+                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, Hn_glob(:, 2, i), &
+                          'gH_r_sin_m=' // tit_m // '_999.plt')
+                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, Hn_glob(:, 3, i), &
+                          'gH_t_cos_m=' // tit_m // '_999.plt')
+                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, Hn_glob(:, 4, i), &
+                          'gH_t_sin_m=' // tit_m // '_999.plt')
+                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, Hn_glob(:, 5, i), &
+                          'gH_z_cos_m=' // tit_m // '_999.plt')
+                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, Hn_glob(:, 6, i), &
+                          'gH_z_sin_m=' // tit_m // '_999.plt')
                   END DO
                END IF
             END IF
@@ -1313,10 +1332,12 @@ CONTAINS
                         tit_s(l:l) = '0'
                      END DO
 
-                     CALL system('mv suite_ns_S' // tit_s // '_I' // tit // '.' // old_filename // 'suite_ns_S' // tit_s // '.' // old_filename)
+                     CALL system('mv suite_ns_S' // tit_s // '_I' // tit // '.' &
+                          // old_filename // 'suite_ns_S' // tit_s // '.' // old_filename)
 
                   ELSE
-                     IF (petsc_rank==0) CALL system('mv suite_ns_I' // tit // '.' // old_filename // 'suite_ns.' // old_filename)
+                     IF (petsc_rank==0) CALL system('mv suite_ns_I' // tit // '.' &
+                          // old_filename // 'suite_ns.' // old_filename)
                      CALL MPI_Barrier(MPI_Comm_WORLD, code)
                   END IF
 
@@ -1386,10 +1407,14 @@ CONTAINS
                   DO l = 1, lblank - 1
                      tit_m(l:l) = '0'
                   END DO
-                  CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 1, i), 'u_r_cos_m=' // tit_m // '_' // tit_s // '_999.plt')
-                  CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 3, i), 'u_t_cos_m=' // tit_m // '_' // tit_s // '_999.plt')
-                  CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 4, i), 'u_t_sin_m=' // tit_m // '_' // tit_s // '_999.plt')
-                  CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 5, i), 'u_z_cos_m=' // tit_m // '_' // tit_s // '_999.plt')
+                  CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 1, i), &
+                       'u_r_cos_m=' // tit_m // '_' // tit_s // '_999.plt')
+                  CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 3, i), &
+                       'u_t_cos_m=' // tit_m // '_' // tit_s // '_999.plt')
+                  CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 4, i), &
+                       'u_t_sin_m=' // tit_m // '_' // tit_s // '_999.plt')
+                  CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 5, i), &
+                       'u_z_cos_m=' // tit_m // '_' // tit_s // '_999.plt')
 
                END DO
 
@@ -1400,10 +1425,14 @@ CONTAINS
                      DO l = 1, lblank - 1
                         tit_m(l:l) = '0'
                      END DO
-                     CALL plot_scalar_field(vv_mesh_glob%jj, vv_mesh_glob%rr, un_glob(:, 1, i), 'gu_r_cos_m=' // tit_m // '_999.plt')
-                     CALL plot_scalar_field(vv_mesh_glob%jj, vv_mesh_glob%rr, un_glob(:, 3, i), 'gu_t_cos_m=' // tit_m // '_999.plt')
-                     CALL plot_scalar_field(vv_mesh_glob%jj, vv_mesh_glob%rr, un_glob(:, 4, i), 'gu_t_sin_m=' // tit_m // '_999.plt')
-                     CALL plot_scalar_field(vv_mesh_glob%jj, vv_mesh_glob%rr, un_glob(:, 5, i), 'gu_z_cos_m=' // tit_m // '_999.plt')
+                     CALL plot_scalar_field(vv_mesh_glob%jj, vv_mesh_glob%rr, un_glob(:, 1, i), &
+                          'gu_r_cos_m=' // tit_m // '_999.plt')
+                     CALL plot_scalar_field(vv_mesh_glob%jj, vv_mesh_glob%rr, un_glob(:, 3, i), &
+                          'gu_t_cos_m=' // tit_m // '_999.plt')
+                     CALL plot_scalar_field(vv_mesh_glob%jj, vv_mesh_glob%rr, un_glob(:, 4, i), &
+                          'gu_t_sin_m=' // tit_m // '_999.plt')
+                     CALL plot_scalar_field(vv_mesh_glob%jj, vv_mesh_glob%rr, un_glob(:, 5, i), &
+                          'gu_z_cos_m=' // tit_m // '_999.plt')
                   END DO
                END IF
             END IF
@@ -1478,9 +1507,11 @@ CONTAINS
                         tit_s(l:l) = '0'
                      END DO
 
-                     CALL system('mv suite_temp_S' // tit_s // '_I' // tit // '.' // old_filename // 'suite_temp_S' // tit_s // '.' // old_filename)
+                     CALL system('mv suite_temp_S' // tit_s // '_I' // tit // '.' &
+                          // old_filename // 'suite_temp_S' // tit_s // '.' // old_filename)
                   ELSE
-                     IF (petsc_rank==0) CALL system('mv suite_temp_I' // tit // '.' // old_filename // 'suite_temp.' // old_filename)
+                     IF (petsc_rank==0) CALL system('mv suite_temp_I' // tit // '.' &
+                          // old_filename // 'suite_temp.' // old_filename)
                      CALL MPI_Barrier(MPI_Comm_WORLD, code)
                   END IF
 
@@ -1513,8 +1544,10 @@ CONTAINS
                   DO l = 1, lblank - 1
                      tit_m(l:l) = '0'
                   END DO
-                  CALL plot_scalar_field(temp_mesh%jj, temp_mesh%rr, tempn(:, 1, i), 'temp_cos_m=' // tit_m // '_' // tit_s // '_999.plt')
-                  CALL plot_scalar_field(temp_mesh%jj, temp_mesh%rr, tempn(:, 2, i), 'temp_sin_m=' // tit_m // '_' // tit_s // '_999.plt')
+                  CALL plot_scalar_field(temp_mesh%jj, temp_mesh%rr, tempn(:, 1, i), &
+                       'temp_cos_m=' // tit_m // '_' // tit_s // '_999.plt')
+                  CALL plot_scalar_field(temp_mesh%jj, temp_mesh%rr, tempn(:, 2, i), &
+                       'temp_sin_m=' // tit_m // '_' // tit_s // '_999.plt')
                END DO
                IF (rang_temp_S == 0) THEN
                   DO i = 1, SIZE(list_mode)
@@ -1597,9 +1630,12 @@ CONTAINS
                         tit_s(l:l) = '0'
                      END DO
 
-                     CALL system('mv suite_conc_S' // tit_s // '_I' // tit // '.' // old_filename // 'suite_conc_S' // tit_s // '.' // old_filename)
+                     CALL system('mv suite_conc_S' // tit_s // '_I' // tit // '.' &
+                          // old_filename // 'suite_conc_S' // tit_s // '.' // old_filename)
                   ELSE
-                     IF (petsc_rank==0) CALL system('mv suite_conc_I' // tit // '.' // old_filename // 'suite_conc.' // old_filename)
+                     IF (petsc_rank==0)
+                        CALL system('mv suite_conc_I' // tit // '.' // old_filename // 'suite_conc.' // old_filename)
+                     END IF
                      CALL MPI_Barrier(MPI_Comm_WORLD, code)
                   END IF
 
@@ -1632,8 +1668,10 @@ CONTAINS
                   DO l = 1, lblank - 1
                      tit_m(l:l) = '0'
                   END DO
-                  CALL plot_scalar_field(conc_mesh%jj, conc_mesh%rr, concn(:, 1, i), 'conc_cos_m=' // tit_m // '_' // tit_s // '_999.plt')
-                  CALL plot_scalar_field(conc_mesh%jj, conc_mesh%rr, concn(:, 2, i), 'conc_sin_m=' // tit_m // '_' // tit_s // '_999.plt')
+                  CALL plot_scalar_field(conc_mesh%jj, conc_mesh%rr, concn(:, 1, i), &
+                       'conc_cos_m=' // tit_m // '_' // tit_s // '_999.plt')
+                  CALL plot_scalar_field(conc_mesh%jj, conc_mesh%rr, concn(:, 2, i), &
+                       'conc_sin_m=' // tit_m // '_' // tit_s // '_999.plt')
                END DO
                IF (rang_conc_S == 0) THEN
                   DO i = 1, SIZE(list_mode)
