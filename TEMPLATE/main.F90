@@ -107,7 +107,7 @@ PROGRAM mhd_prog
      time = time + inputs%dt
      IF (it ==  1) THEN
         IF (rank == 0) THEN
-           write(*,*) 'mesh', vv_mesh_in%jj
+           write(*,*) 'mesh', vv_mesh%jj
          CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 1, 1), 'uui1.plt')
          CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 2, 1), 'uui2.plt')
          CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 3, 1), 'uui3.plt')
