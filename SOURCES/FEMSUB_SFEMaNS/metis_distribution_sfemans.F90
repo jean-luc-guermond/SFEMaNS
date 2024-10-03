@@ -2652,32 +2652,32 @@ CONTAINS
       ALLOCATE(mesh2%i_d(SIZE(mesh1%i_d)))
       mesh2%i_d = mesh1%i_d
 
-      ALLOCATE(mesh2%jce(SIZE(mesh1%jce, 1), SIZE(mesh1%jce, 2)))
-      mesh2%jce = mesh1%jce
+      !ALLOCATE(mesh2%jce(SIZE(mesh1%jce, 1), SIZE(mesh1%jce, 2)))
+      !mesh2%jce = mesh1%jce
       !DEALLOCATE(mesh%jev)
       !ALLOCATE(mesh2%jees(SIZE(mesh1%jees)))
       !mesh2%jees = mesh1%jees
       !ALLOCATE(mesh2%jecs(SIZE(mesh1%jecs)))
       !mesh2%jecs = mesh1%jecs
 
-      ALLOCATE(mesh2%disp(SIZE(mesh1%disp)))
-      mesh2%disp = mesh1%disp
-      ALLOCATE(mesh2%domnp(SIZE(mesh1%domnp)))
-      mesh2%domnp = mesh1%domnp
-      ALLOCATE(mesh2%discell(SIZE(mesh1%disp)))
-      mesh2%discell = mesh1%discell
-      ALLOCATE(mesh2%domcell(SIZE(mesh1%domnp)))
-      mesh2%domcell = mesh1%domcell
-      ALLOCATE(mesh2%disedge(SIZE(mesh1%disp)))
-      mesh2%disedge = mesh1%disedge
-      ALLOCATE(mesh2%domedge(SIZE(mesh1%domnp)))
-      mesh2%domedge = mesh1%domedge
+      !ALLOCATE(mesh2%disp(SIZE(mesh1%disp)))
+      !mesh2%disp = mesh1%disp
+      !ALLOCATE(mesh2%domnp(SIZE(mesh1%domnp)))
+      !mesh2%domnp = mesh1%domnp
+      !ALLOCATE(mesh2%discell(SIZE(mesh1%disp)))
+      !mesh2%discell = mesh1%discell
+      !ALLOCATE(mesh2%domcell(SIZE(mesh1%domnp)))
+      !mesh2%domcell = mesh1%domcell
+      !ALLOCATE(mesh2%disedge(SIZE(mesh1%disp)))
+      !mesh2%disedge = mesh1%disedge
+      !ALLOCATE(mesh2%domedge(SIZE(mesh1%domnp)))
+      !mesh2%domedge = mesh1%domedge
 
-      ALLOCATE(mesh2%jj_extra(SIZE(mesh1%jj_extra, 1), SIZE(mesh1%jj_extra, 2)))
-      mesh2%jj_extra = mesh1%jj_extra
-      ALLOCATE(mesh2%jce_extra(SIZE(mesh1%jce_extra, 1), SIZE(mesh1%jce_extra, 2)))
-      mesh2%jce_extra = mesh1%jce_extra
-      ALLOCATE(mesh2%jcc_extra(SIZE(mesh1%jcc_extra)))
-      mesh2%jcc_extra = mesh1%jcc_extra
+      !ALLOCATE(mesh2%jj_extra(SIZE(mesh1%jj_extra, 1), SIZE(mesh1%jj_extra, 2)))
+      !mesh2%jj_extra = mesh1%jj_extra
+      !ALLOCATE(mesh2%jce_extra(SIZE(mesh1%jce_extra, 1), SIZE(mesh1%jce_extra, 2)))
+      !mesh2%jce_extra = mesh1%jce_extra
+      !ALLOCATE(mesh2%jcc_extra(SIZE(mesh1%jcc_extra)))
+      !mesh2%jcc_extra = mesh1%jcc_extra
    END SUBROUTINE copy_mesh
 END MODULE metis_sfemans
