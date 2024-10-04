@@ -451,6 +451,7 @@ CONTAINS
           END IF
           tps = user_time() - tps
 !!$          WRITE(*,*) ' Tps create_local_petsc_matrix', tps
+      write(*,*) 'ok15.2'
 
           tps = user_time()
           CALL mat_H_p_phi_maxwell(H_mesh,pmag_mesh,phi_mesh,interface_H_phi, &
@@ -458,6 +459,7 @@ CONTAINS
                LA_H, LA_pmag, LA_phi, H_p_phi_mat1(i), H_p_phi_mat2(i), sigma_nj_m, sigma)
           tps = user_time() - tps
 !!$          WRITE(*,*) ' Tps mat_H_p_phi_maxwell', tps
+      write(*,*) 'ok15.3'
 
           !Take care of discontinuous mu
           tps = user_time()
@@ -465,6 +467,7 @@ CONTAINS
                mu_H_field, sigma, LA_H, H_p_phi_mat1(i), H_p_phi_mat2(i), sigma_np)
           tps = user_time() - tps
 !!$          WRITE(*,*) ' Tps mat_maxwell_mu', tps
+      write(*,*) 'ok15.4'
 
           !Take care of discontinuous rot H
           tps = user_time()
@@ -512,7 +515,6 @@ CONTAINS
     tps_tot = user_time()
     tps_cumul = 0
     CALL MPI_COMM_RANK(PETSC_COMM_WORLD, my_petscworld_rank, code)
-      write(*,*) 'ok16'
 
     IF (inputs%if_coupling_H_x) THEN
        !===Initialize rhoLi_node using input tempn/rho
