@@ -1943,7 +1943,6 @@ CONTAINS
             Sij(3,1:n_ws1,1:n_ws2), ADD_VALUES, ierr)
        CALL MatSetValues(H_p_phi_mat2, n_ws1, idxn(1:n_ws1), n_ws2, jdxn(1:n_ws2), &
             Sij(4,1:n_ws1,1:n_ws2), ADD_VALUES, ierr)
-      write(*,*) 'ok4'
 
        !TEST SYM
        !Feb 2 2003
@@ -2020,7 +2019,6 @@ CONTAINS
             mat_loc1(1:3*n_ws1,1:n_w2), ADD_VALUES, ierr)
        CALL MatSetValues(H_p_phi_mat2, 3*n_ws1, idxn(1:3*n_ws1), n_w2, jdxn(1:n_w2), &
             mat_loc2(1:3*n_ws1,1:n_w2), ADD_VALUES, ierr)
-      write(*,*) 'ok5'
 
        !TEST SYM
        !Feb 2 2003
@@ -2210,7 +2208,6 @@ CONTAINS
        CALL MatSetValues(H_p_phi_mat2, n_w1, idxn(1:n_w1), n_ws2, jdxn(1:n_ws2), &
             mat_loc2(1:n_w1,1:n_ws2), ADD_VALUES, ierr)
        !Feb 2 2007
-      write(*,*) 'ok6'
 
        Sij = 0.d0
        DO ls = 1, l_Gs
@@ -2342,7 +2339,6 @@ CONTAINS
        !June 6 2008, I put back (.true.) always.
        !Works much better when mu is discontinuous.
        !Mars 22 2007
-      write(*,*) 'ok6'
 
        IF (stab(2) > 1.d-12) THEN
           !IF (.FALSE.) THEN
@@ -2481,11 +2477,11 @@ CONTAINS
 
     ENDDO
 
-      write(*,*) 'ok7'
 
     !=========================================================
     !--- Artificial boundary condition: d(phi)/dR + (1/R)*phi = 0
     !=========================================================
+      write(*,*) 'ok1'
 
     IF (.NOT.PRESENT(index_fourier) .OR. .NOT.PRESENT(R_fourier)) RETURN
     IF (R_fourier.GT.0.d0) THEN 
@@ -2527,12 +2523,12 @@ CONTAINS
                Phisij(1:n_ws2,1:n_ws2), ADD_VALUES, ierr)
        END DO
     END IF
+      write(*,*) 'ok2'
 
     CALL MatAssemblyBegin(H_p_phi_mat1,MAT_FINAL_ASSEMBLY,ierr)
     CALL MatAssemblyEnd(H_p_phi_mat1,MAT_FINAL_ASSEMBLY,ierr)
     CALL MatAssemblyBegin(H_p_phi_mat2,MAT_FINAL_ASSEMBLY,ierr)
     CALL MatAssemblyEnd(H_p_phi_mat2,MAT_FINAL_ASSEMBLY,ierr)
-      write(*,*) 'ok8'
 
 !!$    DEALLOCATE(mat_loc1, mat_loc2, idxn, jdxn)
 
