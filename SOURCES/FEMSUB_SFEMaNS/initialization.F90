@@ -222,7 +222,6 @@ CONTAINS
       CALL zero_out_modes
 
       time = time_in
-      write(*,*) 'ok1'
       IF (if_mass) THEN
          IF (inputs%variation_temp_param_fluid) THEN
             CALL reconstruct_variable(comm_one_d_ns, list_mode, pp_mesh, vv_mesh, level_set_m1, &
@@ -257,7 +256,6 @@ CONTAINS
             heat_diffusivity_ns = 0.d0
          END IF
       END IF
-      write(*,*) 'ok2'
 
       IF (if_concentration) THEN
          IF (if_momentum) THEN
@@ -276,7 +274,6 @@ CONTAINS
               inputs%convection_coeff_conc_lhs, inputs%convection_coeff_conc_rhs, inputs%exterior_concentration, conc_per, &
               j_H_to_conc)
       END IF
-      write(*,*) 'ok3'
 
       IF (if_energy) THEN
          IF (if_momentum) THEN
@@ -323,7 +320,6 @@ CONTAINS
          !===HF April 2019
          !===JLG July 20, 2019, p3 mesh
       END IF
-      write(*,*) 'ok4'
 
       IF (if_induction) THEN
          IF (inputs%type_pb == 'fhd' .AND. inputs%if_steady_current_fhd) THEN !===If steady current, computation of H only once
@@ -343,7 +339,6 @@ CONTAINS
                phin1 = phin
             END IF
          ELSE
-                  write(*,*) 'ok6'
 
             IF (if_momentum) THEN
                CALL projection_velocity(H_mesh, un, jj_v_to_H, .FALSE., v_to_Max)

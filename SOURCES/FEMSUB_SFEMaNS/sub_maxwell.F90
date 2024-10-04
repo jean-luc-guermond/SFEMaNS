@@ -40,6 +40,8 @@ CONTAINS
 
     IF (inputs%type_pb=='mhs') THEN
        IF (inputs%if_maxwell_with_H) THEN
+                write(*,*) 'ok8'
+
           CALL maxwell_mxs_with_H(comm_one_d, H_mesh, pmag_mesh, phi_mesh, interface_H_phi, &
                interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, vel, stab_in, stab_jump_h, sigma_in, &
                R_fourier, index_fourier, mu_H_field, mu_phi, time, dt, Rem, list_mode, &
@@ -49,12 +51,14 @@ CONTAINS
        ENDIF
     ELSE
        IF (inputs%if_maxwell_with_H) THEN
+      write(*,*) 'ok9'
 
           CALL maxwell_decouple_with_H(comm_one_d, H_mesh, pmag_mesh, phi_mesh, interface_H_phi, &
                interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, vel, stab_in, sigma_in, &
                R_fourier, index_fourier, mu_H_field, mu_phi, time, dt, Rem, list_mode, &
                H_phi_per, LA_H, LA_pmag, LA_phi, LA_mhd, one_over_sigma_ns, jj_v_to_H)
        ELSE
+      write(*,*) 'ok10'
 
           CALL maxwell_decouple_with_B(comm_one_d, H_mesh, pmag_mesh, phi_mesh, interface_H_phi, &
                interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, vel, stab_in, sigma_in, &
