@@ -2502,7 +2502,7 @@ CONTAINS
       END DO
       !===END Find the isolated points on the border
 
-      IF (proc==2) THEN
+      IF (proc==1) THEN
          part = -1.d0
          part(me_loc(1):me_loc(2)) = 0.d0
          part(mesh_loc%jcc_extra) = -2.d0
