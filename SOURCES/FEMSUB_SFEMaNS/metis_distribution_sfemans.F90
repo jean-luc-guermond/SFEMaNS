@@ -2512,7 +2512,7 @@ CONTAINS
          part(mesh_loc%neighs_extra) = -3.d0
          part(187 + 490) = -4.d0
        WRITE(tit,'(i1)') count
-         CALL plot_const_p1_label(mesh%jj, mesh%rr, 1.d0 * part, 'dd.plt')
+         CALL plot_const_p1_label(mesh%jj, mesh%rr, 1.d0 * part, tit // 'dd.plt')
       END IF
 
    END SUBROUTINE create_local_mesh_with_extra_layer
