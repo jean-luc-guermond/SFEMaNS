@@ -259,9 +259,9 @@ CONTAINS
          DO m = 1, H_mesh%mextra
             lp3 : DO ni = 1, SIZE(H_mesh%jj, 1)
                iglob = H_mesh%jj_extra(ni, m)
-               DO m2 = 1, pmag_mesh%mextra
+               DO m2 = 1, pmag_mesh%mextra + 1
+                  IF (m2 == pmag_mesh%mextra + 1) EXIT lp3
                   IF (pmag_mesh%jcc_extra(m2) == H_mesh%jcc_extra(m)) EXIT
-                  IF (m2 == pmag_mesh%mextra) EXIT lp3
                END DO
 
                DO nj = 1, SIZE(pmag_mesh%jj, 1)
