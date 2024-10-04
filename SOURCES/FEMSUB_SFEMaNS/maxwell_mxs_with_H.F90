@@ -1534,7 +1534,7 @@ CONTAINS
 
     error = 0
     DO ms = 1, interface_H_phi%mes
-
+      write(*,*) 'interface ??'
        ms2 = interface_H_phi%mesh2(ms)
        ms1 = interface_H_phi%mesh1(ms)
        m2 = phi_mesh%neighs(ms2)
@@ -2467,8 +2467,6 @@ CONTAINS
                 jdxn(jx) = jb - 1 
                 mat_loc1(ix,jx) = Phisij(ni,nj)  
                 mat_loc2(ix,jx) = Phisij(ni,nj)
-                                                                   IF (jb - 1 == 3809) WRITE(*,*) ib, jb
-
              END DO
           END DO
           CALL MatSetValues(H_p_phi_mat1, n_w2, idxn(1:n_w2), 2*n_ws1+n_w2, jdxn(1:2*n_ws1+n_w2), &
@@ -2517,8 +2515,6 @@ CONTAINS
                 j = phi_mesh%jjs(nj,ms)
                 jb = LA_phi%loc_to_glob(1,j)
                 jdxn(nj) = jb - 1
-                                                                   IF (jb - 1 == 3809) WRITE(*,*) ib, jb
-
              END DO
           END DO
           CALL MatSetValues(H_p_phi_mat1, n_ws2, idxn(1:n_ws2), n_ws2, jdxn(1:n_ws2), &
