@@ -1604,7 +1604,6 @@ CONTAINS
 
       CALL create_local_mesh_with_extra_layer(communicator, mesh, mesh_loc, me_loc, mes_loc, np_loc)
 
-
       IF (PRESENT(opt_mesh_glob)) THEN
          CALL copy_mesh(mesh, opt_mesh_glob)
          CALL prep_jce_jev(opt_mesh_glob)
@@ -1636,6 +1635,10 @@ CONTAINS
 
          ALLOCATE(opt_mesh_glob%isolated_interfaces(opt_mesh_glob%nis, 2))
          ALLOCATE(opt_mesh_glob%isolated_jjs(opt_mesh_glob%nis))
+
+         ALLOCATE(opt_mesh_glob%disp(nb_proc + 1), opt_mesh_glob%domnp(nb_proc))
+         ALLOCATE(opt_mesh_glob%discell(nb_proc + 1), opt_mesh_glob%domcell(nb_proc))
+         ALLOCATE(opt_mesh_glob%disedge(nb_proc + 1), opt_mesh_glob%domedge(nb_proc))
 
          opt_mesh_glob%disp = (/ 1, opt_mesh_glob%np + 1 /)
          opt_mesh_glob%domnp = (/ opt_mesh_glob%np /)
@@ -1669,10 +1672,10 @@ CONTAINS
       CALL MPI_Comm_rank(communicator, rank, ierr)
 
       ! Create parts
-      write(*,*) '?'
+      write(*, *) '?'
       parts = part(mesh_glob%neighs)
       ! End create parts
-      write(*,*) '??'
+      write(*, *) '??'
 
       ! Create list_m
       i = 0
