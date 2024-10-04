@@ -1244,6 +1244,7 @@ CONTAINS
        CALL MatSetValues(H_p_phi_mat2, 3*n_wH, idxn(1:3*n_wH), 3*n_wH, jdxn(1:3*n_wH), &
             mat_loc2(1:3*n_wH,1:3*n_wH), ADD_VALUES, ierr)
     END DO
+      write(*,*) 'ok1'
 
     ! Block on Pmag
     DO m = 1, pmag_mesh%me
@@ -1297,6 +1298,7 @@ CONTAINS
             Tpmag(1:n_wpmag,1:n_wpmag), ADD_VALUES, ierr)
     ENDDO
     ! End Block on PmagxPmag
+      write(*,*) 'ok2'
 
     ! Block on PmagxH and HxPmag
     DO m = 1, pmag_mesh%me
@@ -1361,6 +1363,7 @@ CONTAINS
             mat_loc1(1:3*n_wH,1:n_wpmag), ADD_VALUES, ierr)
        CALL MatSetValues(H_p_phi_mat2, 3*n_wH, idxn(1:3*n_wH), n_wpmag, jdxn(1:n_wpmag), &
             mat_loc2(1:3*n_wH,1:n_wpmag), ADD_VALUES, ierr)
+      write(*,*) 'ok3'
 
        mat_loc1 = 0.d0
        mat_loc2 = 0.d0
@@ -1391,6 +1394,7 @@ CONTAINS
             mat_loc2(1:n_wpmag,1:3*n_wH), ADD_VALUES, ierr)
     END DO
     ! End Block on PmagxH and HxPmag
+      write(*,*) 'ok4'
 
 !!$    !==Block on phi 
 !!$    DO m = 1,phi_mesh%me
