@@ -1625,6 +1625,10 @@ CONTAINS
          ALLOCATE(opt_mesh_glob%sides_extra(opt_mesh_glob%mes_extra))
          ALLOCATE(opt_mesh_glob%jjs_extra(2, opt_mesh_glob%mes_extra))
          ALLOCATE(opt_mesh_glob%rrs_extra(2, 3, opt_mesh_glob%mes_extra))
+         ALLOCATE(opt_mesh_glob%loc_to_glob(opt_mesh_glob%np))
+         DO n = 1, mesh%np
+            opt_mesh_glob%loc_to_glob(n) = n
+         END DO
 
          ALLOCATE(opt_mesh_glob%jj_extra(3, opt_mesh_glob%mextra))
          ALLOCATE(opt_mesh_glob%jce_extra(3, opt_mesh_glob%mextra))
