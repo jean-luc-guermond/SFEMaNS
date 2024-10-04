@@ -2051,6 +2051,8 @@ CONTAINS
       LOGICAL, DIMENSION(mesh%me) :: not_my_cells
       INTEGER, DIMENSION(SIZE(mesh%jj, 1)) :: jglob, eglob
       LOGICAL :: test
+      CHARACTER(len=1)  :: tit
+      INTEGER, save :: count = 0
       REAL(KIND = 8), DIMENSION(mesh%me) :: part
       INTEGER :: dim, nws, nw, m, ms, mop, msop, ns, msup, minf, dof, proc, m2, &
            dom_me, nwc, dom_mes, dom_np, n, i, rank, ierr, dom_np_glob, nb_extra, nb_proc, e_glob, medge, medges, j
@@ -2501,14 +2503,15 @@ CONTAINS
          END DO
       END DO
       !===END Find the isolated points on the border
-
       IF (proc==1) THEN
+         count = count + 1
          part = -1.d0
          part(me_loc(1):me_loc(2)) = 0.d0
          part(mesh_loc%jcc_extra) = -2.d0
          part(mesh%neighs) = mesh%sides
          part(mesh_loc%neighs_extra) = -3.d0
          part(187 + 490) = -4.d0
+       WRITE(tit,'(i1)') count
          CALL plot_const_p1_label(mesh%jj, mesh%rr, 1.d0 * part, 'dd.plt')
       END IF
 
