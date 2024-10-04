@@ -1380,7 +1380,6 @@ CONTAINS
                 jb = LA_H%loc_to_glob(k,j)
                 jx = (k-1)*n_wH + nj
                 jdxn(jx) = jb - 1
-                                                   IF (jb - 1 == 3809) WRITE(*,*) ib, jb
 
                 mat_loc1(ix,jx) = - THpmag(k,nj,ni)
                 mat_loc2(ix,jx) = - eps*THpmag(k,nj,ni)
@@ -2468,6 +2467,8 @@ CONTAINS
                 jdxn(jx) = jb - 1 
                 mat_loc1(ix,jx) = Phisij(ni,nj)  
                 mat_loc2(ix,jx) = Phisij(ni,nj)
+                                                                   IF (jb - 1 == 3809) WRITE(*,*) ib, jb
+
              END DO
           END DO
           CALL MatSetValues(H_p_phi_mat1, n_w2, idxn(1:n_w2), 2*n_ws1+n_w2, jdxn(1:2*n_ws1+n_w2), &
@@ -2516,6 +2517,8 @@ CONTAINS
                 j = phi_mesh%jjs(nj,ms)
                 jb = LA_phi%loc_to_glob(1,j)
                 jdxn(nj) = jb - 1
+                                                                   IF (jb - 1 == 3809) WRITE(*,*) ib, jb
+
              END DO
           END DO
           CALL MatSetValues(H_p_phi_mat1, n_ws2, idxn(1:n_ws2), n_ws2, jdxn(1:n_ws2), &
