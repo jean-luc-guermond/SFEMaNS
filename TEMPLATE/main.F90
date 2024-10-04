@@ -48,8 +48,7 @@ PROGRAM mhd_prog
   PetscMPIInt    :: rank
   MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d, comm_one_d_ns, comm_one_d_temp
   MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d_conc
-    INTEGER           :: l, lblank
-    CHARACTER(len=3)  :: tit_S
+
   !===Start PETSC and MPI (mandatory)=============================================
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
   CALL MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
@@ -124,20 +123,6 @@ PROGRAM mhd_prog
      tploc = user_time() - tploc
      IF (it>1) tploc_max = tploc_max + tploc
   ENDDO
-    WRITE(tit_S,'(i3)') rank
-    lblank = eval_blank(3,tit_S)
-    DO l = 1, lblank - 1
-       tit_S(l:l) = '0'
-    END DO
-
-      CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:,1, 1), tit_S // 'u1.plt')
-      CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:,3, 1), tit_S // 'u2.plt')
-      CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:,5, 1), tit_S // 'u3.plt')
-      CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, Hn(:,1, 1), tit_S // '0H1.plt')
-      CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, Hn(:,3, 1), tit_S // '0H2.plt')
-      CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, Hn(:,5, 1), tit_S // '0H3.plt')
-      CALL plot_scalar_field(H_mesh%jj, conc_mesh%rr, concentration(:,1, 1), tit_S // '0c1.plt')
-      CALL plot_scalar_field(H_mesh%jj, conc_mesh%rr, concentration(:,2, 1), tit_S // '0c2.plt')
 
   !===Timing======================================================================
   tps = user_time() - tps
