@@ -1247,7 +1247,9 @@ CONTAINS
                END IF
                controle_vv = 0
                controle_pp = 0
+                           write(*,*) un_in
                CALL interp_mesh(vv_mesh_in, vv_mesh_out, un_in, un_out, controle_vv, 2)
+                                          write(*,*) un_out
                CALL interp_mesh(vv_mesh_in, vv_mesh_out, un_m1_in, un_m1_out, controle_vv, 2)
                CALL interp_mesh(pp_mesh_in, pp_mesh_out, pn_in, pn_out, controle_pp, 1)
                CALL interp_mesh(pp_mesh_in, pp_mesh_out, pn_m1_in, pn_m1_out, controle_pp, 1)
@@ -1297,7 +1299,6 @@ CONTAINS
             l_t_g_pp = 0
             CALL loc_to_glob(vv_mesh, vv_mesh_glob, l_t_g_vv)
             CALL loc_to_glob(pp_mesh, pp_mesh_glob, l_t_g_pp)
-            write(*,*) l_t_g_vv
             IF (pp_mesh%me /=0) THEN
                DO m = index_start, index_start + nb_fic - 1
                   un_glob = 0.d0
