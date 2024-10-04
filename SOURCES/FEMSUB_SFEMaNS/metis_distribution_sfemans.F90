@@ -1616,8 +1616,6 @@ CONTAINS
          opt_mesh_glob%medges = 0
          opt_mesh_glob%nis = 0
          opt_mesh_glob%nps = 0
-         mesh_loc%gauss%n_w = 3
-         mesh_loc%gauss%n_ws = 2
 
          ALLOCATE(opt_mesh_glob%jees(opt_mesh_glob%medges))
          ALLOCATE(opt_mesh_glob%jecs(opt_mesh_glob%medges))

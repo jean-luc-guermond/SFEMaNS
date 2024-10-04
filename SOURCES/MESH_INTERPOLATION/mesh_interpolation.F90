@@ -713,6 +713,7 @@ CONTAINS
               opt_mesh_glob = p1_conc_mesh_glob)
          CALL create_iso_grid_distributed(p1_conc_mesh, conc_mesh, 2)
          CALL create_iso_grid_distributed(p1_conc_mesh_glob, conc_mesh_glob, 2)
+         CALL gauss_points_2d(conc_mesh_glob, 2)
          ALLOCATE(comm_one_d_conc(2))
          CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_conc(2), code)
          CALL MPI_COMM_RANK(comm_one_d(1), rank_S, code)
@@ -728,6 +729,8 @@ CONTAINS
               opt_mesh_glob = pp_mesh_glob)
          CALL create_iso_grid_distributed(pp_mesh, vv_mesh, 2)
          CALL create_iso_grid_distributed(pp_mesh_glob, vv_mesh_glob, 2)
+         CALL gauss_points_2d(pp_mesh_glob, 1)
+         CALL gauss_points_2d(vv_mesh_glob, 2)
          ALLOCATE(comm_one_d_ns(2))
          CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_ns(2), code)
          CALL MPI_COMM_RANK(comm_one_d(1), rank_S, code)
@@ -743,6 +746,7 @@ CONTAINS
               opt_mesh_glob = p1_temp_mesh_glob)
          CALL create_iso_grid_distributed(p1_temp_mesh, temp_mesh, 2)
          CALL create_iso_grid_distributed(p1_temp_mesh_glob, temp_mesh_glob, 2)
+         CALL gauss_points_2d(temp_mesh_glob, 2)
          ALLOCATE(comm_one_d_temp(2))
          CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_temp(2), code)
          CALL MPI_COMM_RANK(comm_one_d(1), rank_S, code)
@@ -758,11 +762,14 @@ CONTAINS
               opt_mesh_glob = p1_H_mesh_glob)
          CALL create_iso_grid_distributed(p1_H_mesh, H_mesh, type_fe_H)
          CALL create_iso_grid_distributed(p1_H_mesh_glob, H_mesh_glob, type_fe_H)
+         CALL gauss_points_2d(H_mesh_glob, type_fe_H)
 
          CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_phi, p1_phi_mesh, &
               opt_mesh_glob = p1_phi_mesh_glob)
          CALL create_iso_grid_distributed(p1_phi_mesh, phi_mesh, type_fe_phi)
          CALL create_iso_grid_distributed(p1_phi_mesh_glob, phi_mesh_glob, type_fe_phi)
+         CALL gauss_points_2d(phi_mesh_glob, type_fe_phi)
+
       END IF
 
       !===Cleanup
