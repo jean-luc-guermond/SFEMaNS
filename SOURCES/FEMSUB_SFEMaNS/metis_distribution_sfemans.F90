@@ -1623,11 +1623,11 @@ CONTAINS
 
          ALLOCATE(opt_mesh_glob%neighs_extra(opt_mesh_glob%mes_extra))
          ALLOCATE(opt_mesh_glob%sides_extra(opt_mesh_glob%mes_extra))
-         ALLOCATE(opt_mesh_glob%jjs_extra(nws, opt_mesh_glob%mes_extra))
-         ALLOCATE(opt_mesh_glob%rrs_extra(dim, nw, opt_mesh_glob%mes_extra))
+         ALLOCATE(opt_mesh_glob%jjs_extra(2, opt_mesh_glob%mes_extra))
+         ALLOCATE(opt_mesh_glob%rrs_extra(2, 3, opt_mesh_glob%mes_extra))
 
-         ALLOCATE(opt_mesh_glob%jj_extra(nw, opt_mesh_glob%mextra))
-         ALLOCATE(opt_mesh_glob%jce_extra(nw, opt_mesh_glob%mextra))
+         ALLOCATE(opt_mesh_glob%jj_extra(3, opt_mesh_glob%mextra))
+         ALLOCATE(opt_mesh_glob%jce_extra(3, opt_mesh_glob%mextra))
          ALLOCATE(opt_mesh_glob%jcc_extra(opt_mesh_glob%mextra))
 
          ALLOCATE(opt_mesh_glob%isolated_interfaces(opt_mesh_glob%nis, 2))
