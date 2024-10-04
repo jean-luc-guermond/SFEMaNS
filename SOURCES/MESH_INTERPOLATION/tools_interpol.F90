@@ -195,7 +195,7 @@ CONTAINS
        IF (m == 0) CYCLE
        CALL gauss_ff(abc, type_fe, ff)
        controle(i) = 1
-       write(*,*) abc, 'abc', ff
+       write(*,*) abc, 'abc', ff, SIZE(ff)
 
        DO j = 1, SIZE(in_field,2)
           DO k = 1, SIZE(in_field,3)
