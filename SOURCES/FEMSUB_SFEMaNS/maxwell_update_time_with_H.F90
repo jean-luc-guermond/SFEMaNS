@@ -1393,7 +1393,7 @@ CONTAINS
        CALL MatSetValues(H_p_phi_mat2, n_wphi, idxn(1:n_wphi), n_wphi, jdxn(1:n_wphi), &
             TPhi(1:n_wphi,1:n_wphi), ADD_VALUES, ierr)
     END DO
-      write(*,*) 'ok5
+      write(*,*) 'ok5'
 
     !*********************************************************************************
     !--------------------TERMS on interface_H_phi SIGMA-------------------------------
