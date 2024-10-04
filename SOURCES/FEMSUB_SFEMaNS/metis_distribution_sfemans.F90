@@ -2513,6 +2513,7 @@ CONTAINS
                part(m) = -4.d0
             END IF
          END DO
+         write(*,*) mesh%jj
          CALL plot_const_p1_label(mesh%jj, mesh%rr, 1.d0 * part, 'dd.plt')
       END IF
 
