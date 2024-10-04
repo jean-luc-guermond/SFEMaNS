@@ -1049,8 +1049,8 @@ CONTAINS
             CLOSE(51)
          END IF
       END IF
+      IF (rank == 0) CALL plot_const_p1_label(p1_mesh_glob%jj, p1_mesh_glob%rr, 1.d0 * part, 'dd_base.plt')
 
-      IF (rank == 0) CALL plot_const_p1_label(mesh%jj, mesh%rr, 1.d0 * part, 'dd_base.plt')
       !===Extract local meshes from global meshes=====================================
 
       !===Specific to momentum (velocity)
