@@ -1199,7 +1199,6 @@ CONTAINS
       !===Interpolation for NS
       IF (rw_ns) THEN
          IF (rank==0) WRITE(*, *) 'Start interpolation NS'
-         IF (rank==0)      write(*, *) 'mesh', vv_mesh_in%jj
 
          IF (inter_mesh) THEN
 
@@ -1298,6 +1297,7 @@ CONTAINS
             l_t_g_pp = 0
             CALL loc_to_glob(vv_mesh, vv_mesh_glob, l_t_g_vv)
             CALL loc_to_glob(pp_mesh, pp_mesh_glob, l_t_g_pp)
+            write(*,*) l_t_g_vv
             IF (pp_mesh%me /=0) THEN
                DO m = index_start, index_start + nb_fic - 1
                   un_glob = 0.d0
