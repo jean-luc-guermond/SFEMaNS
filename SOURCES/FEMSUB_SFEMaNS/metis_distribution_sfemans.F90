@@ -1607,6 +1607,38 @@ CONTAINS
 
       IF (PRESENT(opt_mesh_glob)) THEN
          CALL copy_mesh(mesh, opt_mesh_glob)
+         CALL prep_jce_jev(opt_mesh_glob)
+
+         opt_mesh_glob%dom_me = opt_mesh_glob%me
+         opt_mesh_glob%dom_np = opt_mesh_glob%np
+         opt_mesh_glob%dom_mes = opt_mesh_glob%mes
+         opt_mesh_glob%mextra = 0
+         opt_mesh_glob%mes_extra = 0
+         opt_mesh_glob%medges = 0
+         opt_mesh_glob%nis = 0
+         opt_mesh_glob%nps = 0
+
+         ALLOCATE(opt_mesh_glob%jees(opt_mesh_glob%medges))
+         ALLOCATE(opt_mesh_glob%jecs(opt_mesh_glob%medges))
+
+         ALLOCATE(opt_mesh_glob%neighs_extra(opt_mesh_glob%mes_extra))
+         ALLOCATE(opt_mesh_glob%sides_extra(opt_mesh_glob%mes_extra))
+         ALLOCATE(opt_mesh_glob%jjs_extra(nws, opt_mesh_glob%mes_extra))
+         ALLOCATE(opt_mesh_glob%rrs_extra(dim, nw, opt_mesh_glob%mes_extra))
+
+         ALLOCATE(opt_mesh_glob%jj_extra(nw, opt_mesh_glob%mextra))
+         ALLOCATE(opt_mesh_glob%jce_extra(nw, opt_mesh_glob%mextra))
+         ALLOCATE(opt_mesh_glob%jcc_extra(opt_mesh_glob%mextra))
+
+         ALLOCATE(opt_mesh_glob%isolated_interfaces(opt_mesh_glob%nis, 2))
+         ALLOCATE(opt_mesh_glob%isolated_jjs(opt_mesh_glob%nis))
+
+         opt_mesh_glob%disp = (/ 1, opt_mesh_glob%np + 1 /)
+         opt_mesh_glob%domnp = (/ opt_mesh_glob%np /)
+         opt_mesh_glob%discell = (/ 1, opt_mesh_glob%me + 1 /)
+         opt_mesh_glob%domcell = (/ opt_mesh_glob%me /)
+         opt_mesh_glob%disedge = (/ 1, opt_mesh_glob%medge + 1 /)
+         opt_mesh_glob%domedge = (/ opt_mesh_glob%medge /)
       END IF
 
       CALL free_mesh(mesh)
