@@ -171,7 +171,6 @@ CONTAINS
        !------------------------------------------------------------------------------
 
        !-------------RESCALING DE STAB------------------------------------------------
-      write(*,*) 'ok10'
 
        stab = stab_in / Rem ! MODIFICATION: stab_in = data coefficients, normalization by Rm
 
@@ -244,7 +243,6 @@ CONTAINS
           END DO
        END DO
        !------------------------------------------------------------------------------
-      write(*,*) 'ok11'
 
        !---------------BOUNDARY CONDITIONS FOR pmag-----------------------------------
        ! Creation of Dirichlet boundary conditions for the magnetic pressure
@@ -271,7 +269,6 @@ CONTAINS
           pmag_global_D(i)%DRL = 0.d0
        END DO
        ! End creation of Dirichlet boundary conditions for the magnetic pressure
-      write(*,*) 'ok12'
 
        !===JLG+CN July 2017
        !===Neuman BC for H
@@ -363,7 +360,6 @@ CONTAINS
           Neumann_bdy_phi_sides(count) = ms
        END DO
        !===End Neuman BC for H
-      write(*,*) 'ok13'
 
        !---------------BOUNDARY CONDITIONS FOR Hxn------------------------------------        
        !===Compute sides that are on Dirichlet boundary (H-H_D)xn=0 
@@ -401,7 +397,6 @@ CONTAINS
           phi_global_D(i)%DRL = 0.d0
        END DO
        !------------------------------------------------------------------------------
-      write(*,*) 'ok14'
 
        !-------------MATRIX ALLOCATION------------------------------------------------
        ALLOCATE(H_p_phi_mat1(m_max_c),H_p_phi_ksp1(m_max_c))
@@ -477,6 +472,7 @@ CONTAINS
                mode, stab, LA_H, H_p_phi_mat1(i), H_p_phi_mat2(i), sigma_np, sigma)
 !!$          tps = user_time() - tps
 !!$          WRITE(*,*) ' Tps mat_dirichlet_maxwell', tps
+      write(*,*) 'ok15.1'
 
 !!$          IF (per) THEN
           IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
