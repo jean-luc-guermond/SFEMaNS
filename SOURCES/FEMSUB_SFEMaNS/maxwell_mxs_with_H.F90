@@ -171,6 +171,7 @@ CONTAINS
        !------------------------------------------------------------------------------
 
        !-------------RESCALING DE STAB------------------------------------------------
+      write(*,*) 'ok10'
 
        stab = stab_in / Rem ! MODIFICATION: stab_in = data coefficients, normalization by Rm
 
@@ -243,6 +244,7 @@ CONTAINS
           END DO
        END DO
        !------------------------------------------------------------------------------
+      write(*,*) 'ok11'
 
        !---------------BOUNDARY CONDITIONS FOR pmag-----------------------------------
        ! Creation of Dirichlet boundary conditions for the magnetic pressure
@@ -269,6 +271,7 @@ CONTAINS
           pmag_global_D(i)%DRL = 0.d0
        END DO
        ! End creation of Dirichlet boundary conditions for the magnetic pressure
+      write(*,*) 'ok12'
 
        !===JLG+CN July 2017
        !===Neuman BC for H
@@ -360,6 +363,7 @@ CONTAINS
           Neumann_bdy_phi_sides(count) = ms
        END DO
        !===End Neuman BC for H
+      write(*,*) 'ok13'
 
        !---------------BOUNDARY CONDITIONS FOR Hxn------------------------------------        
        !===Compute sides that are on Dirichlet boundary (H-H_D)xn=0 
@@ -397,6 +401,7 @@ CONTAINS
           phi_global_D(i)%DRL = 0.d0
        END DO
        !------------------------------------------------------------------------------
+      write(*,*) 'ok14'
 
        !-------------MATRIX ALLOCATION------------------------------------------------
        ALLOCATE(H_p_phi_mat1(m_max_c),H_p_phi_ksp1(m_max_c))
@@ -435,6 +440,7 @@ CONTAINS
           sigma_tot_gauss_Neumann = 0.d0
        END IF
        !------------------------------------------------------------------------------
+      write(*,*) 'ok15'
 
        DO i = 1, m_max_c !Boucle sur les modes
           mode = list_mode(i)
@@ -510,6 +516,7 @@ CONTAINS
     tps_tot = user_time()
     tps_cumul = 0
     CALL MPI_COMM_RANK(PETSC_COMM_WORLD, my_petscworld_rank, code)
+      write(*,*) 'ok16'
 
     IF (inputs%if_coupling_H_x) THEN
        !===Initialize rhoLi_node using input tempn/rho
