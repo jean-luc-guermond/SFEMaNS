@@ -1205,7 +1205,6 @@ CONTAINS
                    jb = LA_H%loc_to_glob(kj,j)
                    jx = (kj-1)*n_wH+nj
                    jdxn(jx) = jb - 1
-                   IF (jb - 1 == 1921 ) WRITE(*,*) ib, jb, 'd'
                    IF   ((ki == 1) .AND. (kj == 1)) THEN
                       mat_loc1(ix,jx) = TH(1,ni,nj)
                       mat_loc2(ix,jx) = TH(1,ni,nj)
@@ -1289,7 +1288,6 @@ CONTAINS
              j = pmag_mesh%jj(nj, m)
              jb =  LA_pmag%loc_to_glob(1,j)
              jdxn(nj) = jb - 1
-             IF (jb - 1 == 1921 ) WRITE(*,*) ib, jb, 'c'
           END DO
        END DO
        CALL MatSetValues(H_p_phi_mat1, n_wpmag, idxn(1:n_wpmag), n_wpmag, jdxn(1:n_wpmag), &
@@ -1352,7 +1350,7 @@ CONTAINS
                 jb = LA_pmag%loc_to_glob(1,j)
                 jx = nj
                 jdxn(jx) = jb - 1
-IF (jb - 1 == 1921 ) WRITE(*,*) ib, jb, 'b'
+                IF (jb - 1 == 1921 .and. jb -1 == 3810 ) WRITE(*,*) ib, jb, 'b', H_mesh%jcc(m)
                 mat_loc1(ix,jx) = THpmag(k,ni,nj)
                 mat_loc2(ix,jx) = eps*THpmag(k,ni,nj)
              END DO
@@ -1382,8 +1380,6 @@ IF (jb - 1 == 1921 ) WRITE(*,*) ib, jb, 'b'
                 jb = LA_H%loc_to_glob(k,j)
                 jx = (k-1)*n_wH + nj
                 jdxn(jx) = jb - 1
-                IF (jb - 1 == 3809 .OR. jb - 1 == 1921 ) WRITE(*,*) ib, jb
-
                 mat_loc1(ix,jx) = - THpmag(k,nj,ni)
                 mat_loc2(ix,jx) = - eps*THpmag(k,nj,ni)
              END DO
@@ -1537,7 +1533,6 @@ IF (jb - 1 == 1921 ) WRITE(*,*) ib, jb, 'b'
 
     error = 0
     DO ms = 1, interface_H_phi%mes
-      write(*,*) 'interface ??'
        ms2 = interface_H_phi%mesh2(ms)
        ms1 = interface_H_phi%mesh1(ms)
        m2 = phi_mesh%neighs(ms2)
@@ -2518,7 +2513,6 @@ IF (jb - 1 == 1921 ) WRITE(*,*) ib, jb, 'b'
                 j = phi_mesh%jjs(nj,ms)
                 jb = LA_phi%loc_to_glob(1,j)
                 jdxn(nj) = jb - 1
-                IF (jb - 1 == 1922 ) WRITE(*,*) ib, jb, 'a'
              END DO
           END DO
           CALL MatSetValues(H_p_phi_mat1, n_ws2, idxn(1:n_ws2), n_ws2, jdxn(1:n_ws2), &
