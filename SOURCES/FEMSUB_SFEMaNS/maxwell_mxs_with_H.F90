@@ -435,7 +435,6 @@ CONTAINS
           sigma_tot_gauss_Neumann = 0.d0
        END IF
        !------------------------------------------------------------------------------
-      write(*,*) 'ok15'
 
        DO i = 1, m_max_c !Boucle sur les modes
           mode = list_mode(i)
@@ -467,7 +466,6 @@ CONTAINS
                mu_H_field, sigma, LA_H, H_p_phi_mat1(i), H_p_phi_mat2(i), sigma_np)
           tps = user_time() - tps
 !!$          WRITE(*,*) ' Tps mat_maxwell_mu', tps
-      write(*,*) 'ok15.4'
 
           !Take care of discontinuous rot H
           tps = user_time()
@@ -475,7 +473,6 @@ CONTAINS
                mode, stab, LA_H, H_p_phi_mat1(i), H_p_phi_mat2(i), sigma_np, sigma)
 !!$          tps = user_time() - tps
 !!$          WRITE(*,*) ' Tps mat_dirichlet_maxwell', tps
-      write(*,*) 'ok15.1'
 
 !!$          IF (per) THEN
           IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN

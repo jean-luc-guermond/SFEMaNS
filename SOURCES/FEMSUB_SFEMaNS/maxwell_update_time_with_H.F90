@@ -1138,6 +1138,7 @@ CONTAINS
           END DO
 
        END DO
+      write(*,*) 'ok1'
 
        mat_loc1 = 0.d0
        mat_loc2 = 0.d0
@@ -1192,6 +1193,7 @@ CONTAINS
        CALL MatSetValues(H_p_phi_mat2, 3*n_wH, idxn(1:3*n_wH), 3*n_wH, jdxn(1:3*n_wH), &
             mat_loc2(1:3*n_wH,1:3*n_wH), ADD_VALUES, ierr)
     END DO
+      write(*,*) 'ok2'
 
     ! Block on Pmag
     DO m = 1, pmag_mesh%me
@@ -1245,6 +1247,7 @@ CONTAINS
             Tpmag(1:n_wpmag,1:n_wpmag), ADD_VALUES, ierr)
     ENDDO
     ! End Block on PmagxPmag
+      write(*,*) 'ok3'
 
     ! Block on PmagxH and HxPmag
     DO m = 1, pmag_mesh%me
@@ -1339,6 +1342,7 @@ CONTAINS
             mat_loc2(1:n_wpmag,1:3*n_wH), ADD_VALUES, ierr)
     END DO
     ! End Block on PmagxH and HxPmag
+      write(*,*) 'ok4'
 
     !==Block on phi
     DO m = 1,phi_mesh%me
@@ -1389,6 +1393,7 @@ CONTAINS
        CALL MatSetValues(H_p_phi_mat2, n_wphi, idxn(1:n_wphi), n_wphi, jdxn(1:n_wphi), &
             TPhi(1:n_wphi,1:n_wphi), ADD_VALUES, ierr)
     END DO
+      write(*,*) 'ok5
 
     !*********************************************************************************
     !--------------------TERMS on interface_H_phi SIGMA-------------------------------
@@ -1478,6 +1483,7 @@ CONTAINS
 
        END DO
     END IF
+      write(*,*) 'ok6'
 
     error = 0
     DO ms = 1, interface_H_phi%mes
@@ -1561,6 +1567,7 @@ CONTAINS
             mat_loc1(1:3*n_ws1,1:3*n_ws1), ADD_VALUES, ierr)
        CALL MatSetValues(H_p_phi_mat2, 3*n_ws1, idxn(1:3*n_ws1), 3*n_ws1, jdxn(1:3*n_ws1), &
             mat_loc2(1:3*n_ws1,1:3*n_ws1), ADD_VALUES, ierr)
+      write(*,*) 'ok7'
 
        !====================================================================================
        !------------------------(1/sigma) (Rot bj) . (bi x ni)------------------------------
@@ -1623,6 +1630,7 @@ CONTAINS
             mat_loc1(1:3*n_ws1,1:3*n_ws1), ADD_VALUES, ierr)
        CALL MatSetValues(H_p_phi_mat2, 3*n_ws1, idxn(1:3*n_ws1), 3*n_ws1, jdxn(1:3*n_ws1), &
             mat_loc2(1:3*n_ws1,1:3*n_ws1), ADD_VALUES, ierr)
+      write(*,*) 'ok8'
 
        !Feb 2 2007
        mat_loc1 = 0.d0
@@ -1659,6 +1667,7 @@ CONTAINS
             mat_loc1(1:3*n_ws1,1:3*n_ws1), ADD_VALUES, ierr)
        CALL MatSetValues(H_p_phi_mat2, 3*n_ws1, idxn(1:3*n_ws1), 3*n_ws1, jdxn(1:3*n_ws1), &
             mat_loc2(1:3*n_ws1,1:3*n_ws1), ADD_VALUES, ierr)
+      write(*,*) 'ok9'
 
        Hsij = 0.d0
        DO ls = 1, phi_mesh%gauss%l_Gs
@@ -1724,6 +1733,7 @@ CONTAINS
             mat_loc1(1:3*n_ws1,1:3*n_w1), ADD_VALUES, ierr)
        CALL MatSetValues(H_p_phi_mat2, 3*n_ws1, idxn(1:3*n_ws1), 3*n_w1, jdxn(1:3*n_w1), &
             mat_loc2(1:3*n_ws1,1:3*n_w1), ADD_VALUES, ierr)
+      write(*,*) 'ok10'
 
        !Feb 2 2007
        mat_loc1 = 0.d0
@@ -1766,6 +1776,7 @@ CONTAINS
        CALL MatSetValues(H_p_phi_mat2, 3*n_w1, idxn(1:3*n_w1), 3*n_ws1, jdxn(1:3*n_ws1), &
             mat_loc2(1:3*n_w1,1:3*n_ws1), ADD_VALUES, ierr)
        !Feb 2 2007
+      write(*,*) 'ok11'
 
 
        !====================================================================================
@@ -1810,6 +1821,7 @@ CONTAINS
             Phisij(1:n_ws2,1:n_ws2), ADD_VALUES, ierr)
        CALL MatSetValues(H_p_phi_mat2, n_ws2, idxn(1:n_ws2), n_ws2, jdxn(1:n_ws2), &
             Phisij(1:n_ws2,1:n_ws2), ADD_VALUES, ierr)
+      write(*,*) 'ok12'
 
        Phisij = 0.d0
        DO ls = 1, l_Gs
@@ -1854,6 +1866,7 @@ CONTAINS
        !------------------------hm1 (bi x ni) . (Grad(phi_j) x nj)--------------------------
        !------------------      + hm1(Grad(phi_i) x ni).(bj x nj)---------------------------
        !====================================================================================
+      write(*,*) 'ok13'
 
        Sij = 0.d0
        DO ls = 1, l_Gs
@@ -1891,6 +1904,7 @@ CONTAINS
             Sij(3,1:n_ws1,1:n_ws2), ADD_VALUES, ierr)
        CALL MatSetValues(H_p_phi_mat2, n_ws1, idxn(1:n_ws1), n_ws2, jdxn(1:n_ws2), &
             Sij(4,1:n_ws1,1:n_ws2), ADD_VALUES, ierr)
+      write(*,*) 'ok14'
 
        !TEST SYM
        !Feb 2 2003
@@ -1914,6 +1928,7 @@ CONTAINS
             mat_loc1(1:n_ws2,1:n_ws1), ADD_VALUES, ierr)
        CALL MatSetValues(H_p_phi_mat2, n_ws2, idxn(1:n_ws2), n_ws1, jdxn(1:n_ws1), &
             mat_loc2(1:n_ws2,1:n_ws1), ADD_VALUES, ierr)
+      write(*,*) 'ok15'
 
        !Feb 2 2003
        !TEST SYM
@@ -1967,6 +1982,7 @@ CONTAINS
             mat_loc1(1:3*n_ws1,1:n_w2), ADD_VALUES, ierr)
        CALL MatSetValues(H_p_phi_mat2, 3*n_ws1, idxn(1:3*n_ws1), n_w2, jdxn(1:n_w2), &
             mat_loc2(1:3*n_ws1,1:n_w2), ADD_VALUES, ierr)
+      write(*,*) 'ok16'
 
        !TEST SYM
        !Feb 2 2003
@@ -2007,6 +2023,7 @@ CONTAINS
        !====================================================================================
        !        GOTO 200
 
+      write(*,*) 'ok17'
 
        Sij = 0.d0
        DO ls = 1, l_Gs
@@ -2061,6 +2078,7 @@ CONTAINS
             mat_loc1(1:n_ws2,1:3*n_ws1), ADD_VALUES, ierr)
        CALL MatSetValues(H_p_phi_mat2, n_ws2, idxn(1:n_ws2), 3*n_ws1, jdxn(1:3*n_ws1), &
             mat_loc2(1:n_ws2,1:3*n_ws1), ADD_VALUES, ierr)
+      write(*,*) 'ok18'
 
        !Feb 2 2007
        mat_loc1 = 0.d0
@@ -2097,6 +2115,7 @@ CONTAINS
        !Feb 2 2007
 
        Sij = 0.d0
+      write(*,*) 'ok19'
 
        DO ls = 1, l_Gs
 
@@ -2132,6 +2151,7 @@ CONTAINS
             Sij(3,1:n_ws2,1:n_w1), ADD_VALUES, ierr)
        CALL MatSetValues(H_p_phi_mat2, n_ws2, idxn(1:n_ws2), n_w1, jdxn(1:n_w1), &
             Sij(4,1:n_ws2,1:n_w1), ADD_VALUES, ierr)
+      write(*,*) 'ok20'
 
        !Feb 2 2007
        Sij = c_sym*Sij !SYM
@@ -2156,6 +2176,7 @@ CONTAINS
        CALL MatSetValues(H_p_phi_mat2, n_w1, idxn(1:n_w1), n_ws2, jdxn(1:n_ws2), &
             mat_loc2(1:n_w1,1:n_ws2), ADD_VALUES, ierr)
        !Feb 2 2007
+      write(*,*) 'ok21'
 
        Sij = 0.d0
        DO ls = 1, l_Gs
