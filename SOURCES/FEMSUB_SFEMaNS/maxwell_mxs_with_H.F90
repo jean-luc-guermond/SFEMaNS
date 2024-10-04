@@ -1350,7 +1350,7 @@ CONTAINS
                 jb = LA_pmag%loc_to_glob(1,j)
                 jx = nj
                 jdxn(jx) = jb - 1
-                IF (ib - 1 == 1921 .and. jb -1 == 3809 ) WRITE(*,*) H_mesh%loc_to_glob(i), ib, pmag_mesh%loc_to_glob(j),&
+                IF (jb - 1 == 1921 .and. ib -1 == 3809 ) WRITE(*,*) H_mesh%loc_to_glob(i), ib, pmag_mesh%loc_to_glob(j),&
                      jb, 'b', m, pmag_mesh%disp, H_mesh%disp
                 mat_loc1(ix,jx) = THpmag(k,ni,nj)
                 mat_loc2(ix,jx) = eps*THpmag(k,ni,nj)
