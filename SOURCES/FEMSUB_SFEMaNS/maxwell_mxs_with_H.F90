@@ -1205,7 +1205,7 @@ CONTAINS
                    jb = LA_H%loc_to_glob(kj,j)
                    jx = (kj-1)*n_wH+nj
                    jdxn(jx) = jb - 1
-
+                   IF (jb - 1 == 3809) WRITE(*,*) ib, jb
                    IF   ((ki == 1) .AND. (kj == 1)) THEN
                       mat_loc1(ix,jx) = TH(1,ni,nj)
                       mat_loc2(ix,jx) = TH(1,ni,nj)
@@ -2481,7 +2481,6 @@ CONTAINS
     !=========================================================
     !--- Artificial boundary condition: d(phi)/dR + (1/R)*phi = 0
     !=========================================================
-      write(*,*) 'ok1'
 
     IF (.NOT.PRESENT(index_fourier) .OR. .NOT.PRESENT(R_fourier)) RETURN
     IF (R_fourier.GT.0.d0) THEN 
@@ -2523,7 +2522,6 @@ CONTAINS
                Phisij(1:n_ws2,1:n_ws2), ADD_VALUES, ierr)
        END DO
     END IF
-      write(*,*) 'ok2'
 
     CALL MatAssemblyBegin(H_p_phi_mat1,MAT_FINAL_ASSEMBLY,ierr)
     CALL MatAssemblyEnd(H_p_phi_mat1,MAT_FINAL_ASSEMBLY,ierr)
