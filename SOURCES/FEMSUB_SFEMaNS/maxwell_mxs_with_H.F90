@@ -1613,7 +1613,6 @@ CONTAINS
             mat_loc1(1:3*n_ws1,1:3*n_ws1), ADD_VALUES, ierr)
        CALL MatSetValues(H_p_phi_mat2, 3*n_ws1, idxn(1:3*n_ws1), 3*n_ws1, jdxn(1:3*n_ws1), &
             mat_loc2(1:3*n_ws1,1:3*n_ws1), ADD_VALUES, ierr)
-      write(*,*) 'ok5'
 
        !====================================================================================
        !------------------------(1/sigma) (Rot bj) . (bi x ni)------------------------------
@@ -1676,7 +1675,6 @@ CONTAINS
             mat_loc1(1:3*n_ws1,1:3*n_ws1), ADD_VALUES, ierr)
        CALL MatSetValues(H_p_phi_mat2, 3*n_ws1, idxn(1:3*n_ws1), 3*n_ws1, jdxn(1:3*n_ws1), &
             mat_loc2(1:3*n_ws1,1:3*n_ws1), ADD_VALUES, ierr)
-      write(*,*) 'ok6'
 
        !Feb 2 2007
        mat_loc1 = 0.d0
@@ -1713,7 +1711,6 @@ CONTAINS
             mat_loc1(1:3*n_ws1,1:3*n_ws1), ADD_VALUES, ierr)
        CALL MatSetValues(H_p_phi_mat2, 3*n_ws1, idxn(1:3*n_ws1), 3*n_ws1, jdxn(1:3*n_ws1), &
             mat_loc2(1:3*n_ws1,1:3*n_ws1), ADD_VALUES, ierr)
-      write(*,*) 'ok7'
 
        Hsij = 0.d0
        DO ls = 1, phi_mesh%gauss%l_Gs
@@ -1779,7 +1776,6 @@ CONTAINS
             mat_loc1(1:3*n_ws1,1:3*n_w1), ADD_VALUES, ierr)
        CALL MatSetValues(H_p_phi_mat2, 3*n_ws1, idxn(1:3*n_ws1), 3*n_w1, jdxn(1:3*n_w1), &
             mat_loc2(1:3*n_ws1,1:3*n_w1), ADD_VALUES, ierr)
-      write(*,*) 'ok8'
 
        !Feb 2 2007
        mat_loc1 = 0.d0
@@ -1823,7 +1819,6 @@ CONTAINS
             mat_loc2(1:3*n_w1,1:3*n_ws1), ADD_VALUES, ierr)
        !Feb 2 2007
 
-      write(*,*) 'ok9'
 
        !====================================================================================
        !------------------------------------TERMES SUR LE BLOC PHI--------------------------
@@ -1867,7 +1862,6 @@ CONTAINS
             Phisij(1:n_ws2,1:n_ws2), ADD_VALUES, ierr)
        CALL MatSetValues(H_p_phi_mat2, n_ws2, idxn(1:n_ws2), n_ws2, jdxn(1:n_ws2), &
             Phisij(1:n_ws2,1:n_ws2), ADD_VALUES, ierr)
-      write(*,*) 'ok10'
 
        Phisij = 0.d0
        DO ls = 1, l_Gs
@@ -1949,6 +1943,7 @@ CONTAINS
             Sij(3,1:n_ws1,1:n_ws2), ADD_VALUES, ierr)
        CALL MatSetValues(H_p_phi_mat2, n_ws1, idxn(1:n_ws1), n_ws2, jdxn(1:n_ws2), &
             Sij(4,1:n_ws1,1:n_ws2), ADD_VALUES, ierr)
+      write(*,*) 'ok4'
 
        !TEST SYM
        !Feb 2 2003
@@ -2025,6 +2020,7 @@ CONTAINS
             mat_loc1(1:3*n_ws1,1:n_w2), ADD_VALUES, ierr)
        CALL MatSetValues(H_p_phi_mat2, 3*n_ws1, idxn(1:3*n_ws1), n_w2, jdxn(1:n_w2), &
             mat_loc2(1:3*n_ws1,1:n_w2), ADD_VALUES, ierr)
+      write(*,*) 'ok5'
 
        !TEST SYM
        !Feb 2 2003
@@ -2214,6 +2210,7 @@ CONTAINS
        CALL MatSetValues(H_p_phi_mat2, n_w1, idxn(1:n_w1), n_ws2, jdxn(1:n_ws2), &
             mat_loc2(1:n_w1,1:n_ws2), ADD_VALUES, ierr)
        !Feb 2 2007
+      write(*,*) 'ok6'
 
        Sij = 0.d0
        DO ls = 1, l_Gs
@@ -2345,6 +2342,7 @@ CONTAINS
        !June 6 2008, I put back (.true.) always.
        !Works much better when mu is discontinuous.
        !Mars 22 2007
+      write(*,*) 'ok6'
 
        IF (stab(2) > 1.d-12) THEN
           !IF (.FALSE.) THEN
@@ -2483,6 +2481,7 @@ CONTAINS
 
     ENDDO
 
+      write(*,*) 'ok7'
 
     !=========================================================
     !--- Artificial boundary condition: d(phi)/dR + (1/R)*phi = 0
@@ -2533,6 +2532,7 @@ CONTAINS
     CALL MatAssemblyEnd(H_p_phi_mat1,MAT_FINAL_ASSEMBLY,ierr)
     CALL MatAssemblyBegin(H_p_phi_mat2,MAT_FINAL_ASSEMBLY,ierr)
     CALL MatAssemblyEnd(H_p_phi_mat2,MAT_FINAL_ASSEMBLY,ierr)
+      write(*,*) 'ok8'
 
 !!$    DEALLOCATE(mat_loc1, mat_loc2, idxn, jdxn)
 
