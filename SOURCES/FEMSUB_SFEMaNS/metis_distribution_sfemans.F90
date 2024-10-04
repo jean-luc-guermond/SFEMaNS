@@ -2509,11 +2509,12 @@ CONTAINS
          part(mesh%neighs) = mesh%sides
          part(mesh_loc%neighs_extra) = -3.d0
                   DO m = 1, mesh%me
+                              write(*,*) mesh%jj(:,m)
             IF (MINVAL(ABS(mesh%jj(:, m) - 1922)) == 0) THEN
                part(m) = -4.d0
+
             END IF
          END DO
-         write(*,*) mesh%jj
          CALL plot_const_p1_label(mesh%jj, mesh%rr, 1.d0 * part, 'dd.plt')
       END IF
 
