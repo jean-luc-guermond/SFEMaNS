@@ -105,22 +105,9 @@ PROGRAM mhd_prog
   DO it = 1, inputs%nb_iteration
      tploc =  user_time()
      time = time + inputs%dt
-     IF (it ==  1) THEN
-        IF (rank == 0) THEN
-           write(*,*) 'mesh', vv_mesh%jj
-         CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 1, 1), 'uui1.plt')
-         CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 2, 1), 'uui2.plt')
-         CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 3, 1), 'uui3.plt')
-        END IF
-     END IF
+
      CALL run_SFEMaNS(time, it)
-     IF (it ==  inputs%nb_iteration) THEN
-        IF (rank == 0) THEN
-        CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 1, 1), 'uuf1.plt')
-        CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 2, 1), 'uuf2.plt')
-        CALL plot_scalar_field(vv_mesh%jj, vv_mesh%rr, un(:, 3, 1), 'uuf3.plt')
-        END IF
-     END IF
+
      !===My postprocessing
      IF (.NOT.inputs%test_de_convergence) THEN
         CALL my_post_processing(it)
