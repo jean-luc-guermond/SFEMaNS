@@ -2672,8 +2672,8 @@ CONTAINS
       mesh2%jjs = mesh1%jjs
       ALLOCATE(mesh2%rr(SIZE(mesh1%rr, 1), SIZE(mesh1%rr, 2)))
       mesh2%rr = mesh1%rr
-      ALLOCATE(mesh2%loc_to_glob(SIZE(mesh1%loc_to_glob)))
-      mesh2%loc_to_glob = mesh1%loc_to_glob
+      !ALLOCATE(mesh2%loc_to_glob(SIZE(mesh1%loc_to_glob)))
+      !mesh2%loc_to_glob = mesh1%loc_to_glob
       ALLOCATE(mesh2%neigh(SIZE(mesh1%neigh, 1), SIZE(mesh1%neigh, 2)))
       mesh2%neigh = mesh1%neigh
 
