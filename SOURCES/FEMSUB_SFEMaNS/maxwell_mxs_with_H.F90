@@ -1205,7 +1205,6 @@ CONTAINS
                    jb = LA_H%loc_to_glob(kj,j)
                    jx = (kj-1)*n_wH+nj
                    jdxn(jx) = jb - 1
-                   IF (jb - 1 == 3809) WRITE(*,*) ib, jb
                    IF   ((ki == 1) .AND. (kj == 1)) THEN
                       mat_loc1(ix,jx) = TH(1,ni,nj)
                       mat_loc2(ix,jx) = TH(1,ni,nj)
@@ -1351,6 +1350,8 @@ CONTAINS
                 jb = LA_pmag%loc_to_glob(1,j)
                 jx = nj
                 jdxn(jx) = jb - 1
+                                   IF (jb - 1 == 3809) WRITE(*,*) ib, jb
+
                 mat_loc1(ix,jx) = THpmag(k,ni,nj)
                 mat_loc2(ix,jx) = eps*THpmag(k,ni,nj)
              END DO
