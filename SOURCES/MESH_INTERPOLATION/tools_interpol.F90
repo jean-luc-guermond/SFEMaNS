@@ -192,6 +192,7 @@ CONTAINS
       write(*,*) 'haeh ?'
     DO i = 1, mesh_out%np
        CALL find_elem(mesh_in, mesh_out%rr(:,i), abc, m)
+       write(*,*) m, 'm'
        IF (m == 0) CYCLE
        CALL gauss_ff(abc, type_fe, ff)
        controle(i) = 1

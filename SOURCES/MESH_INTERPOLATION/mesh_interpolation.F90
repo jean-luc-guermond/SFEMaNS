@@ -1247,9 +1247,7 @@ CONTAINS
                END IF
                controle_vv = 0
                controle_pp = 0
-                           write(*,*) un_in
                CALL interp_mesh(vv_mesh_in, vv_mesh_out, un_in, un_out, controle_vv, 2)
-                                          write(*,*) un_out
                CALL interp_mesh(vv_mesh_in, vv_mesh_out, un_m1_in, un_m1_out, controle_vv, 2)
                CALL interp_mesh(pp_mesh_in, pp_mesh_out, pn_in, pn_out, controle_pp, 1)
                CALL interp_mesh(pp_mesh_in, pp_mesh_out, pn_m1_in, pn_m1_out, controle_pp, 1)
