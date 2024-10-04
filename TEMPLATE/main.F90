@@ -9,6 +9,7 @@ PROGRAM mhd_prog
   USE post_processing_debug
   USE verbose
   USE sub_plot
+  USE chaine_caractere
 #include "petsc/finclude/petsc.h"
   USE petsc
   IMPLICIT NONE
