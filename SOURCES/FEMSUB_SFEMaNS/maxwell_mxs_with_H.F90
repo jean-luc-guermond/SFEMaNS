@@ -45,11 +45,11 @@ CONTAINS
     TYPE(mesh_type),                INTENT(IN)     :: H_mesh, phi_mesh, pmag_mesh
     TYPE(interface_type),           INTENT(IN)     :: interface_H_phi, interface_H_mu
     INTEGER,      DIMENSION(:),     INTENT(IN)     :: list_mode
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)  :: vel  
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)  :: vel
     REAL(KIND=8), DIMENSION(H_mesh%np,6,SIZE(list_mode)), INTENT(INOUT)  :: Hn, Hn1
     REAL(KIND=8), DIMENSION(H_mesh%np,6,SIZE(list_mode)), INTENT(INOUT)  :: Bn, Bn1
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)  :: phin, phin1
-    REAL(KIND=8), DIMENSION(3),     INTENT(IN)     :: stab_in 
+    REAL(KIND=8), DIMENSION(3),     INTENT(IN)     :: stab_in
     REAL(KIND=8),                   INTENT(IN)     :: stab_jump_h
     REAL(KIND=8),                   INTENT(IN)     :: R_fourier
     INTEGER,                        INTENT(IN)     :: index_fourier
@@ -75,7 +75,7 @@ CONTAINS
     INTEGER,     DIMENSION(:),  ALLOCATABLE,       SAVE  :: Dirichlet_bdy_H_sides
     LOGICAL,                                       SAVE  :: once=.TRUE.
     INTEGER,                                       SAVE  :: m_max_c
-    REAL(KIND=8), DIMENSION(3),                    SAVE  :: stab 
+    REAL(KIND=8), DIMENSION(3),                    SAVE  :: stab
     INTEGER,                                       SAVE  :: my_petscworld_rank
     REAL(KIND=8), ALLOCATABLE , DIMENSION(:,:,:),  SAVE  :: sigma_curl_gauss_bdy
     REAL(KIND=8), ALLOCATABLE , DIMENSION(:,:,:),  SAVE  :: J_over_sigma_gauss_bdy
@@ -89,8 +89,8 @@ CONTAINS
 !!$    REAL(KIND=8), DIMENSION(SIZE(Hn,1),6,SIZE(Hn,3))                       :: H_ns
 !!$    REAL(KIND=8), DIMENSION(SIZE(Hn,1),2,SIZE(Hn,3))                       :: one_over_sigma_tot
     REAL(KIND=8), DIMENSION(H_mesh%np, 6, SIZE(list_mode))  :: ff
-    REAL(KIND=8), DIMENSION(H_mesh%np, 2, SIZE(list_mode))  :: rhoLi_node, der_pot_rhoLi_node 
-    LOGICAL, ALLOCATABLE, DIMENSION(:)                   :: Dir_pmag 
+    REAL(KIND=8), DIMENSION(H_mesh%np, 2, SIZE(list_mode))  :: rhoLi_node, der_pot_rhoLi_node
+    LOGICAL, ALLOCATABLE, DIMENSION(:)                   :: Dir_pmag
     REAL(KIND=8), DIMENSION(H_mesh%np,6)                 :: rhs_H
     REAL(KIND=8), DIMENSION(phi_mesh%np,2)               :: rhs_phi
     REAL(KIND=8), DIMENSION(SIZE(Hn,1),6,SIZE(Hn,3))     :: NL, H_ext, B_ext
@@ -153,11 +153,11 @@ CONTAINS
        END IF
 
        n = 3*H_mesh%dom_np + pmag_mesh%dom_np + phi_mesh%dom_np
-       CALL VecCreateGhost(comm_one_d(1), n, & 
+       CALL VecCreateGhost(comm_one_d(1), n, &
             PETSC_DETERMINE, SIZE(H_p_phi_ifrom), H_p_phi_ifrom, vx_1, ierr)
        CALL VecGhostGetLocalForm(vx_1, vx_1_ghost, ierr)
        CALL VecDuplicate(vx_1, vb_1, ierr)
-       CALL VecCreateGhost(comm_one_d(1), n, & 
+       CALL VecCreateGhost(comm_one_d(1), n, &
             PETSC_DETERMINE, SIZE(H_p_phi_ifrom), H_p_phi_ifrom, vx_2, ierr)
        CALL VecGhostGetLocalForm(vx_2, vx_2_ghost, ierr)
        CALL VecDuplicate(vx_2, vb_2, ierr)
@@ -177,8 +177,8 @@ CONTAINS
 !!$       !MARCH, 2010
 !!$       IF (inputs%type_pb=='mhd') THEN
 !!$          ! FL, 31/03/11
-!!$          !stab = stab_in*(1/MINVAL(sigma)+1.d0) 
-!!$          stab = stab_in*(1/sigma_min+1.d0) 
+!!$          !stab = stab_in*(1/MINVAL(sigma)+1.d0)
+!!$          stab = stab_in*(1/sigma_min+1.d0)
 !!$          ! FL, 31/03/11
 !!$	  ! Velocity assume to be used as reference scale
 !!$!LC 2016/02/29
@@ -187,7 +187,7 @@ CONTAINS
 !!$          END IF
 !!$!LC 2016/02/29
 !!$       ELSE
-!!$          nr_vel = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, vel) 
+!!$          nr_vel = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, vel)
 !!$
 !!$          IF (nr_vel .LE. 1.d-10) THEN
 !!$             ! FL, 31/03/11
@@ -274,7 +274,7 @@ CONTAINS
        !===Neuman BC for H
        virgin1=.TRUE.
        virgin2=.TRUE.
-       IF (interface_H_phi%mes/=0) THEN    
+       IF (interface_H_phi%mes/=0) THEN
           virgin1(interface_H_phi%mesh1) = .FALSE.
           virgin2(interface_H_phi%mesh2) = .FALSE.
        END IF
@@ -298,7 +298,7 @@ CONTAINS
        ALLOCATE(Neumann_bdy_H_sides(count))
        count = 0
        DO ms = 1, H_mesh%mes
-          IF (MAXVAL(ABS(H_mesh%rr(1,H_mesh%jjs(:,ms)))).LT.1d-12*H_mesh%global_diameter) CYCLE 
+          IF (MAXVAL(ABS(H_mesh%rr(1,H_mesh%jjs(:,ms)))).LT.1d-12*H_mesh%global_diameter) CYCLE
           IF (.NOT.virgin1(ms)) CYCLE
           IF(MINVAL(ABS(H_mesh%sides(ms)-inputs%list_dirichlet_sides_H))==0) CYCLE
           !===JLG Jan 22 2018
@@ -325,7 +325,7 @@ CONTAINS
        ALLOCATE(Neumann_bdy_pmag_sides(count))
        count = 0
        DO ms = 1, pmag_mesh%mes
-          IF (MAXVAL(ABS(pmag_mesh%rr(1,pmag_mesh%jjs(:,ms)))).LT.1d-12*pmag_mesh%global_diameter) CYCLE 
+          IF (MAXVAL(ABS(pmag_mesh%rr(1,pmag_mesh%jjs(:,ms)))).LT.1d-12*pmag_mesh%global_diameter) CYCLE
           IF(MINVAL(ABS(pmag_mesh%sides(ms)-inputs%list_dirichlet_sides_H))==0) CYCLE
           IF(MINVAL(ABS(pmag_mesh%sides(ms)-inputs%list_inter_H_phi))==0) CYCLE
           !===JLG Jan 22 2018
@@ -339,7 +339,7 @@ CONTAINS
        !===Create Neumann_bdy_phi_sides
        count = 0
        DO ms = 1, phi_mesh%mes
-          !IF (PRESENT(index_fourier)) THEN 
+          !IF (PRESENT(index_fourier)) THEN
           IF (phi_mesh%sides(ms)==index_fourier) CYCLE ! No Neumann BC on Fourier boundary
           !END IF
           IF (.NOT.virgin2(ms)) CYCLE ! No Neumann BC on H_phi interface
@@ -354,26 +354,26 @@ CONTAINS
           IF (phi_mesh%sides(ms)==index_fourier) CYCLE
           !END IF
           IF (.NOT.virgin2(ms)) CYCLE
-          IF (MAXVAL(ABS(phi_mesh%rr(1,phi_mesh%jjs(:,ms)))).LT.1d-12*phi_mesh%global_diameter) CYCLE 
+          IF (MAXVAL(ABS(phi_mesh%rr(1,phi_mesh%jjs(:,ms)))).LT.1d-12*phi_mesh%global_diameter) CYCLE
           IF (MINVAL(ABS(phi_mesh%sides(ms)-inputs%phi_list_dirichlet_sides))==0) CYCLE ! Dirichlet boundary
           count =  count + 1
           Neumann_bdy_phi_sides(count) = ms
        END DO
        !===End Neuman BC for H
 
-       !---------------BOUNDARY CONDITIONS FOR Hxn------------------------------------        
-       !===Compute sides that are on Dirichlet boundary (H-H_D)xn=0 
+       !---------------BOUNDARY CONDITIONS FOR Hxn------------------------------------
+       !===Compute sides that are on Dirichlet boundary (H-H_D)xn=0
        n = 0
        DO ms = 1, H_mesh%mes
           IF (MINVAL(ABS(H_mesh%sides(ms)-inputs%list_dirichlet_sides_H))/=0) CYCLE
-          IF (MAXVAL(ABS(H_mesh%rr(1,H_mesh%jjs(:,ms)))) .LT.1d-12*H_mesh%global_diameter) CYCLE 
+          IF (MAXVAL(ABS(H_mesh%rr(1,H_mesh%jjs(:,ms)))) .LT.1d-12*H_mesh%global_diameter) CYCLE
           n = n + 1
        END DO
        ALLOCATE(Dirichlet_bdy_H_sides(n))
        n = 0
        DO ms = 1, H_mesh%mes
           IF (MINVAL(ABS(H_mesh%sides(ms)-inputs%list_dirichlet_sides_H))/=0) CYCLE
-          IF (MAXVAL(ABS(H_mesh%rr(1,H_mesh%jjs(:,ms)))) .LT.1d-12*H_mesh%global_diameter) CYCLE 
+          IF (MAXVAL(ABS(H_mesh%rr(1,H_mesh%jjs(:,ms)))) .LT.1d-12*H_mesh%global_diameter) CYCLE
           n = n + 1
           Dirichlet_bdy_H_sides(n) = ms
        END DO
@@ -529,7 +529,7 @@ CONTAINS
 
     !-------------TRANSPORT TERM---------------------------------------------------
     tps = user_time()
-    nr_vel = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, vel) 
+    nr_vel = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, vel)
     H_ext = 2*Hn - Hn1
     B_ext = 2*Bn - Bn1
     IF (nr_vel .LE. 1.d-10) THEN
@@ -551,7 +551,7 @@ CONTAINS
 !!$          DO nj = 1, H_mesh%gauss%n_w
 !!$             j = H_mesh%jj(nj,m)
 !!$             !Check if node is in Navier-Stokes domain(s)
-!!$             IF (jj_v_to_H(j) /= -1) THEN 
+!!$             IF (jj_v_to_H(j) /= -1) THEN
 !!$                H_ns(j,:,:)      = 2*Hn(j,:,:)- Hn1(j,:,:)
 !!$                one_over_sigma_tot(j,:,:) = one_over_sigma_ns_in(jj_v_to_H(j),:,:)/Rem
 !!$             ELSE
@@ -570,7 +570,7 @@ CONTAINS
 !!$            one_over_sigma_tot, sigma_nj_m, sigma, sigma_curl_gauss)
 !!$       IF (SIZE(Dirichlet_bdy_H_sides).GE.1) THEN
 !!$          CALL smb_sigma_prod_curl_bdy(comm_one_d(2), H_mesh, jj_v_to_H, Dirichlet_bdy_H_sides, list_mode, H_ns, &
-!!$               one_over_sigma_tot, sigma_np, sigma, sigma_curl_gauss_bdy)          
+!!$               one_over_sigma_tot, sigma_np, sigma, sigma_curl_gauss_bdy)
 !!$       ELSE
 !!$          sigma_curl_gauss_bdy = 0.d0
 !!$       END IF
@@ -587,14 +587,14 @@ CONTAINS
 !!$       IF (SIZE(Dirichlet_bdy_H_sides).GE.1) THEN
 !!$          CALL smb_current_over_sigma_bdy(comm_one_d(2), H_mesh, jj_v_to_H, Dirichlet_bdy_H_sides,&
 !!$               list_mode, B_ext, mu_H_field, mu_phi, one_over_sigma_tot, time, sigma,&
-!!$               J_over_sigma_gauss_bdy) 
+!!$               J_over_sigma_gauss_bdy)
 !!$       ELSE
 !!$          J_over_sigma_gauss_bdy = 0.d0
 !!$       END IF
 !!$       IF (interface_H_mu%mes.GE.1) THEN
 !!$          CALL smb_current_over_sigma_inter_mu(comm_one_d(2), H_mesh, jj_v_to_H, interface_H_mu,&
 !!$               list_mode, B_ext, mu_H_field, mu_phi, one_over_sigma_tot, time, sigma,&
-!!$               J_over_sigma_gauss_inter_mu)  
+!!$               J_over_sigma_gauss_inter_mu)
 !!$       ELSE
 !!$          J_over_sigma_gauss_inter_mu=0.d0
 !!$       END IF
@@ -602,7 +602,7 @@ CONTAINS
 !!$       !===Compute sigma at the gauss points on Neumann bdy
 !!$       IF (SIZE(Neumann_bdy_H_sides).GE.1) THEN
 !!$          CALL smb_sigma_Neumann(comm_one_d(2), H_mesh, Neumann_bdy_H_sides,&
-!!$               list_mode, one_over_sigma_tot, sigma_tot_gauss_Neumann) 
+!!$               list_mode, one_over_sigma_tot, sigma_tot_gauss_Neumann)
 !!$       ELSE
 !!$          sigma_tot_gauss_Neumann = 0.d0
 !!$       END IF
@@ -654,10 +654,10 @@ CONTAINS
        END DO
        rhs_phi = 0.d0
 
-       !SB-CN-LC 2022/01/25       
+       !SB-CN-LC 2022/01/25
 !!$       !-------------Integration by parts of the scalar potential------------------
 !!$       CALL courant_int_by_parts(H_mesh,phi_mesh,interface_H_phi,sigma,mu_phi,mu_H_field,time,mode, &
-!!$            rhs_H, NL(:,:,i), LA_H, LA_phi, vb_1, vb_2, B_ext(:,:,i),& 
+!!$            rhs_H, NL(:,:,i), LA_H, LA_phi, vb_1, vb_2, B_ext(:,:,i),&
 !!$            sigma_curl_gauss(:,:,i), J_over_sigma_gauss(:,:,i))
 !!$       !! Feb 2010, JLG + FL
 !!$       !CALL courant_int_by_parts(H_mesh,phi_mesh,interface_H_phi,sigma,mu_phi,mu_H_field,time,mode, &
@@ -665,7 +665,7 @@ CONTAINS
        !SB-CN-LC 2022/01/25
 
        CALL courant_int_by_parts(H_mesh,phi_mesh,interface_H_phi,sigma,mu_phi,mu_H_field,time,mode, &
-            rhs_H, NL(:,:,i), LA_H, LA_phi, vb_1, vb_2, B_ext(:,:,i),& 
+            rhs_H, NL(:,:,i), LA_H, LA_phi, vb_1, vb_2, B_ext(:,:,i),&
             sigma_curl_gauss(:,:,i), J_over_sigma_gauss(:,:,i))
        !-------------Integration by parts of the scalar potential------------------
 
@@ -680,15 +680,15 @@ CONTAINS
        !SB-CN_LC 2022/01/25
        IF (inputs%if_coupling_H_x) THEN
           CALL jump_rot_H_consistant_rhoLi(H_mesh, jj_v_to_H, interface_H_mu, stab_jump_h, sigma, &
-               minus_grad_times_der_pot_rhoLi(:,:,i), LA_H, vb_1, vb_2,sigma_np) 
+               minus_grad_times_der_pot_rhoLi(:,:,i), LA_H, vb_1, vb_2,sigma_np)
        ELSE IF (inputs%if_coupling_analytical) THEN
-          ff = rot_H_jump_interface(H_mesh,H_mesh%rr,list_mode) 
+          ff = rot_H_jump_interface(H_mesh,H_mesh%rr,list_mode)
           CALL jump_rot_H_consistant(H_mesh, jj_v_to_H, interface_H_mu, stab_jump_h, sigma, &
-               ff(:,:,i), LA_H, vb_1, vb_2,sigma_np) 
+               ff(:,:,i), LA_H, vb_1, vb_2,sigma_np)
        ELSE
-          ff = 0.d0 
+          ff = 0.d0
           CALL jump_rot_H_consistant(H_mesh, jj_v_to_H, interface_H_mu, stab_jump_h, sigma, &
-               ff(:,:,i), LA_H, vb_1, vb_2,sigma_np) 
+               ff(:,:,i), LA_H, vb_1, vb_2,sigma_np)
        END IF
        !SB-CN_LC 2022/01/25
 
@@ -764,7 +764,7 @@ CONTAINS
 
        CALL solver(H_p_phi_ksp1(i),vb_1,vx_1,reinit=.FALSE.,verbose=inputs%my_par_H_p_phi%verbose)
 
-       CALL VecGhostUpdateBegin(vx_1,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        IF (H_mesh%me/=0) THEN
           CALL extract(vx_1_ghost,1,1,LA_mhd,Hn_p1(:,1))
@@ -776,7 +776,7 @@ CONTAINS
        END IF
 
        CALL solver(H_p_phi_ksp2(i),vb_2,vx_2,reinit=.FALSE.,verbose=inputs%my_par_H_p_phi%verbose)
-       CALL VecGhostUpdateBegin(vx_2,INSERT_VALUES,SCATTER_FORWARD,ierr) 
+       CALL VecGhostUpdateBegin(vx_2,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(vx_2,INSERT_VALUES,SCATTER_FORWARD,ierr)
        IF (H_mesh%me/=0) THEN
           CALL extract(vx_2_ghost,1,1,LA_mhd,Hn_p1(:,2))
@@ -804,13 +804,13 @@ CONTAINS
              phin_p1 (:,2) = 0.d0
           END IF
        END IF
-       !JLG AR, Dec 18 2008 
+       !JLG AR, Dec 18 2008
 
        tps = user_time()
        IF (H_mesh%me /=0) THEN
           Hn1(:,:,i) = Hn(:,:,i)
 
-          Hn(:,1,i)   = Hn_p1(:,1)  
+          Hn(:,1,i)   = Hn_p1(:,1)
           Hn(:,4,i)   = Hn_p1(:,4)
           Hn(:,5,i)   = Hn_p1(:,5)
 
@@ -819,7 +819,7 @@ CONTAINS
           Hn(:,6,i)   = Hn_p1(:,6)
 
           DO k = 1, 6
-             Bn1(:,k,i) = Bn(:,k,i) 
+             Bn1(:,k,i) = Bn(:,k,i)
              Bn(:,k,i)  = mu_H_field*Hn(:,k,i)
           END DO
 
@@ -834,7 +834,7 @@ CONTAINS
        END IF
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
        !WRITE(*,*) ' Tps update', tps
-       !------------------------------------------------------------------------------ 
+       !------------------------------------------------------------------------------
 
     ENDDO
 
@@ -861,12 +861,12 @@ CONTAINS
     USE input_data ! MODIFICATION: to call sigma_min and mu_min
 #include "petsc/finclude/petsc.h"
     USE petsc
-    IMPLICIT NONE    
+    IMPLICIT NONE
     TYPE(mesh_type),              INTENT(IN)    :: H_mesh
     TYPE(mesh_type),              INTENT(IN)    :: pmag_mesh
     TYPE(mesh_type),              INTENT(IN)    :: phi_mesh
-    TYPE(interface_type),         INTENT(IN)    :: interface_H_phi 
-    INTEGER,                      INTENT(IN)    :: mode   
+    TYPE(interface_type),         INTENT(IN)    :: interface_H_phi
+    INTEGER,                      INTENT(IN)    :: mode
     REAL(KIND=8),                 INTENT(IN)    :: mu_phi, c_mass
     REAL(KIND=8), DIMENSION(3),   INTENT(IN)    :: stab
     REAL(KIND=8), DIMENSION(:),   INTENT(IN)    :: mu_H_field
@@ -881,20 +881,20 @@ CONTAINS
     REAL(KIND=8) :: x, y, hm1, stab_div, stab_colle_H_phi
     REAL(KIND=8) :: ray, error
 !!$    LOGICAL :: mark=.FALSE.
-    REAL(KIND=8), DIMENSION(3,H_mesh%gauss%n_w,pmag_mesh%gauss%n_w) :: THpmag   
-    REAL(KIND=8), DIMENSION(pmag_mesh%gauss%n_w,pmag_mesh%gauss%n_w) :: Tpmag   
+    REAL(KIND=8), DIMENSION(3,H_mesh%gauss%n_w,pmag_mesh%gauss%n_w) :: THpmag
+    REAL(KIND=8), DIMENSION(pmag_mesh%gauss%n_w,pmag_mesh%gauss%n_w) :: Tpmag
     REAL(KIND=8), DIMENSION(9,H_mesh%gauss%n_w,H_mesh%gauss%n_w)  :: TH
 !!$    REAL(KIND=8), DIMENSION(phi_mesh%gauss%n_w,phi_mesh%gauss%n_w):: TPhi
 
     !MATRICES POUR LES TERMES DE VOLUMES c_mass*mu_H*H + Rot((1/sigma)Rot(H)) - Grad(Div(H))
     !                                    -c_mass*mu_phi*Lap(Phi)
     !========================================================================
-    !Le probleme est decouple en deux sous groupes de variables : 
+    !Le probleme est decouple en deux sous groupes de variables :
     !H1, H4, H5 et Phi1 d'une part et H2, H3, H6 et Phi2 d'autre part.
-    !Les matrices (symetriques sans terme de bord) s'ecrivent : 
+    !Les matrices (symetriques sans terme de bord) s'ecrivent :
 
-    !MATRICE 1 :: 
-    ! (------------------------------) 
+    !MATRICE 1 ::
+    ! (------------------------------)
     ! ( TH1 | TH2 | TH3 |       |    )   H1
     ! (     | TH4 | TH5 |       |    )   H4
     ! (           | TH6 |       |    )   H5
@@ -902,8 +902,8 @@ CONTAINS
     ! (                         |TPhi)   Phi1
     ! (------------------------------)
 
-    !MATRICE 2 (TH2 => TH8 et TH5 => TH9:: 
-    ! (------------------------) 
+    !MATRICE 2 (TH2 => TH8 et TH5 => TH9::
+    ! (------------------------)
     ! ( TH1 | TH8 | TH3 |      )   H2
     ! (     | TH4 | TH9 |      )   H3
     ! (           | TH6 |      )   H6
@@ -925,15 +925,15 @@ CONTAINS
     ! (                | Hsij(5)        |                ||        Sij(3)  )
     ! (                |        Hsij(5) |                || Sij(4)         )
     ! (--------------------------------------------------------------------)
-    ! ( Hsij(7)        |        Hsij(9) | Hsij(6)        || Sij(5)         )             
-    ! (        Hsij(7) | Hsij(8)        |        Hsij(6) ||        Sij(6)  ) 
+    ! ( Hsij(7)        |        Hsij(9) | Hsij(6)        || Sij(5)         )
+    ! (        Hsij(7) | Hsij(8)        |        Hsij(6) ||        Sij(6)  )
     ! (====================================================================)
     ! ( Sij'(1)        |        Sij'(3) | Sij'(5)        || Phisij         )
     ! (        Sij'(2) | Sij'(4)        |        Sij'(6) ||        Phisij  )
     ! (------------------------------------------------------------------- )
     !
     ! L'autre partie des termes croises est la symetrique de la premiere
-    ! juste apres le calcul du terme de bord dissymetrique    
+    ! juste apres le calcul du terme de bord dissymetrique
 
     !fonctions de forme propres a H_mesh
     REAL(KIND=8), DIMENSION(:,:),     POINTER :: ww_H
@@ -942,15 +942,15 @@ CONTAINS
     !jacobien pour H
     REAL(KIND=8), DIMENSION(:,:),     POINTER :: rj_H
     !fonctions de forme propres a phi_mesh
-    REAL(KIND=8), DIMENSION(:,:),     POINTER :: ww_phi  
+    REAL(KIND=8), DIMENSION(:,:),     POINTER :: ww_phi
     !derivees des fonctions de forme propres a phi_mesh
-    REAL(KIND=8), DIMENSION(:,:,:,:), POINTER :: dw_phi 
+    REAL(KIND=8), DIMENSION(:,:,:,:), POINTER :: dw_phi
     !REAL(KIND=8), DIMENSION(2,H_mesh%gauss%n_w,H_mesh%gauss%l_G) :: dwp !JLG Jan 22 2018
     !REAL(KIND=8), DIMENSION(H_mesh%gauss%n_w,H_mesh%gauss%l_G)   :: wwp !JLG Jan 22 2018
     REAL(KIND=8), DIMENSION(2,pmag_mesh%gauss%n_w,H_mesh%gauss%l_G) :: dwp
     REAL(KIND=8), DIMENSION(pmag_mesh%gauss%n_w,H_mesh%gauss%l_G)   :: wwp
     !jacobian for phi
-    REAL(KIND=8), DIMENSION(:,:),     POINTER :: rj_phi   
+    REAL(KIND=8), DIMENSION(:,:),     POINTER :: rj_phi
 
 !!$    REAL(KIND=8), DIMENSION(2,phi_mesh%gauss%l_Gs) :: gauss1, gauss2
 !!$    INTEGER  :: ls1, ls2
@@ -986,16 +986,16 @@ CONTAINS
     CALL MatSetOption (H_p_phi_mat2, MAT_ROW_ORIENTED, PETSC_FALSE, ierr)
 
     !June 2009, JLG, CN, Normalization
-    c_lap = .1d0 
-    stab_colle_H_phi = stab(2) 
+    c_lap = .1d0
+    stab_colle_H_phi = stab(2)
     stab_div = stab(1)
     !Jan 2010, JLG, CN, Normalization,
 
-    c_mu_phi = c_mass*mu_phi 
+    c_mu_phi = c_mass*mu_phi
 
     ww_H   => H_mesh%gauss%ww
     dw_H   => H_mesh%gauss%dw
-    rj_H   => H_mesh%gauss%rj 
+    rj_H   => H_mesh%gauss%rj
     ww_phi => phi_mesh%gauss%ww
     dw_phi => phi_mesh%gauss%dw
     rj_phi => phi_mesh%gauss%rj
@@ -1029,7 +1029,7 @@ CONTAINS
           !c_div = stab_div*hloc/muhl
           !c_div = stab_div*hloc/muhl**2
           !c_div    = stab_div
-          !c_div    = stab_div/muhl 
+          !c_div    = stab_div/muhl
           !c_div    = stab_div/muhl**2
           !June 7 2008, Normalization
           c_div = stab_div*hloc/(inputs%mu_min**2*inputs%sigma_min) ! MODIFICATION: normalization for penalization term for divergence
@@ -1039,7 +1039,7 @@ CONTAINS
              ray = ray + H_mesh%rr(1,i)*ww_H(ni,l)
           END DO
 
-          DO ni = 1, H_mesh%gauss%n_w     
+          DO ni = 1, H_mesh%gauss%n_w
              DO nj = 1, H_mesh%gauss%n_w
                 j = H_mesh%jj(nj,m)
 
@@ -1048,14 +1048,14 @@ CONTAINS
                 TH(1,ni,nj) = TH(1,ni,nj) +  rj_H(l,m) * ray* ( &
                      !DCQ + JLG (Nov 13 2013). Mass integration done same way on LHS and RHS.
                      !                     c_mu_H*ww_H(ni,l)*ww_H(nj,l) &
-                     c_mass*mu_H_field(j)*ww_H(nj,l)*ww_H(ni,l) & 
+                     c_mass*mu_H_field(j)*ww_H(nj,l)*ww_H(ni,l) &
                      + (dw_H(2,ni,l,m)*dw_H(2,nj,l,m) + mode**2/ray**2*ww_H(ni,l)*ww_H(nj,l))/sigma_np_gauss &
                                 !DIVERGENCE, June 8 2008
                      + c_div*(muhl*(ww_H(ni,l)/ray+dw_H(1,ni,l,m)) + ww_H(ni,l)*drmuhl) &
                      *(muhl*(ww_H(nj,l)/ray+dw_H(1,nj,l,m)) + ww_H(nj,l)*drmuhl))
                 !+ stab_div*(ww_H(ni,l)*ww_H(nj,l)/ray**2+dw_H(1,ni,l,m)*dw_H(1,nj,l,m) &
                 !+ 1/ray*(ww_H(ni,l)*dw_H(1,nj,l,m)+ww_H(nj,l)*dw_H(1,ni,l,m))))
-                !                       
+                !
 
                 TH(2,ni,nj) = TH(2,ni,nj)+ rj_H(l,m) * ray* (  &
                      mode/ray**2 * ww_H(ni,l)*(ww_H(nj,l)+ray*dw_H(1,nj,l,m))/sigma_np_gauss &
@@ -1063,7 +1063,7 @@ CONTAINS
                      + c_div*mode/ray*(muhl*(ww_H(ni,l)/ray+dw_H(1,ni,l,m)) &
                      + ww_H(ni,l)*drmuhl)*muhl*ww_H(nj,l))
                 !+ stab_div*mode/ray*(ww_H(ni,l)/ray+dw_H(1,ni,l,m))*ww_H(nj,l))
-                !             
+                !
 
                 TH(8,ni,nj) = TH(8,ni,nj)+ rj_H(l,m) * ray* (  &
                      - mode/ray**2 * ww_H(ni,l)*(ww_H(nj,l)+ray*dw_H(1,nj,l,m))/sigma_np_gauss &
@@ -1071,7 +1071,7 @@ CONTAINS
                      - c_div*mode/ray*(muhl*(ww_H(ni,l)/ray+dw_H(1,ni,l,m)) &
                      + ww_H(ni,l)*drmuhl)*muhl*ww_H(nj,l))
                 !-stab_div*mode/ray*(ww_H(ni,l)/ray+dw_H(1,ni,l,m))*ww_H(nj,l))
-                !           
+                !
 
                 TH(3,ni,nj) = TH(3,ni,nj)+ rj_H(l,m) * ray* ( &
                      - dw_H(2,ni,l,m)*dw_H(1,nj,l,m)/sigma_np_gauss &
@@ -1079,18 +1079,18 @@ CONTAINS
                      + c_div*(muhl*(ww_H(ni,l)/ray+dw_H(1,ni,l,m)) + ww_H(ni,l)*drmuhl)*&
                      (muhl*dw_H(2,nj,l,m) + ww_H(nj,l)*dzmuhl))
                 !+ stab_div*(ww_H(ni,l)/ray+dw_H(1,ni,l,m))*dw_H(2,nj,l,m))
-                !        
+                !
 
                 TH(4,ni,nj) = TH(4,ni,nj) + rj_H(l,m) * ray* ( &
-                     !                     c_mu_H*ww_H(ni,l)*ww_H(nj,l)  & 
+                     !                     c_mu_H*ww_H(ni,l)*ww_H(nj,l)  &
                      !DCQ + JLG (Nov 13 2013). Mass integration done same way on LHS and RHS.
-                     c_mass*mu_H_field(j)*ww_H(nj,l)*ww_H(ni,l) & 
+                     c_mass*mu_H_field(j)*ww_H(nj,l)*ww_H(ni,l) &
                      + (dw_H(2,ni,l,m)*dw_H(2,nj,l,m) &
                      + 1/ray**2 *(ww_H(ni,l)+ray*dw_H(1,ni,l,m))*(ww_H(nj,l)&
                      +ray*dw_H(1,nj,l,m)))/sigma_np_gauss &
                                 !DIVERGENCE, June 8 2008
                      +c_div*muhl**2*mode**2/ray**2*ww_H(ni,l)*ww_H(nj,l))
-                !+stab_div*mode**2/ray**2*ww_H(ni,l)*ww_H(nj,l)) 
+                !+stab_div*mode**2/ray**2*ww_H(ni,l)*ww_H(nj,l))
                 !
 
                 TH(5,ni,nj) = TH(5,ni,nj)  + rj_H(l,m) * ray* (&
@@ -1098,19 +1098,19 @@ CONTAINS
                                 !DIVERGENCE, June 8 2008
                      +c_div*mode/ray*muhl*ww_H(ni,l)*(muhl*dw_H(2,nj,l,m) + ww_H(nj,l)*dzmuhl))
                 !+stab_div*mode/ray*ww_H(ni,l)*dw_H(2,nj,l,m))
-                !    
+                !
 
                 TH(9,ni,nj) = TH(9,ni,nj)  + rj_H(l,m) * ray* (&
                      - mode/ray*dw_H(2,ni,l,m)*ww_H(nj,l)/sigma_np_gauss &
                                 !DIVERGENCE, June 8 2008
                      - c_div*mode/ray*muhl*ww_H(ni,l)*(muhl*dw_H(2,nj,l,m) + ww_H(nj,l)*dzmuhl))
-                !- stab_div*mode/ray*ww_H(ni,l)*dw_H(2,nj,l,m))             
+                !- stab_div*mode/ray*ww_H(ni,l)*dw_H(2,nj,l,m))
                 !
 
                 TH(6,ni,nj) = TH(6,ni,nj) + rj_H(l,m) * ray* ( &
                      !                     c_mu_H*ww_H(ni,l)*ww_H(nj,l)  &
                      !DCQ + JLG (Nov 13 2013). Mass integration done same way on LHS and RHS.
-                     c_mass*mu_H_field(j)*ww_H(nj,l)*ww_H(ni,l) & 
+                     c_mass*mu_H_field(j)*ww_H(nj,l)*ww_H(ni,l) &
                      + (mode**2/ray**2*ww_H(ni,l)*ww_H(nj,l) + dw_H(1,ni,l,m)*dw_H(1,nj,l,m))/sigma_np_gauss &
                                 !DIVERGENCE, June 8 2008
                      + c_div*(muhl*dw_H(2,ni,l,m) + ww_H(ni,l)*dzmuhl) &
@@ -1121,14 +1121,14 @@ CONTAINS
 
 !!$                ! mu_H * <bi,bj> + <Div bi,Div bj> + <(1/sigma) Rot bi,Rot bj>
 !!$                TH(1,ni,nj) = TH(1,ni,nj) +  rj_H(l,m) * ray* ( &
-!!$                     c_mu_H*ww_H(ni,l)*ww_H(nj,l) & 
+!!$                     c_mu_H*ww_H(ni,l)*ww_H(nj,l) &
 !!$                     + (dw_H(2,ni,l,m)*dw_H(2,nj,l,m) + mode**2/ray**2*ww_H(ni,l)*ww_H(nj,l))/sigma(m) &
 !!$                                !DIVERGENCE, June 8 2008
 !!$                     + c_div*(muhl*(ww_H(ni,l)/ray+dw_H(1,ni,l,m)) + ww_H(ni,l)*drmuhl) &
 !!$                     *(muhl*(ww_H(nj,l)/ray+dw_H(1,nj,l,m)) + ww_H(nj,l)*drmuhl))
 !!$                !+ stab_div*(ww_H(ni,l)*ww_H(nj,l)/ray**2+dw_H(1,ni,l,m)*dw_H(1,nj,l,m) &
 !!$                !+ 1/ray*(ww_H(ni,l)*dw_H(1,nj,l,m)+ww_H(nj,l)*dw_H(1,ni,l,m))))
-!!$                !                       
+!!$                !
 !!$
 !!$                TH(2,ni,nj) = TH(2,ni,nj)+ rj_H(l,m) * ray* (  &
 !!$                     mode/ray**2 * ww_H(ni,l)*(ww_H(nj,l)+ray*dw_H(1,nj,l,m))/sigma(m) &
@@ -1136,7 +1136,7 @@ CONTAINS
 !!$                     + c_div*mode/ray*(muhl*(ww_H(ni,l)/ray+dw_H(1,ni,l,m)) &
 !!$                     + ww_H(ni,l)*drmuhl)*muhl*ww_H(nj,l))
 !!$                !+ stab_div*mode/ray*(ww_H(ni,l)/ray+dw_H(1,ni,l,m))*ww_H(nj,l))
-!!$                !             
+!!$                !
 !!$
 !!$                TH(8,ni,nj) = TH(8,ni,nj)+ rj_H(l,m) * ray* (  &
 !!$                     - mode/ray**2 * ww_H(ni,l)*(ww_H(nj,l)+ray*dw_H(1,nj,l,m))/sigma(m) &
@@ -1144,7 +1144,7 @@ CONTAINS
 !!$                     - c_div*mode/ray*(muhl*(ww_H(ni,l)/ray+dw_H(1,ni,l,m)) &
 !!$                     + ww_H(ni,l)*drmuhl)*muhl*ww_H(nj,l))
 !!$                !-stab_div*mode/ray*(ww_H(ni,l)/ray+dw_H(1,ni,l,m))*ww_H(nj,l))
-!!$                !           
+!!$                !
 !!$
 !!$                TH(3,ni,nj) = TH(3,ni,nj)+ rj_H(l,m) * ray* ( &
 !!$                     - dw_H(2,ni,l,m)*dw_H(1,nj,l,m)/sigma(m) &
@@ -1152,16 +1152,16 @@ CONTAINS
 !!$                     + c_div*(muhl*(ww_H(ni,l)/ray+dw_H(1,ni,l,m)) + ww_H(ni,l)*drmuhl)*&
 !!$                     (muhl*dw_H(2,nj,l,m) + ww_H(nj,l)*dzmuhl))
 !!$                !+ stab_div*(ww_H(ni,l)/ray+dw_H(1,ni,l,m))*dw_H(2,nj,l,m))
-!!$                !        
+!!$                !
 !!$
 !!$                TH(4,ni,nj) = TH(4,ni,nj) + rj_H(l,m) * ray* ( &
-!!$                     c_mu_H*ww_H(ni,l)*ww_H(nj,l)  & 
+!!$                     c_mu_H*ww_H(ni,l)*ww_H(nj,l)  &
 !!$                     + (dw_H(2,ni,l,m)*dw_H(2,nj,l,m) &
 !!$                     + 1/ray**2 *(ww_H(ni,l)+ray*dw_H(1,ni,l,m))*(ww_H(nj,l)&
 !!$                     +ray*dw_H(1,nj,l,m)))/sigma(m) &
 !!$                                !DIVERGENCE, June 8 2008
 !!$                     +c_div*muhl**2*mode**2/ray**2*ww_H(ni,l)*ww_H(nj,l))
-!!$                !+stab_div*mode**2/ray**2*ww_H(ni,l)*ww_H(nj,l)) 
+!!$                !+stab_div*mode**2/ray**2*ww_H(ni,l)*ww_H(nj,l))
 !!$                !
 !!$
 !!$                TH(5,ni,nj) = TH(5,ni,nj)  + rj_H(l,m) * ray* (&
@@ -1169,13 +1169,13 @@ CONTAINS
 !!$                                !DIVERGENCE, June 8 2008
 !!$                     +c_div*mode/ray*muhl*ww_H(ni,l)*(muhl*dw_H(2,nj,l,m) + ww_H(nj,l)*dzmuhl))
 !!$                !+stab_div*mode/ray*ww_H(ni,l)*dw_H(2,nj,l,m))
-!!$                !    
+!!$                !
 !!$
 !!$                TH(9,ni,nj) = TH(9,ni,nj)  + rj_H(l,m) * ray* (&
 !!$                     - mode/ray*dw_H(2,ni,l,m)*ww_H(nj,l)/sigma(m) &
 !!$                                !DIVERGENCE, June 8 2008
 !!$                     - c_div*mode/ray*muhl*ww_H(ni,l)*(muhl*dw_H(2,nj,l,m) + ww_H(nj,l)*dzmuhl))
-!!$                !- stab_div*mode/ray*ww_H(ni,l)*dw_H(2,nj,l,m))             
+!!$                !- stab_div*mode/ray*ww_H(ni,l)*dw_H(2,nj,l,m))
 !!$                !
 !!$
 !!$                TH(6,ni,nj) = TH(6,ni,nj) + rj_H(l,m) * ray* ( &
@@ -1185,7 +1185,7 @@ CONTAINS
 !!$                     + c_div*(muhl*dw_H(2,ni,l,m) + ww_H(ni,l)*dzmuhl) &
 !!$                     *(muhl*dw_H(2,nj,l,m) + ww_H(nj,l)*dzmuhl))
 !!$                !+ stab_div*dw_H(2,ni,l,m)*dw_H(2,nj,l,m))
-!!$                !               
+!!$                !
              ENDDO
           END DO
 
@@ -1193,7 +1193,7 @@ CONTAINS
 
        mat_loc1 = 0.d0
        mat_loc2 = 0.d0
-       DO ki= 1, 3  
+       DO ki= 1, 3
           DO ni = 1, n_wH
              i = H_mesh%jj(ni, m)
              ib = LA_H%loc_to_glob(ki,i)
@@ -1205,21 +1205,22 @@ CONTAINS
                    jb = LA_H%loc_to_glob(kj,j)
                    jx = (kj-1)*n_wH+nj
                    jdxn(jx) = jb - 1
+                   IF (jb - 1 == 3809 .OR. jb - 1 == 1922 ) WRITE(*,*) ib, jb
                    IF   ((ki == 1) .AND. (kj == 1)) THEN
                       mat_loc1(ix,jx) = TH(1,ni,nj)
                       mat_loc2(ix,jx) = TH(1,ni,nj)
                    ELSEIF   ((ki == 1) .AND. (kj == 2)) THEN
                       mat_loc1(ix,jx) = TH(2,ni,nj)
                       mat_loc2(ix,jx) = TH(8,ni,nj)
-                   ELSEIF   ((ki == 2) .AND. (kj == 1)) THEN  
+                   ELSEIF   ((ki == 2) .AND. (kj == 1)) THEN
                       mat_loc1(ix,jx) = TH(2,nj,ni)
                       mat_loc2(ix,jx) = TH(8,nj,ni)
                    ELSEIF  ((ki == 1) .AND. (kj == 3)) THEN
                       mat_loc1(ix,jx) = TH(3,ni,nj)
-                      mat_loc2(ix,jx) = TH(3,ni,nj)                          
+                      mat_loc2(ix,jx) = TH(3,ni,nj)
                    ELSEIF  ((ki == 3) .AND. (kj == 1)) THEN
-                      mat_loc1(ix,jx) = TH(3,nj,ni)  
-                      mat_loc2(ix,jx) = TH(3,nj,ni)  
+                      mat_loc1(ix,jx) = TH(3,nj,ni)
+                      mat_loc2(ix,jx) = TH(3,nj,ni)
                    ELSEIF  ((ki == 2) .AND. (kj == 2)) THEN
                       mat_loc1(ix,jx) = TH(4,ni,nj)
                       mat_loc2(ix,jx) = TH(4,ni,nj)
@@ -1227,11 +1228,11 @@ CONTAINS
                       mat_loc1(ix,jx) = TH(5,ni,nj)
                       mat_loc2(ix,jx) = TH(9,ni,nj)
                    ELSEIF   ((ki == 3) .AND. (kj == 2)) THEN
-                      mat_loc1(ix,jx) = TH(5,nj,ni)   
+                      mat_loc1(ix,jx) = TH(5,nj,ni)
                       mat_loc2(ix,jx) = TH(9,nj,ni)
-                   ELSEIF  ((ki == 3) .AND. (kj == 3)) THEN  
-                      mat_loc1(ix,jx) = TH(6,ni,nj)   
-                      mat_loc2(ix,jx) = TH(6,ni,nj) 
+                   ELSEIF  ((ki == 3) .AND. (kj == 3)) THEN
+                      mat_loc1(ix,jx) = TH(6,ni,nj)
+                      mat_loc2(ix,jx) = TH(6,ni,nj)
                    ENDIF
 
                 END DO
@@ -1280,14 +1281,15 @@ CONTAINS
           ENDDO
        ENDDO
 
-       DO ni = 1, pmag_mesh%gauss%n_w 
+       DO ni = 1, pmag_mesh%gauss%n_w
           i = pmag_mesh%jj(ni, m)
           ib = LA_pmag%loc_to_glob(1,i)
-          idxn(ni) = ib - 1 
+          idxn(ni) = ib - 1
           DO nj = 1, pmag_mesh%gauss%n_w
              j = pmag_mesh%jj(nj, m)
              jb =  LA_pmag%loc_to_glob(1,j)
-             jdxn(nj) = jb - 1 
+             jdxn(nj) = jb - 1
+             IF (jb - 1 == 3809 .OR. jb - 1 == 1922 ) WRITE(*,*) ib, jb
           END DO
        END DO
        CALL MatSetValues(H_p_phi_mat1, n_wpmag, idxn(1:n_wpmag), n_wpmag, jdxn(1:n_wpmag), &
@@ -1350,7 +1352,7 @@ CONTAINS
                 jb = LA_pmag%loc_to_glob(1,j)
                 jx = nj
                 jdxn(jx) = jb - 1
-
+IF (jb - 1 == 3809 .OR. jb - 1 == 1922 ) WRITE(*,*) ib, jb
                 mat_loc1(ix,jx) = THpmag(k,ni,nj)
                 mat_loc2(ix,jx) = eps*THpmag(k,ni,nj)
              END DO
@@ -1380,6 +1382,7 @@ CONTAINS
                 jb = LA_H%loc_to_glob(k,j)
                 jx = (k-1)*n_wH + nj
                 jdxn(jx) = jb - 1
+                IF (jb - 1 == 3809 .OR. jb - 1 == 1922 ) WRITE(*,*) ib, jb
 
                 mat_loc1(ix,jx) = - THpmag(k,nj,ni)
                 mat_loc2(ix,jx) = - eps*THpmag(k,nj,ni)
@@ -1393,7 +1396,7 @@ CONTAINS
     END DO
     ! End Block on PmagxH and HxPmag
 
-!!$    !==Block on phi 
+!!$    !==Block on phi
 !!$    DO m = 1,phi_mesh%me
 !!$
 !!$       TPhi = 0.d0
@@ -1412,10 +1415,10 @@ CONTAINS
 !!$                !mu_phi * <Grad bi, Grad bj>
 !!$                !JLG, FL May 28, 2009
 !!$                !On ajoute le laplacien de phi.
-!!$                !TPhi(ni,nj) = TPhi(ni,nj) + rj_phi(l,m) * ray* (c_mu_phi) & 
+!!$                !TPhi(ni,nj) = TPhi(ni,nj) + rj_phi(l,m) * ray* (c_mu_phi) &
 !!$                !     *(dw_phi(1,ni,l,m)*dw_phi(1,nj,l,m)+dw_phi(2,ni,l,m)*dw_phi(2,nj,l,m) &
 !!$                !     +mode**2/ray**2*ww_phi(ni,l)*ww_phi(nj,l))
-!!$                TPhi(ni,nj) = TPhi(ni,nj) + rj_phi(l,m) * ray* (c_mass+c_lap)*mu_phi & 
+!!$                TPhi(ni,nj) = TPhi(ni,nj) + rj_phi(l,m) * ray* (c_mass+c_lap)*mu_phi &
 !!$                     *(dw_phi(1,ni,l,m)*dw_phi(1,nj,l,m)+dw_phi(2,ni,l,m)*dw_phi(2,nj,l,m) &
 !!$                     +mode**2/ray**2*ww_phi(ni,l)*ww_phi(nj,l))
 !!$                !JLG, FL May 28, 2009
@@ -1423,11 +1426,11 @@ CONTAINS
 !!$          END DO
 !!$       END DO
 !!$
-!!$       !TEST      
+!!$       !TEST
 !!$       !TPhi = 0.d0
 !!$       !TEST
 !!$
-!!$       DO ni = 1, phi_mesh%gauss%n_w 
+!!$       DO ni = 1, phi_mesh%gauss%n_w
 !!$          i = phi_mesh%jj(ni, m)
 !!$          ib = LA_phi%loc_to_glob(1,i)
 !!$          idxn(ni) = ib - 1
@@ -1471,7 +1474,7 @@ CONTAINS
 !!$             DO ls = 1, l_Gs
 !!$                w_cs(1,ls)= wws(2,ls)
 !!$                w_cs(2,ls)= wws(1,ls)
-!!$                w_cs(3,ls)= wws(3,ls) 
+!!$                w_cs(3,ls)= wws(3,ls)
 !!$                WRITE(*,*) ' Ouaps! oder of shape functions changed?'
 !!$             END DO
 !!$          END IF
@@ -1513,13 +1516,13 @@ CONTAINS
 !!$             DO ls = 1, l_Gs
 !!$                w_cs(1,ls)= wws(1,ls)+0.5*wws(3,ls)
 !!$                w_cs(2,ls)= wws(2,ls)+0.5*wws(3,ls)
-!!$                w_cs(3,ls)= 0  
+!!$                w_cs(3,ls)= 0
 !!$             END DO
 !!$          ELSE                ! 1 = 2
 !!$             DO ls = 1, l_Gs
 !!$                w_cs(1,ls)= wws(2,ls)+0.5*wws(3,ls)
 !!$                w_cs(2,ls)= wws(1,ls)+0.5*wws(3,ls)
-!!$                w_cs(3,ls)= 0 
+!!$                w_cs(3,ls)= 0
 !!$                WRITE(*,*) ' Ouaps! oder of shape functions changed?'
 !!$             END DO
 !!$          END IF
@@ -1541,10 +1544,10 @@ CONTAINS
        m1 =   H_mesh%neighs(ms1)
        mu_H = SUM(mu_H_field(H_mesh%jj(:,m1)))/H_mesh%gauss%n_w
        !JLG, FL, May, 28, 2009
-       !hm1 = stab_colle_H_phi/SUM(rjs(:,ms2)) 
-       !hm1 = stab_colle_H_phi*(((mu_phi+mu_H)/mu_H)/SUM(rjs(:,ms2)))       
+       !hm1 = stab_colle_H_phi/SUM(rjs(:,ms2))
+       !hm1 = stab_colle_H_phi*(((mu_phi+mu_H)/mu_H)/SUM(rjs(:,ms2)))
        !JLG, FL, May, 28, 2009
-       hm1 = stab_colle_H_phi/(SUM(rjs(:,ms2))*inputs%sigma_min) ! MODIFICATION: normalization for interface H/phi term  
+       hm1 = stab_colle_H_phi/(SUM(rjs(:,ms2))*inputs%sigma_min) ! MODIFICATION: normalization for interface H/phi term
 
        !====================================================================================
        !------------------------------------TERMES SUR LE BLOC H----------------------------
@@ -1553,18 +1556,18 @@ CONTAINS
        !-------------------------------hm1 (bi x ni) . (bj x nj)----------------------------
        !====================================================================================
 
-       Hsij = 0.d0  
+       Hsij = 0.d0
        DO ls = 1, l_Gs
           !===Compute radius of Gauss point
           ray = SUM(phi_mesh%rr(1,phi_mesh%jjs(:,ms2))* phi_mesh%gauss%wws(:,ls))
-          x = hm1*rjs(ls,ms2)*ray 
+          x = hm1*rjs(ls,ms2)*ray
 
           DO ni = 1, n_ws1
              DO nj = 1, n_ws1
                 y = x * w_cs(ni,ls)*w_cs(nj,ls)
-                Hsij(1,ni,nj) = Hsij(1,ni,nj) + y*(rnorms(2,ls,ms2)**2) 
-                Hsij(4,ni,nj) = Hsij(4,ni,nj) - y*rnorms(1,ls,ms2)*rnorms(2,ls,ms2)                        
-                Hsij(5,ni,nj) = Hsij(5,ni,nj) + y                                                
+                Hsij(1,ni,nj) = Hsij(1,ni,nj) + y*(rnorms(2,ls,ms2)**2)
+                Hsij(4,ni,nj) = Hsij(4,ni,nj) - y*rnorms(1,ls,ms2)*rnorms(2,ls,ms2)
+                Hsij(5,ni,nj) = Hsij(5,ni,nj) + y
                 Hsij(6,ni,nj) = Hsij(6,ni,nj) + y*(rnorms(1,ls,ms2)**2)
              ENDDO
           ENDDO
@@ -1578,18 +1581,18 @@ CONTAINS
        !TEST
        mat_loc1 = 0.d0
        mat_loc2 = 0.d0
-       DO ki= 1, 3 
-          DO ni = 1, n_ws1 
+       DO ki= 1, 3
+          DO ni = 1, n_ws1
              i = interface_H_phi%jjs1(ni,ms)
              ib = LA_H%loc_to_glob(ki,i)
              ix = (ki-1)*n_ws1+ni
-             idxn(ix) = ib - 1 
+             idxn(ix) = ib - 1
              DO kj = 1, 3
                 DO nj = 1, n_ws1
                    j = interface_H_phi%jjs1(nj,ms)
                    jb = LA_H%loc_to_glob(kj,j)
                    jx = (kj-1)*n_ws1+nj
-                   jdxn(jx) = jb - 1 
+                   jdxn(jx) = jb - 1
                    IF  ((ki == 1) .AND. (kj == 1)) THEN
                       mat_loc1(ix,jx) = Hsij(1,ni,nj)
                       mat_loc2(ix,jx) = Hsij(1,ni,nj)
@@ -1598,10 +1601,10 @@ CONTAINS
                       mat_loc2(ix,jx) = Hsij(4,ni,nj)
                    ELSEIF  ((ki == 3) .AND. (kj == 1)) THEN
                       mat_loc1(ix,jx) = Hsij(4,nj,ni)
-                      mat_loc2(ix,jx) = Hsij(4,nj,ni)                                             
+                      mat_loc2(ix,jx) = Hsij(4,nj,ni)
                    ELSEIF  ((ki == 2) .AND. (kj == 2)) THEN
                       mat_loc1(ix,jx) = Hsij(5,ni,nj)
-                      mat_loc2(ix,jx) = Hsij(5,ni,nj)                                            
+                      mat_loc2(ix,jx) = Hsij(5,ni,nj)
                    ELSEIF  ((ki == 3) .AND. (kj == 3)) THEN
                       mat_loc1(ix,jx) = Hsij(6,ni,nj)
                       mat_loc2(ix,jx) = Hsij(6,ni,nj)
@@ -1646,7 +1649,7 @@ CONTAINS
 
        mat_loc1 = 0.d0
        mat_loc2 = 0.d0
-       DO ki= 1, 3  
+       DO ki= 1, 3
           DO ni = 1, n_ws1
              i = interface_H_phi%jjs1(ni,ms)
              ib = LA_H%loc_to_glob(ki,i)
@@ -1661,12 +1664,12 @@ CONTAINS
                    IF  ( (ki == 2) .AND. (kj == 1)) THEN
                       mat_loc1(ix,jx) = Hsij(2,ni,nj)
                       mat_loc2(ix,jx) = Hsij(3,ni,nj)
-                   ELSEIF  ((ki == 2) .AND. (kj == 2))  THEN  
+                   ELSEIF  ((ki == 2) .AND. (kj == 2))  THEN
                       mat_loc1(ix,jx) = Hsij(5,ni,nj)
                       mat_loc2(ix,jx) = Hsij(5,ni,nj)
                    ELSEIF  ( (ki == 2) .AND. (kj == 3)) THEN
                       mat_loc1(ix,jx) = Hsij(8,ni,nj)
-                      mat_loc2(ix,jx) = Hsij(9,ni,nj) 
+                      mat_loc2(ix,jx) = Hsij(9,ni,nj)
                    ENDIF
                 END DO
              END DO
@@ -1740,7 +1743,7 @@ CONTAINS
        !TEST
        mat_loc1 = 0.d0
        mat_loc2 = 0.d0
-       DO ki= 1, 3  
+       DO ki= 1, 3
           DO ni = 1, n_ws1
              i = interface_H_phi%jjs1(ni,ms)
              ib =  LA_H%loc_to_glob(ki,i)
@@ -1758,12 +1761,12 @@ CONTAINS
                    ELSEIF  ((ki == 1) .AND. (kj == 3)) THEN
                       mat_loc1(ix,jx) = Hsij(4,ni,nj)
                       mat_loc2(ix,jx) = Hsij(4,ni,nj)
-                   ELSEIF  ((ki == 2) .AND. (kj == 2))  THEN  
+                   ELSEIF  ((ki == 2) .AND. (kj == 2))  THEN
                       mat_loc1(ix,jx) = Hsij(5,ni,nj)
                       mat_loc2(ix,jx) = Hsij(5,ni,nj)
-                   ELSEIF  ((ki == 3) .AND. (kj == 3)) THEN  
-                      mat_loc1(ix,jx) = Hsij(6,ni,nj)   
-                      mat_loc2(ix,jx) = Hsij(6,ni,nj) 
+                   ELSEIF  ((ki == 3) .AND. (kj == 3)) THEN
+                      mat_loc1(ix,jx) = Hsij(6,ni,nj)
+                      mat_loc2(ix,jx) = Hsij(6,ni,nj)
                    ELSEIF  ((ki == 3) .AND. (kj == 1)) THEN
                       mat_loc1(ix,jx) = Hsij(7,ni,nj)
                       mat_loc2(ix,jx) = Hsij(7,ni,nj)
@@ -1834,12 +1837,12 @@ CONTAINS
 
           !===Compute radius of Gauss point
           ray = SUM(phi_mesh%rr(1,phi_mesh%jjs(:,ms2))* phi_mesh%gauss%wws(:,ls))
-          x = hm1*rjs(ls,ms2)*ray 
+          x = hm1*rjs(ls,ms2)*ray
 
           !terme sans derivee
           DO ni=1, n_ws2
              DO nj=1, n_ws2
-                Phisij(ni,nj) = Phisij(ni,nj) + x*mode**2/ray**2*wws(ni,ls)*wws(nj,ls) 
+                Phisij(ni,nj) = Phisij(ni,nj) + x*mode**2/ray**2*wws(ni,ls)*wws(nj,ls)
              ENDDO
           ENDDO
 
@@ -1869,7 +1872,7 @@ CONTAINS
 
           !===Compute radius of Gauss point
           ray = SUM(phi_mesh%rr(1,phi_mesh%jjs(:,ms2))* phi_mesh%gauss%wws(:,ls))
-          x = hm1*rjs(ls,ms2)*ray 
+          x = hm1*rjs(ls,ms2)*ray
 
           !terme avec derivee
           DO ni = 1, n_w2
@@ -1899,7 +1902,7 @@ CONTAINS
             Phisij(1:n_w2,1:n_w2), ADD_VALUES, ierr)
        CALL MatSetValues(H_p_phi_mat2, n_w2, idxn(1:n_w2), n_w2, jdxn(1:n_w2), &
             Phisij(1:n_w2,1:n_w2), ADD_VALUES, ierr)
-       !====================================================================================   
+       !====================================================================================
        !------------------------------------TERMES CROISES----------------------------------
        !====================================================================================
 
@@ -1913,7 +1916,7 @@ CONTAINS
 
           !===Compute radius of Gauss point
           ray = SUM(phi_mesh%rr(1,phi_mesh%jjs(:,ms2))* phi_mesh%gauss%wws(:,ls))
-          x = hm1*rjs(ls,ms2)*ray 
+          x = hm1*rjs(ls,ms2)*ray
 
           !terme sans derivee
           DO ni = 1, n_ws1
@@ -1930,7 +1933,7 @@ CONTAINS
        !TEST
 
        ki = 2
-       DO ni = 1, n_ws1 
+       DO ni = 1, n_ws1
           i = interface_H_phi%jjs1(ni,ms)
           ib = LA_H%loc_to_glob(ki,i)
           idxn(ni) = ib - 1
@@ -1975,7 +1978,7 @@ CONTAINS
 
           !===Compute radius of Gauss point
           ray = SUM(phi_mesh%rr(1,phi_mesh%jjs(:,ms2))* phi_mesh%gauss%wws(:,ls))
-          x = hm1*rjs(ls,ms2)*ray 
+          x = hm1*rjs(ls,ms2)*ray
 
           !terme avec derivee
           DO ni = 1, n_ws1
@@ -1983,8 +1986,8 @@ CONTAINS
              DO nj = 1, n_w2
                 Sij(1,ni,nj) = Sij(1,ni,nj) + &
                      y*(-dw_s(1,nj,ls,ms2)*rnorms(2,ls,ms2)**2 + dw_s(2,nj,ls,ms2)*rnorms(1,ls,ms2)*rnorms(2,ls,ms2))
-                Sij(5,ni,nj) = Sij(5,ni,nj) + & 
-                     y*(-dw_s(2,nj,ls,ms2)*rnorms(1,ls,ms2)**2 + dw_s(1,nj,ls,ms2)*rnorms(1,ls,ms2)*rnorms(2,ls,ms2)) 
+                Sij(5,ni,nj) = Sij(5,ni,nj) + &
+                     y*(-dw_s(2,nj,ls,ms2)*rnorms(1,ls,ms2)**2 + dw_s(1,nj,ls,ms2)*rnorms(1,ls,ms2)*rnorms(2,ls,ms2))
              ENDDO
           ENDDO
        ENDDO
@@ -1995,8 +1998,8 @@ CONTAINS
        !TEST
        mat_loc1 = 0.d0
        mat_loc2 = 0.d0
-       DO ki= 1, 3 
-          DO ni = 1, n_ws1 
+       DO ki= 1, 3
+          DO ni = 1, n_ws1
              i = interface_H_phi%jjs1(ni,ms)
              ib = LA_H%loc_to_glob(ki,i)
              ix = (ki-1)*n_ws1 + ni
@@ -2029,7 +2032,7 @@ CONTAINS
        DO ni = 1, n_w2
           i = phi_mesh%jj(ni,m2)
           ib = LA_phi%loc_to_glob(1,i)
-          ix = ni 
+          ix = ni
           idxn(ix) = ib - 1
           DO kj=1,3
              DO nj = 1, n_ws1
@@ -2086,10 +2089,10 @@ CONTAINS
        !TEST
        mat_loc1 = 0.d0
        mat_loc2 = 0.d0
-       DO ni = 1, n_ws2 
+       DO ni = 1, n_ws2
           i = interface_H_phi%jjs2(ni,ms)
           ib = LA_phi%loc_to_glob(1,i)
-          ix = ni 
+          ix = ni
           idxn(ix) = ib - 1
           DO kj =1,3
              DO nj = 1, n_ws1
@@ -2099,10 +2102,10 @@ CONTAINS
                 jdxn(jx) = jb - 1
                 IF (kj == 1)  THEN
                    mat_loc1(ix,jx) = Sij(1,ni,nj)
-                   mat_loc2(ix,jx) = Sij(1,ni,nj)                          
+                   mat_loc2(ix,jx) = Sij(1,ni,nj)
                 ELSEIF (kj == 2)  THEN
                    mat_loc1(ix,jx) = Sij(3,ni,nj)
-                   mat_loc2(ix,jx) = Sij(4,ni,nj)  
+                   mat_loc2(ix,jx) = Sij(4,ni,nj)
                 ELSEIF  (kj == 3)  THEN
                    mat_loc1(ix,jx) = Sij(5,ni,nj)
                    mat_loc2(ix,jx) = Sij(5,ni,nj)
@@ -2128,7 +2131,7 @@ CONTAINS
              DO nj = 1, n_ws2
                 j = interface_H_phi%jjs2(nj,ms)
                 jb = LA_phi%loc_to_glob(1,j)
-                jx = nj 
+                jx = nj
                 jdxn(jx) = jb - 1
                 IF (ki == 1)  THEN
                    mat_loc1(ix,jx) = Sij(1,nj,ni)
@@ -2160,7 +2163,7 @@ CONTAINS
           !terme avec derivee de bi seulement
           DO ni = 1, n_ws2
              y =  x*wws(ni,ls)*mode/ray
-             DO nj = 1, n_w1 
+             DO nj = 1, n_w1
                 Sij(3,ni,nj) = Sij(3,ni,nj) + &
                      y*(dw_cs(2,nj,ls,ms1)*rnorms(2,ls,ms2) + dw_cs(1,nj,ls,ms1)*rnorms(1,ls,ms2))
              ENDDO
@@ -2171,7 +2174,7 @@ CONTAINS
        !Sij = 0.d0
        !TEST
        kj=2
-       DO ni = 1, n_ws2 
+       DO ni = 1, n_ws2
           i = interface_H_phi%jjs2(ni,ms)
           ib = LA_phi%loc_to_glob(1,i)
           idxn(ni) = ib - 1
@@ -2221,7 +2224,7 @@ CONTAINS
           DO ni = 1, n_w2
              y =  x*(dw_s(2,ni,ls,ms2)*rnorms(1,ls,ms2) - dw_s(1,ni,ls,ms2)*rnorms(2,ls,ms2))
              DO nj = 1, n_w1
-                Sij(1,ni,nj) = Sij(1,ni,nj) +   y *dw_cs(2,nj,ls,ms1) 
+                Sij(1,ni,nj) = Sij(1,ni,nj) +   y *dw_cs(2,nj,ls,ms1)
                 Sij(5,ni,nj) = Sij(5,ni,nj) + (-y)*dw_cs(1,nj,ls,ms1)
              ENDDO
           ENDDO
@@ -2233,7 +2236,7 @@ CONTAINS
        !TEST
        mat_loc1 = 0.d0
        mat_loc2 = 0.d0
-       DO ni = 1, n_w2 
+       DO ni = 1, n_w2
           i = phi_mesh%jj(ni,m2)
           ib =  LA_phi%loc_to_glob(1,i)
           ix = ni
@@ -2243,7 +2246,7 @@ CONTAINS
              DO kj=1,3
                 jb = LA_H%loc_to_glob(kj,j)
                 jx = (kj-1)*n_w1 + nj
-                jdxn(jx) = jb - 1           
+                jdxn(jx) = jb - 1
                 IF (kj == 1)  THEN
                    mat_loc1(ix,jx) = Sij(1,ni,nj)
                    mat_loc2(ix,jx) = Sij(1,ni,nj)
@@ -2268,7 +2271,7 @@ CONTAINS
              i = H_mesh%jj(ni,m1)
              ib = LA_H%loc_to_glob(ki,i)
              ix = (ki-1)*n_w1 + ni
-             idxn(ix) = ib - 1 
+             idxn(ix) = ib - 1
              DO nj = 1, n_w2
                 j = phi_mesh%jj(nj,m2)
                 jb =  LA_phi%loc_to_glob(1,j)
@@ -2297,7 +2300,7 @@ CONTAINS
           ray = SUM(phi_mesh%rr(1,phi_mesh%jjs(:,ms2))* phi_mesh%gauss%wws(:,ls))
           muhl = SUM(mu_H_field(interface_H_phi%jjs1(1:n_ws1,ms))*w_cs(1:n_ws1,ls))
           x = c_lap*muhl*rjs(ls,ms2)*ray
-          DO ni = 1, n_ws2 
+          DO ni = 1, n_ws2
              DO nj = 1, n_ws1
                 Sij(1,ni,nj) = Sij(1,ni,nj) - x*w_cs(nj,ls)*wws(ni,ls)*rnorms(1,ls,ms2)
                 Sij(5,ni,nj) = Sij(5,ni,nj) - x*w_cs(nj,ls)*wws(ni,ls)*rnorms(2,ls,ms2)
@@ -2316,13 +2319,13 @@ CONTAINS
              j = interface_H_phi%jjs1(nj,ms)
              jb = LA_H%loc_to_glob(1,j)
              jx = nj         !(1-1)*n_ws1 + nj
-             jdxn(jx) = jb - 1 
+             jdxn(jx) = jb - 1
              mat_loc1(ix,jx) = Sij(1,ni,nj)
              mat_loc2(ix,jx) = Sij(1,ni,nj)
 
              jb = LA_H%loc_to_glob(3,j)
              jx = n_ws1 + nj !(3-1)*n_ws1 + nj
-             jdxn(jx) = jb - 1 
+             jdxn(jx) = jb - 1
              mat_loc1(ix,jx) = Sij(5,ni,nj)
              mat_loc2(ix,jx) = Sij(5,ni,nj)
           END DO
@@ -2343,15 +2346,15 @@ CONTAINS
 
        IF (stab(2) > 1.d-12) THEN
           !IF (.FALSE.) THEN
-          !Mars 22 2007 
+          !Mars 22 2007
           !Enforcing weak continuity on the normal components
-          Hsij   = 0.d0 
+          Hsij   = 0.d0
           Sij    = 0.d0
           Phisij = 0.d0
 
 
           ms2 = interface_H_phi%mesh2(ms)
-          !hm1 = SUM(rjs(:,ms2))**(2*alpha-1) 
+          !hm1 = SUM(rjs(:,ms2))**(2*alpha-1)
           hm1 =(SUM(rjs(:,ms2))/H_mesh%global_diameter)**(2*alpha-1)/(inputs%sigma_min*inputs%mu_min**2*H_mesh%global_diameter) ! MODIFICATION: normalization for divergence stabilization term
 
           DO ls = 1, l_Gs
@@ -2368,7 +2371,7 @@ CONTAINS
              !ray = ray*hm1*rjs(ls,ms2)
              !June 8, 2008, Normalization, JLG, FL, May, 28, 2009
              ray = stab_div*ray*hm1*rjs(ls,ms2)
-             !ray = stab_div*ray*hm1*rjs(ls,ms2)/muhl 
+             !ray = stab_div*ray*hm1*rjs(ls,ms2)/muhl
              !ray = stab_div*ray*hm1*rjs(ls,ms2)/muhl**2
              !June 8, 2008, Normalization, JLG, FL, May, 28, 2009
              DO ni = 1, n_ws1
@@ -2405,15 +2408,15 @@ CONTAINS
           DO ni = 1, n_ws1
              i = H_mesh%jjs(ni,ms1)
              DO ki= 1, 3, 2
-                ib = LA_H%loc_to_glob(ki,i) 
+                ib = LA_H%loc_to_glob(ki,i)
                 ix = (ki/2)*n_ws1 + ni
-                idxn(ix) = ib - 1 
+                idxn(ix) = ib - 1
                 DO nj = 1, n_ws1
                    j = H_mesh%jjs(nj,ms1)
                    DO kj = 1, 3, 2
-                      jb = LA_H%loc_to_glob(kj,j) 
+                      jb = LA_H%loc_to_glob(kj,j)
                       jx = (kj/2)*n_ws1 + nj
-                      jdxn(jx) = jb - 1 
+                      jdxn(jx) = jb - 1
                       IF (ki*kj==1) THEN
                          mat_loc1(ix,jx) = Hsij(1,ni,nj)
                          mat_loc2(ix,jx) = Hsij(1,ni,nj)
@@ -2431,7 +2434,7 @@ CONTAINS
                    j = phi_mesh%jj(nj,m2)
                    jb = LA_phi%loc_to_glob(1,j)
                    jx = 2*n_ws1 + nj
-                   jdxn(jx) = jb - 1 
+                   jdxn(jx) = jb - 1
                    mat_loc1(ix,jx) = Sij(2*ki-1,ni,nj)
                    mat_loc2(ix,jx) = Sij(2*ki-1,ni,nj)
                 END DO
@@ -2464,8 +2467,8 @@ CONTAINS
                 j = phi_mesh%jj(nj,m2)
                 jb =  LA_phi%loc_to_glob(1,j)
                 jx = 2*n_ws1 + nj
-                jdxn(jx) = jb - 1 
-                mat_loc1(ix,jx) = Phisij(ni,nj)  
+                jdxn(jx) = jb - 1
+                mat_loc1(ix,jx) = Phisij(ni,nj)
                 mat_loc2(ix,jx) = Phisij(ni,nj)
              END DO
           END DO
@@ -2484,7 +2487,7 @@ CONTAINS
     !=========================================================
 
     IF (.NOT.PRESENT(index_fourier) .OR. .NOT.PRESENT(R_fourier)) RETURN
-    IF (R_fourier.GT.0.d0) THEN 
+    IF (R_fourier.GT.0.d0) THEN
        !WRITE(*,*) ' Assembling the Fourier condition'
        DO ms = 1, phi_mesh%mes
           IF (phi_mesh%sides(ms) /= index_fourier) CYCLE ! Not on the artificial boundary
@@ -2500,7 +2503,7 @@ CONTAINS
 
              DO ni=1,  phi_mesh%gauss%n_ws
                 DO nj=1,  phi_mesh%gauss%n_ws
-                   Phisij(ni,nj) = Phisij(ni,nj) + x*wws(ni,ls)*wws(nj,ls) 
+                   Phisij(ni,nj) = Phisij(ni,nj) + x*wws(ni,ls)*wws(nj,ls)
                 ENDDO
              ENDDO
 
@@ -2543,11 +2546,11 @@ CONTAINS
     USE input_data ! MODIFICATION: to call sigma_min and mu_min
 #include "petsc/finclude/petsc.h"
     USE petsc
-    IMPLICIT NONE    
+    IMPLICIT NONE
     TYPE(mesh_type),            INTENT(IN)    :: H_mesh
     INTEGER,      DIMENSION(:), INTENT(IN)    :: jj_v_to_H
     INTEGER,      DIMENSION(:), INTENT(IN)    :: Dirichlet_bdy_H_sides
-    INTEGER,                    INTENT(IN)    :: mode   
+    INTEGER,                    INTENT(IN)    :: mode
     REAL(KIND=8), DIMENSION(3), INTENT(IN)    :: stab
     REAL(KIND=8), DIMENSION(:), INTENT(IN)    :: sigma_np
     REAL(KIND=8), DIMENSION(H_mesh%me), INTENT(IN) :: sigma
@@ -2566,15 +2569,15 @@ CONTAINS
     ! (                | Hsij(5)        |                ||        Sij(3)  )
     ! (                |        Hsij(5) |                || Sij(4)         )
     ! (--------------------------------------------------------------------)
-    ! ( Hsij(7)        |        Hsij(9) | Hsij(6)        || Sij(5)         )             
-    ! (        Hsij(7) | Hsij(8)        |        Hsij(6) ||        Sij(6)  ) 
+    ! ( Hsij(7)        |        Hsij(9) | Hsij(6)        || Sij(5)         )
+    ! (        Hsij(7) | Hsij(8)        |        Hsij(6) ||        Sij(6)  )
     ! (====================================================================)
     ! ( Sij'(1)        |        Sij'(3) | Sij'(5)        || Phisij         )
     ! (        Sij'(2) | Sij'(4)        |        Sij'(6) ||        Phisij  )
     ! (------------------------------------------------------------------- )
     !
     ! L'autre partie des termes croises est la symetrique de la premiere
-    ! juste apres le calcsrhs_maul du terme de bord dissymetrique    
+    ! juste apres le calcsrhs_maul du terme de bord dissymetrique
     !June 8 2008
     REAL(KIND=8) :: c_sym=.0d0 ! Symmetrization of the bilinear form
     !June 8 2008
@@ -2609,7 +2612,7 @@ CONTAINS
     error = 0
     DO count = 1, SIZE(Dirichlet_bdy_H_sides)
        ms = Dirichlet_bdy_H_sides(count)
-       !hm1 = stab_colle_H_mu/SUM(H_mesh%gauss%rjs(:,ms))  
+       !hm1 = stab_colle_H_mu/SUM(H_mesh%gauss%rjs(:,ms))
        hm1 = stab_colle_H_mu/(SUM(H_mesh%gauss%rjs(:,ms))*inputs%sigma_min) ! MODIFICATION: normalization for dirichlet term LHS
        m1 = H_mesh%neighs(ms)
        !====================================================================================
@@ -2619,18 +2622,18 @@ CONTAINS
        !-------------------------------hm1 (bi x ni) . (bj x nj)----------------------------
        !====================================================================================
 
-       Hsij = 0.d0  
+       Hsij = 0.d0
        DO ls = 1, H_mesh%gauss%l_Gs
           !===Compute radius of Gauss point
           ray = SUM(H_mesh%rr(1,H_mesh%jjs(:,ms))*H_mesh%gauss%wws(:,ls))
-          x = hm1*H_mesh%gauss%rjs(ls,ms)*ray 
+          x = hm1*H_mesh%gauss%rjs(ls,ms)*ray
 
           DO ni = 1, H_mesh%gauss%n_ws
              DO nj = 1, H_mesh%gauss%n_ws
                 y = x * H_mesh%gauss%wws(ni,ls)*H_mesh%gauss%wws(nj,ls)
-                Hsij(1,ni,nj) = Hsij(1,ni,nj) + y*(H_mesh%gauss%rnorms(2,ls,ms)**2) 
+                Hsij(1,ni,nj) = Hsij(1,ni,nj) + y*(H_mesh%gauss%rnorms(2,ls,ms)**2)
                 Hsij(4,ni,nj) = Hsij(4,ni,nj) - y*H_mesh%gauss%rnorms(1,ls,ms)*H_mesh%gauss%rnorms(2,ls,ms)
-                Hsij(5,ni,nj) = Hsij(5,ni,nj) + y                                                
+                Hsij(5,ni,nj) = Hsij(5,ni,nj) + y
                 Hsij(6,ni,nj) = Hsij(6,ni,nj) + y*(H_mesh%gauss%rnorms(1,ls,ms)**2)
              ENDDO
           ENDDO
@@ -2644,8 +2647,8 @@ CONTAINS
        !TEST
        mat_loc1 = 0.d0
        mat_loc2 = 0.d0
-       DO ki= 1, 3 
-          DO ni = 1, n_ws1 
+       DO ki= 1, 3
+          DO ni = 1, n_ws1
              i = H_mesh%jjs(ni,ms)
              ib = LA_H%loc_to_glob(ki,i)
              ix = ni + (ki-1)*n_ws1
@@ -2721,7 +2724,7 @@ CONTAINS
 
        mat_loc1 = 0.d0
        mat_loc2 = 0.d0
-       DO ki= 1, 3  
+       DO ki= 1, 3
           DO ni = 1, n_ws1
              i = H_mesh%jjs(ni,ms)
              ib = LA_H%loc_to_glob(ki,i)
@@ -2736,12 +2739,12 @@ CONTAINS
                    IF  ( (ki == 2) .AND. (kj == 1)) THEN
                       mat_loc1(ix,jx) = Hsij(2,ni,nj)
                       mat_loc2(ix,jx) = Hsij(3,ni,nj)
-                   ELSEIF  ((ki == 2) .AND. (kj == 2))  THEN  
+                   ELSEIF  ((ki == 2) .AND. (kj == 2))  THEN
                       mat_loc1(ix,jx) = Hsij(5,ni,nj)
                       mat_loc2(ix,jx) = Hsij(5,ni,nj)
                    ELSEIF  ( (ki == 2) .AND. (kj == 3)) THEN
                       mat_loc1(ix,jx) = Hsij(8,ni,nj)
-                      mat_loc2(ix,jx) = Hsij(9,ni,nj) 
+                      mat_loc2(ix,jx) = Hsij(9,ni,nj)
                    ENDIF
                 END DO
              END DO
@@ -2824,7 +2827,7 @@ CONTAINS
 
        mat_loc1 = 0.d0
        mat_loc2 = 0.d0
-       DO ki= 1, 3  
+       DO ki= 1, 3
           DO ni = 1, n_ws1
              i = H_mesh%jjs(ni,ms)
              ib = LA_H%loc_to_glob(ki,i)
@@ -2842,12 +2845,12 @@ CONTAINS
                    ELSEIF  ((ki == 1) .AND. (kj == 3)) THEN
                       mat_loc1(ix,jx) = Hsij(4,ni,nj)
                       mat_loc2(ix,jx) = Hsij(4,ni,nj)
-                   ELSEIF  ((ki == 2) .AND. (kj == 2))  THEN  
+                   ELSEIF  ((ki == 2) .AND. (kj == 2))  THEN
                       mat_loc1(ix,jx) = Hsij(5,ni,nj)
                       mat_loc2(ix,jx) = Hsij(5,ni,nj)
-                   ELSEIF  ((ki == 3) .AND. (kj == 3)) THEN  
-                      mat_loc1(ix,jx) = Hsij(6,ni,nj)   
-                      mat_loc2(ix,jx) = Hsij(6,ni,nj) 
+                   ELSEIF  ((ki == 3) .AND. (kj == 3)) THEN
+                      mat_loc1(ix,jx) = Hsij(6,ni,nj)
+                      mat_loc2(ix,jx) = Hsij(6,ni,nj)
                    ELSEIF  ((ki == 3) .AND. (kj == 1)) THEN
                       mat_loc1(ix,jx) = Hsij(7,ni,nj)
                       mat_loc2(ix,jx) = Hsij(7,ni,nj)
@@ -2951,7 +2954,7 @@ CONTAINS
     !REAL(KIND=8), DIMENSION(:,:), POINTER               :: nl
     !REAL(KIND=8), DIMENSION(:,:), ALLOCATABLE           :: src_H, src_phi
 !!$    REAL(KIND=8), DIMENSION(:,:), ALLOCATABLE           :: nl
-    REAL(KIND=8), DIMENSION(phi_mesh%gauss%n_ws,phi_mesh%gauss%l_Gs)   :: w_cs   
+    REAL(KIND=8), DIMENSION(phi_mesh%gauss%n_ws,phi_mesh%gauss%l_Gs)   :: w_cs
     REAL(KIND=8), DIMENSION(2) :: gaussp
     REAL(KIND=8) :: ray
     INTEGER :: m, l, i, ni, k, ms, ls, n_ws1, n_ws2, ms1, ms2, H_bloc_size, n_w2, m1
@@ -2962,7 +2965,7 @@ CONTAINS
     !REAL(KIND=8), DIMENSION(2,phi_mesh%gauss%n_w) :: src_phil
     REAL(KIND=8) :: ray_rjl, muhl
     !REAL(KIND=8) :: moderay2
-    !REAL(KIND=8) :: tps, dummy 
+    !REAL(KIND=8) :: tps, dummy
 !!$ FL + CN, 22/03/2013
 !!$    INTEGER, DIMENSION(:), ALLOCATABLE          :: idxn
     INTEGER, DIMENSION(H_mesh%np)               :: idxn_H
@@ -2978,7 +2981,7 @@ CONTAINS
     !CALL VecZeroEntries(vb_1, ierr)
     !CALL VecZeroEntries(vb_2, ierr)
 
-    !forcage volumique  
+    !forcage volumique
     !attention on comprime le calcul sur les points de Gauss et integration !!
     !j/sigma *(Rot(b))
 
@@ -2988,7 +2991,7 @@ CONTAINS
     index    = 0
 
     DO m = 1, H_mesh%me
-       mesh_id1 = H_mesh%i_d(m) 
+       mesh_id1 = H_mesh%i_d(m)
        DO l = 1, H_mesh%gauss%l_G
           index = index + 1
           !Feb 8 2007, muhl
@@ -3036,13 +3039,13 @@ CONTAINS
              src_H(i,2) = src_H(i,2)+ ray_rjl  &
                   *(JsolH_anal(4)*dwH(2,ni) &
                   - mode/ray*JsolH_anal(5)*H_mesh%gauss%ww(ni,l) &
-                  + rhs_Hl(2)*H_mesh%gauss%ww(ni,l))   
+                  + rhs_Hl(2)*H_mesh%gauss%ww(ni,l))
 
              !--------Composante theta------
              src_H(i,3) = src_H(i,3)+ ray_rjl  &
                   * (-JsolH_anal(1)*dwH(2,ni)  &
                   + 1/ray*JsolH_anal(5)*(ray*dwH(1,ni) + H_mesh%gauss%ww(ni,l)) &
-                  + rhs_Hl(3)*H_mesh%gauss%ww(ni,l)) 
+                  + rhs_Hl(3)*H_mesh%gauss%ww(ni,l))
 
              src_H(i,4) = src_H(i,4)+ ray_rjl &
                   * (-JsolH_anal(2)*dwH(2,ni) &
@@ -3058,7 +3061,7 @@ CONTAINS
              src_H(i,6) = src_H(i,6)+ ray_rjl* &
                   (mode/ray*JsolH_anal(1)*H_mesh%gauss%ww(ni,l) &
                   - JsolH_anal(4)*dwH(1,ni) &
-                  + rhs_Hl(6)*H_mesh%gauss%ww(ni,l)) 
+                  + rhs_Hl(6)*H_mesh%gauss%ww(ni,l))
           ENDDO
 
        END DO
@@ -3103,7 +3106,7 @@ CONTAINS
     !   END DO
     !   DO ni = 1, phi_mesh%gauss%n_w
     !      i = phi_mesh%jj(ni,m)
-    !      src_phi(i,:) = src_phi(i,:) + src_phil(:,ni) 
+    !      src_phi(i,:) = src_phi(i,:) + src_phil(:,ni)
     !   END DO
     !END DO
     ! End integration by parts
@@ -3126,7 +3129,7 @@ CONTAINS
     IF (interface_H_phi%mes /=0) THEN  ! Ajout du test pour les grands nb de domaines
        IF (H_mesh%gauss%n_ws == n_ws) THEN
           w_cs = wws
-       ELSE    
+       ELSE
           DO ls = 1, l_Gs
              w_cs(1,ls)= wws(1,ls)+0.5*wws(3,ls)
              w_cs(2,ls)= wws(2,ls)+0.5*wws(3,ls)
@@ -3141,7 +3144,7 @@ CONTAINS
 
        ms2 = interface_H_phi%mesh2(ms)
        ms1 = interface_H_phi%mesh1(ms)
-       m = phi_mesh%neighs(ms2)           
+       m = phi_mesh%neighs(ms2)
        m1 = H_mesh%neighs(ms1)
        mesh_id1 = H_mesh%i_d(m1)
        DO ls = 1,l_Gs
@@ -3158,7 +3161,7 @@ CONTAINS
              ray = ray + phi_mesh%rr(1,i)* wws(ni,ls)
           END DO
 
-          gaussp = 0.d0    
+          gaussp = 0.d0
           DO ni=1, n_ws2
              i=phi_mesh%jjs(ni,ms2)
              gaussp = gaussp + phi_mesh%rr(:,i)*phi_mesh%gauss%wws(ni,ls)
@@ -3169,7 +3172,7 @@ CONTAINS
                   muhl, time, mesh_id1, B_ext_l)/sigma(m1) &
                   + muhl * SUM(NL(H_mesh%jjs(1:n_ws1,ms1),k)*w_cs(1:n_ws1,ls))
           ENDDO
-!!$! TO DO : to do before using H with phi 
+!!$! TO DO : to do before using H with phi
 !!$          IF (inputs%if_level_set.AND.inputs%variation_sigma_fluid) THEN
 !!$             DO k = 1, 6
 !!$                JsolH_anal(k) = J_over_sigma_gauss(k) + sigma_curl(index,k) &
@@ -3184,7 +3187,7 @@ CONTAINS
 !!$          END IF
 !!$! TO DO
 
-          !---------forcage pour H            
+          !---------forcage pour H
 
           DO ni=1, n_ws1
              i = interface_H_phi%jjs1(ni,ms)
@@ -3209,9 +3212,9 @@ CONTAINS
                   JsolH_anal(4)*w_cs(ni,ls)*(-rnorms(1,ls,ms2)))
           ENDDO
 
-          !---------forcage pour phi            
+          !---------forcage pour phi
           !terme sans derivee de phi
-          DO ni=1,n_ws2           
+          DO ni=1,n_ws2
              i = interface_H_phi%jjs2(ni,ms)
              !attention si on force sur l'axe, il faut retirer les 1/ray
              !There was a BUG here. There was w_cs instead of wws
@@ -3226,11 +3229,11 @@ CONTAINS
           ENDDO
 
           !terme avec derivee de phi
-          DO ni=1,n_w2           
+          DO ni=1,n_w2
              i = phi_mesh%jj(ni,m)
              src_phi(i,1) = src_phi(i,1)+rjs(ls,ms2)*ray*( &
                   + JsolH_anal(3) *(dw_s(2,ni,ls,ms2) * rnorms(1,ls,ms2)&
-                  -dw_s(1,ni,ls,ms2) * rnorms(2,ls,ms2)))  
+                  -dw_s(1,ni,ls,ms2) * rnorms(2,ls,ms2)))
 
              src_phi(i,2) = src_phi(i,2)+rjs(ls,ms2)*ray*( &
                   + JsolH_anal(4)*(dw_s(2,ni,ls,ms2) * rnorms(1,ls,ms2)&
@@ -3275,7 +3278,7 @@ CONTAINS
 !!$       ALLOCATE(idxn(phi_mesh%np))
        idxn_phi = LA_phi%loc_to_glob(1,:)-1
        CALL VecSetValues(vb_1, phi_mesh%np, idxn_phi, src_phi(:,1), ADD_VALUES, ierr)
-       CALL VecSetValues(vb_2, phi_mesh%np, idxn_phi, src_phi(:,2), ADD_VALUES, ierr)       
+       CALL VecSetValues(vb_2, phi_mesh%np, idxn_phi, src_phi(:,2), ADD_VALUES, ierr)
 !!$       DEALLOCATE(idxn)
     END IF
 
@@ -3309,12 +3312,12 @@ CONTAINS
     INTEGER,     DIMENSION(:),    INTENT(IN)    :: list_dirichlet_sides_H
     REAL(KIND=8),                 INTENT(IN)    :: mu_phi, time
     REAL(KIND=8),DIMENSION(H_mesh%me),INTENT(IN):: sigma
-    REAL(KIND=8),DIMENSION(:),    INTENT(IN)    :: mu_H_field 
+    REAL(KIND=8),DIMENSION(:),    INTENT(IN)    :: mu_H_field
     INTEGER,                      INTENT(IN)    :: mode
     REAL(KIND=8), DIMENSION(:,:)                :: sigma_tot_gauss
     REAL(KIND=8),                 OPTIONAL      :: R_fourier
     INTEGER,                      OPTIONAL      :: index_fourier
-    REAL(KIND=8), DIMENSION(H_mesh%np, 6)       :: src_H 
+    REAL(KIND=8), DIMENSION(H_mesh%np, 6)       :: src_H
     REAL(KIND=8), DIMENSION(phi_mesh%np, 2)     :: src_phi
     REAL(KIND=8), DIMENSION(pmag_mesh%np, 2)    :: src_pmag !===JLG Jan 22 2018
     !REAL(KIND=8), DIMENSION(pmag_mesh%gauss%n_ws,H_mesh%gauss%l_Gs) :: wwps !===JLG Jan 22 2018
@@ -3360,8 +3363,8 @@ CONTAINS
        DO ls = 1, H_mesh%gauss%l_Gs
           muhl = SUM(mu_H_field(H_mesh%jjs(:,ms))*H_mesh%gauss%wws(:,ls))
           muloc(ls) = muhl
-          rloc(1,ls) = SUM(H_mesh%rr(1,H_mesh%jjs(:,ms))*H_mesh%gauss%wws(:,ls)) 
-          rloc(2,ls) = SUM(H_mesh%rr(2,H_mesh%jjs(:,ms))*H_mesh%gauss%wws(:,ls)) 
+          rloc(1,ls) = SUM(H_mesh%rr(1,H_mesh%jjs(:,ms))*H_mesh%gauss%wws(:,ls))
+          rloc(2,ls) = SUM(H_mesh%rr(2,H_mesh%jjs(:,ms))*H_mesh%gauss%wws(:,ls))
        END DO
        Banal(1,:) = muhl*Hexact(H_mesh, 1, rloc, mode, muloc, time)
        Banal(2,:) = muhl*Hexact(H_mesh, 2, rloc, mode, muloc, time)
@@ -3385,7 +3388,7 @@ CONTAINS
 
           IF (ray.LT.1.d-12*H_mesh%global_diameter) CYCLE !ATTENTION Axe
 
-          gaussp = 0.d0    
+          gaussp = 0.d0
           DO ns=1, H_mesh%gauss%n_ws
              i=H_mesh%jjs(ns,ms)
              gaussp = gaussp + H_mesh%rr(:,i)*H_mesh%gauss%wws(ns,ls)
@@ -3394,7 +3397,7 @@ CONTAINS
 !!$          DO k=1, 6
 !!$             EsolH_anal(k) = Eexact_gauss(k,gaussp,mode,mu_phi,sigma(m),muhl, time)
 !!$          ENDDO
-          !LC-JLG-CN 2018/04       
+          !LC-JLG-CN 2018/04
           DO k=1, 6
              EsolH_anal(k) = Eexact_gauss(k,gaussp,mode,mu_phi,sigma_tot_gauss(index,mod(k+1,2)+1),muhl, time)
           ENDDO
@@ -3473,8 +3476,8 @@ CONTAINS
        DO ls = 1, pmag_mesh%gauss%l_Gs
           muhl = SUM(mu_H_field(pmag_mesh%jjs(:,ms))*pmag_mesh%gauss%wws(:,ls))
           muloc_pmesh(ls) = muhl
-          rloc_pmesh(1,ls) = SUM(pmag_mesh%rr(1,pmag_mesh%jjs(:,ms))*pmag_mesh%gauss%wws(:,ls)) 
-          rloc_pmesh(2,ls) = SUM(pmag_mesh%rr(2,pmag_mesh%jjs(:,ms))*pmag_mesh%gauss%wws(:,ls)) 
+          rloc_pmesh(1,ls) = SUM(pmag_mesh%rr(1,pmag_mesh%jjs(:,ms))*pmag_mesh%gauss%wws(:,ls))
+          rloc_pmesh(2,ls) = SUM(pmag_mesh%rr(2,pmag_mesh%jjs(:,ms))*pmag_mesh%gauss%wws(:,ls))
        END DO
        Banal_pmesh(1,:) = muhl*Hexact(pmag_mesh, 1, rloc_pmesh, mode, muloc_pmesh, time)
        Banal_pmesh(2,:) = muhl*Hexact(pmag_mesh, 2, rloc_pmesh, mode, muloc_pmesh, time)
@@ -3524,7 +3527,7 @@ CONTAINS
              ray = ray + phi_mesh%rr(1,i)* phi_mesh%gauss%wws(ni,ls)
           END DO
 
-          gaussp = 0.d0    
+          gaussp = 0.d0
           DO ns=1, phi_mesh%gauss%n_ws
              i=phi_mesh%jjs(ns,ms)
              gaussp = gaussp + phi_mesh%rr(:,i)*phi_mesh%gauss%wws(ns,ls)
@@ -3532,7 +3535,7 @@ CONTAINS
 
           DO k=1, 6
              !===Here sigma and mu_H_field should not intervene
-             !===I put boggus values for sigma and mu_H_field, Feb 8 2007, Jean-Luc Guermond       
+             !===I put boggus values for sigma and mu_H_field, Feb 8 2007, Jean-Luc Guermond
              Esolphi_anal(k) = Eexact_gauss(k,gaussp,mode,mu_phi,sigma(1),mu_H_field(1),time)
           ENDDO
           !TO DEBUG
@@ -3540,12 +3543,12 @@ CONTAINS
           !TO DEBUG
 
           !===Nemnann forcing for phi in rhs:  - E.(grad(phi) x nv)
-          DO ns=1, phi_mesh%gauss%n_ws           
-             i = phi_mesh%jjs(ns,ms) 
+          DO ns=1, phi_mesh%gauss%n_ws
+             i = phi_mesh%jjs(ns,ms)
              DO n = 1, phi_mesh%gauss%n_w
                 IF (phi_mesh%jj(n,m) == i) EXIT
              END DO
-             !===There should not be any Neumann forcing on z-axis (1/ray would be infinite) 
+             !===There should not be any Neumann forcing on z-axis (1/ray would be infinite)
              src_phi(i,1) = src_phi(i,1)-phi_mesh%gauss%rjs(ls,ms)*ray*( &
                   +Esolphi_anal(3)*(phi_mesh%gauss%dw_s(2,n,ls,ms)*phi_mesh%gauss%rnorms(1,ls,ms) &
                   -phi_mesh%gauss%dw_s(1,n,ls,ms)*phi_mesh%gauss%rnorms(2,ls,ms))) &
@@ -3555,7 +3558,7 @@ CONTAINS
 
              src_phi(i,2) = src_phi(i,2)-phi_mesh%gauss%rjs(ls,ms)*ray*( &
                   +Esolphi_anal(4)*(phi_mesh%gauss%dw_s(2,n,ls,ms)*phi_mesh%gauss%rnorms(1,ls,ms) &
-                  -phi_mesh%gauss%dw_s(1,n,ls,ms)*phi_mesh%gauss%rnorms(2,ls,ms))) & 
+                  -phi_mesh%gauss%dw_s(1,n,ls,ms)*phi_mesh%gauss%rnorms(2,ls,ms))) &
                   -phi_mesh%gauss%rjs(ls,ms)*(&
                   mode*Esolphi_anal(1)*phi_mesh%gauss%wws(ns,ls)*phi_mesh%gauss%rnorms(2,ls,ms) &
                   -mode*Esolphi_anal(5)*phi_mesh%gauss%wws(ns,ls)*phi_mesh%gauss%rnorms(1,ls,ms))
@@ -3590,13 +3593,13 @@ CONTAINS
     !      x = phi_mesh%gauss%rjs(ls,ms)*ray/R_fourier
     !      y1 = x* SUM(rhs(phi_mesh%jjs(:,ms),1)* phi_mesh%gauss%wws(:,ls))
     !      y2 = x* SUM(rhs(phi_mesh%jjs(:,ms),2)* phi_mesh%gauss%wws(:,ls))
-    !      DO ns =1, phi_mesh%gauss%n_ws    
+    !      DO ns =1, phi_mesh%gauss%n_ws
     !         src_phi(1,phi_mesh%jjs(ns,ms)) = src_phi(1,phi_mesh%jjs(ns,ms)) + &
     !               y1*phi_mesh%gauss%wws(ns,ls)
     !         src_phi(2,phi_mesh%jjs(ns,ms)) = src_phi(2,phi_mesh%jjs(ns,ms)) + &
     !               y2*phi_mesh%gauss%wws(ns,ls)
     !      ENDDO
-    !      
+    !
     !   ENDDO
     !END DO
     IF (H_mesh%mes/=0) THEN
@@ -3623,7 +3626,7 @@ CONTAINS
 !!$       ALLOCATE(idxn(phi_mesh%np))
        idxn_phi = LA_phi%loc_to_glob(1,:)-1
        CALL VecSetValues(vb_1, phi_mesh%np, idxn_phi, src_phi(:,1), ADD_VALUES, ierr)
-       CALL VecSetValues(vb_2, phi_mesh%np, idxn_phi, src_phi(:,2), ADD_VALUES, ierr)       
+       CALL VecSetValues(vb_2, phi_mesh%np, idxn_phi, src_phi(:,2), ADD_VALUES, ierr)
 !!$       DEALLOCATE(idxn)
     END IF
 
@@ -3647,7 +3650,7 @@ CONTAINS
     USE my_util
     USE input_data
 #include "petsc/finclude/petsc.h"
-    USE petsc  
+    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),            INTENT(IN)    :: H_mesh
     INTEGER,      DIMENSION(:), INTENT(IN)    :: jj_v_to_H
@@ -3664,7 +3667,7 @@ CONTAINS
     LOGICAL :: mark=.FALSE.
     REAL(KIND=8), DIMENSION(9,SIZE(H_mesh%jj,1),SIZE(H_mesh%jj,1),2,2)      :: Hsij, Gsij
 
-    ! MATRICES POUR LES TERMES DE BORDS Hsij et Gsij 
+    ! MATRICES POUR LES TERMES DE BORDS Hsij et Gsij
     !=================================================
     ! (--------------------------------------------------)
     ! ( Hsij(1) +G     | GSij(2)        | Hsij(4) +G     )
@@ -3687,7 +3690,7 @@ CONTAINS
 !!$    REAL(KIND=8), DIMENSION(:,:)    , ALLOCATABLE :: gauss1, gauss2
 !!$ FL+CN 22/03/2013
     REAL(KIND=8), DIMENSION(2)                    :: normi, normj
-    REAL(KIND=8), DIMENSION(SIZE(H_mesh%jjs,1))   :: wwsi, wwsj 
+    REAL(KIND=8), DIMENSION(SIZE(H_mesh%jjs,1))   :: wwsi, wwsj
     INTEGER                                       :: n_wsi, n_wsj, ci, cj, n_wi, n_wj
 
     INTEGER      :: ls1, ls2
@@ -3750,7 +3753,7 @@ CONTAINS
           DO ls = 1, l_Gs
              w_cs(1,ls)= wws(2,ls)
              w_cs(2,ls)= wws(1,ls)
-             IF (n_ws1==3) w_cs(n_ws1,ls) = wws(n_ws1,ls) 
+             IF (n_ws1==3) w_cs(n_ws1,ls) = wws(n_ws1,ls)
              WRITE(*,*) ' Ouaps! oder of shape functions changed?'
           END DO
        END IF
@@ -3796,7 +3799,7 @@ CONTAINS
        !-------------------------------hm1 (bi x ni) . (bj x nj)----------------------------
        !---------------------------------+ (mui bi.ni) (muj bj.nj)--------------------------
        !====================================================================================
-       Hsij = 0.d0  
+       Hsij = 0.d0
        DO ls = 1, l_Gs
           !===Compute radius of Gauss point
           ray = SUM(H_mesh%rr(1,H_mesh%jjs(:,ms2))* H_mesh%gauss%wws(:,ls))
@@ -3829,7 +3832,7 @@ CONTAINS
                 n_wsi = n_ws2
                 muhi = muhl2
              END IF
-             DO cj = 1, 2 
+             DO cj = 1, 2
                 IF (cj==1) THEN
                    normj = rnorms(:,ls,ms1)
                    wwsj = w_cs(:,ls)
@@ -3852,7 +3855,7 @@ CONTAINS
                            + z*normi(1)*normj(1)
                       Hsij(4,ni,nj,ci,cj) = Hsij(4,ni,nj,ci,cj) - y*normj(1)*normi(2) &
                            + z*normi(1)*normj(2)
-                      Hsij(5,ni,nj,ci,cj) = Hsij(5,ni,nj,ci,cj) + y*(normi(1)*normj(1) + normi(2)*normj(2)) 
+                      Hsij(5,ni,nj,ci,cj) = Hsij(5,ni,nj,ci,cj) + y*(normi(1)*normj(1) + normi(2)*normj(2))
                       Hsij(6,ni,nj,ci,cj) = Hsij(6,ni,nj,ci,cj) + y*normi(1)*normj(1) &
                            + z*normi(2)*normj(2)
                    END DO
@@ -3864,8 +3867,8 @@ CONTAINS
        mat_loc1 = 0.d0
        mat_loc2 = 0.d0
        DO ci = 1, 2
-          DO ki = 1, 3 
-             DO ni = 1, n_ws1 
+          DO ki = 1, 3
+             DO ni = 1, n_ws1
                 IF (ci==1) THEN
                    i = interface_H_mu%jjs1(ni,ms)
                 ELSE
@@ -3896,7 +3899,7 @@ CONTAINS
                             mat_loc1(ix,jx) = Hsij(4,nj,ni,cj,ci)
                             mat_loc2(ix,jx) = Hsij(4,nj,ni,cj,ci)
                          ELSEIF  ((ki == 2) .AND. (kj == 2)) THEN
-                            mat_loc1(ix,jx) = Hsij(5,ni,nj,ci,cj) 
+                            mat_loc1(ix,jx) = Hsij(5,ni,nj,ci,cj)
                             mat_loc2(ix,jx) = Hsij(5,ni,nj,ci,cj)
                          ELSEIF  ((ki == 3) .AND. (kj == 3)) THEN
                             mat_loc1(ix,jx) = Hsij(6,ni,nj,ci,cj)
@@ -4026,7 +4029,7 @@ CONTAINS
                          ELSE IF((ki == 1) .AND. (kj == 2)) THEN
                             mat_loc1(ix,jx) = Gsij(2,ni,nj,ci,cj)
                             mat_loc2(ix,jx) = Gsij(3,ni,nj,ci,cj)
-                         ELSEIF  ((ki == 2) .AND. (kj == 2))  THEN  
+                         ELSEIF  ((ki == 2) .AND. (kj == 2))  THEN
                             mat_loc1(ix,jx) = Hsij(5,ni,nj,ci,cj)+Gsij(5,ni,nj,ci,cj)
                             mat_loc2(ix,jx) = Hsij(5,ni,nj,ci,cj)+Gsij(5,ni,nj,ci,cj)
                          ELSEIF ((ki == 2) .AND. (kj == 3)) THEN
@@ -4094,17 +4097,17 @@ CONTAINS
                    dwsj = dw_cs(:,:,ls,ms1)
                    n_wsj = n_ws1
                    n_wj = n_w1
-                   sigmaj = sigmal1                   
+                   sigmaj = sigmal1
                    thetaj = sigmal1/(sigmal1+sigmal2)
                    indice_j = 1.d0
                 ELSE
                    normj = rnorms(:,ls,ms2)
                    wwsj = wws(:,ls)
-                   dwsj = dw_s(:,:,ls,ms2) 
+                   dwsj = dw_s(:,:,ls,ms2)
                    n_wsj = n_ws2
                    n_wj = n_w2
                    sigmaj = sigmal2
-                   thetaj = sigmal2/(sigmal1+sigmal2) 
+                   thetaj = sigmal2/(sigmal1+sigmal2)
                    indice_j = -1.d0
                 END IF
 
@@ -4171,11 +4174,11 @@ CONTAINS
                          ELSEIF  ((ki == 3) .AND. (kj == 1)) THEN
                             mat_loc1(ix,jx) = Hsij(7,ni,nj,ci,cj)
                             mat_loc2(ix,jx) = Hsij(7,ni,nj,ci,cj)
-                         ELSEIF  ((ki == 2) .AND. (kj == 2)) THEN  
+                         ELSEIF  ((ki == 2) .AND. (kj == 2)) THEN
                             mat_loc1(ix,jx) = Hsij(5,ni,nj,ci,cj)
                             mat_loc2(ix,jx) = Hsij(5,ni,nj,ci,cj)
-                         ELSEIF  ((ki == 3) .AND. (kj == 3)) THEN  
-                            mat_loc1(ix,jx) = Hsij(6,ni,nj,ci,cj)   
+                         ELSEIF  ((ki == 3) .AND. (kj == 3)) THEN
+                            mat_loc1(ix,jx) = Hsij(6,ni,nj,ci,cj)
                             mat_loc2(ix,jx) = Hsij(6,ni,nj,ci,cj)
                          ENDIF
 
@@ -4214,7 +4217,7 @@ CONTAINS
                          END IF
                          jb = LA_H%loc_to_glob(kj,j)
                          jx = nj + n_wsj*((kj-1) + 3*(cj-1))
-                         jdxn(jx) = jb-1 
+                         jdxn(jx) = jb-1
                          IF      ((ki == 1) .AND. (kj == 1)) THEN
                             mat_loc1(ix,jx) = Gsij(1,ni,nj,ci,cj)
                             mat_loc2(ix,jx) = Gsij(1,ni,nj,ci,cj)
@@ -4278,7 +4281,7 @@ CONTAINS
        !             sigmal2 = sigma(m2)
        !          ELSE
        !             sigmal2 = SUM(sigma_np(H_mesh%jjs(:,ms2))* wws(:,ls))
-       !          END IF   
+       !          END IF
        !
        !          lambda = 2.d0/(sigmal1+sigmal2)
        !
@@ -4351,7 +4354,7 @@ CONTAINS
        !                         IF  ((ki == 2) .AND. (kj == 1)) THEN
        !                            mat_loc1(ix,jx) = Hsij(2,ni,nj,ci,cj)
        !                            mat_loc2(ix,jx) = Hsij(3,ni,nj,ci,cj)
-       !                         ELSEIF  ((ki == 2) .AND. (kj == 2))  THEN  
+       !                         ELSEIF  ((ki == 2) .AND. (kj == 2))  THEN
        !                            mat_loc1(ix,jx) = Hsij(5,ni,nj,ci,cj)
        !                            mat_loc2(ix,jx) = Hsij(5,ni,nj,ci,cj)
        !                         ELSEIF ((ki == 2) .AND. (kj == 3)) THEN
@@ -4421,7 +4424,7 @@ CONTAINS
        !                ELSE
        !                   normj = rnorms(:,ls,ms2)
        !                   wwsj = wws(:,ls)
-       !                   dwsj = dw_s(:,:,ls,ms2) 
+       !                   dwsj = dw_s(:,:,ls,ms2)
        !                   n_wsj = n_ws2
        !                   n_wj = n_w2
        !                   sigmaj = sigmal2
@@ -4477,11 +4480,11 @@ CONTAINS
        !                         ELSEIF  ((ki == 3) .AND. (kj == 1)) THEN
        !                            mat_loc1(ix,jx) = Hsij(7,ni,nj,ci,cj)
        !                            mat_loc2(ix,jx) = Hsij(7,ni,nj,ci,cj)
-       !                         ELSEIF  ((ki == 2) .AND. (kj == 2)) THEN  
+       !                         ELSEIF  ((ki == 2) .AND. (kj == 2)) THEN
        !                            mat_loc1(ix,jx) = Hsij(5,ni,nj,ci,cj)
        !                            mat_loc2(ix,jx) = Hsij(5,ni,nj,ci,cj)
-       !                         ELSEIF  ((ki == 3) .AND. (kj == 3)) THEN  
-       !                            mat_loc1(ix,jx) = Hsij(6,ni,nj,ci,cj)   
+       !                         ELSEIF  ((ki == 3) .AND. (kj == 3)) THEN
+       !                            mat_loc1(ix,jx) = Hsij(6,ni,nj,ci,cj)
        !                            mat_loc2(ix,jx) = Hsij(6,ni,nj,ci,cj)
        !                         ENDIF
        !
@@ -4531,9 +4534,9 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:),          INTENT(IN)   :: sigma_curl_gauss
     REAL(KIND=8), DIMENSION(H_mesh%np,6)                :: src_H
 
-    REAL(KIND=8), DIMENSION(H_mesh%gauss%n_ws,H_mesh%gauss%l_Gs)   :: w_cs   
+    REAL(KIND=8), DIMENSION(H_mesh%gauss%n_ws,H_mesh%gauss%l_Gs)   :: w_cs
     REAL(KIND=8), DIMENSION(2) :: normi, gaussp1, gaussp2
-    REAL(KIND=8), DIMENSION(H_mesh%gauss%n_ws) :: wwsi 
+    REAL(KIND=8), DIMENSION(H_mesh%gauss%n_ws) :: wwsi
     REAL(KIND=8) ::  x, ray
     INTEGER :: i, ni, ms, k, ls, n_ws1, n_ws2, ms1, ms2, n_w1, n_w2, m1, m2, ci, n_wsi
     INTEGER :: mesh_id1, mesh_id2, index
@@ -4577,7 +4580,7 @@ CONTAINS
           DO ls = 1, l_Gs
              w_cs(1,ls)= wws(2,ls)
              w_cs(2,ls)= wws(1,ls)
-             IF (n_ws1==3) w_cs(n_ws1,ls) = wws(n_ws1,ls) 
+             IF (n_ws1==3) w_cs(n_ws1,ls) = wws(n_ws1,ls)
              WRITE(*,*) ' Ouaps! oder of shape functions changed?'
           END DO
        END IF
@@ -4603,7 +4606,7 @@ CONTAINS
              J_over_sigma_l(k) = J_over_sigma_gauss(index,k) + sigma_curl_gauss(index,k)
           END DO
           muhl1=SUM(mu_H_field(H_mesh%jjs(:,ms1))*w_cs(:,ls))
-          gaussp1(1) = SUM(H_mesh%rr(1,H_mesh%jjs(:,ms1))*w_cs(:,ls))    
+          gaussp1(1) = SUM(H_mesh%rr(1,H_mesh%jjs(:,ms1))*w_cs(:,ls))
           gaussp1(2) = SUM(H_mesh%rr(2,H_mesh%jjs(:,ms1))*w_cs(:,ls))
 
           IF (inputs%if_level_set.AND.inputs%variation_sigma_fluid) THEN
@@ -4626,8 +4629,8 @@ CONTAINS
              J_over_sigma_l(k) = J_over_sigma_gauss(index,k) + sigma_curl_gauss(index,k)
           END DO
           muhl2=SUM(mu_H_field(H_mesh%jjs(:,ms2))*wws(:,ls))
-          gaussp2(1) = SUM(H_mesh%rr(1,H_mesh%jjs(:,ms2))*wws(:,ls))    
-          gaussp2(2) = SUM(H_mesh%rr(2,H_mesh%jjs(:,ms2))*wws(:,ls))    
+          gaussp2(1) = SUM(H_mesh%rr(1,H_mesh%jjs(:,ms2))*wws(:,ls))
+          gaussp2(2) = SUM(H_mesh%rr(2,H_mesh%jjs(:,ms2))*wws(:,ls))
           IF (MAXVAL(ABS(gaussp1-gaussp2)) > 1.d-11) THEN
              WRITE(*,*) ' BUG courant_mu '
              STOP
@@ -4648,7 +4651,7 @@ CONTAINS
           END IF
           ! Division by 2 to get the mean is in definition of x below.
 
-          !---------forcage pour H            
+          !---------forcage pour H
           DO ci = 1, 2
              IF (ci==1) THEN
                 normi = rnorms(:,ls,ms1)
@@ -4715,13 +4718,13 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:), INTENT(IN)              :: sigma_np
     REAL(KIND=8), DIMENSION(H_mesh%np,6)                :: src_H
 
-    REAL(KIND=8), DIMENSION(H_mesh%gauss%n_ws,H_mesh%gauss%l_Gs)   :: w_cs   
+    REAL(KIND=8), DIMENSION(H_mesh%gauss%n_ws,H_mesh%gauss%l_Gs)   :: w_cs
     REAL(KIND=8), DIMENSION(2) :: normi
-    REAL(KIND=8), DIMENSION(H_mesh%gauss%n_ws) :: wwsi 
+    REAL(KIND=8), DIMENSION(H_mesh%gauss%n_ws) :: wwsi
     REAL(KIND=8) ::  x, ray, hm1,y
     INTEGER :: i, ni, ms, k, ls, n_ws1, n_ws2, ms1, ms2, n_w1, n_w2, m1, m2, ci, n_wsi, indice_i
     INTEGER :: mesh_id1, mesh_id2
-    REAL(KIND=8), DIMENSION(6)             :: jump_sol 
+    REAL(KIND=8), DIMENSION(6)             :: jump_sol
     REAL(KIND=8) :: ref, diff
     REAL(KIND=8) :: sigmal1, sigmal2, thetai
     !April 17th, 2008, JLG
@@ -4753,7 +4756,7 @@ CONTAINS
           DO ls = 1, l_Gs
              w_cs(1,ls)= wws(2,ls)
              w_cs(2,ls)= wws(1,ls)
-             IF (n_ws1==3) w_cs(n_ws1,ls) = wws(n_ws1,ls) 
+             IF (n_ws1==3) w_cs(n_ws1,ls) = wws(n_ws1,ls)
              WRITE(*,*) ' Ouaps! oder of shape functions changed?'
           END DO
        END IF
@@ -4790,7 +4793,7 @@ CONTAINS
              jump_sol(k) =+SUM(NL(H_mesh%jjs(1:n_ws1,ms1),k)*w_cs(1:n_ws1,ls))
           END DO
 
-          !---------forcage pour H            
+          !---------forcage pour H
           DO ci = 1, 2
              IF (ci==1) THEN
                 normi = rnorms(:,ls,ms1)
@@ -4854,16 +4857,16 @@ CONTAINS
     TYPE(interface_type),                  INTENT(IN)   :: interface_H_mu
     REAL(KIND=8),                          INTENT(IN)   :: stab_jump
     REAL(KIND=8), DIMENSION(:),            INTENT(IN)   :: sigma
-    REAL(KIND=8), DIMENSION(:,:),          INTENT(IN)   :: function_of_rhoLi 
+    REAL(KIND=8), DIMENSION(:,:),          INTENT(IN)   :: function_of_rhoLi
     REAL(KIND=8), DIMENSION(:),            INTENT(IN)   :: sigma_np
     REAL(KIND=8), DIMENSION(H_mesh%np,6)                :: src_H
-    REAL(KIND=8), DIMENSION(H_mesh%gauss%n_ws,H_mesh%gauss%l_Gs)   :: w_cs   
+    REAL(KIND=8), DIMENSION(H_mesh%gauss%n_ws,H_mesh%gauss%l_Gs)   :: w_cs
     REAL(KIND=8), DIMENSION(2) :: normi
-    REAL(KIND=8), DIMENSION(H_mesh%gauss%n_ws) :: wwsi 
+    REAL(KIND=8), DIMENSION(H_mesh%gauss%n_ws) :: wwsi
     REAL(KIND=8) ::  x, ray, hm1,y
     INTEGER :: i, ni, ms, k, ls, n_ws1, n_ws2, ms1, ms2, n_w1, n_w2, m1, m2, ci, n_wsi, indice_i, index
     INTEGER :: mesh_id1, mesh_id2
-    REAL(KIND=8), DIMENSION(6)             :: jump_sol 
+    REAL(KIND=8), DIMENSION(6)             :: jump_sol
     REAL(KIND=8) :: ref, diff
     REAL(KIND=8) :: sigmal1, sigmal2, thetai
     !April 17th, 2008, JLG
@@ -4901,7 +4904,7 @@ CONTAINS
           DO ls = 1, l_Gs
              w_cs(1,ls)= wws(2,ls)
              w_cs(2,ls)= wws(1,ls)
-             IF (n_ws1==3) w_cs(n_ws1,ls) = wws(n_ws1,ls) 
+             IF (n_ws1==3) w_cs(n_ws1,ls) = wws(n_ws1,ls)
              WRITE(*,*) ' Ouaps! oder of shape functions changed?'
           END DO
        END IF
@@ -4941,7 +4944,7 @@ CONTAINS
              jump_sol(k) = function_of_rhoLi(index,k)
           END DO
 
-          !---------forcage pour H            
+          !---------forcage pour H
           DO ci = 1, 2
              IF (ci==1) THEN
                 normi = rnorms(:,ls,ms1)
@@ -5004,7 +5007,7 @@ CONTAINS
     TYPE(mesh_type),                       INTENT(IN)   :: H_mesh
     TYPE(interface_type),                  INTENT(IN)   :: interface_H_mu
     INTEGER,      DIMENSION(:),            INTENT(IN)   :: list_mode
-    REAL(KIND=8), DIMENSION(:,:,:),        INTENT(IN)   :: rhoLi, der_pot_rhoLi_node 
+    REAL(KIND=8), DIMENSION(:,:,:),        INTENT(IN)   :: rhoLi, der_pot_rhoLi_node
     REAL(KIND=8), DIMENSION(:,:,:),        INTENT(OUT)  :: minus_grad_times_der_pot_rhoLi
 
     INTEGER,      DIMENSION(H_mesh%gauss%n_w)           :: j_loc
@@ -5013,8 +5016,8 @@ CONTAINS
     REAL(KIND=8), DIMENSION(2, H_mesh%gauss%n_w)       :: dws_loc
     REAL(KIND=8) ::  ray
     INTEGER :: i, ms, k, ls, index, mode, m, ms1, ms2, m1, m2, mms, mesh_id1, mesh_id2
-    REAL(KIND=8), DIMENSION(H_mesh%gauss%l_Gs*interface_H_mu%mes,6,SIZE(list_mode))  :: minus_grad_rhoLi 
-    REAL(KIND=8), DIMENSION(H_mesh%gauss%l_Gs*interface_H_mu%mes,2,SIZE(list_mode))  :: der_pot_rhoLi_gauss 
+    REAL(KIND=8), DIMENSION(H_mesh%gauss%l_Gs*interface_H_mu%mes,6,SIZE(list_mode))  :: minus_grad_rhoLi
+    REAL(KIND=8), DIMENSION(H_mesh%gauss%l_Gs*interface_H_mu%mes,2,SIZE(list_mode))  :: der_pot_rhoLi_gauss
     REAL(KIND=8), DIMENSION(3)                  :: temps
     INTEGER                                     :: code, m_max_pad, bloc_size, nb_procs
     MPI_Comm       :: communicator
@@ -5076,7 +5079,7 @@ CONTAINS
     bloc_size = SIZE(minus_grad_rhoLi,1)/nb_procs+1
     m_max_pad = 3*SIZE(list_mode)*nb_procs/2
     CALL FFT_SCALAR_VECT_DCL(communicator, minus_grad_rhoLi, der_pot_rhoLi_gauss,minus_grad_times_der_pot_rhoLi,&
-         1, nb_procs,bloc_size, m_max_pad, temps) 
+         1, nb_procs,bloc_size, m_max_pad, temps)
 
   END SUBROUTINE compute_minus_grad_times_der_pot_rhoLi
 
@@ -5108,7 +5111,7 @@ CONTAINS
     INTEGER :: mesh_id1
     REAL(KIND=8), DIMENSION(6)                   :: JsolH_anal, B_ext_l
     REAL(KIND=8) :: muhl1, hm1
-    REAL(KIND=8), DIMENSION(6,H_mesh%gauss%l_Gs) :: Hloc, Hlocxn 
+    REAL(KIND=8), DIMENSION(6,H_mesh%gauss%l_Gs) :: Hloc, Hlocxn
     REAL(KIND=8), DIMENSION(2,H_mesh%gauss%l_Gs) :: rloc
     REAL(KIND=8), DIMENSION(1)                   :: muloc
     INTEGER                                      :: index
@@ -5140,15 +5143,15 @@ CONTAINS
 
     DO count = 1, SIZE(Dirichlet_bdy_H_sides)
        ms = Dirichlet_bdy_H_sides(count)
-       !hm1 = stab_colle_H_mu/SUM(H_mesh%gauss%rjs(:,ms))     
+       !hm1 = stab_colle_H_mu/SUM(H_mesh%gauss%rjs(:,ms))
        hm1 = stab_colle_H_mu/(SUM(H_mesh%gauss%rjs(:,ms))*inputs%sigma_min) ! MODIFICATION: normalization for dirichlet term RHS
        m1 = H_mesh%neighs(ms)
        mesh_id1 = H_mesh%i_d(m1)
        muloc(1) = mu_H_field(H_mesh%jj(1,m1))
 
        DO ls = 1, H_mesh%gauss%l_Gs
-          rloc(1,ls) = SUM(H_mesh%rr(1,H_mesh%jjs(:,ms))*H_mesh%gauss%wws(:,ls)) 
-          rloc(2,ls) = SUM(H_mesh%rr(2,H_mesh%jjs(:,ms))*H_mesh%gauss%wws(:,ls)) 
+          rloc(1,ls) = SUM(H_mesh%rr(1,H_mesh%jjs(:,ms))*H_mesh%gauss%wws(:,ls))
+          rloc(2,ls) = SUM(H_mesh%rr(2,H_mesh%jjs(:,ms))*H_mesh%gauss%wws(:,ls))
        END DO
 
        DO k = 1, 6
@@ -5172,8 +5175,8 @@ CONTAINS
 
           ! Side 1
           muhl1=SUM(mu_H_field(H_mesh%jjs(:,ms))*H_mesh%gauss%wws(:,ls))
-          gaussp1(1) = rloc(1,ls) !SUM(H_mesh%rr(1,H_mesh%jjs(:,ms))*H_mesh%gauss%wws(:,ls))    
-          gaussp1(2) = rloc(2,ls) !SUM(H_mesh%rr(2,H_mesh%jjs(:,ms))*H_mesh%gauss%wws(:,ls))    
+          gaussp1(1) = rloc(1,ls) !SUM(H_mesh%rr(1,H_mesh%jjs(:,ms))*H_mesh%gauss%wws(:,ls))
+          gaussp1(2) = rloc(2,ls) !SUM(H_mesh%rr(2,H_mesh%jjs(:,ms))*H_mesh%gauss%wws(:,ls))
 !!$          DO k=1, 6
 !!$             JsolH_anal(k) = Jexact_gauss(k, gaussp1, mode, one ,sigma(m1), muhl1, &
 !!$                  time, mesh_id1, B_ext_l)/sigma(m1) &
@@ -5248,7 +5251,7 @@ CONTAINS
 !!$    USE input_data
 !!$    USE my_util
 !!$#include "petsc/finclude/petsc.h"
-!!$    USE petsc  
+!!$    USE petsc
 !!$    IMPLICIT NONE
 !!$    TYPE(interface_type),           INTENT(IN)    :: interface_H_phi
 !!$    TYPE(mesh_type),                INTENT(IN)    :: mesh
@@ -5266,7 +5269,7 @@ CONTAINS
 !!$
 !!$    CALL MPI_COMM_RANK(communicator, rank, ierr)
 !!$
-!!$    nb_dom = inputs%nb_dom_phi 
+!!$    nb_dom = inputs%nb_dom_phi
 !!$    ALLOCATE(on_proc_loc(nb_dom), on_proc(nb_dom))
 !!$    ALLOCATE(not_cav_loc(nb_dom), not_cav(nb_dom))
 !!$    on_proc_loc = -1
@@ -5366,7 +5369,7 @@ CONTAINS
 !!$    IMPLICIT NONE
 !!$    TYPE(mesh_type),                INTENT(IN)  :: mesh
 !!$    INTEGER,      DIMENSION(:)    , INTENT(IN)  :: jj_v_to_H
-!!$    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode 
+!!$    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
 !!$    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: H_in
 !!$    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: one_over_sigma_in
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%me), INTENT(IN)  :: sigma_nj_m
@@ -5376,7 +5379,7 @@ CONTAINS
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%me,2,SIZE(list_mode)) :: one_over_sigma_gauss
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%me,6,SIZE(list_mode)) :: RotH_bar
 !!$    INTEGER,      DIMENSION(mesh%gauss%n_w)                           :: j_loc
-!!$    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)            :: dw_loc     
+!!$    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)            :: dw_loc
 !!$    INTEGER                                                           :: m, l , i, mode, index, k
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)                         :: H_in_loc
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,2)                         :: one_over_sigma_in_loc
@@ -5412,7 +5415,7 @@ CONTAINS
 !!$             H_gauss(index,4,i) = SUM(H_in_loc(:,4)*mesh%gauss%ww(:,l))
 !!$             H_gauss(index,6,i) = SUM(H_in_loc(:,6)*mesh%gauss%ww(:,l))
 !!$             !-----------------Curl of H on gauss points--------------------------------
-!!$             !coeff sur les cosinus 
+!!$             !coeff sur les cosinus
 !!$             RotH(index,1,i) = mode/ray*H_gauss(index,6,i) &
 !!$                  -SUM(H_in_loc(:,3)*dw_loc(2,:))
 !!$             RotH(index,4,i) = SUM(H_in_loc(:,2)*dw_loc(2,:)) &
@@ -5420,7 +5423,7 @@ CONTAINS
 !!$             RotH(index,5,i) = 1/ray*H_gauss(index,3,i) &
 !!$                  +SUM(H_in_loc(:,3)*dw_loc(1,:)) &
 !!$                  -mode/ray*H_gauss(index,2,i)
-!!$             !coeff sur les sinus       
+!!$             !coeff sur les sinus
 !!$             RotH(index,2,i) =-mode/ray*H_gauss(index,5,i) &
 !!$                  -SUM(H_in_loc(:,4)*dw_loc(2,:))
 !!$             RotH(index,3,i) = SUM(H_in_loc(:,1)*dw_loc(2,:)) &
@@ -5442,7 +5445,7 @@ CONTAINS
 !!$             !-----------------RotHbar on gauss points----------------------------------
 !!$             sigma_np_gauss = SUM(sigma_nj_m(:,m)*mesh%gauss%ww(:,l))
 !!$             DO k = 1, 6
-!!$                RotH_bar(index,k,i) = RotH(index,k,i)/sigma_np_gauss             
+!!$                RotH_bar(index,k,i) = RotH(index,k,i)/sigma_np_gauss
 !!$             END DO
 !!$          ENDDO
 !!$       ENDDO
@@ -5472,7 +5475,7 @@ CONTAINS
 !!$    TYPE(mesh_type),                INTENT(IN)  :: mesh
 !!$    INTEGER,      DIMENSION(:)    , INTENT(IN)  :: jj_v_to_H
 !!$    INTEGER,      DIMENSION(:),     INTENT(IN)  :: Dirichlet_bdy_H_sides
-!!$    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode 
+!!$    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
 !!$    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: H_in
 !!$    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: one_over_sigma_in
 !!$    REAL(KIND=8), DIMENSION(:),     INTENT(IN)  :: sigma_np
@@ -5481,7 +5484,7 @@ CONTAINS
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%l_Gs*SIZE(Dirichlet_bdy_H_sides),6,SIZE(list_mode)) :: H_gauss, RotH
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%l_Gs*SIZE(Dirichlet_bdy_H_sides),6,SIZE(list_mode)) :: RotH_bar
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%l_Gs*SIZE(Dirichlet_bdy_H_sides),2,SIZE(list_mode)) :: one_over_sigma_gauss
-!!$    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)            :: dw_loc     
+!!$    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)            :: dw_loc
 !!$    INTEGER                                                           :: ms, ls , i, mode, index, k
 !!$    INTEGER,      DIMENSION(mesh%gauss%n_ws)                          :: j_loc
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,6)                        :: H_in_loc
@@ -5521,7 +5524,7 @@ CONTAINS
 !!$             H_gauss(index,4,i) = SUM(H_in_loc(:,4)*mesh%gauss%wws(:,ls))
 !!$             H_gauss(index,6,i) = SUM(H_in_loc(:,6)*mesh%gauss%wws(:,ls))
 !!$             !-----------------Curl of H on bdy gauss points--------------------------------
-!!$             !coeff sur les cosinus 
+!!$             !coeff sur les cosinus
 !!$             RotH(index,1,i) = mode/ray*H_gauss(index,6,i) &
 !!$                  -SUM(H_in(mesh%jj(:,m1),3,i)*dw_loc(2,:))
 !!$
@@ -5532,7 +5535,7 @@ CONTAINS
 !!$                  +SUM(H_in(mesh%jj(:,m1),3,i)*dw_loc(1,:)) &
 !!$                  -mode/ray*H_gauss(index,2,i)
 !!$
-!!$             !coeff sur les sinus       
+!!$             !coeff sur les sinus
 !!$             RotH(index,2,i) =-mode/ray*H_gauss(index,5,i) &
 !!$                  -SUM(H_in(mesh%jj(:,m1),4,i)*dw_loc(2,:))
 !!$
@@ -5589,7 +5592,7 @@ CONTAINS
 !!$    TYPE(mesh_type),                INTENT(IN)  :: mesh
 !!$    INTEGER,      DIMENSION(:)    , INTENT(IN)  :: jj_v_to_H
 !!$    TYPE(interface_type),           INTENT(IN)  :: interface_H_mu
-!!$    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode 
+!!$    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
 !!$    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: H_in
 !!$    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: one_over_sigma_in
 !!$    REAL(KIND=8), DIMENSION(:),     INTENT(IN)  :: sigma_np
@@ -5597,8 +5600,8 @@ CONTAINS
 !!$    REAL(KIND=8), DIMENSION(:,:,:)              :: V_out
 !!$    REAL(KIND=8), DIMENSION(2*mesh%gauss%l_Gs*interface_H_mu%mes,6,SIZE(list_mode)) :: H_gauss, RotH
 !!$    REAL(KIND=8), DIMENSION(2*mesh%gauss%l_Gs*interface_H_mu%mes,6,SIZE(list_mode)) :: RotH_bar
-!!$    REAL(KIND=8), DIMENSION(2*mesh%gauss%l_Gs*interface_H_mu%mes,2,SIZE(list_mode)) :: one_over_sigma_gauss  
-!!$    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)            :: dw_loc     
+!!$    REAL(KIND=8), DIMENSION(2*mesh%gauss%l_Gs*interface_H_mu%mes,2,SIZE(list_mode)) :: one_over_sigma_gauss
+!!$    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)            :: dw_loc
 !!$    INTEGER                                                           :: ms, ls , i, mode, index, k
 !!$    INTEGER,      DIMENSION(mesh%gauss%n_ws)                          :: j_loc1, j_loc2
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,6)                        :: H_in_loc1, H_in_loc2
@@ -5622,7 +5625,7 @@ CONTAINS
 !!$          DO ls = 1, mesh%gauss%l_Gs
 !!$             w_cs(1,ls)= mesh%gauss%wws(2,ls)
 !!$             w_cs(2,ls)= mesh%gauss%wws(1,ls)
-!!$             IF (mesh%gauss%n_ws==3) w_cs(mesh%gauss%n_ws,ls) = mesh%gauss%wws(mesh%gauss%n_ws,ls) 
+!!$             IF (mesh%gauss%n_ws==3) w_cs(mesh%gauss%n_ws,ls) = mesh%gauss%wws(mesh%gauss%n_ws,ls)
 !!$             WRITE(*,*) ' Ouaps! oder of shape functions changed?'
 !!$          END DO
 !!$       END IF
@@ -5639,7 +5642,7 @@ CONTAINS
 !!$          mesh_id1 = mesh%i_d(m1)
 !!$          mesh_id2 = mesh%i_d(m2)
 !!$          j_loc1 = mesh%jjs(:,ms1)
-!!$          j_loc2 = mesh%jjs(:,ms2)          
+!!$          j_loc2 = mesh%jjs(:,ms2)
 !!$          DO k = 1, 6
 !!$             H_in_loc1(:,k) = H_in(j_loc1,k,i)
 !!$             H_in_loc2(:,k) = H_in(j_loc2,k,i)
@@ -5663,7 +5666,7 @@ CONTAINS
 !!$             H_gauss(index,4,i) = SUM(H_in_loc1(:,4)*w_cs(:,ls))
 !!$             H_gauss(index,6,i) = SUM(H_in_loc1(:,6)*w_cs(:,ls))
 !!$             !-----------------Curl of H on bdy gauss points--------------------------------
-!!$             !coeff sur les cosinus 
+!!$             !coeff sur les cosinus
 !!$             RotH(index,1,i) = mode/ray*H_gauss(index,6,i) &
 !!$                  -SUM(H_in(mesh%jj(:,m1),3,i)*dw_loc(2,:))
 !!$             RotH(index,4,i) = SUM(H_in(mesh%jj(:,m1),2,i)*dw_loc(2,:)) &
@@ -5671,7 +5674,7 @@ CONTAINS
 !!$             RotH(index,5,i) = 1/ray*H_gauss(index,3,i) &
 !!$                  +SUM(H_in(mesh%jj(:,m1),3,i)*dw_loc(1,:)) &
 !!$                  -mode/ray*H_gauss(index,2,i)
-!!$             !coeff sur les sinus       
+!!$             !coeff sur les sinus
 !!$             RotH(index,2,i) =-mode/ray*H_gauss(index,5,i) &
 !!$                  -SUM(H_in(mesh%jj(:,m1),4,i)*dw_loc(2,:))
 !!$             RotH(index,3,i) = SUM(H_in(mesh%jj(:,m1),1,i)*dw_loc(2,:)) &
@@ -5710,7 +5713,7 @@ CONTAINS
 !!$             H_gauss(index,4,i) = SUM(H_in_loc2(:,4)*mesh%gauss%wws(:,ls))
 !!$             H_gauss(index,6,i) = SUM(H_in_loc2(:,6)*mesh%gauss%wws(:,ls))
 !!$             !-----------------Curl of H on bdy gauss points--------------------------------
-!!$             !coeff sur les cosinus 
+!!$             !coeff sur les cosinus
 !!$             RotH(index,1,i) = mode/ray*H_gauss(index,6,i) &
 !!$                  -SUM(H_in(mesh%jj(:,m2),3,i)*dw_loc(2,:))
 !!$             RotH(index,4,i) = SUM(H_in(mesh%jj(:,m2),2,i)*dw_loc(2,:)) &
@@ -5718,7 +5721,7 @@ CONTAINS
 !!$             RotH(index,5,i) = 1/ray*H_gauss(index,3,i) &
 !!$                  +SUM(H_in(mesh%jj(:,m2),3,i)*dw_loc(1,:)) &
 !!$                  -mode/ray*H_gauss(index,2,i)
-!!$             !coeff sur les sinus       
+!!$             !coeff sur les sinus
 !!$             RotH(index,2,i) =-mode/ray*H_gauss(index,5,i) &
 !!$                  -SUM(H_in(mesh%jj(:,m2),4,i)*dw_loc(2,:))
 !!$             RotH(index,3,i) = SUM(H_in(mesh%jj(:,m2),1,i)*dw_loc(2,:)) &
@@ -5794,7 +5797,7 @@ CONTAINS
 !!$       mode = list_mode(i)
 !!$       index = 0
 !!$       DO m = 1, mesh%me
-!!$          mesh_id1 = mesh%i_d(m) 
+!!$          mesh_id1 = mesh%i_d(m)
 !!$          j_loc = mesh%jj(:,m)
 !!$          DO k = 1, 6
 !!$             B_in_loc(:,k) = B_in(j_loc,k,i)
@@ -5817,7 +5820,7 @@ CONTAINS
 !!$             B_ext_l(6) = SUM(B_in_loc(:,6)*mesh%gauss%ww(:,l))
 !!$             gaussp = 0.d0
 !!$             DO ni = 1, mesh%gauss%n_w
-!!$                gaussp = gaussp + mesh%rr(:,mesh%jj(ni,m))*mesh%gauss%ww(ni,l)         
+!!$                gaussp = gaussp + mesh%rr(:,mesh%jj(ni,m))*mesh%gauss%ww(ni,l)
 !!$             ENDDO
 !!$             muhl=SUM(mu_H_field(mesh%jj(:,m))*mesh%gauss%ww(:,l))
 !!$             !-----------------J_exact on gauss points----------------------------------
@@ -5888,7 +5891,7 @@ CONTAINS
 !!$       DO count = 1, SIZE(Dirichlet_bdy_H_sides)
 !!$          ms = Dirichlet_bdy_H_sides(count)
 !!$          m1 = mesh%neighs(ms)
-!!$          mesh_id1 = mesh%i_d(m1) 
+!!$          mesh_id1 = mesh%i_d(m1)
 !!$          j_loc = mesh%jjs(:,ms)
 !!$          DO k = 1, 6
 !!$             B_in_loc(:,k) = B_in(j_loc,k,i)
@@ -5912,7 +5915,7 @@ CONTAINS
 !!$             B_ext_l(6) = SUM(B_in_loc(:,6)*mesh%gauss%wws(:,ls))
 !!$             gaussp = 0.d0
 !!$             DO ni = 1, mesh%gauss%n_ws
-!!$                gaussp = gaussp + mesh%rr(:,mesh%jjs(ni,ms))*mesh%gauss%wws(ni,ls)         
+!!$                gaussp = gaussp + mesh%rr(:,mesh%jjs(ni,ms))*mesh%gauss%wws(ni,ls)
 !!$             ENDDO
 !!$             muhl=SUM(mu_H_field(mesh%jjs(:,ms))*mesh%gauss%wws(:,ls))
 !!$             !-----------------J_exact on gauss points----------------------------------
@@ -5958,7 +5961,7 @@ CONTAINS
 !!$    IMPLICIT NONE
 !!$    TYPE(mesh_type),                INTENT(IN)  :: mesh
 !!$    INTEGER,      DIMENSION(:)    , INTENT(IN)  :: jj_v_to_H
-!!$    TYPE(interface_type),           INTENT(IN)  :: interface_H_mu    
+!!$    TYPE(interface_type),           INTENT(IN)  :: interface_H_mu
 !!$    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
 !!$    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: B_in
 !!$    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: one_over_sigma_tot
@@ -5972,7 +5975,7 @@ CONTAINS
 !!$    REAL(KIND=8)               :: muhl, diff, ref, ray
 !!$    REAL(KIND=8), DIMENSION(2) :: gaussp
 !!$    INTEGER               :: mode, k, i, mesh_id1, mesh_id2, ni
-!!$    INTEGER               :: nb_procs, bloc_size, m_max_pad, code     
+!!$    INTEGER               :: nb_procs, bloc_size, m_max_pad, code
 !!$    INTEGER                                         :: ms, ms1, ms2, m1, m2, ls, index
 !!$    INTEGER,      DIMENSION(mesh%gauss%n_ws)        :: j_loc1, j_loc2
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,6)      :: B_in_loc1, B_in_loc2
@@ -5994,7 +5997,7 @@ CONTAINS
 !!$          DO ls = 1, mesh%gauss%l_Gs
 !!$             w_cs(1,ls)= mesh%gauss%wws(2,ls)
 !!$             w_cs(2,ls)= mesh%gauss%wws(1,ls)
-!!$             IF (mesh%gauss%n_ws==3) w_cs(mesh%gauss%n_ws,ls) = mesh%gauss%wws(mesh%gauss%n_ws,ls) 
+!!$             IF (mesh%gauss%n_ws==3) w_cs(mesh%gauss%n_ws,ls) = mesh%gauss%wws(mesh%gauss%n_ws,ls)
 !!$             WRITE(*,*) ' Ouaps! oder of shape functions changed?'
 !!$          END DO
 !!$       END IF
@@ -6011,7 +6014,7 @@ CONTAINS
 !!$          mesh_id1 = mesh%i_d(m1)
 !!$          mesh_id2 = mesh%i_d(m2)
 !!$          j_loc1 = mesh%jjs(:,ms1)
-!!$          j_loc2 = mesh%jjs(:,ms2)          
+!!$          j_loc2 = mesh%jjs(:,ms2)
 !!$          DO k = 1, 6
 !!$             B_in_loc1(:,k) = B_in(j_loc1,k,i)
 !!$             B_in_loc2(:,k) = B_in(j_loc2,k,i)
