@@ -2043,6 +2043,7 @@ CONTAINS
       IMPLICIT NONE
       TYPE(mesh_type) :: mesh, mesh_loc
       INTEGER, DIMENSION(2), INTENT(IN) :: me_loc, mes_loc, np_loc
+      NTEGER, DIMENSION(2) :: is
       INTEGER, DIMENSION(mesh%me) :: m_glob_to_loc, m_loc_to_glob
       INTEGER, DIMENSION(mesh%np) :: glob_to_loc, loc_to_glob
       LOGICAL, DIMENSION(mesh%np) :: virgin
