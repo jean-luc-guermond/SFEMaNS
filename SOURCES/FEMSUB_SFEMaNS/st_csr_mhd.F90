@@ -86,7 +86,6 @@ CONTAINS
       ALLOCATE(ja_work(np_glob, param), nja_glob(np_glob))
       ALLOCATE(per_loc(2 * param))
       nja_glob = 0
-      IF(rank == 0) WRITE(*,*) 'extra', pmag_mesh%mextra, H_mesh%mextra
       ! Block HxH
       IF (H_mesh%me /=0) THEN
          DO m = 1, H_mesh%me

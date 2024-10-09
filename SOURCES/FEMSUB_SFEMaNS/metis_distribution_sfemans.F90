@@ -2541,16 +2541,6 @@ CONTAINS
          END DO
       END DO
       !===END Find the isolated points on the border
-      IF (proc==1) THEN
-         count = count + 1
-         part = -1.d0
-         part(me_loc(1):me_loc(2)) = 0.d0
-         part(mesh_loc%jcc_extra) = -2.d0
-         part(mesh%neighs) = mesh%sides
-         part(mesh_loc%neighs_extra) = -3.d0
-         WRITE(tit, '(i1)') count
-         CALL plot_const_p1_label(mesh%jj, mesh%rr, 1.d0 * part, tit // 'dd.plt')
-      END IF
 
    END SUBROUTINE create_local_mesh_with_extra_layer
 

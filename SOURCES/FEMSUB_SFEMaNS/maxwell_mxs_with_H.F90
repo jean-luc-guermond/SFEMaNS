@@ -450,7 +450,6 @@ CONTAINS
           END IF
           tps = user_time() - tps
 !!$          WRITE(*,*) ' Tps create_local_petsc_matrix', tps
-      write(*,*) 'ok15.2'
 
           tps = user_time()
           CALL mat_H_p_phi_maxwell(H_mesh,pmag_mesh,phi_mesh,interface_H_phi, &
@@ -458,7 +457,6 @@ CONTAINS
                LA_H, LA_pmag, LA_phi, H_p_phi_mat1(i), H_p_phi_mat2(i), sigma_nj_m, sigma)
           tps = user_time() - tps
 !!$          WRITE(*,*) ' Tps mat_H_p_phi_maxwell', tps
-      write(*,*) 'ok15.3'
 
           !Take care of discontinuous mu
           tps = user_time()
@@ -1351,9 +1349,6 @@ CONTAINS
                 jb = LA_pmag%loc_to_glob(1,j)
                 jx = nj
                 jdxn(jx) = jb - 1
-                IF (jb - 1 == 1921 .and. ib -1 == 3809 ) WRITE(*,*) rank, H_mesh%loc_to_glob(i), ib, pmag_mesh%loc_to_glob(j),&
-                     jb, 'b', m, pmag_mesh%discell, pmag_mesh%loc_to_glob(1), 'jj', &
-                     H_mesh%loc_to_glob(H_mesh%jj(:, m)),  pmag_mesh%loc_to_glob(pmag_mesh%jj(:, m))
                 mat_loc1(ix,jx) = THpmag(k,ni,nj)
                 mat_loc2(ix,jx) = eps*THpmag(k,ni,nj)
              END DO

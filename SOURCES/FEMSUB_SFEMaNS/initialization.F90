@@ -350,7 +350,6 @@ CONTAINS
             IF (if_concentration) THEN
                CALL projection_concentration(H_mesh, 2 * concn - concn_m1, jj_c_to_H, conc_to_H)
             END IF
-      write(*,*) 'ok7'
 
             CALL maxwell_decouple(comm_one_d, H_mesh, pmag_mesh, phi_mesh, &
                  interface_H_phi, interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, v_to_Max, &
@@ -360,7 +359,6 @@ CONTAINS
 
          END IF
       END IF
-      write(*,*) 'ok5'
 
    END SUBROUTINE run_SFEMaNS
    !---------------------------------------------------------------------------

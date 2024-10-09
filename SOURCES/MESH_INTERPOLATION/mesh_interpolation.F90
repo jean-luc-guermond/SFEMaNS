@@ -1712,24 +1712,6 @@ CONTAINS
       END IF
       CALL MPI_Barrier(MPI_Comm_WORLD, code)
 
-      IF (rank == 0) THEN
-         write(*,*) '????'
-         CALL plot_scalar_field(conc_mesh_out%jj, conc_mesh_out%rr, concn_out(:, 1, 1), 'conc1.plt')
-         CALL plot_scalar_field(conc_mesh_out%jj, conc_mesh_out%rr, concn_out(:, 2, 1), 'conc2.plt')
-         CALL plot_scalar_field(H_mesh_out%jj, H_mesh_out%rr, Hn_out(:, 1, 1), 'H1.plt')
-         CALL plot_scalar_field(H_mesh_out%jj, H_mesh_out%rr, Hn_out(:, 2, 1), 'H2.plt')
-         CALL plot_scalar_field(H_mesh_out%jj, H_mesh_out%rr, Hn_out(:, 3, 1), 'H3.plt')
-         CALL plot_scalar_field(H_mesh_out%jj, H_mesh_out%rr, Hn_out(:, 4, 1), 'H4.plt')
-         CALL plot_scalar_field(H_mesh_out%jj, H_mesh_out%rr, Hn_out(:, 5, 1), 'H5.plt')
-         CALL plot_scalar_field(H_mesh_out%jj, H_mesh_out%rr, Hn_out(:, 6, 1), 'H6.plt')
-         CALL plot_scalar_field(vv_mesh_out%jj, vv_mesh_out%rr, un_out(:, 1, 1), 'uu1.plt')
-         CALL plot_scalar_field(vv_mesh_out%jj, vv_mesh_out%rr, un_out(:, 2, 1), 'uu2.plt')
-         CALL plot_scalar_field(vv_mesh_out%jj, vv_mesh_out%rr, un_out(:, 3, 1), 'uu3.plt')
-         CALL plot_scalar_field(vv_mesh_out%jj, vv_mesh_out%rr, un_out(:, 4, 1), 'uu4.plt')
-         CALL plot_scalar_field(vv_mesh_out%jj, vv_mesh_out%rr, un_out(:, 5, 1), 'uu5.plt')
-         CALL plot_scalar_field(vv_mesh_out%jj, vv_mesh_out%rr, un_out(:, 6, 1), 'uu6.plt')
-      END IF
-
       CALL PetscFinalize(ierr)
 
    END SUBROUTINE mesh_interpol
