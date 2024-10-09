@@ -2377,13 +2377,26 @@ CONTAINS
             nb_extra = nb_extra + 1
             virginss(m) = .FALSE.
             IF (MINVAL(ABS(mesh%neighs - m)) == 0) THEN
-               CALL find_cell_interface(mesh, m, m2)
+               is = 0
+               CALL find_cell_interface(mesh, m, m2, is)
                IF (m2 > me_loc(2)) THEN
                   IF (virginss(m2)) THEN
                      nb_extra = nb_extra + 1
                      virginss(m2) = .FALSE.
                   END IF
                END IF
+               DO i = 1, 2
+                  DO m2 = 1, mesh%me
+                     IF (MINVAL(ABS(mesh%jj(:, m2) - is(i))) == 0) THEN
+                        IF (m2 > me_loc(2)) THEN
+                           IF (virginss(m2)) THEN
+                              nb_extra = nb_extra + 1
+                              virginss(m2) = .FALSE.
+                           END IF
+                        END IF
+                     END IF
+                  END DO
+               END DO
             END IF
          END IF
       END DO
@@ -2420,6 +2433,21 @@ CONTAINS
                      virginss(m2) = .FALSE.
                   END IF
                END IF
+               DO i = 1, 2
+                  DO m2 = 1, mesh%me
+                     IF (MINVAL(ABS(mesh%jj(:, m2) - is(i))) == 0) THEN
+                        IF (m2 > me_loc(2)) THEN
+                           IF (virginss(m2)) THEN
+                              nb_extra = nb_extra + 1
+                              mesh_loc%jj_extra(:, nb_extra) = mesh%jj(:, m2)
+                              mesh_loc%jce_extra(:, nb_extra) = mesh%jce(:, m2)
+                              mesh_loc%jcc_extra(nb_extra) = m2
+                              virginss(m2) = .FALSE.
+                           END IF
+                        END IF
+                     END IF
+                  END DO
+               END DO
             END IF
          END IF
       END DO
@@ -2510,9 +2538,6 @@ CONTAINS
          part(mesh_loc%jcc_extra) = -2.d0
          part(mesh%neighs) = mesh%sides
          part(mesh_loc%neighs_extra) = -3.d0
-         part(188+489) = -4.d0
-         write(*, *) 'dd', count, mesh%jj(:, 188+489)
-         write(*,*) 'dd ex', count , mesh_loc%jcc_extra, 'jj', mesh_loc%jj_extra(:,:)
          WRITE(tit, '(i1)') count
          CALL plot_const_p1_label(mesh%jj, mesh%rr, 1.d0 * part, tit // 'dd.plt')
       END IF
@@ -2625,10 +2650,11 @@ CONTAINS
 
    END SUBROUTINE reassign_per_pts
 
-   SUBROUTINE find_cell_interface(mesh, m1, m2)
+   SUBROUTINE find_cell_interface(mesh, m1, m2, is)
       USE def_type_mesh
       TYPE(mesh_type), INTENT(IN) :: mesh
       INTEGER :: m1, m2, ms1, ms2, k, ns
+      INTEGER, DIMENSION(2) :: is
       REAL(KIND = 8) :: eps_ref = 1.d-7, r_norm, epsilon
       LOGICAL :: okay
       INTEGER, DIMENSION(2) :: list
@@ -2652,6 +2678,7 @@ CONTAINS
             IF (r_norm <= 1d-9) THEN
                CYCLE
             END IF
+            is = mesh%jjs(1:2, ms2)
             okay = .TRUE.
             EXIT lp2
 
