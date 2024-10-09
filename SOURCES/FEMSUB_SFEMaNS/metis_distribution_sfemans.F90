@@ -2043,7 +2043,7 @@ CONTAINS
       IMPLICIT NONE
       TYPE(mesh_type) :: mesh, mesh_loc
       INTEGER, DIMENSION(2), INTENT(IN) :: me_loc, mes_loc, np_loc
-      INTEGER, DIMENSION(2) :: is
+      INTEGER, DIMENSION(2) :: is1, is2
       INTEGER, DIMENSION(mesh%me) :: m_glob_to_loc, m_loc_to_glob
       INTEGER, DIMENSION(mesh%np) :: glob_to_loc, loc_to_glob
       LOGICAL, DIMENSION(mesh%np) :: virgin
@@ -2379,7 +2379,7 @@ CONTAINS
             virginss(m) = .FALSE.
             IF (MINVAL(ABS(mesh%neighs - m)) == 0) THEN
                is = 0
-               CALL find_cell_interface(mesh, m, m2, is)
+               CALL find_cell_interface(mesh, m, m2, is1, is2)
                IF (m2 > me_loc(2)) THEN
                   IF (virginss(m2)) THEN
                      nb_extra = nb_extra + 1
@@ -2387,8 +2387,11 @@ CONTAINS
                   END IF
                END IF
                DO i = 1, 2
+                  IF (is1(i) < mesh_loc%loc_to_glob(1) .OR. is1(i) > mesh_loc%loc_to_glob(1) + mesh_loc%dom_np - 1) THEN
+                     CYCLE
+                  END IF
                   DO m2 = 1, mesh%me
-                     IF (MINVAL(ABS(mesh%jj(:, m2) - is(i))) == 0) THEN
+                     IF (MINVAL(ABS(mesh%jj(:, m2) - is2(i))) == 0) THEN
                         IF (m2 > me_loc(2)) THEN
                            IF (virginss(m2)) THEN
                               nb_extra = nb_extra + 1
@@ -2424,7 +2427,7 @@ CONTAINS
             mesh_loc%jcc_extra(nb_extra) = m
             virginss(m) = .FALSE.
             IF (MINVAL(ABS(mesh%neighs - m)) == 0) THEN
-               CALL find_cell_interface(mesh, m, m2, is)
+               CALL find_cell_interface(mesh, m, m2, is1, is2)
                IF (m2 > me_loc(2)) THEN
                   IF (virginss(m2)) THEN
                      nb_extra = nb_extra + 1
@@ -2435,8 +2438,11 @@ CONTAINS
                   END IF
                END IF
                DO i = 1, 2
+                  IF (is1(i) < mesh_loc%loc_to_glob(1) .OR. is1(i) > mesh_loc%loc_to_glob(1) + mesh_loc%dom_np - 1) THEN
+                     CYCLE
+                  END IF
                   DO m2 = 1, mesh%me
-                     IF (MINVAL(ABS(mesh%jj(:, m2) - is(i))) == 0) THEN
+                     IF (MINVAL(ABS(mesh%jj(:, m2) - is2(i))) == 0) THEN
                         IF (m2 > me_loc(2)) THEN
                            IF (virginss(m2)) THEN
                               nb_extra = nb_extra + 1
@@ -2651,11 +2657,11 @@ CONTAINS
 
    END SUBROUTINE reassign_per_pts
 
-   SUBROUTINE find_cell_interface(mesh, m1, m2, is)
+   SUBROUTINE find_cell_interface(mesh, m1, m2, is1, is2)
       USE def_type_mesh
       TYPE(mesh_type), INTENT(IN) :: mesh
       INTEGER :: m1, m2, ms1, ms2, k, ns
-      INTEGER, DIMENSION(2) :: is
+      INTEGER, DIMENSION(2) :: is1, is2
       REAL(KIND = 8) :: eps_ref = 1.d-7, r_norm, epsilon
       LOGICAL :: okay
       INTEGER, DIMENSION(2) :: list
@@ -2679,7 +2685,8 @@ CONTAINS
             IF (r_norm <= 1d-9) THEN
                CYCLE
             END IF
-            is = mesh%jjs(1:2, ms2)
+            is1 = mesh%jjs(list, ms1)
+            is2 = mesh%jjs(1:2, ms2)
             okay = .TRUE.
             EXIT lp2
 
