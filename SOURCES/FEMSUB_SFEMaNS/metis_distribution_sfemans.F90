@@ -2052,11 +2052,8 @@ CONTAINS
       LOGICAL, DIMENSION(mesh%me) :: not_my_cells
       INTEGER, DIMENSION(SIZE(mesh%jj, 1)) :: jglob, eglob
       LOGICAL :: test
-      CHARACTER(len = 1) :: tit
-      INTEGER, save :: count = 0
-      REAL(KIND = 8), DIMENSION(mesh%me) :: part
-      INTEGER :: dim, nws, nw, m, ms, mop, msop, ns, msup, minf, dof, proc, m2, &
-           dom_me, nwc, dom_mes, dom_np, n, i, rank, ierr, dom_np_glob, nb_extra, nb_proc, e_glob, medge, medges, j
+      INTEGER :: dim, nws, nw, m, ms, mop, ns, msup, minf, dof, proc, m2, &
+           dom_me, nwc, dom_mes, dom_np, n, i, ierr, dom_np_glob, nb_extra, nb_proc, e_glob, medge, medges, j
       MPI_Comm       :: communicator
 
       dim = SIZE(mesh%rr, 1)
