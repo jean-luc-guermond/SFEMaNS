@@ -2388,7 +2388,6 @@ CONTAINS
                END IF
                DO i = 1, 2
                   DO m2 = 1, mesh%me
-                     IF (MINVAL(ABS(mesh%neighs - m2)) == 0) CYCLE
                      IF (MINVAL(ABS(mesh%jj(:, m2) - is(i))) == 0) THEN
                         IF (m2 > me_loc(2)) THEN
                            IF (virginss(m2)) THEN
@@ -2438,7 +2437,6 @@ CONTAINS
                DO i = 1, 2
                   DO m2 = 1, mesh%me
                      IF (MINVAL(ABS(mesh%jj(:, m2) - is(i))) == 0) THEN
-                        IF (MINVAL(ABS(mesh%neighs - m2)) == 0) CYCLE
                         IF (m2 > me_loc(2)) THEN
                            IF (virginss(m2)) THEN
                               nb_extra = nb_extra + 1
