@@ -973,7 +973,7 @@ CONTAINS
          phi_mesh%gauss%n_w)                    :: idxn, jdxn
 !!$ FL + CN 22/03/2013
     TYPE(petsc_csr_LA)                          :: LA_H, LA_pmag, LA_phi
-    INTEGER                                     :: n_wpmag, n_wH, n_wphi, ix, jx
+    INTEGER                                     :: n_wpmag, n_wH, n_wphi, ix, jx, rank
     !LC 2016/03/25
     REAL(KIND=8) :: sigma_np_gauss
     !LC 2016/03/25
@@ -1329,6 +1329,7 @@ CONTAINS
              END DO
           END DO
        END DO
+       CALL MPI_COMM_RANK(PETSC_COMM_WORLD,rank,ierr)
 
        mat_loc1 = 0.d0
        mat_loc2 = 0.d0
@@ -1350,7 +1351,7 @@ CONTAINS
                 jb = LA_pmag%loc_to_glob(1,j)
                 jx = nj
                 jdxn(jx) = jb - 1
-                IF (jb - 1 == 1921 .and. ib -1 == 3809 ) WRITE(*,*) H_mesh%loc_to_glob(i), ib, pmag_mesh%loc_to_glob(j),&
+                IF (jb - 1 == 1921 .and. ib -1 == 3809 ) WRITE(*,*) rank, H_mesh%loc_to_glob(i), ib, pmag_mesh%loc_to_glob(j),&
                      jb, 'b', m, pmag_mesh%discell, pmag_mesh%loc_to_glob(1), 'jj', &
                      H_mesh%loc_to_glob(H_mesh%jj(:, m)),  pmag_mesh%loc_to_glob(pmag_mesh%jj(:, m))
                 mat_loc1(ix,jx) = THpmag(k,ni,nj)
