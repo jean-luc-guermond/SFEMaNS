@@ -2424,7 +2424,7 @@ CONTAINS
             mesh_loc%jcc_extra(nb_extra) = m
             virginss(m) = .FALSE.
             IF (MINVAL(ABS(mesh%neighs - m)) == 0) THEN
-               CALL find_cell_interface(mesh, m, m2)
+               CALL find_cell_interface(mesh, m, m2, is)
                IF (m2 > me_loc(2)) THEN
                   IF (virginss(m2)) THEN
                      nb_extra = nb_extra + 1
