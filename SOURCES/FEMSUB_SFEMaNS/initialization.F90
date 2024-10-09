@@ -1201,7 +1201,7 @@ CONTAINS
          DEALLOCATE(list_dummy)
          CALL free_mesh(p1_c0_mesh_glob)
 
-         write(*, *) 'H', H_mesh%mextra
+         write(*, *) 'H', H_mesh%mextra, H_mesh%discell
          write(*, *) 'p', pmag_mesh%mextra
          write(*, *) 'phi', phi_mesh%mextra
 
