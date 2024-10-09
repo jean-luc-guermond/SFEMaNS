@@ -2051,7 +2051,7 @@ CONTAINS
       LOGICAL, DIMENSION(mesh%me) :: not_my_cells
       INTEGER, DIMENSION(SIZE(mesh%jj, 1)) :: jglob, eglob
       LOGICAL :: test
-      CHARACTER(len=1)  :: tit
+      CHARACTER(len = 1) :: tit
       INTEGER, save :: count = 0
       REAL(KIND = 8), DIMENSION(mesh%me) :: part
       INTEGER :: dim, nws, nw, m, ms, mop, msop, ns, msup, minf, dof, proc, m2, &
@@ -2510,7 +2510,9 @@ CONTAINS
          part(mesh_loc%jcc_extra) = -2.d0
          part(mesh%neighs) = mesh%sides
          part(mesh_loc%neighs_extra) = -3.d0
-       WRITE(tit,'(i1)') count
+         part(188) = -4.d0
+         write(*, *) 'dd', count, mesh%jj(:, 188)
+         WRITE(tit, '(i1)') count
          CALL plot_const_p1_label(mesh%jj, mesh%rr, 1.d0 * part, tit // 'dd.plt')
       END IF
 
