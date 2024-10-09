@@ -2512,7 +2512,7 @@ CONTAINS
          part(mesh_loc%neighs_extra) = -3.d0
          part(188+489) = -4.d0
          write(*, *) 'dd', count, mesh%jj(:, 188+489)
-         write(*,*) 'dd ex', mesh_loc%jcc_extra, mesh_loc%jj_extra(:,:)
+         write(*,*) 'dd ex', count , mesh_loc%jcc_extra, 'jj', mesh_loc%jj_extra(:,:)
          WRITE(tit, '(i1)') count
          CALL plot_const_p1_label(mesh%jj, mesh%rr, 1.d0 * part, tit // 'dd.plt')
       END IF
