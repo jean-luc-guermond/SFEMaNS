@@ -1199,10 +1199,6 @@ CONTAINS
          DEALLOCATE(list_dummy)
          CALL free_mesh(p1_c0_mesh_glob)
 
-         write(*, *) 'H', H_mesh%mextra, H_mesh%discell
-         write(*, *) 'p', pmag_mesh%mextra
-         write(*, *) 'phi', phi_mesh%mextra
-
       END IF
 
       !===Specific to induction equation==============================================
@@ -1359,19 +1355,15 @@ CONTAINS
 
          IF (H_mesh%me /=0) THEN
             CALL load_interface(H_mesh, H_mesh, inputs%list_inter_mu, interface_H_mu, .FALSE.)
-            write(*, *) 'H inter', interface_H_mu%mes_extra, H_mesh%neighs_extra(interface_H_mu%mesh1_extra), &
-                 H_mesh%neighs_extra(interface_H_mu%mesh2_extra)
          ELSE
             interface_H_mu%mes = 0
          END IF
 
          IF (H_mesh%me * phi_mesh%me /=0) THEN
             CALL load_interface(H_mesh, phi_mesh, inputs%list_inter_H_phi, interface_H_phi, .TRUE.)
-            write(*, *) 'phi inter', interface_H_phi%mes_extra
          ELSE
             interface_H_phi%mes = 0
          END IF
-         write(*, *) 'int done'
          !===JLG july 20, 2019, p3 mesh
          !===Use increasing vertex index enumeration
          !CALL incr_vrtx_indx_enumeration_for_interfaces(interface_H_phi,inputs%type_fe_H+1,inputs%type_fe_phi+1)

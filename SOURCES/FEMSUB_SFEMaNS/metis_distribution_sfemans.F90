@@ -1672,10 +1672,8 @@ CONTAINS
       CALL MPI_Comm_rank(communicator, rank, ierr)
 
       ! Create parts
-      write(*, *) '?'
       parts = part(mesh_glob%neighs)
       ! End create parts
-      write(*, *) '??'
 
       ! Create list_m
       i = 0
