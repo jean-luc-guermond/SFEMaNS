@@ -2028,11 +2028,13 @@ CONTAINS
                        'BUG in create_iso_grid: cell near boundary isnt in neighs'
                   IF (mesh_p1%neighs(ms) == m) EXIT
                END DO
-               IF (MINVAL(ABS(mesh_p1%sides(ms) - inputs%list_spherical)) == 0) THEN
-                  iso = .TRUE.
-                  DO interface = 1, inputs%nb_spherical
-                     IF (mesH_p1%sides(ms) - inputs%list_spherical(interface) == 0) EXIT
-                  END DO
+               IF (inputs%nb_spherical > 0) THEN
+                  IF (MINVAL(ABS(mesh_p1%sides(ms) - inputs%list_spherical)) == 0) THEN
+                     iso = .TRUE.
+                     DO interface = 1, inputs%nb_spherical
+                        IF (mesH_p1%sides(ms) - inputs%list_spherical(interface) == 0) EXIT
+                     END DO
+                  END IF
                END IF
             END IF
 
@@ -2196,12 +2198,15 @@ CONTAINS
       !==connectivity array the surface elements of the iso grid for extras
       DO ms = 1, mesh%mes_extra
          iso = .FALSE.
-         IF (MINVAL(ABS(mesh%sides_extra(ms) - inputs%list_spherical)) == 0) THEN
-            DO interface = 1, inputs%nb_spherical
-               IF (mesh%sides_extra(ms) - inputs%list_spherical(interface) == 0) EXIT
-            END DO
-            iso = .TRUE.
+         IF (inputs%nb_spherical > 0) THEN
+            IF (MINVAL(ABS(mesh%sides_extra(ms) - inputs%list_spherical)) == 0) THEN
+               DO interface = 1, inputs%nb_spherical
+                  IF (mesh%sides_extra(ms) - inputs%list_spherical(interface) == 0) EXIT
+               END DO
+               iso = .TRUE.
+            END IF
          END IF
+
          cell_g = mesh%neighs_extra(ms)
          DO m = 1, mesh%mextra !find associated extra cell
             IF (mesh_p1%jcc_extra(m) == cell_g) EXIT
