@@ -2031,7 +2031,7 @@ CONTAINS
                IF (MINVAL(ABS(mesh_p1%sides(ms) - inputs%list_spherical)) == 0) THEN
                   iso = .TRUE.
                   DO interface = 1, inputs%nb_spherical
-                     IF (mesH_p1%sides(ms) - inputs%list_spherical(interface)) EXIT
+                     IF (mesH_p1%sides(ms) - inputs%list_spherical(interface) == 0) EXIT
                   END DO
                END IF
             END IF
@@ -2198,7 +2198,7 @@ CONTAINS
          iso = .FALSE.
          IF (MINVAL(ABS(mesh%sides_extra(ms) - inputs%list_spherical)) == 0) THEN
             DO interface = 1, inputs%nb_spherical
-               IF (mesh_p1%sides(ms) - inputs%list_spherical(interface)) EXIT
+               IF (mesh_p1%sides(ms) - inputs%list_spherical(interface) == 0) EXIT
             END DO
             iso = .TRUE.
          END IF
