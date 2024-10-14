@@ -191,9 +191,9 @@ MODULE my_data_module
       REAL(KIND = 8), DIMENSION(:), POINTER :: r_anemo_h, z_anemo_h
       !===Data for spherical interfaces
       INTEGER :: nb_spherical
-      INTEGER, DIMENSION(:) :: list_spherical
-      REAL(KIND = 8), DIMENSION(:) :: radius_spherical
-      REAL(KIND = 8), DIMENSION(:, :) :: origin_spherical
+      INTEGER, DIMENSION(:), POINTER :: list_spherical
+      REAL(KIND = 8), DIMENSION(:), POINTER :: radius_spherical
+      REAL(KIND = 8), DIMENSION(:, :), POINTER :: origin_spherical
 
    CONTAINS
       PROCEDURE, PUBLIC :: init
