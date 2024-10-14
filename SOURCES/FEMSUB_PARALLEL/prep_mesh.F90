@@ -2028,10 +2028,10 @@ CONTAINS
                        'BUG in create_iso_grid: cell near boundary isnt in neighs'
                   IF (mesh_p1%neighs(m) == m) EXIT
                END DO
-               IF (MINVAL(ABS(mesh_p1%sides(ms) - inputs%list_spherical)) == 0)
+               IF (MINVAL(ABS(mesh_p1%sides(ms) - inputs%list_spherical)) == 0) THEN
                   iso = .TRUE.
                   DO interface = 1, inputs%nb_spherical
-                     IF (mesp_p1%sides(ms) - inputs%list_spherical(interface)) EXIT
+                     IF (mesH_p1%sides(ms) - inputs%list_spherical(interface)) EXIT
                   END DO
                END IF
             END IF
@@ -2198,7 +2198,7 @@ CONTAINS
          iso = .FALSE.
          IF (MINVAL(ABS(mesh%sides_extra(ms) - inputs%list_spherical)) == 0) THEN
             DO interface = 1, inputs%nb_spherical
-               IF (mesp_p1%sides(ms) - inputs%list_spherical(interface)) EXIT
+               IF (mesh_p1%sides(ms) - inputs%list_spherical(interface)) EXIT
             END DO
             iso = .TRUE.
          END IF
