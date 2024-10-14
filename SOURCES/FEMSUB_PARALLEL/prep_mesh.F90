@@ -1729,6 +1729,7 @@ CONTAINS
       !===jjs_f(:, :)  nodes of the surface_elements of the output p2 grid
       !===rr_f(:, :)  cartesian coordinates of the nodes of the output p2 grid
       USE def_type_mesh
+      USE input_data
       IMPLICIT NONE
       TYPE(mesh_type) :: mesh_p1, mesh
       INTEGER, INTENT(IN) :: type_fe
@@ -2027,7 +2028,7 @@ CONTAINS
                        'BUG in create_iso_grid: cell near boundary isnt in neighs'
                   IF (mesh_p1%neighs(m) == m) EXIT
                END DO
-               IF (MINVAL(ABS(mesp_p1%sides(ms) - inputs%list_spherical)) == 0)
+               IF (MINVAL(ABS(mesh_p1%sides(ms) - inputs%list_spherical)) == 0)
                   iso = .TRUE.
                   DO interface = 1, inputs%nb_spherical
                      IF (mesp_p1%sides(ms) - inputs%list_spherical(interface)) EXIT
