@@ -1739,9 +1739,11 @@ CONTAINS
       INTEGER :: n_k1, n_k2, m_op_k, kk, i, mm, ms_bord, p_e, p_c
       REAL(KIND = 8), DIMENSION(:), ALLOCATABLE :: r_mid
       INTEGER, DIMENSION(type_fe + 1) :: ns3
+      REAL(KIND = 8), DIMENSION(2) :: rz
       REAL(KIND = 8), DIMENSION(type_fe + 1) :: scos
-      REAL(KIND = 8) :: epsilon = 1.d-13, dist, d1, d2, s1, s2, s3, shalf, ref, scc, infinity
+      REAL(KIND = 8) :: epsilon = 1.d-13, dist, d1, d2, s1, s2, s3, shalf, ref, scc, infinity, rescale
       INTEGER :: ns, ns1, index, nb_angle, f_dof, edge_g, edge_l, n_new_start, proc, nb_proc, edges, p, cell_g, cell_l
+      INTEGER :: interface
       LOGICAL :: iso
 
       nw = SIZE(mesh_p1%jj, 1)   !===nodes in each volume element (3 in 2D)
@@ -2018,160 +2020,45 @@ CONTAINS
                n_end = n1
             END IF
 
-            !IF (m_op_k == 0) THEN  !===the side is on the boundary
-            !   iso = .TRUE.
-            !ELSE
             iso = .FALSE.
-            !END IF
-
-            IF (iso) THEN
-               DO ms = 1, SIZE(mesh_p1%jjs, 2)
-                  DO ns = 1, SIZE(mesh_p1%jjs, 1)
-                     dist = SQRT(SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, mesh_p1%jjs(ns, ms)))**2))
-                     IF (dist.LE.epsilon) THEN
-                        ns1 = MODULO(ns, SIZE(mesh_p1%jjs, 1)) + 1
-                        dist = SQRT(SUM((mesh_p1%rr(:, n2) - mesh_p1%rr(:, mesh_p1%jjs(ns1, ms)))**2))
-                        IF (dist.LE.epsilon) THEN
-                           ms_bord = ms
-                           GO TO 100
-                        END IF
-                     END IF
+            IF (m_op_k == 0) THEN  !===the side is on the boundary
+               DO ms = 1, SIZE(mesh_p1%neighs) + 1
+                  IF (ms == SIZE(mesh_p1%neighs) + 1) WRITE(*, *) &
+                       'BUG in create_iso_grid: cell near boundary isnt in neighs'
+                  IF (mesh_p1%neighs(m) == m) EXIT
+               END DO
+               IF (MINVAL(ABS(mesp_p1%sides(ms) - inputs%list_spherical)) == 0)
+                  iso = .TRUE.
+                  DO interface = 1, inputs%nb_spherical
+                     IF (mesp_p1%sides(ms) - inputs%list_spherical(interface)) EXIT
                   END DO
-               END DO
-               WRITE(*, *) ' BUG in create_iso_grid'
-               !===Algorithm not designed yet for internal interfaces
-               STOP
+               END IF
+            END IF
 
-               100          index = 1
-               ref = SQRT(SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, n2))**2))
-               DO ms = 1, SIZE(mesh_p1%jjs, 2)
-                  IF (ms==ms_bord) CYCLE
-                  d1 = SQRT(SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, mesh_p1%jjs(1, ms)))**2)) / ref
-                  d2 = SQRT(SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, mesh_p1%jjs(2, ms)))**2)) / ref
-                  IF (d1.LE.epsilon .AND. d2.GT.2 * epsilon) THEN
-                     scc = SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, mesh_p1%jjs(2, ms))) &
-                          * (mesh_p1%rr(:, n1) - mesh_p1%rr(:, n2))) / &
-                          (SQRT(SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, mesh_p1%jjs(2, ms)))**2)) &
-                               * SQRT(SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, n2))**2)))
-                     IF (index.GE.3) THEN
-                        IF (scc .GE. MINVAL(scos)) CYCLE
-                        index = 2
-                     END IF
-                     ns3(index) = mesh_p1%jjs(2, ms)
-                     scos(index) = scc
-                     index = index + 1
-                  ELSE IF (d2.LE.epsilon .AND. d1.GT.2 * epsilon) THEN
-                     scc = SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, mesh_p1%jjs(1, ms))) &
-                          * (mesh_p1%rr(:, n1) - mesh_p1%rr(:, n2))) / &
-                          (SQRT(SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, mesh_p1%jjs(1, ms)))**2)) &
-                               * SQRT(SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, n2))**2)))
-                     IF (index.GE.3) THEN
-                        IF (scc .GE. MINVAL(scos)) CYCLE
-                        index = 2
-                     END IF
-                     ns3(index) = mesh_p1%jjs(1, ms)
-                     scos(index) = scc
-                     index = index + 1
-                  END IF
-                  d1 = SQRT(SUM((mesh_p1%rr(:, n2) - mesh_p1%rr(:, mesh_p1%jjs(1, ms)))**2)) / ref
-                  d2 = SQRT(SUM((mesh_p1%rr(:, n2) - mesh_p1%rr(:, mesh_p1%jjs(2, ms)))**2)) / ref
-                  IF (d1.LE.epsilon .AND. d2.GT.2 * epsilon) THEN
-                     scc = SUM((mesh_p1%rr(:, n2) - mesh_p1%rr(:, mesh_p1%jjs(2, ms))) &
-                          * (mesh_p1%rr(:, n2) - mesh_p1%rr(:, n1))) / &
-                          (SQRT(SUM((mesh_p1%rr(:, n2) - mesh_p1%rr(:, mesh_p1%jjs(2, ms)))**2))&
-                               * SQRT(SUM((mesh_p1%rr(:, n2) - mesh_p1%rr(:, n1))**2)))
-                     IF (index.GE.3) THEN
-                        IF (scc .GE. MINVAL(scos)) CYCLE
-                        index = 2
-                     END IF
-                     ns3(index) = mesh_p1%jjs(2, ms)
-                     scos(index) = scc
-                     index = index + 1
-                  ELSE IF (d2.LE.epsilon .AND. d1.GT.2 * epsilon) THEN
-                     scc = SUM((mesh_p1%rr(:, n2) - mesh_p1%rr(:, mesh_p1%jjs(1, ms))) &
-                          * (mesh_p1%rr(:, n2) - mesh_p1%rr(:, n1))) / &
-                          (SQRT(SUM((mesh_p1%rr(:, n2) - mesh_p1%rr(:, mesh_p1%jjs(1, ms)))**2))&
-                               * SQRT(SUM((mesh_p1%rr(:, n2) - mesh_p1%rr(:, n1))**2)))
-                     IF (index.GE.3) THEN
-                        IF (scc .GE. MINVAL(scos)) CYCLE
-                        index = 2
-                     END IF
-                     ns3(index) = mesh_p1%jjs(1, ms)
-                     scos(index) = scc
-                     index = index + 1
-                  END IF
-               END DO
-
-               IF (index.LT.2) THEN
-                  WRITE(*, *) SIZE(mesh_p1%jjs, 2), ms_bord
-                  WRITE(*, *) ' BUG: bad index', mesh_p1%rr(1, mesh_p1%jjs(1, ms_bord)), mesh_p1%rr(1, mesh_p1%jjs(2, ms_bord))
-                  WRITE(*, *) ' BUG: bad index', mesh_p1%rr(2, mesh_p1%jjs(1, ms_bord)), mesh_p1%rr(2, mesh_p1%jjs(2, ms_bord))
-                  STOP
-               END IF
-               IF (ABS(scos(1)) > ABS(scos(2))) THEN
-                  n3 = ns3(1)
-               ELSE
-                  n3 = ns3(2)
-               END IF
-               IF (MINVAL(ABS(scos)) < 0.95) THEN
-                  nb_angle = nb_angle + 1
-               END IF
-               d1 = SQRT(SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, n3))**2))
-               d2 = SQRT(SUM((mesh_p1%rr(:, n2) - mesh_p1%rr(:, n3))**2))
-               IF (d1 .LT. d2) THEN
-                  n4 = n2
-                  n2 = n1
-                  n1 = n4
-               END IF
-               d1 = SQRT(SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, n3))**2))
-               d2 = SQRT(SUM((mesh_p1%rr(:, n1) - mesh_p1%rr(:, n2))**2))
-               s3 = d1 / d2
-               s2 = 1.d0
-               s1 = 0.d0
-               shalf = 0.5d0
-               r_mid = mesh_p1%rr(:, n1) * (shalf - s2) * (shalf - s3) / ((s1 - s2) * (s1 - s3)) &
-                    + mesh_p1%rr(:, n2) * (shalf - s3) * (shalf - s1) / ((s2 - s3) * (s2 - s1)) &
-                    + mesh_p1%rr(:, n3) * (shalf - s1) * (shalf - s2) / ((s3 - s1) * (s3 - s2))
-
+            IF (virgin(edge_l)) THEN !===This side is new
                DO l = 1, f_dof
                   n_dof = n_dof + 1 !===New index created
                   j_mid((k - 1) * f_dof + l, m) = l + n_new_start
-                  IF (n1<n2) THEN
-                     shalf = l / dble(type_fe)
-                  ELSE
-                     shalf = 1 - l / dble(type_fe)
+                  mesh%rr(:, l + n_new_start) = mesh_p1%rr(:, n_start) &
+                       + l * (mesh_p1%rr(:, n_end) - mesh_p1%rr(:, n_start)) / type_fe
+                  IF (iso) THEN
+                     rz = mesh%rr(:, l + n_new_start) - inputs%origin_spherical(:, interface)
+                     rescale = inputs%radius_spherical(interface) / SQRT(SUM(rz * rz))
+                     mesh%rr(:, l + n_new_start) = rz * rescale + inputs%origin_spherical(:, interface)
                   END IF
-                  mesh%rr(:, l + n_new_start) = &
-                       mesh_p1%rr(:, n1) * (shalf - s2) * (shalf - s3) / ((s1 - s2) * (s1 - s3)) &
-                            + mesh_p1%rr(:, n2) * (shalf - s3) * (shalf - s1) / ((s2 - s3) * (s2 - s1)) &
-                            + mesh_p1%rr(:, n3) * (shalf - s1) * (shalf - s2) / ((s3 - s1) * (s3 - s2))
                   mesh%loc_to_glob(l + n_new_start) = l + n_new_start + mesh%disp(proc) - 1
                END DO
-
-               !===End of iso-grid
-               !===Surface elements of the grid are defined later
-            ELSE !===the side is internal
-
-               IF (virgin(edge_l)) THEN !===This side is new
-                  DO l = 1, f_dof
-                     n_dof = n_dof + 1 !===New index created
-                     j_mid((k - 1) * f_dof + l, m) = l + n_new_start
-                     mesh%rr(:, l + n_new_start) = mesh_p1%rr(:, n_start) &
-                          + l * (mesh_p1%rr(:, n_end) - mesh_p1%rr(:, n_start)) / type_fe
-                     mesh%loc_to_glob(l + n_new_start) = l + n_new_start + mesh%disp(proc) - 1
-                  END DO
-               ELSE !===the side has been already considered
-                  mm = m_op_k
-                  DO i = 1, nw
-                     IF (mesh_p1%neigh(i, mm) == m) THEN
-                        kk = i
-                        EXIT
-                     END IF
-                  ENDDO
-                  DO l = 1, f_dof
-                     j_mid((k - 1) * f_dof + l, m) = j_mid((kk - 1) * f_dof + l, mm) !===New index created
-                  END DO
-               ENDIF
+            ELSE !===the side has been already considered
+               mm = m_op_k
+               DO i = 1, nw
+                  IF (mesh_p1%neigh(i, mm) == m) THEN
+                     kk = i
+                     EXIT
+                  END IF
+               ENDDO
+               DO l = 1, f_dof
+                  j_mid((k - 1) * f_dof + l, m) = j_mid((kk - 1) * f_dof + l, mm) !===New index created
+               END DO
             ENDIF
             virgin(edge_l) = .FALSE.
          ENDDO
@@ -2307,6 +2194,13 @@ CONTAINS
 
       !==connectivity array the surface elements of the iso grid for extras
       DO ms = 1, mesh%mes_extra
+         iso = .FALSE.
+         IF (MINVAL(ABS(mesh%sides_extra(ms) - inputs%list_spherical)) == 0) THEN
+            DO interface = 1, inputs%nb_spherical
+               IF (mesp_p1%sides(ms) - inputs%list_spherical(interface)) EXIT
+            END DO
+            iso = .TRUE.
+         END IF
          cell_g = mesh%neighs_extra(ms)
          DO m = 1, mesh%mextra !find associated extra cell
             IF (mesh_p1%jcc_extra(m) == cell_g) EXIT
@@ -2336,6 +2230,11 @@ CONTAINS
             DO l = 1, f_dof
                mesh%rrs_extra(:, nw + (k - 1) * f_dof + l, ms) = mesh_p1%rrs_extra(:, n_start, ms) &
                     + l * (mesh_p1%rrs_extra(:, n_end, ms) - mesh_p1%rrs_extra(:, n_start, ms)) / type_fe
+               IF (iso) THEN
+                  rz = mesh%rrs_extra(:, nw + (k - 1) * f_dof + l, ms) - inputs%origin_spherical(:, interface)
+                  rescale = inputs%radius_spherical(interface) / SQRT(SUM(rz * rz))
+                  mesh%rrs_extra(:, nw + (k - 1) * f_dof + l, ms) = rz * rescale + inputs%origin_spherical(:, interface)
+               END IF
             END DO
          END DO
 

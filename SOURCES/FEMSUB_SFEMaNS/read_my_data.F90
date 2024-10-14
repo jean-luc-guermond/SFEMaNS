@@ -189,6 +189,11 @@ MODULE my_data_module
       REAL(KIND = 8), DIMENSION(:), POINTER :: r_anemo_v, z_anemo_v
       REAL(KIND = 8), DIMENSION(:), POINTER :: r_anemo_T, z_anemo_T
       REAL(KIND = 8), DIMENSION(:), POINTER :: r_anemo_h, z_anemo_h
+      !===Data for spherical interfaces
+      INTEGER :: nb_spherical
+      INTEGER, DIMENSION(:) :: list_spherical
+      REAL(KIND = 8), DIMENSION(:) :: radius_spherical
+      REAL(KIND = 8), DIMENSION(:, :) :: origin_spherical
 
    CONTAINS
       PROCEDURE, PUBLIC :: init
@@ -305,6 +310,7 @@ CONTAINS
       a%nb_dom_temp = 0
       a%nb_dom_H = 0
       a%nb_dom_phi = 0
+      a%nb_spherical = 0
    END SUBROUTINE init
 END MODULE my_data_module
 
@@ -1780,6 +1786,28 @@ CONTAINS
       !===mxw becomes mxx if restart_u and mxw========================================
       IF (inputs%type_pb == 'mxw' .AND. inputs%irestart_u) THEN
          inputs%type_pb = 'mxx'
+      END IF
+
+      !==========Spherical interfaces=================================!
+      CALL find_string(21, '===How many spherical boundary pieces ?', test)
+      IF (test) THEN
+         READ(21, *) inputs%nb_spherical
+      ELSE
+         inputs%nb_spherical = 0
+      END IF
+      IF (inputs%nb_spherical > 0) THEN
+         ALLOCATE(inputs%list_spherical(inputs%nb_spherical), inputs%radius_spherical(inputs%nb_spherical), &
+              inputs%origin_spherical(2, inputs%nb_spherical))
+         CALL read_until(21, '===List of spherical boundary pieces')
+         READ(21, *) inputs%list_spherical
+         CALL read_until(21, '===Radius of spherical boundary pieces')
+         READ(21, *) inputs%list_radius
+         CALL read_until(21, '===R coordinate of origin of spherical boundary pieces')
+         READ(21, *) inputs%list_origin(1, :)
+         CALL read_until(21, '===Z coordinate of origin of spherical boundary pieces')
+         READ(21, *) inputs%list_origin(2, :)
+      ELSE
+         ALLOCATE(inputs%list_spherical(0), inputs%radius_spherical(0), inputs%origin_spherical(2, 0))
       END IF
 
       CLOSE(21)
