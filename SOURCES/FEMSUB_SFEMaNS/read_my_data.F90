@@ -1801,11 +1801,11 @@ CONTAINS
          CALL read_until(21, '===List of spherical boundary pieces')
          READ(21, *) inputs%list_spherical
          CALL read_until(21, '===Radius of spherical boundary pieces')
-         READ(21, *) inputs%list_radius
+         READ(21, *) inputs%radius_spherical
          CALL read_until(21, '===R coordinate of origin of spherical boundary pieces')
-         READ(21, *) inputs%list_origin(1, :)
+         READ(21, *) inputs%origin_spherical(1, :)
          CALL read_until(21, '===Z coordinate of origin of spherical boundary pieces')
-         READ(21, *) inputs%list_origin(2, :)
+         READ(21, *) inputs%origin_spherical(2, :)
       ELSE
          ALLOCATE(inputs%list_spherical(0), inputs%radius_spherical(0), inputs%origin_spherical(2, 0))
       END IF
