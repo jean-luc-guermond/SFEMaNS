@@ -2026,7 +2026,7 @@ CONTAINS
                DO ms = 1, SIZE(mesh_p1%neighs) + 1
                   IF (ms == SIZE(mesh_p1%neighs) + 1) WRITE(*, *) &
                        'BUG in create_iso_grid: cell near boundary isnt in neighs'
-                  IF (mesh_p1%neighs(m) == m) EXIT
+                  IF (mesh_p1%neighs(ms) == m) EXIT
                END DO
                IF (MINVAL(ABS(mesh_p1%sides(ms) - inputs%list_spherical)) == 0) THEN
                   iso = .TRUE.
