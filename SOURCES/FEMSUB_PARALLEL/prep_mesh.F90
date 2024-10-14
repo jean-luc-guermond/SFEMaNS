@@ -2198,7 +2198,7 @@ CONTAINS
          iso = .FALSE.
          IF (MINVAL(ABS(mesh%sides_extra(ms) - inputs%list_spherical)) == 0) THEN
             DO interface = 1, inputs%nb_spherical
-               IF (mesh_p1%sides(ms) - inputs%list_spherical(interface) == 0) EXIT
+               IF (mesh%sides_extra(ms) - inputs%list_spherical(interface) == 0) EXIT
             END DO
             iso = .TRUE.
          END IF
