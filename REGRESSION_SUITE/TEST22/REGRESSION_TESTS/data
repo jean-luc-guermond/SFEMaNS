@@ -85,6 +85,21 @@ GMRES
 ===Preconditionner type for Maxwell solver (HYPRE, JACOBI, MUMPS...)
 MUMPS
 
+===========================================
+            Spherical interfaces
+===========================================
+===How many spherical boundary pieces ?
+1
+===List of spherical boundary pieces
+3
+===Radius of spherical boundary pieces
+10.d0
+===R coordinate of origin of spherical boundary pieces
+0.d0
+===Z coordinate of origin of spherical boundary pieces
+0.d0
+
+
 ============================================
 mesh_17_0.05.FEM, dt=1d0, it_max=10 
 ===Reference results
