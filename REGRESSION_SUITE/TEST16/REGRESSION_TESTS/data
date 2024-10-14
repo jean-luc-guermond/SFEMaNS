@@ -98,16 +98,7 @@ MUMPS
 ===========================================
             Spherical interfaces
 ===========================================
-===How many spherical boundary pieces ?
-1
-===List of spherical boundary pieces
-2
-===Radius of spherical boundary pieces
-.8d0
-===R coordinate of origin of spherical boundary pieces
-0.d0
-===Z coordinate of origin of spherical boundary pieces
-0.d0
+
 
 ============================================
 ELL_b0p8_10_form.FEM, dt=1d-1, it_max=20
