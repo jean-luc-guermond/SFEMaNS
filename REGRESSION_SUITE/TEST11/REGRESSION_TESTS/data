@@ -179,7 +179,7 @@ MUMPS
 ===List of spherical boundary pieces
 2 4
 ===Radius of spherical boundary pieces
-.53846153846d0 1.5384615384d0
+.53846d0 1.53846d0
 ===R coordinate of origin of spherical boundary pieces
 0.d0 0.d0
 ===Z coordinate of origin of spherical boundary pieces
