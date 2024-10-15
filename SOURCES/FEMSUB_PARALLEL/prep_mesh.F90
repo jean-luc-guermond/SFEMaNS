@@ -2325,11 +2325,12 @@ CONTAINS
    SUBROUTINE is_on_curved_interface(side, iso, interface)
       USE input_data
       INTEGER :: side, interface
-      LOGICAL :: iso = .FALSE.
+      LOGICAL :: iso
 
+      iso = .FALSE.
       IF (inputs%nb_spherical + inputs%nb_curved > 0) THEN
          IF (MINVAL(ABS(side - inputs%list_spherical)) == 0 .OR. &
-              MINVAL(ABS(side - inputs%list_curved))) THEN
+              MINVAL(ABS(side - inputs%list_curved)) == 0) THEN
             DO interface = 1, inputs%nb_spherical + inputs%nb_curved
                IF (interface <= inputs%nb_spherical) THEN
                   IF (side - inputs%list_spherical(interface) == 0) EXIT
@@ -2353,7 +2354,7 @@ CONTAINS
       USE boundary
       REAL(KIND = 8), DIMENSION(2) :: rr_start, rr_end, rr, rr_ref
       INTEGER :: interface
-      REAL(KIND = 8) :: rescale, pi = ACOS(-1.d0)
+      REAL(KIND = 8) :: rescale, pi = ACOS(-1.d0), theta
 
       IF (interface <= inputs%nb_spherical) THEN
          rr_ref = rr - inputs%origin_spherical(:, interface)
@@ -2374,13 +2375,10 @@ CONTAINS
       REAL(KIND = 8) :: x, out
       IF (x > 0.d0) THEN
          out  = 1.d0
-         RETURN
       ELSE IF (x < 0.d0) THEN
          out = -1.d0
-         RETURN
       ELSE
          out= 0.d0
-         RETURN
       ENDIF
    END FUNCTION sgn
 
