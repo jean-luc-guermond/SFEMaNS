@@ -1826,6 +1826,10 @@ CONTAINS
          ALLOCATE(inputs%list_curved(inputs%nb_curved))
          CALL read_until(21, '===List of curved  boundary pieces')
          READ(21, *) inputs%list_curved
+         CALL read_until(21, '===R coordinate of origin of curved boundary pieces')
+         READ(21, *) inputs%origin_curved(1, :)
+         CALL read_until(21, '===Z coordinate of origin of curved boundary pieces')
+         READ(21, *) inputs%origin_curved(2, :)
       ELSE
          ALLOCATE(inputs%list_curved(0))
       END IF
