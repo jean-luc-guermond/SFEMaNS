@@ -96,8 +96,16 @@ MUMPS
 .t.
 
 ===========================================
-            Spherical interfaces
+            Curved boundaries
 ===========================================
+===How many curved boundary pieces ?
+1
+===List of curved  boundary pieces
+2
+===R coordinate of origin of curved boundary pieces
+0.d0
+===Z coordinate of origin of curved boundary pieces
+0.d0
 
 
 ============================================
