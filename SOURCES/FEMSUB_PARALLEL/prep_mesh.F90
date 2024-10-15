@@ -2361,12 +2361,12 @@ CONTAINS
          rescale = inputs%radius_spherical(interface) / SQRT(SUM(rr_ref * rr_ref))
          rr = rr_ref * rescale + inputs%origin_spherical(:, interface)
       ELSE
-         rr_ref = rr - inputs%origin_curved(:, interface - inputs%nb_curved)
+         rr_ref = rr - inputs%origin_curved(:, interface - inputs%nb_spherical)
          theta = pi - pi / 2 * (1 + sgn(rr_ref(1))) * (1 - sgn(rr_ref(2) * rr_ref(2))) &
          - pi / 4 * (2 + sgn(rr_ref(1))) * sgn(rr_ref(2)) &
          - sgn(rr_ref(1) * rr_ref(2)) * ATAN((ABS(rr_ref(1)) - ABS(rr_ref(2)))/(ABS(rr_ref(1)) + ABS(rr_ref(2))))
          rescale =  curved_boundary_radius(interface,theta) / SQRT(SUM(rr_ref * rr_ref))
-         rr = rr_ref * rescale + inputs%origin_curved(:, interface - inputs%nb_curved)
+         rr = rr_ref * rescale + inputs%origin_curved(:, interface - inputs%nb_spherical)
       END IF
 
    END SUBROUTINE rescale_to_curved_boundary
