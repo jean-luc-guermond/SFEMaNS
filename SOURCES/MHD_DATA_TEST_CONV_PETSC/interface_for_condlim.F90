@@ -34,7 +34,7 @@ module interface_boundary
   PROCEDURE(sub_rot_H_jump_interface), POINTER :: rot_H_jump_interface
   PROCEDURE(sub_Derivative_of_potential_from_rhoLi), POINTER :: Derivative_of_potential_from_rhoLi
   PROCEDURE(sub_molar_fraction_from_concentration), POINTER :: molar_fraction_from_concentration
-  PROCEDURE(curved_boundary_radius), POINTER :: curved_boundary_radius
+  PROCEDURE(sub_curved_boundary_radius), POINTER :: curved_boundary_radius
 END module interface_boundary
 
 module point_to_boundary_generic
