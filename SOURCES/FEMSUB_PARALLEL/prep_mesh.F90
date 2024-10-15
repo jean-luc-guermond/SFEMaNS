@@ -2028,14 +2028,7 @@ CONTAINS
                        'BUG in create_iso_grid: cell near boundary isnt in neighs'
                   IF (mesh_p1%neighs(ms) == m) EXIT
                END DO
-               IF (inputs%nb_spherical > 0) THEN
-                  IF (MINVAL(ABS(mesh_p1%sides(ms) - inputs%list_spherical)) == 0) THEN
-                     iso = .TRUE.
-                     DO interface = 1, inputs%nb_spherical
-                        IF (mesH_p1%sides(ms) - inputs%list_spherical(interface) == 0) EXIT
-                     END DO
-                  END IF
-               END IF
+               CALL is_on_curved_interface(mesh_p1%sides(ms), iso, interface)
             END IF
 
             IF (virgin(edge_l)) THEN !===This side is new
@@ -2045,9 +2038,8 @@ CONTAINS
                   mesh%rr(:, l + n_new_start) = mesh_p1%rr(:, n_start) &
                        + l * (mesh_p1%rr(:, n_end) - mesh_p1%rr(:, n_start)) / type_fe
                   IF (iso) THEN
-                     rz = mesh%rr(:, l + n_new_start) - inputs%origin_spherical(:, interface)
-                     rescale = inputs%radius_spherical(interface) / SQRT(SUM(rz * rz))
-                     mesh%rr(:, l + n_new_start) = rz * rescale + inputs%origin_spherical(:, interface)
+                     CALL rescale_to_curved_boundary(mesh_p1%rr(:, n_start), mesh_p1%rr(:, n_end), &
+                          mesh%rr(:, l + n_new_start), interface)
                   END IF
                   mesh%loc_to_glob(l + n_new_start) = l + n_new_start + mesh%disp(proc) - 1
                END DO
@@ -2198,14 +2190,7 @@ CONTAINS
       !==connectivity array the surface elements of the iso grid for extras
       DO ms = 1, mesh%mes_extra
          iso = .FALSE.
-         IF (inputs%nb_spherical > 0) THEN
-            IF (MINVAL(ABS(mesh%sides_extra(ms) - inputs%list_spherical)) == 0) THEN
-               DO interface = 1, inputs%nb_spherical
-                  IF (mesh%sides_extra(ms) - inputs%list_spherical(interface) == 0) EXIT
-               END DO
-               iso = .TRUE.
-            END IF
-         END IF
+         CALL is_on_curved_interface(mesh%sides(ms), iso, interface)
 
          cell_g = mesh%neighs_extra(ms)
          DO m = 1, mesh%mextra !find associated extra cell
@@ -2237,9 +2222,8 @@ CONTAINS
                mesh%rrs_extra(:, nw + (k - 1) * f_dof + l, ms) = mesh_p1%rrs_extra(:, n_start, ms) &
                     + l * (mesh_p1%rrs_extra(:, n_end, ms) - mesh_p1%rrs_extra(:, n_start, ms)) / type_fe
                IF (iso) THEN
-                  rz = mesh%rrs_extra(:, nw + (k - 1) * f_dof + l, ms) - inputs%origin_spherical(:, interface)
-                  rescale = inputs%radius_spherical(interface) / SQRT(SUM(rz * rz))
-                  mesh%rrs_extra(:, nw + (k - 1) * f_dof + l, ms) = rz * rescale + inputs%origin_spherical(:, interface)
+                  CALL rescale_to_curved_boundary(mesh_p1%rrs_extra(:, n_start, ms), mesh_p1%rrs_extra(:, n_end, ms), &
+                       mesh%rrs_extra(:, nw + (k - 1) * f_dof + l, ms), interface)
                END IF
             END DO
          END DO
@@ -2337,5 +2321,64 @@ CONTAINS
          END DO
       END DO
    END SUBROUTINE prep_jce_jev
+
+   SUBROUTINE is_on_curved_interface(side, iso, interface)
+      USE input_data
+      INTEGER :: side, interface
+      LOGICAL :: iso = .FALSE.
+
+      IF (inputs%nb_spherical + inputs%nb_curved > 0) THEN
+         IF (MINVAL(ABS(side - inputs%list_spherical)) == 0 .OR. &
+              MINVAL(ABS(side - inputs%list_curved))) THEN
+            DO interface = 1, inputs%nb_spherical + inputs%nb_curved
+               IF (interface <= inputs%nb_spherical) THEN
+                  IF (side - inputs%list_spherical(interface) == 0) EXIT
+               ELSE
+                  IF (side - inputs%list_curved(interface - inputs%nb_spherical) == 0) EXIT
+               END IF
+            END DO
+            iso = .TRUE.
+         ELSE
+            iso = .FALSE.
+         END IF
+      ELSE
+         iso = .FALSE.
+      END IF
+
+   END SUBROUTINE is_on_curved_interface
+
+
+   SUBROUTINE rescale_to_curved_boundary(rr_start, rr_end, rr, interface)
+      USE input_data
+      USE boundary
+      REAL(KIND = 8), DIMENSION(2) :: rr_start, rr_end, rr, rr_ref
+      INTEGER :: interface
+      REAL(KIND = 8) :: rescale, pi = ACOS(-1.d0)
+
+      IF (interface <= inputs%nb_spherical) THEN
+         rr_ref = rr - inputs%origin_spherical(:, interface)
+         rescale = inputs%radius_spherical(interface) / SQRT(SUM(rr_ref * rr_ref))
+         rr = rr_ref * rescale + inputs%origin_spherical(:, interface)
+      ELSE
+         rr_ref = rr - inputs%origin_curved(:, interface - inputs%nb_curved)
+         theta = pi - pi / 2 * (1 + sgn(rr_ref(1))) * (1 - sgn(rr_ref(2) * rr_ref(2))) &
+         - pi / 4 * (2 + sgn(rr_ref(1))) * sgn(rr_ref(2)) &
+         - sgn(rr_ref(1) * rr_ref(2)) * ATAN((ABS(rr_ref(1)) - ABS(rr_ref(2)))/(ABS(rr_ref(1)) + ABS(rr_ref(2))))
+         rescale =  curved_boundary_radius(interface,theta) / SQRT(SUM(rr_ref * rr_ref))
+         rr = rr_ref * rescale + inputs%origin_curved(:, interface)
+      END IF
+
+   END SUBROUTINE rescale_to_curved_boundary
+
+   FUNCTION sgn(x)
+      REAL(KIND = 8) :: x
+      IF (x > 0.d0) THEN
+         RETURN 1.d0
+      ELSE IF (x < 0.d0) THEN
+         RETURN -1.d0
+      ELSE
+         RETURN 0.d0
+      ENDIF
+   END FUNCTION sgn
 
 END MODULE prep_maill

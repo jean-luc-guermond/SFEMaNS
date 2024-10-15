@@ -34,6 +34,7 @@ module interface_boundary
   PROCEDURE(sub_rot_H_jump_interface), POINTER :: rot_H_jump_interface
   PROCEDURE(sub_Derivative_of_potential_from_rhoLi), POINTER :: Derivative_of_potential_from_rhoLi
   PROCEDURE(sub_molar_fraction_from_concentration), POINTER :: molar_fraction_from_concentration
+  PROCEDURE(curved_boundary_radius), POINTER :: curved_boundary_radius
 END module interface_boundary
 
 module point_to_boundary_generic
@@ -70,5 +71,6 @@ module point_to_boundary_generic
        nu_tilde_law_generic => nu_tilde_law, &
        rot_H_jump_interface_generic => rot_H_jump_interface, &
        Derivative_of_potential_from_rhoLi_generic => Derivative_of_potential_from_rhoLi, &
-       molar_fraction_from_concentration_generic => molar_fraction_from_concentration
+       molar_fraction_from_concentration_generic => molar_fraction_from_concentration, &
+       curved_boundary_radius_generic => curved_boundary_radius
 END module point_to_boundary_generic

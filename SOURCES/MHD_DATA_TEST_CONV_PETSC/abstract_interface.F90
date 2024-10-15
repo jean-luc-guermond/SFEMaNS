@@ -284,5 +284,11 @@ MODULE abstract_interface
        REAL(KIND=8) :: vv
      END FUNCTION  sub_molar_fraction_from_concentration
 
+     FUNCTION curved_boundary_radius(interface,theta) RESULT(vv)
+        INTEGER, INTENT(IN)  :: interface
+        REAL(KIND=8), INTENT(IN)   :: theta
+        REAL(KIND = 8) :: vv
+     END FUNCTION curved_boundary_radius
+
   END INTERFACE
 END MODULE abstract_interface

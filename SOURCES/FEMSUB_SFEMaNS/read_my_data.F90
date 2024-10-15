@@ -194,6 +194,9 @@ MODULE my_data_module
       INTEGER, DIMENSION(:), POINTER :: list_spherical
       REAL(KIND = 8), DIMENSION(:), POINTER :: radius_spherical
       REAL(KIND = 8), DIMENSION(:, :), POINTER :: origin_spherical
+      INTEGER :: nb_curved
+      INTEGER, DIMENSION(:), POINTER :: list_curved
+      REAL(KIND = 8), DIMENSION(:, :), POINTER :: origin_curved
 
    CONTAINS
       PROCEDURE, PUBLIC :: init
@@ -311,6 +314,8 @@ CONTAINS
       a%nb_dom_H = 0
       a%nb_dom_phi = 0
       a%nb_spherical = 0
+      a%nb_curved = 0
+
    END SUBROUTINE init
 END MODULE my_data_module
 
@@ -1808,6 +1813,21 @@ CONTAINS
          READ(21, *) inputs%origin_spherical(2, :)
       ELSE
          ALLOCATE(inputs%list_spherical(0), inputs%radius_spherical(0), inputs%origin_spherical(2, 0))
+      END IF
+
+      !==========Curved interfaces=================================!
+      CALL find_string(21, '===How many curved boundary pieces ?', test)
+      IF (test) THEN
+         READ(21, *) inputs%nb_curved
+      ELSE
+         inputs%nb_curved = 0
+      END IF
+      IF (inputs%nb_curved > 0) THEN
+         ALLOCATE(inputs%list_curved(inputs%nb_curved))
+         CALL read_until(21, '===List of curved  boundary pieces')
+         READ(21, *) inputs%list_curved
+      ELSE
+         ALLOCATE(inputs%list_curved(0))
       END IF
 
       CLOSE(21)

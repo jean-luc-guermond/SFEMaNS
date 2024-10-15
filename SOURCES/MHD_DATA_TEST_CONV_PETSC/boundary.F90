@@ -49,7 +49,7 @@ CONTAINS
        rot_H_jump_interface => rot_H_jump_interface_generic
        Derivative_of_potential_from_rhoLi => Derivative_of_potential_from_rhoLi_generic
        molar_fraction_from_concentration => molar_fraction_from_concentration_generic
-
+       curved_boundary_radius => curved_boundary_radius_generic
     CASE DEFAULT
        CALL error_petsc(' BUG in assign_boundary, wrong test number')
     end SELECT
