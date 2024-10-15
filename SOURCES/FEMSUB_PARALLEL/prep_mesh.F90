@@ -2363,9 +2363,10 @@ CONTAINS
       ELSE
          rr_ref = rr - inputs%origin_curved(:, interface - inputs%nb_spherical)
          theta = pi - pi / 2 * (1 + sgn(rr_ref(1))) * (1 - sgn(rr_ref(2) * rr_ref(2))) &
-         - pi / 4 * (2 + sgn(rr_ref(1))) * sgn(rr_ref(2)) &
-         - sgn(rr_ref(1) * rr_ref(2)) * ATAN((ABS(rr_ref(1)) - ABS(rr_ref(2)))/(ABS(rr_ref(1)) + ABS(rr_ref(2))))
-         rescale =  curved_boundary_radius(interface,theta) / SQRT(SUM(rr_ref * rr_ref))
+              - pi / 4 * (2 + sgn(rr_ref(1))) * sgn(rr_ref(2)) &
+              - sgn(rr_ref(1) * rr_ref(2)) * ATAN((ABS(rr_ref(1)) - ABS(rr_ref(2))) / (ABS(rr_ref(1)) + ABS(rr_ref(2))))
+         rescale = curved_boundary_radius(inputs%list_curved(interface - inputs%nb_spherical), theta) &
+              / SQRT(SUM(rr_ref * rr_ref))
          rr = rr_ref * rescale + inputs%origin_curved(:, interface - inputs%nb_spherical)
       END IF
 
@@ -2374,11 +2375,11 @@ CONTAINS
    FUNCTION sgn(x) RESULT(out)
       REAL(KIND = 8) :: x, out
       IF (x > 0.d0) THEN
-         out  = 1.d0
+         out = 1.d0
       ELSE IF (x < 0.d0) THEN
          out = -1.d0
       ELSE
-         out= 0.d0
+         out = 0.d0
       ENDIF
    END FUNCTION sgn
 
