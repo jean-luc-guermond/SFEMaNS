@@ -2370,14 +2370,17 @@ CONTAINS
 
    END SUBROUTINE rescale_to_curved_boundary
 
-   FUNCTION sgn(x)
-      REAL(KIND = 8) :: x
+   FUNCTION sgn(x) RESULT(out)
+      REAL(KIND = 8) :: x, out
       IF (x > 0.d0) THEN
-         RETURN 1.d0
+         out  = 1.d0
+         RETURN
       ELSE IF (x < 0.d0) THEN
-         RETURN -1.d0
+         out = -1.d0
+         RETURN
       ELSE
-         RETURN 0.d0
+         out= 0.d0
+         RETURN
       ENDIF
    END FUNCTION sgn
 
