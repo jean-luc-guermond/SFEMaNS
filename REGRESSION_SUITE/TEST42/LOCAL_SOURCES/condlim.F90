@@ -676,6 +676,15 @@ CONTAINS
     RETURN
   END FUNCTION molar_fraction_from_concentration
 
+  MODULE FUNCTION curved_boundary_radius(interface, theta) RESULT(vv)
+      INTEGER, INTENT(IN) :: interface
+      REAL(KIND = 8), INTENT(IN) :: theta
+      REAL(KIND = 8) :: vv
+
+      vv = 0.d0
+      RETURN
+   END FUNCTION curved_boundary_radius
+
   !====Local functions
   SUBROUTINE bessel_J(N_in,rr,J_out)
     IMPLICIT NONE
