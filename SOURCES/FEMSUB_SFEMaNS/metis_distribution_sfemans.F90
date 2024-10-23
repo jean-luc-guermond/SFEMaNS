@@ -1613,7 +1613,10 @@ CONTAINS
       ALLOCATE(mesh%sides_extra(0))
       ALLOCATE(mesh%jjs_extra(2, 0))
       ALLOCATE(mesh%rrs_extra(2, 3, 0))
-      ALLOCATE(mesh%loc_to_glob(0))
+      ALLOCATE(mesh%loc_to_glob(mesh%np))
+      DO n = 1, mesh%np
+         mesh%loc_to_glob(n) = n
+      END DO
       mesh%nis = 0
       ALLOCATE(mesh%isolated_jjs(0), mesh%isolated_interfaces(0, 2))
 
@@ -1639,11 +1642,6 @@ CONTAINS
          opt_mesh_glob%medges = 0
          opt_mesh_glob%nis = 0
          opt_mesh_glob%nps = 0
-
-         ALLOCATE(opt_mesh_glob%loc_to_glob(opt_mesh_glob%np))
-         DO n = 1, mesh%np
-            opt_mesh_glob%loc_to_glob(n) = n
-         END DO
       END IF
 
       CALL free_mesh(mesh)
