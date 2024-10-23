@@ -1601,7 +1601,6 @@ CONTAINS
 
       !==We create the local mesh now
       mesh%edge_stab = .FALSE.
-      ALLOCATE(mesh%disp(0), mesh%domnp(0), mesh%disedge(0), mesh%domedge(0), mesh%discell(0), mesh%domcell(0))
       ALLOCATE(mesh%jees(0), mesh%jecs(0))
 
       mesh%mextra = 0
@@ -1617,6 +1616,16 @@ CONTAINS
       ALLOCATE(mesh%loc_to_glob(0))
       mesh%nis = 0
       ALLOCATE(mesh%isolated_jjs(0), mesh%isolated_interfaces(0, 2))
+
+      ALLOCATE(mesh%disp(nb_proc + 1), mesh%domnp(nb_proc))
+      ALLOCATE(mesh%discell(nb_proc + 1), mesh%domcell(nb_proc))
+      ALLOCATE(mesh%disedge(nb_proc + 1), mesh%domedge(nb_proc))
+      mesh%disp = (/ 1, mesh%np + 1 /)
+      mesh%domnp = (/ mesh%np /)
+      mesh%discell = (/ 1, mesh%me + 1 /)
+      mesh%domcell = (/ mesh%me /)
+      mesh%disedge = (/ 1, mesh%medge + 1 /)
+      mesh%domedge = (/ mesh%medge /)
 
       CALL create_local_mesh_with_extra_layer(communicator, mesh, mesh_loc, me_loc, mes_loc, np_loc)
 
