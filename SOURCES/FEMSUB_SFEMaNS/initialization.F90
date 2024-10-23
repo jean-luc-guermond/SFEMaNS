@@ -1109,6 +1109,8 @@ CONTAINS
             CALL st_aij_csr_glob_block_with_extra_layer(comm_one_d_ns(1), 1, pp_mesh, pp_1_LA, opt_per = pp_per)
             !===Prepare csr structure for post processing curl_u==========================
             CALL st_aij_csr_glob_block_with_extra_layer(comm_one_d_ns(1), 1, vv_mesh, vizu_rot_u_LA)
+            CALL clean_mesh(vv_mesh)
+            CALL clean_mesh(pp_mesh)
          END IF
 
 
@@ -1393,6 +1395,10 @@ CONTAINS
          !   CALL symmetric_points(H_mesh, H_mesh_glob, H_mz_LA)
          !END IF
 
+         CALL clean_mesh(H_mesh)
+         CALL clean_mesh(pmag_mesh)
+         CALL clean_mesh(phi_mesh)
+
          !===Start Gauss points generation============================================
          !===JLG july 20, 2019, p3 mesh
          H_mesh%edge_stab = .FALSE.
@@ -1541,6 +1547,7 @@ CONTAINS
 
          !===Create csr structure for temperature=====================================
          CALL st_aij_csr_glob_block_with_extra_layer(comm_one_d_temp(1), 1, temp_mesh, temp_1_LA, opt_per = temp_per)
+         CALL clean_mesh(temp_mesh)
 
          !===Start Gauss points generation============================================
          !===JLG July 20, 2019, p3 mesh
@@ -1622,6 +1629,7 @@ CONTAINS
 
          !===Create csr structure for concentration=====================================
          CALL st_aij_csr_glob_block_with_extra_layer(comm_one_d_conc(1), 1, conc_mesh, conc_1_LA, opt_per = conc_per)
+         CALL clean_mesh(conc_mesh)
 
          !===Start Gauss points generation============================================
          !===JLG July 20, 2019, p3 mesh

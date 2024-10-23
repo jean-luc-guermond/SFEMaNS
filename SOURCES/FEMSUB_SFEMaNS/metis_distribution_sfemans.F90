@@ -1622,46 +1622,6 @@ CONTAINS
 
       IF (PRESENT(opt_mesh_glob)) THEN
          CALL copy_mesh(mesh, opt_mesh_glob)
-         CALL prep_jce_jev(opt_mesh_glob)
-
-         opt_mesh_glob%dom_me = opt_mesh_glob%me
-         opt_mesh_glob%dom_np = opt_mesh_glob%np
-         opt_mesh_glob%dom_mes = opt_mesh_glob%mes
-         opt_mesh_glob%mextra = 0
-         opt_mesh_glob%mes_extra = 0
-         opt_mesh_glob%medges = 0
-         opt_mesh_glob%nis = 0
-         opt_mesh_glob%nps = 0
-
-         ALLOCATE(opt_mesh_glob%jees(opt_mesh_glob%medges))
-         ALLOCATE(opt_mesh_glob%jecs(opt_mesh_glob%medges))
-
-         ALLOCATE(opt_mesh_glob%neighs_extra(opt_mesh_glob%mes_extra))
-         ALLOCATE(opt_mesh_glob%sides_extra(opt_mesh_glob%mes_extra))
-         ALLOCATE(opt_mesh_glob%jjs_extra(2, opt_mesh_glob%mes_extra))
-         ALLOCATE(opt_mesh_glob%rrs_extra(2, 3, opt_mesh_glob%mes_extra))
-         ALLOCATE(opt_mesh_glob%loc_to_glob(opt_mesh_glob%np))
-         DO n = 1, mesh%np
-            opt_mesh_glob%loc_to_glob(n) = n
-         END DO
-
-         ALLOCATE(opt_mesh_glob%jj_extra(3, opt_mesh_glob%mextra))
-         ALLOCATE(opt_mesh_glob%jce_extra(3, opt_mesh_glob%mextra))
-         ALLOCATE(opt_mesh_glob%jcc_extra(opt_mesh_glob%mextra))
-
-         ALLOCATE(opt_mesh_glob%isolated_interfaces(opt_mesh_glob%nis, 2))
-         ALLOCATE(opt_mesh_glob%isolated_jjs(opt_mesh_glob%nis))
-
-         ALLOCATE(opt_mesh_glob%disp(nb_proc + 1), opt_mesh_glob%domnp(nb_proc))
-         ALLOCATE(opt_mesh_glob%discell(nb_proc + 1), opt_mesh_glob%domcell(nb_proc))
-         ALLOCATE(opt_mesh_glob%disedge(nb_proc + 1), opt_mesh_glob%domedge(nb_proc))
-
-         opt_mesh_glob%disp = (/ 1, opt_mesh_glob%np + 1 /)
-         opt_mesh_glob%domnp = (/ opt_mesh_glob%np /)
-         opt_mesh_glob%discell = (/ 1, opt_mesh_glob%me + 1 /)
-         opt_mesh_glob%domcell = (/ opt_mesh_glob%me /)
-         opt_mesh_glob%disedge = (/ 1, opt_mesh_glob%medge + 1 /)
-         opt_mesh_glob%domedge = (/ opt_mesh_glob%medge /)
       END IF
 
       CALL free_mesh(mesh)
@@ -2720,13 +2680,17 @@ CONTAINS
       mesh2%me = mesh1%me
       mesh2%mes = mesh1%mes
       mesh2%np = mesh1%np
+      mesh2%nps = mesh1%nps
+      mesh2%mi = mesh1%mi
       mesh2%medge = mesh1%medge
       mesh2%medges = mesh1%medges
       mesh2%mextra = mesh1%mextra
+      mesh2%mes_extra = mesh1%mes_extra
 
       mesh2%dom_me = mesh1%dom_me
       mesh2%dom_np = mesh1%dom_np
       mesh2%dom_mes = mesh1%dom_mes
+      mesh2%nis = mesh1%nis
 
       ALLOCATE(mesh2%jj(SIZE(mesh1%jj, 1), SIZE(mesh1%jj, 2)))
       mesh2%jj = mesh1%jj
@@ -2734,8 +2698,8 @@ CONTAINS
       mesh2%jjs = mesh1%jjs
       ALLOCATE(mesh2%rr(SIZE(mesh1%rr, 1), SIZE(mesh1%rr, 2)))
       mesh2%rr = mesh1%rr
-      !ALLOCATE(mesh2%loc_to_glob(SIZE(mesh1%loc_to_glob)))
-      !mesh2%loc_to_glob = mesh1%loc_to_glob
+      ALLOCATE(mesh2%loc_to_glob(SIZE(mesh1%loc_to_glob)))
+      mesh2%loc_to_glob = mesh1%loc_to_glob
       ALLOCATE(mesh2%neigh(SIZE(mesh1%neigh, 1), SIZE(mesh1%neigh, 2)))
       mesh2%neigh = mesh1%neigh
 
@@ -2746,32 +2710,46 @@ CONTAINS
       ALLOCATE(mesh2%i_d(SIZE(mesh1%i_d)))
       mesh2%i_d = mesh1%i_d
 
-      !ALLOCATE(mesh2%jce(SIZE(mesh1%jce, 1), SIZE(mesh1%jce, 2)))
-      !mesh2%jce = mesh1%jce
-      !DEALLOCATE(mesh%jev)
-      !ALLOCATE(mesh2%jees(SIZE(mesh1%jees)))
-      !mesh2%jees = mesh1%jees
-      !ALLOCATE(mesh2%jecs(SIZE(mesh1%jecs)))
-      !mesh2%jecs = mesh1%jecs
+      ALLOCATE(mesh2%sides_extra(SIZE(mesh1%sides_extra)))
+      mesh2%sides_extra = mesh1%sides_extra
+      ALLOCATE(mesh2%neighs_extra(SIZE(mesh1%neighs_extra)))
+      mesh2%neighs_extra = mesh1%neighs_extra
 
-      !ALLOCATE(mesh2%disp(SIZE(mesh1%disp)))
-      !mesh2%disp = mesh1%disp
-      !ALLOCATE(mesh2%domnp(SIZE(mesh1%domnp)))
-      !mesh2%domnp = mesh1%domnp
-      !ALLOCATE(mesh2%discell(SIZE(mesh1%disp)))
-      !mesh2%discell = mesh1%discell
-      !ALLOCATE(mesh2%domcell(SIZE(mesh1%domnp)))
-      !mesh2%domcell = mesh1%domcell
-      !ALLOCATE(mesh2%disedge(SIZE(mesh1%disp)))
-      !mesh2%disedge = mesh1%disedge
-      !ALLOCATE(mesh2%domedge(SIZE(mesh1%domnp)))
-      !mesh2%domedge = mesh1%domedge
+      ALLOCATE(mesh2%jce(SIZE(mesh1%jce, 1), SIZE(mesh1%jce, 2)))
+      mesh2%jce = mesh1%jce
+      ALLOCATE(mesh2%jees(SIZE(mesh1%jees)))
+      mesh2%jees = mesh1%jees
+      ALLOCATE(mesh2%jecs(SIZE(mesh1%jecs)))
+      mesh2%jecs = mesh1%jecs
 
-      !ALLOCATE(mesh2%jj_extra(SIZE(mesh1%jj_extra, 1), SIZE(mesh1%jj_extra, 2)))
-      !mesh2%jj_extra = mesh1%jj_extra
-      !ALLOCATE(mesh2%jce_extra(SIZE(mesh1%jce_extra, 1), SIZE(mesh1%jce_extra, 2)))
-      !mesh2%jce_extra = mesh1%jce_extra
-      !ALLOCATE(mesh2%jcc_extra(SIZE(mesh1%jcc_extra)))
-      !mesh2%jcc_extra = mesh1%jcc_extra
+      ALLOCATE(mesh2%disp(SIZE(mesh1%disp)))
+      mesh2%disp = mesh1%disp
+      ALLOCATE(mesh2%domnp(SIZE(mesh1%domnp)))
+      mesh2%domnp = mesh1%domnp
+      ALLOCATE(mesh2%discell(SIZE(mesh1%disp)))
+      mesh2%discell = mesh1%discell
+      ALLOCATE(mesh2%domcell(SIZE(mesh1%domnp)))
+      mesh2%domcell = mesh1%domcell
+      ALLOCATE(mesh2%disedge(SIZE(mesh1%disp)))
+      mesh2%disedge = mesh1%disedge
+      ALLOCATE(mesh2%domedge(SIZE(mesh1%domnp)))
+      mesh2%domedge = mesh1%domedge
+
+      ALLOCATE(mesh2%jj_extra(SIZE(mesh1%jj_extra, 1), SIZE(mesh1%jj_extra, 2)))
+      mesh2%jj_extra = mesh1%jj_extra
+      ALLOCATE(mesh2%jce_extra(SIZE(mesh1%jce_extra, 1), SIZE(mesh1%jce_extra, 2)))
+      mesh2%jce_extra = mesh1%jce_extra
+      ALLOCATE(mesh2%jcc_extra(SIZE(mesh1%jcc_extra)))
+      mesh2%jcc_extra = mesh1%jcc_extra
+
+      ALLOCATE(mesh2%jjs_extra(SIZE(mesh1%jjs_extra, 1), SIZE(mesh1%jjs_extra, 2)))
+      mesh2%jjs_extra = mesh1%jjs_extra
+      ALLOCATE(mesh2%rrs_extra(SIZE(mesh1%rrs_extra, 1), SIZE(mesh1%rrs_extra, 2), SIZE(mesh1%rrs_extra, 3)))
+      mesh2%rrs_extra = mesh1%rrs_extra
+
+      ALLOCATE(mesh2%isolated_jjs(SIZE(mesh1%isolated_jjs)))
+      mesh2%isolated_jjs = mesh1%isolated_jjs
+      ALLOCATE(mesh2%isolated_interfaces(SIZE(mesh1%isolated_interfaces, 1), SIZE(mesh1%isolated_interfaces, 2)))
+      mesh2%isolated_interfaces = mesh1%isolated_interfaces
    END SUBROUTINE copy_mesh
 END MODULE metis_sfemans
