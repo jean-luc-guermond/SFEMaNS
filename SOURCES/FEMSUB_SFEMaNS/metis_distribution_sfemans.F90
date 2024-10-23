@@ -1643,6 +1643,36 @@ CONTAINS
          opt_mesh_glob%medges = 0
          opt_mesh_glob%nis = 0
          opt_mesh_glob%nps = 0
+
+         ALLOCATE(opt_mesh_glob%jees(opt_mesh_glob%medges))
+         ALLOCATE(opt_mesh_glob%jecs(opt_mesh_glob%medges))
+
+         ALLOCATE(opt_mesh_glob%neighs_extra(opt_mesh_glob%mes_extra))
+         ALLOCATE(opt_mesh_glob%sides_extra(opt_mesh_glob%mes_extra))
+         ALLOCATE(opt_mesh_glob%jjs_extra(2, opt_mesh_glob%mes_extra))
+         ALLOCATE(opt_mesh_glob%rrs_extra(2, 3, opt_mesh_glob%mes_extra))
+         ALLOCATE(opt_mesh_glob%loc_to_glob(opt_mesh_glob%np))
+         DO n = 1, mesh%np
+            opt_mesh_glob%loc_to_glob(n) = n
+         END DO
+
+         ALLOCATE(opt_mesh_glob%jj_extra(3, opt_mesh_glob%mextra))
+         ALLOCATE(opt_mesh_glob%jce_extra(3, opt_mesh_glob%mextra))
+         ALLOCATE(opt_mesh_glob%jcc_extra(opt_mesh_glob%mextra))
+
+         ALLOCATE(opt_mesh_glob%isolated_interfaces(opt_mesh_glob%nis, 2))
+         ALLOCATE(opt_mesh_glob%isolated_jjs(opt_mesh_glob%nis))
+
+         ALLOCATE(opt_mesh_glob%disp(nb_proc + 1), opt_mesh_glob%domnp(nb_proc))
+         ALLOCATE(opt_mesh_glob%discell(nb_proc + 1), opt_mesh_glob%domcell(nb_proc))
+         ALLOCATE(opt_mesh_glob%disedge(nb_proc + 1), opt_mesh_glob%domedge(nb_proc))
+
+         opt_mesh_glob%disp = (/ 1, opt_mesh_glob%np + 1 /)
+         opt_mesh_glob%domnp = (/ opt_mesh_glob%np /)
+         opt_mesh_glob%discell = (/ 1, opt_mesh_glob%me + 1 /)
+         opt_mesh_glob%domcell = (/ opt_mesh_glob%me /)
+         opt_mesh_glob%disedge = (/ 1, opt_mesh_glob%medge + 1 /)
+         opt_mesh_glob%domedge = (/ opt_mesh_glob%medge /)
       END IF
 
       CALL free_mesh(mesh)
