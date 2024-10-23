@@ -2579,6 +2579,29 @@ CONTAINS
 
    END SUBROUTINE FREE_MESH
 
+   SUBROUTINE clean_mesh(mesh)
+      USE def_type_mesh
+      USE my_util
+      IMPLICIT NONE
+      TYPE(mesh_type) :: mesh
+
+      DEALLOCATE(mesh%i_d, mesh%neigh)
+      DEALLOCATE(mesh%jjs, mesh%sides, mesh%neighs)
+      DEALLOCATE(mesh%disp, mesh%domnp, mesh%disedge, mesh%domedge, mesh%discell, mesh%domcell)
+      DEALLOCATE(mesh%jce, mesh%jees, mesh%jecs)
+
+      DEALLOCATE(mesh%jj_extra, mesh%jce_extra, mesh%jjs_extra, mesh%jcc_extra, mesh%rrs_extra)
+      DEALLOCATE(mesh%sides_extra, mesh%neighs_extra) !interfaces
+
+      !IF (mesh%edge_stab) THEN
+      !   DEALLOCATE(mesh%iis)
+      !   NULLIFY(mesh%jji)
+      !   DEALLOCATE(mesh%jjsi)
+      !   DEALLOCATE(mesh%neighi)
+      !END IF
+
+   END SUBROUTINE clean_MESH
+
    SUBROUTINE free_interface(interf)
       USE def_type_mesh
       USE my_util
