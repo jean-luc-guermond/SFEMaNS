@@ -1634,6 +1634,7 @@ CONTAINS
 
       IF (PRESENT(opt_mesh_glob)) THEN
          CALL copy_mesh(mesh, opt_mesh_glob)
+         CALL prep_jce_jev(opt_mesh_glob)
          opt_mesh_glob%dom_me = opt_mesh_glob%me
          opt_mesh_glob%dom_np = opt_mesh_glob%np
          opt_mesh_glob%dom_mes = opt_mesh_glob%mes
