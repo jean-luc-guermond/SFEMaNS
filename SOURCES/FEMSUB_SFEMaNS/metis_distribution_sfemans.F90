@@ -1640,6 +1640,7 @@ CONTAINS
          opt_mesh_glob%nis = 0
          opt_mesh_glob%nps = 0
 
+         ALLOCATE(opt_mesh_glob%loc_to_glob(opt_mesh_glob%np))
          DO n = 1, mesh%np
             opt_mesh_glob%loc_to_glob(n) = n
          END DO
