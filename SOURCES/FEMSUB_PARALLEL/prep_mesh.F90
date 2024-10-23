@@ -1819,6 +1819,14 @@ CONTAINS
          mesh%isolated_interfaces = mesh_p1%isolated_interfaces
          ALLOCATE(mesh%isolated_jjs(mesh_p1%nis))
          mesh%isolated_jjs = mesh_p1%isolated_jjs
+
+         ALLOCATE(mesh%jce_extra(SIZE(mesh_p1%jce_extra, 1), SIZE(mesh_p1%jce_extra, 2)))
+         mesh%jce_extra = mesh_p1%jce_extra
+         ALLOCATE(mesh%jees(SIZE(mesh_p1%jees)))
+         mesh%jees = mesh_p1%jees
+         ALLOCATE(mesh%jecs(SIZE(mesh_p1%jecs)))
+         mesh%jecs = mesh_p1%jecs
+
          RETURN
       ELSE IF (type_fe==2) THEN
          mesh%me = mesh_p1%me
@@ -1873,6 +1881,13 @@ CONTAINS
          ALLOCATE(mesh%isolated_interfaces(mesh_p1%nis, 2))
          mesh%isolated_interfaces = mesh_p1%isolated_interfaces
          ALLOCATE(mesh%isolated_jjs(mesh_p1%nis))
+
+         ALLOCATE(mesh%jce_extra(SIZE(mesh_p1%jce_extra, 1), SIZE(mesh_p1%jce_extra, 2)))
+         mesh%jce_extra = mesh_p1%jce_extra
+         ALLOCATE(mesh%jees(SIZE(mesh_p1%jees)))
+         mesh%jees = mesh_p1%jees
+         ALLOCATE(mesh%jecs(SIZE(mesh_p1%jecs)))
+         mesh%jecs = mesh_p1%jecs
       ELSE IF (type_fe==3) THEN
          mesh%me = mesh_p1%me
          mesh%mes = mesh_p1%mes
@@ -1925,6 +1940,13 @@ CONTAINS
          ALLOCATE(mesh%isolated_interfaces(mesh_p1%nis, 2))
          mesh%isolated_interfaces = mesh_p1%isolated_interfaces
          ALLOCATE(mesh%isolated_jjs(mesh_p1%nis))
+
+         ALLOCATE(mesh%jce_extra(SIZE(mesh_p1%jce_extra, 1), SIZE(mesh_p1%jce_extra, 2)))
+         mesh%jce_extra = mesh_p1%jce_extra
+         ALLOCATE(mesh%jees(SIZE(mesh_p1%jees)))
+         mesh%jees = mesh_p1%jees
+         ALLOCATE(mesh%jecs(SIZE(mesh_p1%jecs)))
+         mesh%jecs = mesh_p1%jecs
       END IF
 
       nb_angle = 0
