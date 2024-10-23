@@ -77,7 +77,6 @@ MODULE def_type_mesh
       INTEGER, POINTER, DIMENSION(:) :: jcc_extra
       INTEGER, POINTER, DIMENSION(:, :) :: jce! cell-> edge (JLG+MC Sept 2022)
       INTEGER, POINTER, DIMENSION(:) :: jees, jecs !edges belonging to another proc (MC Sept 2022)
-      INTEGER, POINTER, DIMENSION(:, :) :: jevs
       INTEGER, POINTER, DIMENSION(:, :, :) :: jji  ! (JLG April 2009)
       INTEGER, POINTER, DIMENSION(:, :) :: jjsi ! (JLG April 2009)
       INTEGER, POINTER, DIMENSION(:) :: j_s  ! boundary nodes --> volume numbering
