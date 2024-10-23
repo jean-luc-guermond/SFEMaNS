@@ -1631,6 +1631,18 @@ CONTAINS
 
       IF (PRESENT(opt_mesh_glob)) THEN
          CALL copy_mesh(mesh, opt_mesh_glob)
+         opt_mesh_glob%dom_me = opt_mesh_glob%me
+         opt_mesh_glob%dom_np = opt_mesh_glob%np
+         opt_mesh_glob%dom_mes = opt_mesh_glob%mes
+         opt_mesh_glob%mextra = 0
+         opt_mesh_glob%mes_extra = 0
+         opt_mesh_glob%medges = 0
+         opt_mesh_glob%nis = 0
+         opt_mesh_glob%nps = 0
+
+         DO n = 1, mesh%np
+            opt_mesh_glob%loc_to_glob(n) = n
+         END DO
       END IF
 
       CALL free_mesh(mesh)
