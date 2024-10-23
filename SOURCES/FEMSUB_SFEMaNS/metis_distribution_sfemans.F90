@@ -2546,7 +2546,7 @@ CONTAINS
       TYPE(mesh_type) :: mesh
 
       DEALLOCATE(mesh%jj, mesh%i_d, mesh%loc_to_glob, mesh%rr, mesh%neigh)
-      DEALLOCATE(mesh%jjs, mesh%j_s, mesh%sides, mesh%neighs)
+      DEALLOCATE(mesh%jjs, mesh%sides, mesh%neighs)
       DEALLOCATE(mesh%disp, mesh%domnp, mesh%disedge, mesh%domedge, mesh%discell, mesh%domcell)
       DEALLOCATE(mesh%jce, mesh%jees, mesh%jecs)
 
