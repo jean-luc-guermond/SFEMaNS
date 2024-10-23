@@ -1614,7 +1614,7 @@ CONTAINS
       ALLOCATE(mesh%sides_extra(0))
       ALLOCATE(mesh%jjs_extra(2, 0))
       ALLOCATE(mesh%rrs_extra(2, 3, 0))
-
+      ALLOCATE(mesh%loc_to_glob(0))
       mesh%nis = 0
       ALLOCATE(mesh%isolated_jjs(0), mesh%isolated_interfaces(0, 2))
 
