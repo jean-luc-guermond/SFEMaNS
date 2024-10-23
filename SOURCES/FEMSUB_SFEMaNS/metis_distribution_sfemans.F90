@@ -2545,18 +2545,13 @@ CONTAINS
       IMPLICIT NONE
       TYPE(mesh_type) :: mesh
 
-      DEALLOCATE(mesh%jj)
-      DEALLOCATE(mesh%jjs)
-      DEALLOCATE(mesh%rr)
-      DEALLOCATE(mesh%neigh)
-      DEALLOCATE(mesh%sides)
-      DEALLOCATE(mesh%neighs)
-      DEALLOCATE(mesh%i_d)
+      DEALLOCATE(mesh%jj, mesh%i_d, mesh%loc_to_glob, mesh%rr, mesh%neigh)
+      DEALLOCATE(mesh%jjs, mesh%j_s, mesh%sides, mesh%neighs)
+      DEALLOCATE(mesh%disp, mesh%domnp, mesh%disedge, mesh%domedge, mesh%discell, mesh%domcell)
+      DEALLOCATE(mesh%jce, mesh%jees, mesh%jecs, mesh%jevs)
 
-      NULLIFY(mesh%loc_to_glob)
-      NULLIFY(mesh%disp)
-      NULLIFY(mesh%domnp)
-      NULLIFY(mesh%j_s)
+      DEALLOCATE(mesh%jj_extra, mesh%jce_extra, mesh%jjs_extra, mesh%jcc_extra, mesh%rrs_extra)
+      DEALLOCATE(mesh%sides_extra, mesh%neighs_extra) !interfaces
 
       !IF (mesh%edge_stab) THEN
       !   DEALLOCATE(mesh%iis)
@@ -2564,16 +2559,6 @@ CONTAINS
       !   DEALLOCATE(mesh%jjsi)
       !   DEALLOCATE(mesh%neighi)
       !END IF
-
-      mesh%dom_me = 0
-      mesh%dom_np = 0
-      mesh%dom_mes = 0
-      mesh%me = 0
-      mesh%mes = 0
-      mesh%np = 0
-      mesh%nps = 0
-      mesh%mi = 0
-      mesh%edge_stab = .FALSE.
 
    END SUBROUTINE FREE_MESH
 
@@ -2588,6 +2573,7 @@ CONTAINS
       DEALLOCATE(interf%mesh2)
       DEALLOCATE(interf%jjs1)
       DEALLOCATE(interf%jjs2)
+      DEALLOCATE(interf%mesh1_extra, interf%mesh2_extra, interf%jjs1_extra, interf%jjs2_extra)
    END SUBROUTINE free_interface
 
    SUBROUTINE reassign_per_pts(mesh, partition, list_pts)
