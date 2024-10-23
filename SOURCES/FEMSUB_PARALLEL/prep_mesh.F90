@@ -2257,6 +2257,367 @@ CONTAINS
       ENDDO
    END SUBROUTINE  create_iso_grid_distributed
 
+   SUBROUTINE refinement_iso_grid_distributed(mesh_p1, mesh)
+      !===jj(:, :)    nodes of the  volume_elements of the input grid
+      !===jjs(:, :)    nodes of the surface_elements of the input grid
+      !===rr(:, :)    cartesian coordinates of the nodes of the input grid
+      !===m_op(:,:)   volume element opposite to each node
+      !===neigh_el(:) volume element ajacent to the surface element
+      !===jj_f(:, :)  nodes of the  volume_elements of the output p2 grid
+      !===jjs_f(:, :)  nodes of the surface_elements of the output p2 grid
+      !===rr_f(:, :)  cartesian coordinates of the nodes of the output p2 grid
+      USE def_type_mesh
+      IMPLICIT NONE
+      TYPE(mesh_type) :: mesh_p1, mesh
+      LOGICAL, DIMENSION(:), ALLOCATABLE :: virgin
+      INTEGER, DIMENSION(:, :), ALLOCATABLE :: j_mid, jjs_mid
+      INTEGER :: np, me, mes, nw, nws, kd, n, m, k, l, n_dof, dom_np, e_g, a, mextra
+      INTEGER :: n1, n2, n3, n4, ms, n_start, n_end, n1_g, n2_g, neigh, k_neigh, n_kneigh1, n_kneigh2, swap
+      INTEGER :: n_k1, n_k2, m_op_k, kk, i, mm, ms_bord, p_e, p_c, m_new, e_k, p_j, n_kks
+      REAL(KIND = 8), DIMENSION(:), ALLOCATABLE :: r_mid
+      INTEGER, DIMENSION(3) :: edges_g, edges_l, p_es
+      INTEGER, DIMENSION(2) :: n_ks
+      REAL(KIND = 8) :: epsilon = 1.d-13, dist, d1, d2, s1, s2, s3, shalf, ref, scc, infinity
+      INTEGER :: ns, ns1, index, nb_angle, f_dof, edge_g, edge_l, n_new_start, proc, nb_proc, edges, p, cell_g, cell_l
+      LOGICAL :: iso
+
+      nw = SIZE(mesh_p1%jj, 1)   !===nodes in each volume element (3 in 2D)
+      me = SIZE(mesh_p1%jj, 2)   !===number of cells
+      kd = SIZE(mesh_p1%rr, 1)   !===space dimensions
+      np = mesh_p1%np            !===number of P1 vertices connected to grid
+      dom_np = mesh_p1%dom_np    !===number of P1 vertices attributed to proc
+      mes = SIZE(mesh_p1%jjs, 2)
+      nws = SIZE(mesh_p1%jjs, 1)
+      nb_proc = SIZE(mesh_p1%domnp)
+
+      mesh%me = 4 * mesh_p1%me
+      mesh%mes = 2 * mesh_p1%mes !---> something with news to take into account
+      mesh%np = mesh_p1%np + mesh_p1%medge + mesh_p1%medges
+      mesh%medge = 2 * mesh_p1%medge + 3 * mesh_p1%me
+      mesh%medges = 2 * mesh_p1%medges
+
+      !jjs_extra !(extra layer of cells not own by proc but with dofs own by proc)
+      !rrs_extra  ! coordinates for cells at interfaces
+      !sides_extra, neighs_extra !interfaces
+      !mes_extra
+
+      ALLOCATE(mesh%jj(nw, mesh%me)) !--->done
+      ALLOCATE(mesh%jjs(nws, mesh%mes))  !--->done
+      ALLOCATE(mesh%rr(kd, mesh%np)) !--->done
+      ALLOCATE(mesh%loc_to_glob(mesh%np)) !--->done
+
+      ALLOCATE(mesh%jce(nw, mesh%me))  !--->done
+      !ALLOCATE(mesh%jev(nw - 1, mesh%medge)) !----->never needed so not constructed
+      ALLOCATE(mesh%jees(mesh%medges))  !--->done
+      ALLOCATE(mesh%jecs(mesh%medges))  !--->done
+
+      ALLOCATE(mesh%neigh(nw, mesh%me)) !--->done
+      ALLOCATE(mesh%sides(mesh%mes))   !---> still don't know what this is ?? done ?
+      ALLOCATE(mesh%neighs(mesh%mes))  !--->done
+      ALLOCATE(mesh%i_d(mesh%me)) !--->done
+
+      mesh%dom_me = 4 * mesh_p1%dom_me
+      mesh%dom_np = mesh_p1%dom_np + mesh_p1%medge
+      mesh%dom_mes = 2 * mesh_p1%dom_mes
+      ALLOCATE(mesh%disp(nb_proc + 1), mesh%domnp(nb_proc))
+      mesh%domnp = mesh_p1%domnp + mesh_p1%domedge
+      mesh%disp = mesh_p1%disp + mesh_p1%disedge - 1
+      ALLOCATE(mesh%discell(nb_proc + 1), mesh%domcell(nb_proc))
+      mesh%domcell = 4 * mesh_p1%domcell
+      mesh%discell = 4 * mesh_p1%discell - 3
+      ALLOCATE(mesh%disedge(nb_proc + 1), mesh%domedge(nb_proc))
+      mesh%domedge = 2 * mesh_p1%domedge + 3 * mesh_p1%domcell
+      mesh%disedge = 2 * mesh_p1%disedge + 3 * mesh_p1%discell - 4
+
+      mesh%nis = mesh_p1%nis
+      ALLOCATE(mesh%isolated_interfaces(mesh_p1%nis, 2))
+      mesh%isolated_interfaces = mesh_p1%isolated_interfaces
+      ALLOCATE(mesh%isolated_jjs(mesh_p1%nis))
+
+      IF (kd == 3) THEN
+         WRITE(*, *) ' CREATE_GRID_Pk: 3D case not programmed yet !'
+         STOP
+      END IF
+
+      DO proc = 1, nb_proc
+         IF (mesh_p1%loc_to_glob(1) <= mesh_p1%disp(proc))    EXIT
+      END DO
+
+      !===GENERATION OF THE Pk GRID
+      mesh%rr(:, 1:dom_np) = mesh_p1%rr(:, 1:dom_np)
+      mesh%rr(:, mesh%dom_np + 1:mesh%dom_np + np - dom_np) = mesh_p1%rr(:, dom_np + 1:)
+      mesh%loc_to_glob(1:dom_np) = mesh_p1%loc_to_glob(1:dom_np) + mesh_p1%disedge(proc) - 1
+      mesh%isolated_jjs = mesh_p1%isolated_jjs + mesh_p1%disedge(proc) - 1
+
+      DO m = 1, np - dom_np
+         DO p = 1, nb_proc
+            IF (mesh_p1%loc_to_glob(dom_np + m) < mesh_p1%disp(p + 1)) THEN
+               EXIT
+            END IF
+         END DO
+         mesh%loc_to_glob(mesh%dom_np + m) = mesh_p1%loc_to_glob(dom_np + m) + mesh_p1%disedge(p) - 1
+      END DO
+
+      n_dof = 0
+      DO m = 1, me !===loop on the elements unrefined mesh
+         edges_g = mesh_p1%jce(:, m)
+         edges_l = edges_g - mesh_p1%disedge(proc) + 1
+
+         !===Center cell
+         mesh%i_d(m) = mesh%discell(proc) - 1 + m
+         DO i = 1, nw
+            !===Creating the new points
+            IF (edges_l(i) <=0) THEN
+               DO p = 1, nb_proc
+                  IF (edges_g(i) < mesh_p1%disedge(p + 1)) EXIT
+               END DO
+               DO ms = 1, mesh_p1%medges
+                  IF (mesh_p1%jees(ms) == edges_g(i)) EXIT
+               END DO
+               mesh%jj(i, m) = mesh%dom_np + mesh_p1%np - mesh_p1%dom_np + ms
+               mesh%loc_to_glob(mesh%jj(i, m)) = mesh%disp(p) - 1 + mesh_p1%domnp(p) + edges_g(i) - mesh_p1%disedge(p) + 1
+            ELSE
+               mesh%jj(i, m) = dom_np + edges_l(i)
+               mesh%loc_to_glob(mesh%jj(i, m)) = mesh%disp(proc) - 1 + mesh%jj(i, m)
+            END IF
+
+            n1 = mesh_p1%jj(MODULO(i, nw) + 1, m)
+            n2 = mesh_p1%jj(MODULO(i + 1, nw) + 1, m)
+            mesh%rr(:, mesh%jj(i, m)) = (mesh_p1%rr(:, n2) + mesh_p1%rr(:, n1)) / 2.d0
+
+            !===Setting up neighbours and edges
+            mesh%neigh(i, m) = me + 3 * (m - 1) + i
+            mesh%i_d(mesh%neigh(i, m)) = mesh%discell(proc) - 1 + mesh%neigh(i, m)
+            mesh%jce(i, m) = mesh%disedge(proc) - 1 + 2 * mesh_p1%medge + 3 * (m - 1) + i
+         END DO
+
+
+         !===Corner cells
+         DO k = 1, nw
+            m_new = mesh%neigh(k, m)
+
+            n_ks = (/MODULO(k, nw) + 1, MODULO(k + 1, nw) + 1/)
+            IF (n_ks(1)>n_ks(2)) THEN
+               n_ks = (/n_ks(2), n_ks(1)/)
+            END IF
+
+            !===Setting the center cell as a neighbour
+            mesh%neigh(1, m_new) = m
+            mesh%jce(1, m_new) = mesh%jce(k, m)
+
+            !===Adding the points using the center cell
+            IF (mesh_p1%jj(k, m) > dom_np) THEN
+               mesh%jj(1, m_new) = mesh_p1%jj(k, m) + mesh%dom_np - mesh_p1%dom_np
+            ELSE
+               mesh%jj(1, m_new) = mesh_p1%jj(k, m)
+            END IF
+            mesh%jj(2, m_new) = mesh%jj(n_ks(1), m)
+            mesh%jj(3, m_new) = mesh%jj(n_ks(2), m)
+            !===Adding the last edges and neighbours
+            DO e_k = 1, 2
+
+               !===Adding neighbours
+               neigh = mesh_p1%neigh(n_ks(MODULO(e_k, 2) + 1), m)
+
+               IF (neigh <= 0) THEN
+                  mesh%neigh(e_k + 1, m_new) = neigh
+               ELSE
+                  DO k_neigh = 1, nw
+                     IF (mesh_p1%neigh(k_neigh, neigh) == m) exit
+                  END DO
+                  n_kneigh1 = MODULO(k_neigh, nw) + 1
+                  n_kneigh2 = MODULO(k_neigh + 1, nw) + 1
+                  IF (n_kneigh1>n_kneigh2) THEN
+                     swap = n_kneigh1
+                     n_kneigh1 = n_kneigh2
+                     n_kneigh2 = swap
+                  END IF
+                  IF (k < n_ks(e_k)) THEN
+                     mesh%neigh(e_k + 1, m_new) = me + 3 * (neigh - 1) + n_kneigh1
+                  ELSE
+                     mesh%neigh(e_k + 1, m_new) = me + 3 * (neigh - 1) + n_kneigh2
+                  END IF
+               END IF
+
+               !===Adding edge
+               e_g = mesh_p1%jce(n_ks(MODULO(e_k, 2) + 1), m)
+               IF (e_g < mesh_p1%disedge(proc)) THEN
+                  DO p = 1, nb_proc
+                     IF (e_g < mesh_p1%disedge(p + 1)) EXIT
+                  END DO
+                  DO ms = 1, mesh_p1%medges
+                     IF (mesh_p1%jees(ms) == e_g) EXIT
+                  END DO
+               ELSE
+                  p = proc
+               END IF
+
+               IF (k < n_ks(e_k)) THEN
+                  mesh%jce(e_k + 1, m_new) = mesh%disedge(p) - 1 + e_g - mesh_p1%disedge(p) + 1
+               ELSE
+                  mesh%jce(e_k + 1, m_new) = mesh%disedge(p) - 1 + mesh_p1%domedge(p) + e_g - mesh_p1%disedge(p) + 1
+               END IF
+
+               IF (e_g < mesh_p1%disedge(proc)) THEN
+                  IF (k < n_ks(e_k)) THEN
+                     mesh%jees(ms) = mesh%jce(e_k + 1, m_new)
+                     mesh%jecs(ms) = m_new
+                  ELSE
+                     mesh%jees(mesh_p1%medges + ms) = mesh%jce(e_k + 1, m_new)
+                     mesh%jecs(mesh_p1%medges + ms) = m_new
+                  END IF
+               END IF
+            END DO
+         END DO
+      END DO
+
+      !===Surface elements
+      DO ms = 1, mes
+         m = mesh_p1%neighs(ms)
+         !===Finding the corresponding side in the cell
+         DO k = 1, nw
+            IF (MINVAL(ABS(mesh_p1%jj(k, m) - mesh_p1%jjs(:, ms)))/=0) EXIT
+         ENDDO
+
+         n_ks = (/MODULO(k, nw) + 1, MODULO(k + 1, nw) + 1/)
+         IF (n_ks(1)>n_ks(2)) THEN
+            n_ks = (/n_ks(2), n_ks(1)/)
+         END IF
+
+         mesh%jjs(1, ms) = mesh_p1%jj(n_ks(1), m)
+         IF (mesh%jjs(1, ms) > mesh_p1%dom_np) mesh%jjs(1, ms) = mesh%jjs(1, ms) + mesh%dom_np - mesh_p1%dom_np
+         mesh%jjs(1, mes + ms) = mesh_p1%jj(n_ks(2), m)
+         IF (mesh%jjs(1, mes + ms) > mesh_p1%dom_np) mesh%jjs(1, mes + ms) = mesh%jjs(1, mes + ms) &
+              + mesh%dom_np - mesh_p1%dom_np
+         mesh%jjs(2, ms) = mesh%jj(k, m)
+         mesh%jjs(2, mes + ms) = mesh%jj(k, m)
+         mesh%neighs(ms) = mesh%neigh(n_ks(1), m)
+         mesh%neighs(mes + ms) = mesh%neigh(n_ks(2), m)
+         mesh%sides(ms) = mesh_p1%sides(ms)
+         mesh%sides(mes + ms) = mesh_p1%sides(ms)
+      ENDDO
+
+      !===Counting number of new extra cells
+      mesh%mextra = 0
+      DO m = 1, mesh_p1%mextra
+         a = 0
+         DO k = 1, nw
+            IF (mesh_p1%disedge(proc) <= mesh_p1%jce_extra(k, m) &
+                 .and. mesh_p1%jce_extra(k, m) < mesh_p1%disedge(proc + 1) .and. a == 0) THEN
+               a = 1
+               mesh%mextra = mesh%mextra + 1
+            END IF
+         END DO
+         DO k = 1, nw
+            n_ks = (/MODULO(k, nw) + 1, MODULO(k + 1, nw) + 1/)
+            IF (n_ks(1)>n_ks(2)) THEN
+               n_ks = (/n_ks(2), n_ks(1)/)
+            END IF
+
+            IF (mesh_p1%jj_extra(k, m) < mesh_p1%disp(proc + 1) .and. &
+                 (mesh_p1%disp(proc) <= mesh_p1%jj_extra(k, m)  .or. &
+                      (mesh_p1%disedge(proc) <= mesh_p1%jce_extra(n_ks(1), m) &
+                           .and. mesh_p1%jce_extra(n_ks(1), m) < mesh_p1%disedge(proc + 1)) .or.  &
+                      (mesh_p1%disedge(proc) <= mesh_p1%jce_extra(n_ks(2), m) &
+                           .and. mesh_p1%jce_extra(n_ks(2), m) < mesh_p1%disedge(proc + 1)))) THEN
+               mesh%mextra = mesh%mextra + 1
+            END IF
+         END DO
+      END DO
+
+      ALLOCATE(mesh%jj_extra(nw, mesh%mextra)) !---->
+      ALLOCATE(mesh%jce_extra(nw, mesh%mextra)) !---->
+      ALLOCATE(mesh%jcc_extra(mesh%mextra)) !---->
+
+      !===Constructing the extra cells
+      mextra = 0
+      DO m = 1, mesh_p1%mextra
+         a = 0
+         DO k = 1, nw
+            IF (mesh_p1%disedge(proc) <= mesh_p1%jce_extra(k, m) &
+                 .and. mesh_p1%jce_extra(k, m) < mesh_p1%disedge(proc + 1) .and. a==0) THEN
+               a = 1
+               mextra = mextra + 1
+
+               cell_g = mesh_p1%jcc_extra(m)
+               DO p_c = 1, nb_proc
+                  IF (cell_g < mesh_p1%discell(p_c + 1)) EXIT
+               END DO
+               cell_l = cell_g - mesh_p1%discell(p_c) + 1
+               mesh%jcc_extra(mextra) = cell_l + mesh%discell(p_c) - 1
+
+               DO i = 1, 3
+                  mesh%jce_extra(i, mextra) = mesh%disedge(p_c) - 1 + 2 * mesh_p1%domedge(p_c) + 3 * (cell_l - 1) + i
+                  e_g = mesh_p1%jce_extra(i, m)
+                  DO p = 1, nb_proc
+                     IF (e_g < mesh_p1%disedge(p + 1)) EXIT
+                  END DO
+                  mesh%jj_extra(i, mextra) = mesh%disp(p) - 1 + mesh_p1%domnp(p) + e_g - mesh_p1%disedge(p) + 1
+               END DO
+
+            END IF
+         END DO
+
+         DO k = 1, nw
+            n_ks = (/MODULO(k, nw) + 1, MODULO(k + 1, nw) + 1/)
+            IF (n_ks(1)>n_ks(2)) THEN
+               n_ks = (/n_ks(2), n_ks(1)/)
+            END IF
+
+            IF (mesh_p1%jj_extra(k, m) < mesh_p1%disp(proc + 1) .and. &
+                 (mesh_p1%disp(proc) <= mesh_p1%jj_extra(k, m)  .or. &
+                      (mesh_p1%disedge(proc) <= mesh_p1%jce_extra(n_ks(1), m) &
+                           .and. mesh_p1%jce_extra(n_ks(1), m) < mesh_p1%disedge(proc + 1)) .or.  &
+                      (mesh_p1%disedge(proc) <= mesh_p1%jce_extra(n_ks(2), m) &
+                           .and. mesh_p1%jce_extra(n_ks(2), m) < mesh_p1%disedge(proc + 1))))  THEN
+               mextra = mextra + 1
+               cell_g = mesh_p1%jcc_extra(m)
+               DO p_c = 1, nb_proc
+                  IF (cell_g < mesh_p1%discell(p_c + 1))  EXIT
+               END DO
+
+               cell_l = cell_g - mesh_p1%discell(p_c) + 1
+               mesh%jcc_extra(mextra) = mesh%discell(p_c) - 1 + mesh_p1%domcell(p_c) + 3 * (cell_l - 1) + k
+
+               edges_g = mesh_p1%jce_extra(:, m)
+
+               DO i = 1, nw
+                  DO p = 1, nb_proc
+                     IF (edges_g(i) < mesh_p1%disedge(p + 1)) EXIT
+                  END DO
+                  p_es(i) = p
+               END DO
+
+               !===Adding the points
+               DO p_j = 1, nb_proc
+                  IF (mesh_p1%jj_extra(k, m) < mesh_p1%disp(p_j + 1))  EXIT
+               END DO
+               mesh%jj_extra(1, mextra) = mesh_p1%jj_extra(k, m) + mesh_p1%disedge(p_j) - 1
+               mesh%jj_extra(2, mextra) = mesh%disp(p_es(n_ks(1))) - 1 + &
+                    mesh_p1%domnp(p_es(n_ks(1))) + edges_g(n_ks(1)) - mesh_p1%disedge(p_es(n_ks(1))) + 1
+               mesh%jj_extra(3, mextra) = mesh%disp(p_es(n_ks(2))) - 1 + &
+                    mesh_p1%domnp(p_es(n_ks(2))) + edges_g(n_ks(2)) - mesh_p1%disedge(p_es(n_ks(2))) + 1
+
+               !===Adding the edges
+               mesh%jce_extra(1, mextra) = mesh%disedge(p_c) - 1 + 2 * mesh_p1%domedge(p_c) + 3 * (cell_l - 1) + k
+
+               DO e_k = 1, 2
+                  IF (k < n_ks(e_k)) THEN
+                     mesh%jce_extra(e_k + 1, mextra) = mesh%disedge(p_es(n_ks(MODULO(e_k, 2) + 1))) - 1 + &
+                          edges_g(n_ks(MODULO(e_k, 2) + 1)) - mesh_p1%disedge(p_es(n_ks(MODULO(e_k, 2) + 1))) + 1
+                  ELSE
+                     mesh%jce_extra(e_k + 1, mextra) = mesh%disedge(p_es(n_ks(MODULO(e_k, 2) + 1))) - 1 + &
+                          mesh_p1%domedge(p_es(n_ks(MODULO(e_k, 2) + 1))) + edges_g(n_ks(MODULO(e_k, 2) + 1)) &
+                          - mesh_p1%disedge(p_es(n_ks(MODULO(e_k, 2) + 1))) + 1
+                  END IF
+               END DO
+            END IF
+         END DO
+      END DO
+
+   END SUBROUTINE refinement_iso_grid_distributed
+
+
    SUBROUTINE prep_jce_jev(mesh)
       USE def_type_mesh
       IMPLICIT NONE
