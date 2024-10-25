@@ -1842,7 +1842,7 @@ CONTAINS
       IF (test) THEN
          READ(21, *) inputs%nb_refinements
       ELSE
-         inputs%nb_curved = 0
+         inputs%nb_refinements = 0
       END IF
 
       CLOSE(21)

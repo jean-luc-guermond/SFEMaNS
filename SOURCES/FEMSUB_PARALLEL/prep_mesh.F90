@@ -2767,8 +2767,9 @@ CONTAINS
       USE input_data
       INTEGER :: side, interface
       LOGICAL :: iso
-
+      interface = -1
       iso = .FALSE.
+
       IF (inputs%nb_spherical + inputs%nb_curved > 0) THEN
          IF (MINVAL(ABS(side - inputs%list_spherical)) == 0 .OR. &
               MINVAL(ABS(side - inputs%list_curved)) == 0) THEN
