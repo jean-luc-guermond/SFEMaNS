@@ -2647,10 +2647,11 @@ CONTAINS
             mesh%jjs_extra(2, mextra) = mesh%jj_extra(k, m1)
             mesh%neighs_extra(mextra) = mesh%discell(p_c) - 1 + mesh_p1%domcell(p_c) + 3 * (cell_l - 1) + n_ks(k)
 
-            DO m2 = 1, mesh%mextra !find associated extra cell
-               IF (mesh%jcc_extra(m1) == mesh%neighs_extra(mextra)) EXIT
-            END DO
-            mesh%rrs_extra(:, :, mextra) = mesh%rr(:, :, m2)
+            mesh%rrs_extra(:, 1, mextra) = mesh%rrs_extra(:, n_ks(k), m)
+            mesh%rrs_extra(:, 2, mextra) = (mesh%rrs_extra(:, n_ks(k), m) &
+                 + mesh%rrs_extra(:, n_ks(MODULO(k + 1, 2) + 1), m)) / 2
+            mesh%rrs_extra(:, 3, mextra) = (mesh%rrs_extra(:, n_ks(k), m) &
+                 + mesh%rrs_extra(:, n, m)) / 2
          END DO
       END DO
 
