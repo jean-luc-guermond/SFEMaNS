@@ -2279,6 +2279,7 @@ CONTAINS
       INTEGER, DIMENSION(2) :: n_ks
       REAL(KIND = 8) :: epsilon = 1.d-13, dist, d1, d2, s1, s2, s3, shalf, ref, scc, infinity
       INTEGER :: ns, ns1, index, nb_angle, f_dof, edge_g, edge_l, n_new_start, proc, nb_proc, edges, p, cell_g, cell_l
+      INTEGER :: m1, m2
       LOGICAL :: iso
 
       nw = SIZE(mesh_p1%jj, 1)   !===nodes in each volume element (3 in 2D)
@@ -2618,7 +2619,12 @@ CONTAINS
             IF (mesh_p1%jcc_extra(m1) == cell_g) EXIT
          END DO
 
-         DO n = 1, dim + 1 !===find side in cell
+         DO p_c = 1, nb_proc
+            IF (cell_g < mesh_p1%discell(p_c + 1))  EXIT
+         END DO
+         cell_l = cell_g - mesh_p1%discell(p_c) + 1
+
+         DO n = 1, 3 !===find side in cell
             IF (MINVAL(ABS(mesh_p1%jj_extra(n, m1) - mesh_p1%jjs_extra(:, m)))/=0) THEN
                EXIT
             END IF
@@ -2639,8 +2645,12 @@ CONTAINS
             END DO
             mesh%jjs_extra(1, mextra) = mesh_p1%jj_extra(n_ks(k), m1) + mesh_p1%disedge(p_j) - 1
             mesh%jjs_extra(2, mextra) = mesh%jj_extra(k, m1)
-            mesh%neighs_extra(mextra) = mesh%neigh_extra(n_ks(k), m1)
-            mesh%rrs_extra(:, :, mextra) = mesh%rr(:, :, mesh%neigh_extra(n_ks(k), m1))
+            mesh%neighs_extra(mextra) = mesh%discell(p_c) - 1 + mesh_p1%domcell(p_c) + 3 * (cell_l - 1) + n_ks(k)
+
+            DO m2 = 1, mesh%mextra !find associated extra cell
+               IF (mesh%jcc_extra(m1) == mesh%neighs_extra(mextra)) EXIT
+            END DO
+            mesh%rrs_extra(:, :, mextra) = mesh%rr(:, :, m2)
          END DO
       END DO
 
