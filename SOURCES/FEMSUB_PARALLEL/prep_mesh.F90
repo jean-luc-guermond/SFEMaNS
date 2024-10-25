@@ -2278,7 +2278,7 @@ CONTAINS
       INTEGER, DIMENSION(2) :: n_ks
       REAL(KIND = 8) :: epsilon = 1.d-13, dist, d1, d2, s1, s2, s3, shalf, ref, scc, infinity
       INTEGER :: ns, ns1, index, nb_angle, f_dof, edge_g, edge_l, n_new_start, proc, nb_proc, edges, p, cell_g, cell_l
-      INTEGER :: m1, m2
+      INTEGER :: m1, m2, interface
       LOGICAL :: iso
 
       nw = SIZE(mesh_p1%jj, 1)   !===nodes in each volume element (3 in 2D)
@@ -2384,9 +2384,6 @@ CONTAINS
             n1 = mesh_p1%jj(MODULO(i, nw) + 1, m)
             n2 = mesh_p1%jj(MODULO(i + 1, nw) + 1, m)
             mesh%rr(:, mesh%jj(i, m)) = (mesh_p1%rr(:, n2) + mesh_p1%rr(:, n1)) / 2.d0
-            IF (iso) THEN
-               CALL rescale_to_curved_boundary(mesh%rr(:, mesh%jj(i, m)), interface)
-            END IF
 
             !===Setting up neighbours and edges
             mesh%neigh(i, m) = me + 3 * (m - 1) + i
@@ -2498,6 +2495,11 @@ CONTAINS
          mesh%neighs(mes + ms) = mesh%neigh(n_ks(2), m)
          mesh%sides(ms) = mesh_p1%sides(ms)
          mesh%sides(mes + ms) = mesh_p1%sides(ms)
+
+         CALL is_on_curved_interface(mesh_p1%sides(ms), iso, interface)
+         IF (iso) THEN
+            CALL rescale_to_curved_boundary(mesh%rr(:, mesh%jj(k, m), interface))
+         END IF
       ENDDO
 
       !===Counting number of new extra cells
@@ -2616,6 +2618,8 @@ CONTAINS
 
       mextra = 0
       DO m = 1, mesh_p1%mextra
+         CALL is_on_curved_interface(mesh_p1%sides_extra(m), iso, interface)
+
          cell_g = mesh_p1%neighs_extra(m)
          DO m1 = 1, mesh_p1%mextra !find associated extra cell
             IF (mesh_p1%jcc_extra(m1) == cell_g) EXIT
@@ -2657,9 +2661,6 @@ CONTAINS
             END IF
             mesh%rrs_extra(:, 3, mextra) = (mesh%rrs_extra(:, n_ks(k), m) &
                  + mesh%rrs_extra(:, n, m)) / 2
-            IF (iso) THEN
-               CALL rescale_to_curved_boundary(mesh%rrs_extra(:, 3, mextra), interface)
-            END IF
          END DO
       END DO
 
