@@ -1056,6 +1056,9 @@ CONTAINS
       !===Specific to momentum (velocity)
       IF (if_momentum .OR. inputs%type_pb=='mxx') THEN
          CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_mesh_glob, part, list_dom_ns, dummy_mesh_loc)
+         DO n = 1, inputs%nb_refinements !===Create refined mesh
+            CALL refinement_iso_grid_distributed(dummy_mesh_loc)
+         END DO
          WRITE(*, *)'mesh extracted'
          CALL create_iso_grid_distributed(dummy_mesh_loc, vv_mesh, inputs%type_fe_velocity)
          CALL create_iso_grid_distributed(dummy_mesh_loc, pp_mesh, inputs%type_fe_velocity - 1)
@@ -1133,10 +1136,16 @@ CONTAINS
       !===Extract local meshes from global meshes for Maxwell=========================
       IF (if_induction) THEN
          CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_mesh_glob, part, list_dom_H, dummy_mesh_loc)
+         DO n = 1, inputs%nb_refinements !===Create refined mesh
+            CALL refinement_iso_grid_distributed(dummy_mesh_loc)
+         END DO
          CALL create_iso_grid_distributed(dummy_mesh_loc, H_mesh, inputs%type_fe_H)
          CALL free_mesh(dummy_mesh_loc)
 
          CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_mesh_glob, part, inputs%list_dom_phi, dummy_mesh_loc)
+         DO n = 1, inputs%nb_refinements !===Create refined mesh
+            CALL refinement_iso_grid_distributed(dummy_mesh_loc)
+         END DO
          CALL create_iso_grid_distributed(dummy_mesh_loc, phi_mesh, inputs%type_fe_phi)
          CALL free_mesh(dummy_mesh_loc)
       END IF
@@ -1152,6 +1161,9 @@ CONTAINS
               list_inter_conc, 1, p1_c0_mesh_glob_conc, inputs%iformatted)
 
          CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_c0_mesh_glob_conc, part, inputs%list_dom_conc, dummy_mesh_loc)
+         DO n = 1, inputs%nb_refinements !===Create refined mesh
+            CALL refinement_iso_grid_distributed(dummy_mesh_loc)
+         END DO
          CALL create_iso_grid_distributed(dummy_mesh_loc, conc_mesh, 2)
          CALL free_mesh(dummy_mesh_loc)
 
@@ -1175,6 +1187,9 @@ CONTAINS
               list_inter_temp, 1, p1_c0_mesh_glob_temp, inputs%iformatted)
 
          CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_c0_mesh_glob_temp, part, list_dom_temp, dummy_mesh_loc)
+         DO n = 1, inputs%nb_refinements !===Create refined mesh
+            CALL refinement_iso_grid_distributed(dummy_mesh_loc)
+         END DO
          CALL create_iso_grid_distributed(dummy_mesh_loc, temp_mesh, 2)
          CALL free_mesh(dummy_mesh_loc)
 
@@ -1198,6 +1213,9 @@ CONTAINS
               inputs%list_inter_H_phi, 1, p1_c0_mesh_glob, inputs%iformatted)
 
          CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_c0_mesh_glob, part, list_dom_H, pmag_mesh)
+         DO n = 1, inputs%nb_refinements !===Create refined mesh
+            CALL refinement_iso_grid_distributed(pmag_mesh)
+         END DO
          DEALLOCATE(list_dummy)
          CALL free_mesh(p1_c0_mesh_glob)
 

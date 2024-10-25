@@ -197,6 +197,8 @@ MODULE my_data_module
       INTEGER :: nb_curved
       INTEGER, DIMENSION(:), POINTER :: list_curved
       REAL(KIND = 8), DIMENSION(:, :), POINTER :: origin_curved
+      !===Data for refinements
+      INTEGER :: nb_refinements
 
    CONTAINS
       PROCEDURE, PUBLIC :: init
@@ -315,6 +317,7 @@ CONTAINS
       a%nb_dom_phi = 0
       a%nb_spherical = 0
       a%nb_curved = 0
+      a%nb_refinements = 0
 
    END SUBROUTINE init
 END MODULE my_data_module
@@ -1832,6 +1835,14 @@ CONTAINS
          READ(21, *) inputs%origin_curved(2, :)
       ELSE
          ALLOCATE(inputs%list_curved(0))
+      END IF
+
+      !==========Refinements=================================!
+      CALL find_string(21, '===Number of refinements', test)
+      IF (test) THEN
+         READ(21, *) inputs%nb_refinements
+      ELSE
+         inputs%nb_curved = 0
       END IF
 
       CLOSE(21)
