@@ -2,7 +2,7 @@ MODULE metis_sfemans
 #include "petsc/finclude/petsc.h"
    USE petsc
    PUBLIC :: part_mesh_mhd, free_mesh, extract_mesh, free_interface, part_mesh_mhd_bis, part_mesh_M_T_H_phi, &
-        extract_mesh_deprecated, clean_mesh
+        extract_mesh_deprecated, clean_mesh, copy_mesh
    PRIVATE
    REAL(KIND = 8) :: epsilon = 1.d-10
    !!$ Dummy for metis...
