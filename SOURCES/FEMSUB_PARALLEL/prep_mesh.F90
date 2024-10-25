@@ -2051,6 +2051,7 @@ CONTAINS
                   IF (mesh_p1%neighs(ms) == m) EXIT
                END DO
                CALL is_on_curved_interface(mesh_p1%sides(ms), iso, interface)
+               write(*,*) 'iso', iso, interface
             END IF
 
             IF (virgin(edge_l)) THEN !===This side is new
@@ -2211,7 +2212,7 @@ CONTAINS
       !==connectivity array the surface elements of the iso grid for extras
       DO ms = 1, mesh%mes_extra
          iso = .FALSE.
-         CALL is_on_curved_interface(mesh%sides(ms), iso, interface)
+         CALL is_on_curved_interface(mesh%sides_extra(ms), iso, interface)
 
          cell_g = mesh%neighs_extra(ms)
          DO m = 1, mesh%mextra !find associated extra cell
@@ -2795,7 +2796,6 @@ CONTAINS
       REAL(KIND = 8), DIMENSION(2) :: rr, rr_ref
       INTEGER :: interface
       REAL(KIND = 8) :: rescale, pi = ACOS(-1.d0), theta
-write(*,*) 'ssssssss', interface
       IF (interface <= inputs%nb_spherical) THEN
          rr_ref = rr - inputs%origin_spherical(:, interface)
          rescale = inputs%radius_spherical(interface) / SQRT(SUM(rr_ref * rr_ref))
@@ -2808,7 +2808,6 @@ write(*,*) 'ssssssss', interface
          rescale = curved_boundary_radius(inputs%list_curved(interface - inputs%nb_spherical), theta) &
               / SQRT(SUM(rr_ref * rr_ref))
          rr = rr_ref * rescale + inputs%origin_curved(:, interface - inputs%nb_spherical)
-         write(*,*) 'ssssssss'
       END IF
 
    END SUBROUTINE rescale_to_curved_boundary
