@@ -2795,7 +2795,7 @@ CONTAINS
       REAL(KIND = 8), DIMENSION(2) :: rr, rr_ref
       INTEGER :: interface
       REAL(KIND = 8) :: rescale, pi = ACOS(-1.d0), theta
-
+write(*,*) 'ssssssss', interface
       IF (interface <= inputs%nb_spherical) THEN
          rr_ref = rr - inputs%origin_spherical(:, interface)
          rescale = inputs%radius_spherical(interface) / SQRT(SUM(rr_ref * rr_ref))
