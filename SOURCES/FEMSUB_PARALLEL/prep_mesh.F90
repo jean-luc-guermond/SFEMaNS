@@ -2281,6 +2281,10 @@ CONTAINS
       INTEGER :: m1, m2, interface
       LOGICAL :: iso
 
+      IF (mesh_p1%me == 0) THEN
+         RETURN
+      END IF
+
       nw = SIZE(mesh_p1%jj, 1)   !===nodes in each volume element (3 in 2D)
       me = SIZE(mesh_p1%jj, 2)   !===number of cells
       kd = SIZE(mesh_p1%rr, 1)   !===space dimensions
