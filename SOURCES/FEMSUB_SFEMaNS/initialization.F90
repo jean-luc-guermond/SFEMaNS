@@ -1232,8 +1232,8 @@ CONTAINS
                   if (MAXVAL(ABS(pmag_mesh%rr(k, pmag_mesh%jj(n, :)) &
                        - H_mesh%rr(k, H_mesh%jj(n, 1:pmag_mesh%me)))) > 5.d-14) THEN
                      do m = 1, pmag_mesh%me
-                        if (MAXVAL(ABS(pmag_mesh%rr(k, pmag_mesh%jj(n, m)) &
-                             - H_mesh%rr(k, H_mesh%jj(n, m)))) > 5.d-14) THEN
+                        if (ABS(pmag_mesh%rr(k, pmag_mesh%jj(n, m)) &
+                             - H_mesh%rr(k, H_mesh%jj(n, m))) > 5.d-14) THEN
                            write(*,*) 'error', m, n
                         end if
                      end do
