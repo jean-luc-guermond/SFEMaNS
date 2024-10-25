@@ -1629,9 +1629,8 @@ CONTAINS
       mesh%domcell = (/ mesh%me /)
       mesh%disedge = (/ 1, mesh%medge + 1 /)
       mesh%domedge = (/ mesh%medge /)
-      write(*,*) mesh%sides, mesh%sides_extra
       CALL create_local_mesh_with_extra_layer(communicator, mesh, mesh_loc, me_loc, mes_loc, np_loc)
-write(*,*) 'aaa', mesh_loc%sides, mesh_loc%sides_extra
+
       IF (PRESENT(opt_mesh_glob)) THEN
          CALL copy_mesh(mesh, opt_mesh_glob)
          CALL prep_jce_jev(opt_mesh_glob)

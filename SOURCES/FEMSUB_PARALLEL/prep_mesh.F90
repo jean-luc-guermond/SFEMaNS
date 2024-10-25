@@ -2051,7 +2051,7 @@ CONTAINS
                   IF (mesh_p1%neighs(ms) == m) EXIT
                END DO
                CALL is_on_curved_interface(mesh_p1%sides(ms), iso, interface)
-               write(*,*) 'iso', iso, interface
+               write(*,*) 'iso', iso, interface, mesh_p1%sides(ms)
             END IF
 
             IF (virgin(edge_l)) THEN !===This side is new
