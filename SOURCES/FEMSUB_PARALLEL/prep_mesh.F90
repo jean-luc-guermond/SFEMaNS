@@ -2051,7 +2051,6 @@ CONTAINS
                   IF (mesh_p1%neighs(ms) == m) EXIT
                END DO
                CALL is_on_curved_interface(mesh_p1%sides(ms), iso, interface)
-               write(*,*) 'iso', iso, interface, mesh_p1%sides(ms)
             END IF
 
             IF (virgin(edge_l)) THEN !===This side is new
@@ -2618,7 +2617,7 @@ CONTAINS
       ALLOCATE(mesh%sides_extra(mesh%mes_extra), mesh%neighs_extra(mesh%mes_extra))
 
       mextra = 0
-      DO m = 1, mesh_p1%mextra
+      DO m = 1, mesh_p1%mes_extra
          CALL is_on_curved_interface(mesh_p1%sides_extra(m), iso, interface)
 
          cell_g = mesh_p1%neighs_extra(m)
