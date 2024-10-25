@@ -2808,6 +2808,7 @@ CONTAINS
          rescale = curved_boundary_radius(inputs%list_curved(interface - inputs%nb_spherical), theta) &
               / SQRT(SUM(rr_ref * rr_ref))
          rr = rr_ref * rescale + inputs%origin_curved(:, interface - inputs%nb_spherical)
+         write(*,*) 'ssssssss'
       END IF
 
    END SUBROUTINE rescale_to_curved_boundary
