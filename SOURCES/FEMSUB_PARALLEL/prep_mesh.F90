@@ -2267,6 +2267,7 @@ CONTAINS
       !===jjs_f(:, :)  nodes of the surface_elements of the output p2 grid
       !===rr_f(:, :)  cartesian coordinates of the nodes of the output p2 grid
       USE def_type_mesh
+      USE metis_sfemans
       IMPLICIT NONE
       TYPE(mesh_type) :: mesh_p1, mesh
       LOGICAL, DIMENSION(:), ALLOCATABLE :: virgin
