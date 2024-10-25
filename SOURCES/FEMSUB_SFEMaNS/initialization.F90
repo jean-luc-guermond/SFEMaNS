@@ -1293,8 +1293,7 @@ CONTAINS
                         do m = 1, vv_mesh%me
                            if (ABS(vv_mesh%rr(k, vv_mesh%jj(n, m)) - H_mesh%rr(k, H_mesh%jj(n, m)))&
                            > 5.d-14) THEN
-                              write(*, *) 'error', m, n, &
-                              ABS(vv_mesh%rr(k, vv_mesh%jj(n, m)) - H_mesh%rr(k, H_mesh%jj(n, m)))
+                              write(*, *) 'error', m, n, vv_mesh%rr(1:3, vv_mesh%jj(n, m)), H_mesh%rr(1:3, H_mesh%jj(n, m))
                            end if
                         end do
                      error = error + MAXVAL(ABS(vv_mesh%rr(k, vv_mesh%jj(n, :)) - H_mesh%rr(k, H_mesh%jj(n, 1:vv_mesh%me))))
