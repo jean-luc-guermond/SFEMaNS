@@ -2060,8 +2060,7 @@ CONTAINS
                   mesh%rr(:, l + n_new_start) = mesh_p1%rr(:, n_start) &
                        + l * (mesh_p1%rr(:, n_end) - mesh_p1%rr(:, n_start)) / type_fe
                   IF (iso) THEN
-                     CALL rescale_to_curved_boundary(mesh_p1%rr(:, n_start), mesh_p1%rr(:, n_end), &
-                          mesh%rr(:, l + n_new_start), interface)
+                     CALL rescale_to_curved_boundary(mesh%rr(:, l + n_new_start), interface)
                   END IF
                   mesh%loc_to_glob(l + n_new_start) = l + n_new_start + mesh%disp(proc) - 1
                END DO
@@ -2244,8 +2243,7 @@ CONTAINS
                mesh%rrs_extra(:, nw + (k - 1) * f_dof + l, ms) = mesh_p1%rrs_extra(:, n_start, ms) &
                     + l * (mesh_p1%rrs_extra(:, n_end, ms) - mesh_p1%rrs_extra(:, n_start, ms)) / type_fe
                IF (iso) THEN
-                  CALL rescale_to_curved_boundary(mesh_p1%rrs_extra(:, n_start, ms), mesh_p1%rrs_extra(:, n_end, ms), &
-                       mesh%rrs_extra(:, nw + (k - 1) * f_dof + l, ms), interface)
+                  CALL rescale_to_curved_boundary(mesh%rrs_extra(:, nw + (k - 1) * f_dof + l, ms), interface)
                END IF
             END DO
          END DO
@@ -2386,6 +2384,9 @@ CONTAINS
             n1 = mesh_p1%jj(MODULO(i, nw) + 1, m)
             n2 = mesh_p1%jj(MODULO(i + 1, nw) + 1, m)
             mesh%rr(:, mesh%jj(i, m)) = (mesh_p1%rr(:, n2) + mesh_p1%rr(:, n1)) / 2.d0
+            IF (iso) THEN
+               CALL rescale_to_curved_boundary(mesh%rr(:, mesh%jj(i, m)), interface)
+            END IF
 
             !===Setting up neighbours and edges
             mesh%neigh(i, m) = me + 3 * (m - 1) + i
@@ -2651,8 +2652,14 @@ CONTAINS
             mesh%rrs_extra(:, 1, mextra) = mesh%rrs_extra(:, n_ks(k), m)
             mesh%rrs_extra(:, 2, mextra) = (mesh%rrs_extra(:, n_ks(k), m) &
                  + mesh%rrs_extra(:, n_ks(MODULO(k + 1, 2) + 1), m)) / 2
+            IF (iso) THEN
+               CALL rescale_to_curved_boundary(mesh%rrs_extra(:, 2, mextra), interface)
+            END IF
             mesh%rrs_extra(:, 3, mextra) = (mesh%rrs_extra(:, n_ks(k), m) &
                  + mesh%rrs_extra(:, n, m)) / 2
+            IF (iso) THEN
+               CALL rescale_to_curved_boundary(mesh%rrs_extra(:, 3, mextra), interface)
+            END IF
          END DO
       END DO
 
@@ -2781,10 +2788,10 @@ CONTAINS
    END SUBROUTINE is_on_curved_interface
 
 
-   SUBROUTINE rescale_to_curved_boundary(rr_start, rr_end, rr, interface)
+   SUBROUTINE rescale_to_curved_boundary(rr, interface)
       USE input_data
       USE boundary
-      REAL(KIND = 8), DIMENSION(2) :: rr_start, rr_end, rr, rr_ref
+      REAL(KIND = 8), DIMENSION(2) :: rr, rr_ref
       INTEGER :: interface
       REAL(KIND = 8) :: rescale, pi = ACOS(-1.d0), theta
 
