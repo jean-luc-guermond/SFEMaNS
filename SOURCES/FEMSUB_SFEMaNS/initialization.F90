@@ -1283,6 +1283,8 @@ CONTAINS
 
          !===Verify if H and NS meshes coincide on the NS domain=======================
          IF (if_momentum .OR. inputs%type_pb=='mxx') THEN
+            IF (rank == 0) CALL plot_const_p1_label(vv_mesh%jj, vv_mesh%rr, vv_mesh%jj(1,:) , 'vv.plt')
+            IF (rank == 0) CALL plot_const_p1_label(H_mesh%jj, H_mesh%rr, H_mesh%jj(1,:), 'HH.plt')
             IF (vv_mesh%me/=0) THEN
                error = 0.d0
                DO k = 1, 2

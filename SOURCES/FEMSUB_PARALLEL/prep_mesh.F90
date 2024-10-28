@@ -2301,11 +2301,6 @@ CONTAINS
       mesh%medge = 2 * mesh_p1%medge + 3 * mesh_p1%me
       mesh%medges = 2 * mesh_p1%medges
 
-      !jjs_extra !(extra layer of cells not own by proc but with dofs own by proc)
-      !rrs_extra  ! coordinates for cells at interfaces
-      !sides_extra, neighs_extra !interfaces
-      !mes_extra
-
       ALLOCATE(mesh%jj(nw, mesh%me)) !--->done
       ALLOCATE(mesh%jjs(nws, mesh%mes))  !--->done
       ALLOCATE(mesh%rr(kd, mesh%np)) !--->done
