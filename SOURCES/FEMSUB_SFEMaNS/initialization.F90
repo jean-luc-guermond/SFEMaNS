@@ -1046,7 +1046,8 @@ CONTAINS
                      n_ks = (/n_ks(2), n_ks(1)/)
                   END IF
                   IF (MAXVAL(ABS(p1_mesh_glob%jj(m_ks, m) - p1_mesh_glob%jj(n_ks, nm))) /= 0) THEN
-                     write(*,*) 'not well ordianed', m, nm, p1_mesh_glob%jj(:, m), p1_mesh_glob%jj(:, m)
+                     write(*,*) 'not well ordianed', m, nm, p1_mesh_glob%jj(:, m), p1_mesh_glob%jj(:, nm), &
+                          p1_mesh_glob%jj(m_ks, m), p1_mesh_glob%jj(n_ks, nm)
                   END IF
 
                END IF
