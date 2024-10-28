@@ -1324,7 +1324,7 @@ CONTAINS
                     + ABS(vv_mesh%rr(2, vv_mesh%jj(5, m)) &
                          - (H_mesh%rr(2, H_mesh%jj(3, m)) + H_mesh%rr(2, H_mesh%jj(1, m))) / 2),&
                     + ABS(vv_mesh%rr(2, vv_mesh%jj(6, m)) &
-                         - (H_mesh%rr(2, H_mesh%jj(1, m)) + H_mesh%rr(2, H_mesh%jj(2, m))) / 2), m
+                         - (H_mesh%rr(2, H_mesh%jj(1, m)) + H_mesh%rr(2, H_mesh%jj(2, m))) / 2), m, vv_mesh%neigh(:, m)
                END DO
                IF (error / MAXVAL(ABS(H_mesh%rr(1, 1) - H_mesh%rr(1, :))) .GE. 5.d-14) THEN
                   WRITE(*, *) ' WARNING: vv_mesh and H_mesh do not coincide on the NS domain.'
