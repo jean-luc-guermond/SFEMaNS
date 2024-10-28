@@ -2047,11 +2047,11 @@ CONTAINS
             IF (m_op_k == 0) THEN  !===the side is on the boundary
                DO ms = 1, SIZE(mesh_p1%neighs) + 1
                   IF (ms == SIZE(mesh_p1%neighs) + 1) WRITE(*, *) &
-                       'BUG in create_iso_grid: cell near boundary isnt in neighs'
+                       'BUG in create_iso_grid: cell near boundary isnt in neighs', m_op_k, m
                   IF (mesh_p1%neighs(ms) == m) EXIT
                END DO
                CALL is_on_curved_interface(mesh_p1%sides(ms), iso, interface)
-               write(*,*) 'mm', m_op_k, m, mesh_p1%neighs
+
             END IF
 
             IF (virgin(edge_l)) THEN !===This side is new
@@ -2073,7 +2073,7 @@ CONTAINS
                      EXIT
                   END IF
                ENDDO
-               write(*,*) 'mm', m_op_k, m, mesh_p1%neighs
+               write(*,*) 'mm', m_op_k, m
                DO l = 1, f_dof
                   j_mid((k - 1) * f_dof + l, m) = j_mid((kk - 1) * f_dof + l, mm) !===New index created
                END DO
