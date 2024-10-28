@@ -659,8 +659,9 @@ CONTAINS
       CHARACTER(len = 200) :: tit_part, mesh_part_name
       CHARACTER(len = 200) :: data_fichier
       INTEGER :: nsize
-      INTEGER :: k, kp, m, n, i, j
+      INTEGER :: k, kp, m, n, i, j, nm
       INTEGER :: code, rank, rank_S, nb_procs, petsc_rank, bloc_size, m_max_pad
+            INTEGER, DIMENSION(2) :: n_ks, m_ks
       REAL(KIND = 8) :: time_u, time_h, time_T, error, max_vel_S
       REAL(KIND = 8) :: time_conc
       LOGICAL :: ns_periodic, mxw_periodic, temp_periodic
@@ -1029,6 +1030,28 @@ CONTAINS
       !===Meshes using p1_mesh_glob
       CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom, &
            list_inter, 1, p1_mesh_glob, inputs%iformatted)
+      DO m = 1, p1_mesh_glob%m
+         DO n = 1, 3
+            m_ks = (/MODULO(n, 3) + 1, MODULO(n + 1, 3) + 1/)
+            IF (m_ks(1)>m_ks(2)) THEN
+               m_ks = (/m_ks(2), m_ks(1)/)
+            END IF
+
+            nm = p1_mesh_glob%neigh(n, m)
+            Do k = 1, 3
+               IF (m == p1_mesh_glob%neigh(k, nm)) THEN
+                  n_ks = (/MODULO(k, nw) + 1, MODULO(k + 1, nw) + 1/)
+                  IF (n_ks(1)>n_ks(2)) THEN
+                     n_ks = (/n_ks(2), n_ks(1)/)
+                  END IF
+                  IF (MAXVAL(ABS(p1_mesh_glob%jj(m_ks, m) - p1_mesh_glob%jj(n_ks, nm))) /= 0) THEN
+                     write(*,*) 'not well ordianed', m, nm
+                  END IF
+
+               END IF
+            End Do
+         END DO
+      END DO
 
       !===Start Metis mesh generation=================================================
       ALLOCATE(part(p1_mesh_glob%me))
@@ -1223,9 +1246,9 @@ CONTAINS
 
       !===Specific to induction equation==============================================
       IF (if_induction) THEN
-            IF (rank == 0) CALL plot_const_p1_label(vv_mesh%jj, vv_mesh%rr, 1.d0 * vv_mesh%jj(1,:) , 'vv.plt')
-            IF (rank == 0) CALL plot_const_p1_label(H_mesh%jj, H_mesh%rr, 1.d0 * H_mesh%jj(1,:), 'HH.plt')
-            IF (rank == 0) CALL plot_const_p1_label(pmag_mesh%jj, pmag_mesh%rr, 1.d0 * pmag_mesh%jj(1,:) , 'pp.plt')
+         IF (rank == 0) CALL plot_const_p1_label(vv_mesh%jj, vv_mesh%rr, 1.d0 * vv_mesh%jj(1, :), 'vv.plt')
+         IF (rank == 0) CALL plot_const_p1_label(H_mesh%jj, H_mesh%rr, 1.d0 * H_mesh%jj(1, :), 'HH.plt')
+         IF (rank == 0) CALL plot_const_p1_label(pmag_mesh%jj, pmag_mesh%rr, 1.d0 * pmag_mesh%jj(1, :), 'pp.plt')
          !===Verify that pmag_mesh and H_mesh coincide================================
          IF (pmag_mesh%me/=0) THEN
             error = 0.d0
@@ -1249,7 +1272,7 @@ CONTAINS
                   END DO
                END DO
                IF (error / MAXVAL(ABS(H_mesh%rr(1, 1) - H_mesh%rr(1, :))) .GE. 5.d-14) THEN
-               CALL error_Petsc('BUG in INIT, (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14')
+                  CALL error_Petsc('BUG in INIT, (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14')
                END IF
 
                error = error + MAXVAL(ABS(temp_mesh%rr(1, temp_mesh%jj(4, 1:temp_mesh%me)) &
@@ -1289,12 +1312,12 @@ CONTAINS
                error = 0.d0
                DO k = 1, 2
                   DO n = 1, SIZE(H_mesh%jj, 1)
-                        do m = 1, vv_mesh%me
-                           if (ABS(vv_mesh%rr(k, vv_mesh%jj(n, m)) - H_mesh%rr(k, H_mesh%jj(n, m)))&
-                           > 5.d-14) THEN
-                              write(*, *) 'error', m, n, vv_mesh%rr(k, vv_mesh%jj(1:3, m)), H_mesh%rr(k, H_mesh%jj(1:3, m))
-                           end if
-                        end do
+                     do m = 1, vv_mesh%me
+                        if (ABS(vv_mesh%rr(k, vv_mesh%jj(n, m)) - H_mesh%rr(k, H_mesh%jj(n, m)))&
+                             > 5.d-14) THEN
+                           write(*, *) 'error', m, n, vv_mesh%rr(k, vv_mesh%jj(1:3, m)), H_mesh%rr(k, H_mesh%jj(1:3, m))
+                        end if
+                     end do
                      error = error + MAXVAL(ABS(vv_mesh%rr(k, vv_mesh%jj(n, :)) - H_mesh%rr(k, H_mesh%jj(n, 1:vv_mesh%me))))
                   END DO
                END DO
@@ -1315,19 +1338,19 @@ CONTAINS
                     + MAXVAL(ABS(vv_mesh%rr(2, vv_mesh%jj(6, :)) &
                          - (H_mesh%rr(2, H_mesh%jj(1, 1:vv_mesh%me)) + H_mesh%rr(2, H_mesh%jj(2, 1:vv_mesh%me))) / 2))
                DO m = 1, vv_mesh%me
-                  write(*,*) vv_mesh%rr(1, vv_mesh%jj(1:3, m)) - H_mesh%rr(1, H_mesh%jj(1:3, m)),&
-                  vv_mesh%rr(1, vv_mesh%jj(4, m)) &
-                    - (H_mesh%rr(1, H_mesh%jj(2, m)) + H_mesh%rr(1, H_mesh%jj(3, m))) / 2,&
-                    + vv_mesh%rr(1, vv_mesh%jj(5, m)) &
-                         - (H_mesh%rr(1, H_mesh%jj(3, m)) + H_mesh%rr(1, H_mesh%jj(1, m))) / 2,&
-                    + vv_mesh%rr(1, vv_mesh%jj(6, m)) &
-                         - (H_mesh%rr(1, H_mesh%jj(1, m)) + H_mesh%rr(1, H_mesh%jj(2, m))) / 2, m, vv_mesh%neigh(:, m)
+                  write(*, *) vv_mesh%rr(1, vv_mesh%jj(1:3, m)) - H_mesh%rr(1, H_mesh%jj(1:3, m)), &
+                       vv_mesh%rr(1, vv_mesh%jj(4, m)) &
+                            - (H_mesh%rr(1, H_mesh%jj(2, m)) + H_mesh%rr(1, H_mesh%jj(3, m))) / 2, &
+                       + vv_mesh%rr(1, vv_mesh%jj(5, m)) &
+                            - (H_mesh%rr(1, H_mesh%jj(3, m)) + H_mesh%rr(1, H_mesh%jj(1, m))) / 2, &
+                       + vv_mesh%rr(1, vv_mesh%jj(6, m)) &
+                            - (H_mesh%rr(1, H_mesh%jj(1, m)) + H_mesh%rr(1, H_mesh%jj(2, m))) / 2, m, vv_mesh%neigh(:, m)
                END DO
-               write(*,*) vv_mesh%rr(2, vv_mesh%jj(1:3, 15)) - H_mesh%rr(2, H_mesh%jj(1:3, 16)),&
-                  vv_mesh%rr(2, vv_mesh%jj(4, 15)) &
-                    - (H_mesh%rr(2, H_mesh%jj(2, 16)) + H_mesh%rr(2, H_mesh%jj(3, 16))) / 2,&
+               write(*, *) vv_mesh%rr(2, vv_mesh%jj(1:3, 15)) - H_mesh%rr(2, H_mesh%jj(1:3, 16)), &
+                    vv_mesh%rr(2, vv_mesh%jj(4, 15)) &
+                         - (H_mesh%rr(2, H_mesh%jj(2, 16)) + H_mesh%rr(2, H_mesh%jj(3, 16))) / 2, &
                     + vv_mesh%rr(2, vv_mesh%jj(5, 15)) &
-                         - (H_mesh%rr(2, H_mesh%jj(3, 16)) + H_mesh%rr(2, H_mesh%jj(2, 16))) / 2,&
+                         - (H_mesh%rr(2, H_mesh%jj(3, 16)) + H_mesh%rr(2, H_mesh%jj(2, 16))) / 2, &
                     + vv_mesh%rr(2, vv_mesh%jj(6, 15)) &
                          - (H_mesh%rr(2, H_mesh%jj(2, 16)) + H_mesh%rr(2, H_mesh%jj(2, 16))) / 2, 16, vv_mesh%neigh(:, 16)
                IF (error / MAXVAL(ABS(H_mesh%rr(1, 1) - H_mesh%rr(1, :))) .GE. 5.d-14) THEN
