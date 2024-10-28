@@ -1233,7 +1233,6 @@ CONTAINS
                END DO
             END DO
             IF (error / MAXVAL(ABS(H_mesh%rr(1, 1) - H_mesh%rr(1, :))) .GE. 5.d-14) THEN
-               write(*, *) 'error1'
                CALL error_Petsc('BUG in INIT, (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14')
             END IF
          END IF
@@ -1248,9 +1247,7 @@ CONTAINS
                   END DO
                END DO
                IF (error / MAXVAL(ABS(H_mesh%rr(1, 1) - H_mesh%rr(1, :))) .GE. 5.d-14) THEN
-                  write(*, *) 'error2'
-
-                  CALL error_Petsc('BUG in INIT, (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14')
+               CALL error_Petsc('BUG in INIT, (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14')
                END IF
 
                error = error + MAXVAL(ABS(temp_mesh%rr(1, temp_mesh%jj(4, 1:temp_mesh%me)) &
@@ -1300,8 +1297,6 @@ CONTAINS
                   END DO
                END DO
                IF (error / MAXVAL(ABS(H_mesh%rr(1, 1) - H_mesh%rr(1, :))) .GE. 5.d-14) THEN
-                  write(*, *) 'error3'
-
                   CALL error_Petsc('BUG in INIT, (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14')
                END IF
 
@@ -1317,6 +1312,20 @@ CONTAINS
                          - (H_mesh%rr(2, H_mesh%jj(3, 1:vv_mesh%me)) + H_mesh%rr(2, H_mesh%jj(1, 1:vv_mesh%me))) / 2))&
                     + MAXVAL(ABS(vv_mesh%rr(2, vv_mesh%jj(6, :)) &
                          - (H_mesh%rr(2, H_mesh%jj(1, 1:vv_mesh%me)) + H_mesh%rr(2, H_mesh%jj(2, 1:vv_mesh%me))) / 2))
+               DO m = 1, vv_mesh%me
+                  write(*,*) MAXVAL(ABS(vv_mesh%rr(1, vv_mesh%jj(4, m)) &
+                    - (H_mesh%rr(1, H_mesh%jj(2, m)) + H_mesh%rr(1, H_mesh%jj(3, m))) / 2))&
+                    + MAXVAL(ABS(vv_mesh%rr(1, vv_mesh%jj(5, :)) &
+                         - (H_mesh%rr(1, H_mesh%jj(3, m)) + H_mesh%rr(1, H_mesh%jj(1, m))) / 2))&
+                    + MAXVAL(ABS(vv_mesh%rr(1, vv_mesh%jj(6, :)) &
+                         - (H_mesh%rr(1, H_mesh%jj(1, m)) + H_mesh%rr(1, H_mesh%jj(2, m))) / 2))&
+                    + MAXVAL(ABS(vv_mesh%rr(2, vv_mesh%jj(4, :)) &
+                         - (H_mesh%rr(2, H_mesh%jj(2, m)) + H_mesh%rr(2, H_mesh%jj(3, m))) / 2))&
+                    + MAXVAL(ABS(vv_mesh%rr(2, vv_mesh%jj(5, :)) &
+                         - (H_mesh%rr(2, H_mesh%jj(3, m)) + H_mesh%rr(2, H_mesh%jj(1, m))) / 2))&
+                    + MAXVAL(ABS(vv_mesh%rr(2, vv_mesh%jj(6, :)) &
+                         - (H_mesh%rr(2, H_mesh%jj(1, m)) + H_mesh%rr(2, H_mesh%jj(2, m))) / 2)), m
+               END DO
                IF (error / MAXVAL(ABS(H_mesh%rr(1, 1) - H_mesh%rr(1, :))) .GE. 5.d-14) THEN
                   WRITE(*, *) ' WARNING: vv_mesh and H_mesh do not coincide on the NS domain.'
                   WRITE(*, *) ' WARNING: Either you use curved elements P2 elements or BUG, ', &
@@ -1346,8 +1355,6 @@ CONTAINS
                   END DO
                END DO
                IF (error / MAXVAL(ABS(H_mesh%rr(1, 1) - H_mesh%rr(1, :))) .GE. 5.d-14) THEN
-                  write(*, *) 'error4'
-
                   CALL error_Petsc('BUG in INIT, (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14')
                END IF
 
