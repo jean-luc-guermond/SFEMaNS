@@ -2073,7 +2073,6 @@ CONTAINS
                   END IF
                ENDDO
                DO l = 1, f_dof
-                  write(*,*) 'mm', m, mm
                   j_mid((k - 1) * f_dof + l, m) = j_mid((kk - 1) * f_dof + l, mm) !===New index created
                END DO
             ENDIF
@@ -2494,10 +2493,10 @@ CONTAINS
          mesh%jjs(1, mes + ms) = mesh_p1%jj(n_ks(2), m)
          IF (mesh%jjs(1, mes + ms) > mesh_p1%dom_np) mesh%jjs(1, mes + ms) = mesh%jjs(1, mes + ms) &
               + mesh%dom_np - mesh_p1%dom_np
-         mesh%jjs(2, ms) = mesh%jj(k, m)
-         mesh%jjs(2, mes + ms) = mesh%jj(k, m)
-         mesh%neighs(ms) = mesh%neigh(n_ks(1), m)
-         mesh%neighs(mes + ms) = mesh%neigh(n_ks(2), m)
+         mesh%jjs(2, ms) = mesh%jj(k, 4 * (m - 1) + 1)
+         mesh%jjs(2, mes + ms) = mesh%jj(k, 4 * (m - 1) + 1)
+         mesh%neighs(ms) = mesh%neigh(n_ks(1), 4 * (m - 1) + 1)
+         mesh%neighs(mes + ms) = mesh%neigh(n_ks(2), 4 * (m - 1) + 1)
          mesh%sides(ms) = mesh_p1%sides(ms)
          mesh%sides(mes + ms) = mesh_p1%sides(ms)
 
