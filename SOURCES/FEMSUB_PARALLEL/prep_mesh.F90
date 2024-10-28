@@ -2400,7 +2400,7 @@ CONTAINS
 
          !===Corner cells
          DO k = 1, nw
-            m_new = mesh%neigh(k, m)
+            m_new = mesh%neigh(k, m_center)
 
             n_ks = (/MODULO(k, nw) + 1, MODULO(k + 1, nw) + 1/)
             IF (n_ks(1)>n_ks(2)) THEN
