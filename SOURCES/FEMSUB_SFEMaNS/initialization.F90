@@ -1030,7 +1030,7 @@ CONTAINS
       !===Meshes using p1_mesh_glob
       CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom, &
            list_inter, 1, p1_mesh_glob, inputs%iformatted)
-      DO m = 1, p1_mesh_glob%m
+      DO m = 1, p1_mesh_glob%me
          DO n = 1, 3
             m_ks = (/MODULO(n, 3) + 1, MODULO(n + 1, 3) + 1/)
             IF (m_ks(1)>m_ks(2)) THEN
@@ -1040,7 +1040,7 @@ CONTAINS
             nm = p1_mesh_glob%neigh(n, m)
             Do k = 1, 3
                IF (m == p1_mesh_glob%neigh(k, nm)) THEN
-                  n_ks = (/MODULO(k, nw) + 1, MODULO(k + 1, nw) + 1/)
+                  n_ks = (/MODULO(k, 3) + 1, MODULO(k + 1, 3) + 1/)
                   IF (n_ks(1)>n_ks(2)) THEN
                      n_ks = (/n_ks(2), n_ks(1)/)
                   END IF
