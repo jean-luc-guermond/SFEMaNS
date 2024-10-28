@@ -2368,9 +2368,9 @@ CONTAINS
       DO m = 1, me !===loop on the elements unrefined mesh
          edges_g = mesh_p1%jce(:, m)
          edges_l = edges_g - mesh_p1%disedge(proc) + 1
-
+         m_center = 4 * (m - 1) + 1
          !===Center cell
-         mesh%i_d(m) = mesh%discell(proc) - 1 + m
+         mesh%i_d(m_center) = mesh%discell(proc) - 1 + m_center
          DO i = 1, nw
             !===Creating the new points
             IF (edges_l(i) <=0) THEN
@@ -2380,21 +2380,21 @@ CONTAINS
                DO ms = 1, mesh_p1%medges
                   IF (mesh_p1%jees(ms) == edges_g(i)) EXIT
                END DO
-               mesh%jj(i, m) = mesh%dom_np + mesh_p1%np - mesh_p1%dom_np + ms
-               mesh%loc_to_glob(mesh%jj(i, m)) = mesh%disp(p) - 1 + mesh_p1%domnp(p) + edges_g(i) - mesh_p1%disedge(p) + 1
+               mesh%jj(i, m_center) = mesh%dom_np + mesh_p1%np - mesh_p1%dom_np + ms
+               mesh%loc_to_glob(mesh%jj(i, m_center)) = mesh%disp(p) - 1 + mesh_p1%domnp(p) + edges_g(i) - mesh_p1%disedge(p) + 1
             ELSE
-               mesh%jj(i, m) = dom_np + edges_l(i)
-               mesh%loc_to_glob(mesh%jj(i, m)) = mesh%disp(proc) - 1 + mesh%jj(i, m)
+               mesh%jj(i, m_center) = dom_np + edges_l(i)
+               mesh%loc_to_glob(mesh%jj(i, m_center)) = mesh%disp(proc) - 1 + mesh%jj(i, m_center)
             END IF
 
             n1 = mesh_p1%jj(MODULO(i, nw) + 1, m)
             n2 = mesh_p1%jj(MODULO(i + 1, nw) + 1, m)
-            mesh%rr(:, mesh%jj(i, m)) = (mesh_p1%rr(:, n2) + mesh_p1%rr(:, n1)) / 2.d0
+            mesh%rr(:, mesh%jj(i, m_center)) = (mesh_p1%rr(:, n2) + mesh_p1%rr(:, n1)) / 2.d0
 
             !===Setting up neighbours and edges
-            mesh%neigh(i, m) = 4 * (m - 1) + 1 + i
-            mesh%i_d(mesh%neigh(i, m)) = mesh%discell(proc) - 1 + mesh%neigh(i, m)
-            mesh%jce(i, m) = mesh%disedge(proc) - 1 + 2 * mesh_p1%medge + 3 * (m - 1) + i
+            mesh%neigh(i, m_center) = m_center + i
+            mesh%i_d(mesh%neigh(i, m_center)) = mesh%discell(proc) - 1 + mesh%neigh(i, m_center)
+            mesh%jce(i, m_center) = mesh%disedge(proc) - 1 + 2 * mesh_p1%medge + 3 * (m - 1) + i
          END DO
 
 
@@ -2408,8 +2408,8 @@ CONTAINS
             END IF
 
             !===Setting the center cell as a neighbour
-            mesh%neigh(1, m_new) = 4 * (m - 1) + 1
-            mesh%jce(1, m_new) = mesh%jce(k, m)
+            mesh%neigh(1, m_new) = m_center
+            mesh%jce(1, m_new) = mesh%jce(k, m_center)
 
             !===Adding the points using the center cell
             IF (mesh_p1%jj(k, m) > dom_np) THEN
@@ -2417,8 +2417,8 @@ CONTAINS
             ELSE
                mesh%jj(1, m_new) = mesh_p1%jj(k, m)
             END IF
-            mesh%jj(2, m_new) = mesh%jj(n_ks(1), m)
-            mesh%jj(3, m_new) = mesh%jj(n_ks(2), m)
+            mesh%jj(2, m_new) = mesh%jj(n_ks(1), m_center)
+            mesh%jj(3, m_new) = mesh%jj(n_ks(2), m_center)
             !===Adding the last edges and neighbours
             DO e_k = 1, 2
 
