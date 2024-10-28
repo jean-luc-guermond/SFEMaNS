@@ -2390,7 +2390,7 @@ CONTAINS
             mesh%rr(:, mesh%jj(i, m)) = (mesh_p1%rr(:, n2) + mesh_p1%rr(:, n1)) / 2.d0
 
             !===Setting up neighbours and edges
-            mesh%neigh(i, m) = me + 3 * (m - 1) + i
+            mesh%neigh(i, m) = 4 * (m - 1) + 1 + i
             mesh%i_d(mesh%neigh(i, m)) = mesh%discell(proc) - 1 + mesh%neigh(i, m)
             mesh%jce(i, m) = mesh%disedge(proc) - 1 + 2 * mesh_p1%medge + 3 * (m - 1) + i
          END DO
@@ -2406,7 +2406,7 @@ CONTAINS
             END IF
 
             !===Setting the center cell as a neighbour
-            mesh%neigh(1, m_new) = m
+            mesh%neigh(1, m_new) = 4 * (m - 1) + 1
             mesh%jce(1, m_new) = mesh%jce(k, m)
 
             !===Adding the points using the center cell
@@ -2437,9 +2437,9 @@ CONTAINS
                      n_kneigh2 = swap
                   END IF
                   IF (k < n_ks(e_k)) THEN
-                     mesh%neigh(e_k + 1, m_new) = me + 3 * (neigh - 1) + n_kneigh1
+                     mesh%neigh(e_k + 1, m_new) = 4 * (neigh - 1) + 1 + n_kneigh1
                   ELSE
-                     mesh%neigh(e_k + 1, m_new) = me + 3 * (neigh - 1) + n_kneigh2
+                     mesh%neigh(e_k + 1, m_new) = 4 * (neigh - 1) + 1 + n_kneigh2
                   END IF
                END IF
 
@@ -2552,7 +2552,7 @@ CONTAINS
             IF (cell_g < mesh_p1%discell(p_c + 1)) EXIT
          END DO
          cell_l = cell_g - mesh_p1%discell(p_c) + 1
-         mesh%jcc_extra(mextra) = cell_l + mesh%discell(p_c) - 1
+         mesh%jcc_extra(mextra) = 4 * (cell_l - 1) + 1 + mesh%discell(p_c) - 1
 
          DO i = 1, 3
             mesh%jce_extra(i, mextra) = mesh%disedge(p_c) - 1 + 2 * mesh_p1%domedge(p_c) + 3 * (cell_l - 1) + i
@@ -2577,7 +2577,7 @@ CONTAINS
             END DO
 
             cell_l = cell_g - mesh_p1%discell(p_c) + 1
-            mesh%jcc_extra(mextra) = mesh%discell(p_c) - 1 + mesh_p1%domcell(p_c) + 3 * (cell_l - 1) + k
+            mesh%jcc_extra(mextra) = mesh%discell(p_c) - 1 + mesh_p1%domcell(p_c) + 4 * (cell_l - 1) + 1 + k
 
             edges_g = mesh_p1%jce_extra(:, m)
 
@@ -2655,7 +2655,7 @@ CONTAINS
             END DO
             mesh%jjs_extra(1, mextra) = mesh_p1%jj_extra(n_ks(k), m1) + mesh_p1%disedge(p_j) - 1
             mesh%jjs_extra(2, mextra) = mesh%jj_extra(k, m1)
-            mesh%neighs_extra(mextra) = mesh%discell(p_c) - 1 + mesh_p1%domcell(p_c) + 3 * (cell_l - 1) + n_ks(k)
+            mesh%neighs_extra(mextra) = mesh%discell(p_c) - 1 + mesh_p1%domcell(p_c) + 4 * (cell_l - 1) + 1 + n_ks(k)
 
             mesh%rrs_extra(:, 1, mextra) = mesh%rrs_extra(:, n_ks(k), m)
             mesh%rrs_extra(:, 2, mextra) = (mesh%rrs_extra(:, n_ks(k), m) &
