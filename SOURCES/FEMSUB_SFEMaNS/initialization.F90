@@ -1225,6 +1225,7 @@ CONTAINS
       IF (if_induction) THEN
             IF (rank == 0) CALL plot_const_p1_label(vv_mesh%jj, vv_mesh%rr, 1.d0 * vv_mesh%jj(1,:) , 'vv.plt')
             IF (rank == 0) CALL plot_const_p1_label(H_mesh%jj, H_mesh%rr, 1.d0 * H_mesh%jj(1,:), 'HH.plt')
+            IF (rank == 0) CALL plot_const_p1_label(pmag_mesh%jj, pmag_mesh%rr, 1.d0 * pmag_mesh%jj(1,:) , 'pp.plt')
          !===Verify that pmag_mesh and H_mesh coincide================================
          IF (pmag_mesh%me/=0) THEN
             error = 0.d0
