@@ -1313,7 +1313,7 @@ CONTAINS
                     + MAXVAL(ABS(vv_mesh%rr(2, vv_mesh%jj(6, :)) &
                          - (H_mesh%rr(2, H_mesh%jj(1, 1:vv_mesh%me)) + H_mesh%rr(2, H_mesh%jj(2, 1:vv_mesh%me))) / 2))
                DO m = 1, vv_mesh%me
-                  write(*,*) vv_mesh%rr(1, vv_mesh%jj(1:3, m)) - H_mesh%rr(1, H_mesh%jj(1:3, m),&
+                  write(*,*) vv_mesh%rr(1, vv_mesh%jj(1:3, m)) - H_mesh%rr(1, H_mesh%jj(1:3, m)),&
                   vv_mesh%rr(1, vv_mesh%jj(4, m)) &
                     - (H_mesh%rr(1, H_mesh%jj(2, m)) + H_mesh%rr(1, H_mesh%jj(3, m))) / 2,&
                     + vv_mesh%rr(1, vv_mesh%jj(5, m)) &
