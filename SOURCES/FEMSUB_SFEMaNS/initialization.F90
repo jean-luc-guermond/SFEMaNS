@@ -1038,6 +1038,7 @@ CONTAINS
             END IF
 
             nm = p1_mesh_glob%neigh(n, m)
+            IF (nm > 0) THEN
             Do k = 1, 3
                IF (m == p1_mesh_glob%neigh(k, nm)) THEN
                   n_ks = (/MODULO(k, 3) + 1, MODULO(k + 1, 3) + 1/)
@@ -1050,6 +1051,7 @@ CONTAINS
 
                END IF
             End Do
+               END IF
          END DO
       END DO
 
