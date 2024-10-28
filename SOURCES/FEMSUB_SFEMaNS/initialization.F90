@@ -1315,15 +1315,15 @@ CONTAINS
                DO m = 1, vv_mesh%me
                   write(*,*) ABS(vv_mesh%rr(1, vv_mesh%jj(4, m)) &
                     - (H_mesh%rr(1, H_mesh%jj(2, m)) + H_mesh%rr(1, H_mesh%jj(3, m))) / 2)&
-                    + ABS(vv_mesh%rr(1, vv_mesh%jj(5, :)) &
+                    + ABS(vv_mesh%rr(1, vv_mesh%jj(5, m)) &
                          - (H_mesh%rr(1, H_mesh%jj(3, m)) + H_mesh%rr(1, H_mesh%jj(1, m))) / 2)&
-                    + ABS(vv_mesh%rr(1, vv_mesh%jj(6, :)) &
+                    + ABS(vv_mesh%rr(1, vv_mesh%jj(6, m)) &
                          - (H_mesh%rr(1, H_mesh%jj(1, m)) + H_mesh%rr(1, H_mesh%jj(2, m))) / 2)&
-                    + ABS(vv_mesh%rr(2, vv_mesh%jj(4, :)) &
+                    + ABS(vv_mesh%rr(2, vv_mesh%jj(4, m)) &
                          - (H_mesh%rr(2, H_mesh%jj(2, m)) + H_mesh%rr(2, H_mesh%jj(3, m))) / 2)&
-                    + ABS(vv_mesh%rr(2, vv_mesh%jj(5, :)) &
+                    + ABS(vv_mesh%rr(2, vv_mesh%jj(5, m)) &
                          - (H_mesh%rr(2, H_mesh%jj(3, m)) + H_mesh%rr(2, H_mesh%jj(1, m))) / 2)&
-                    + ABS(vv_mesh%rr(2, vv_mesh%jj(6, :)) &
+                    + ABS(vv_mesh%rr(2, vv_mesh%jj(6, m)) &
                          - (H_mesh%rr(2, H_mesh%jj(1, m)) + H_mesh%rr(2, H_mesh%jj(2, m))) / 2), m
                END DO
                IF (error / MAXVAL(ABS(H_mesh%rr(1, 1) - H_mesh%rr(1, :))) .GE. 5.d-14) THEN
