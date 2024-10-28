@@ -2362,9 +2362,9 @@ CONTAINS
       DO m = 1, me !===loop on the elements unrefined mesh
          edges_g = mesh_p1%jce(:, m)
          edges_l = edges_g - mesh_p1%disedge(proc) + 1
-
+         m_center = 4 * (m - 1) + 1
          !===Center cell
-         mesh%i_d(m) = mesh%discell(proc) - 1 + m
+         mesh%i_d(m_center) = mesh%discell(proc) - 1 + m_center
          DO i = 1, nw
             !===Creating the new points
             IF (edges_l(i) <=0) THEN
@@ -2374,27 +2374,27 @@ CONTAINS
                DO ms = 1, mesh_p1%medges
                   IF (mesh_p1%jees(ms) == edges_g(i)) EXIT
                END DO
-               mesh%jj(i, m) = mesh%dom_np + mesh_p1%np - mesh_p1%dom_np + ms
-               mesh%loc_to_glob(mesh%jj(i, m)) = mesh%disp(p) - 1 + mesh_p1%domnp(p) + edges_g(i) - mesh_p1%disedge(p) + 1
+               mesh%jj(i, m_center) = mesh%dom_np + mesh_p1%np - mesh_p1%dom_np + ms
+               mesh%loc_to_glob(mesh%jj(i, m_center)) = mesh%disp(p) - 1 + mesh_p1%domnp(p) + edges_g(i) - mesh_p1%disedge(p) + 1
             ELSE
-               mesh%jj(i, m) = dom_np + edges_l(i)
-               mesh%loc_to_glob(mesh%jj(i, m)) = mesh%disp(proc) - 1 + mesh%jj(i, m)
+               mesh%jj(i, m_center) = dom_np + edges_l(i)
+               mesh%loc_to_glob(mesh%jj(i, m_center)) = mesh%disp(proc) - 1 + mesh%jj(i, m_center)
             END IF
 
             n1 = mesh_p1%jj(MODULO(i, nw) + 1, m)
             n2 = mesh_p1%jj(MODULO(i + 1, nw) + 1, m)
-            mesh%rr(:, mesh%jj(i, m)) = (mesh_p1%rr(:, n2) + mesh_p1%rr(:, n1)) / 2.d0
+            mesh%rr(:, mesh%jj(i, m_center)) = (mesh_p1%rr(:, n2) + mesh_p1%rr(:, n1)) / 2.d0
 
             !===Setting up neighbours and edges
-            mesh%neigh(i, m) = me + 3 * (m - 1) + i
-            mesh%i_d(mesh%neigh(i, m)) = mesh%discell(proc) - 1 + mesh%neigh(i, m)
-            mesh%jce(i, m) = mesh%disedge(proc) - 1 + 2 * mesh_p1%medge + 3 * (m - 1) + i
+            mesh%neigh(i, m_center) = m_center + i
+            mesh%i_d(mesh%neigh(i, m_center)) = mesh%discell(proc) - 1 + mesh%neigh(i, m_center)
+            mesh%jce(i, m_center) = mesh%disedge(proc) - 1 + 2 * mesh_p1%medge + 3 * (m - 1) + i
          END DO
 
 
          !===Corner cells
          DO k = 1, nw
-            m_new = mesh%neigh(k, m)
+            m_new = mesh%neigh(k, m_center)
 
             n_ks = (/MODULO(k, nw) + 1, MODULO(k + 1, nw) + 1/)
             IF (n_ks(1)>n_ks(2)) THEN
@@ -2402,8 +2402,8 @@ CONTAINS
             END IF
 
             !===Setting the center cell as a neighbour
-            mesh%neigh(1, m_new) = m
-            mesh%jce(1, m_new) = mesh%jce(k, m)
+            mesh%neigh(1, m_new) = m_center
+            mesh%jce(1, m_new) = mesh%jce(k, m_center)
 
             !===Adding the points using the center cell
             IF (mesh_p1%jj(k, m) > dom_np) THEN
@@ -2411,8 +2411,8 @@ CONTAINS
             ELSE
                mesh%jj(1, m_new) = mesh_p1%jj(k, m)
             END IF
-            mesh%jj(2, m_new) = mesh%jj(n_ks(1), m)
-            mesh%jj(3, m_new) = mesh%jj(n_ks(2), m)
+            mesh%jj(2, m_new) = mesh%jj(n_ks(1), m_center)
+            mesh%jj(3, m_new) = mesh%jj(n_ks(2), m_center)
             !===Adding the last edges and neighbours
             DO e_k = 1, 2
 
@@ -2433,9 +2433,9 @@ CONTAINS
                      n_kneigh2 = swap
                   END IF
                   IF (k < n_ks(e_k)) THEN
-                     mesh%neigh(e_k + 1, m_new) = me + 3 * (neigh - 1) + n_kneigh1
+                     mesh%neigh(e_k + 1, m_new) = 4 * (neigh - 1) + 1 + n_kneigh1
                   ELSE
-                     mesh%neigh(e_k + 1, m_new) = me + 3 * (neigh - 1) + n_kneigh2
+                     mesh%neigh(e_k + 1, m_new) = 4 * (neigh - 1) + 1 + n_kneigh2
                   END IF
                END IF
 
@@ -2489,12 +2489,17 @@ CONTAINS
          mesh%jjs(1, mes + ms) = mesh_p1%jj(n_ks(2), m)
          IF (mesh%jjs(1, mes + ms) > mesh_p1%dom_np) mesh%jjs(1, mes + ms) = mesh%jjs(1, mes + ms) &
               + mesh%dom_np - mesh_p1%dom_np
-         mesh%jjs(2, ms) = mesh%jj(k, m)
-         mesh%jjs(2, mes + ms) = mesh%jj(k, m)
-         mesh%neighs(ms) = mesh%neigh(n_ks(1), m)
-         mesh%neighs(mes + ms) = mesh%neigh(n_ks(2), m)
+         mesh%jjs(2, ms) = mesh%jj(k, 4 * (m - 1) + 1)
+         mesh%jjs(2, mes + ms) = mesh%jj(k, 4 * (m - 1) + 1)
+         mesh%neighs(ms) = mesh%neigh(n_ks(1), 4 * (m - 1) + 1)
+         mesh%neighs(mes + ms) = mesh%neigh(n_ks(2), 4 * (m - 1) + 1)
          mesh%sides(ms) = mesh_p1%sides(ms)
          mesh%sides(mes + ms) = mesh_p1%sides(ms)
+
+         CALL is_on_curved_interface(mesh_p1%sides(ms), iso, interface)
+         IF (iso) THEN
+            CALL rescale_to_curved_boundary(mesh%rr(:, mesh%jj(k, m)), interface)
+         END IF
       ENDDO
 
       !===Counting number of new extra cells
