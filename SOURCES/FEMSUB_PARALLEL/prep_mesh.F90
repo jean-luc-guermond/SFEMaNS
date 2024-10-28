@@ -2073,6 +2073,7 @@ CONTAINS
                   END IF
                ENDDO
                DO l = 1, f_dof
+                  write(*,*) 'mm', m, mm
                   j_mid((k - 1) * f_dof + l, m) = j_mid((kk - 1) * f_dof + l, mm) !===New index created
                END DO
             ENDIF
