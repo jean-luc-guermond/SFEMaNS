@@ -1234,7 +1234,7 @@ CONTAINS
             DO k = 1, 2
                DO n = 1, SIZE(pmag_mesh%jj, 1)
                   error = error + MAXVAL(ABS(pmag_mesh%rr(k, pmag_mesh%jj(n, :)) - H_mesh%rr(k, H_mesh%jj(n, 1:pmag_mesh%me))))
-                  DO m = 1, p_mag%mesh%me
+                  DO m = 1, pmag_mesh%me
                      IF (ABS(pmag_mesh%rr(k, pmag_mesh%jj(n, m)) - H_mesh%rr(k, H_mesh%jj(n, m))) > 5.d-14) THEN
                         write(*,*) m, n, pmag_mesh%jj(:,m), H_mesh%jj(:,m), H_mesh%neigh(:,m)
                      END IF
