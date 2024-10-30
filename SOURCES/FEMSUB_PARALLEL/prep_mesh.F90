@@ -374,13 +374,13 @@ CONTAINS
          END IF
       END DO
 
-      DO ms = 1, mes
-         IF (jjs_lect(1, ms) >  jjs_lect(2, ms)) THEN
-            m = jjs_lect(1, ms)
-            jjs_lect(1, ms) = jjs_lect(2, ms)
-            jjs_lect(2, ms) = m
-         END IF
-      END DO
+!      DO ms = 1, mes
+!         IF (jjs_lect(1, ms) >  jjs_lect(2, ms)) THEN
+!            m = jjs_lect(1, ms)
+!            jjs_lect(1, ms) = jjs_lect(2, ms)
+!            jjs_lect(2, ms) = m
+!         END IF
+!      END DO
 
       ! Identify the status of faces
       ! stat = 1 (interface to be forgotten), stat = 2 (boundary), stat = 3 (real interface)
