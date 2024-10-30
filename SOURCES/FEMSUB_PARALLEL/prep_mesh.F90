@@ -363,7 +363,7 @@ CONTAINS
 
       !===Re-order at cell level to get proper edges orientation
       DO m = 1, me
-         IF (jj_lect(1, m) >  v(2, m)) THEN
+         IF (jj_lect(1, m) >  jj_lect(2, m)) THEN
             CALL switch_cell_vertices(jj_lect, neigh_lect, m, 1, 2)
          END IF
          IF (jj_lect(2, m) >  jj_lect(3, m)) THEN
