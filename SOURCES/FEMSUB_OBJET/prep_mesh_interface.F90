@@ -208,7 +208,7 @@ CONTAINS
          IF (.NOT.okay) THEN
             write(*,*) 'err1',  mesh_master%rrs_extra(1, n1_ks, ms1), mesh_master%rrs_extra(1, 1:3, ms1)
             DO ms2 = 1, mesh_slave%mes_extra
-            write(*,*) 'err',  mesh_master%rrs_extra(1, 1:3, ms1), mesh_master%rrs_extra(1, 1:3, ms2)
+            write(*,*) 'err',  mesh_master%rrs_extra(1, 1:3, ms2)
             END DO
             WRITE(*, *) ' BUG in load_interface extras: .NOT.okay'
             STOP
