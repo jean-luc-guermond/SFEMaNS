@@ -2657,6 +2657,7 @@ CONTAINS
             IF (MINVAL(ABS(mesh_p1%jj_extra(n, m1) - mesh_p1%jjs_extra(:, m)))/=0) THEN
                EXIT
             END IF
+            write(*,*) 'BUG in extra celles border'
          ENDDO
 
          !==cell index of edge
