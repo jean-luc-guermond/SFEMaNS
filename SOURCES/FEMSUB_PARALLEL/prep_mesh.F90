@@ -2519,7 +2519,7 @@ CONTAINS
 
          CALL is_on_curved_interface(mesh_p1%sides(ms), iso, interface)
          IF (iso) THEN
-            write(*,*) iso, interface, mesh_p1%sides(ms)
+            write(*,*) iso, interface, mesh_p1%sides(ms), mesh%rr(1, mesh%jj(k, m))
             !CALL rescale_to_curved_boundary(mesh%rr(:, mesh%jj(k, m)), interface)
          END IF
       ENDDO
