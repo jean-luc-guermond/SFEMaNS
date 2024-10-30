@@ -1291,12 +1291,6 @@ CONTAINS
                error = 0.d0
                DO k = 1, 2
                   DO n = 1, SIZE(H_mesh%jj, 1)
-                     do m = 1, vv_mesh%me
-                        if (ABS(vv_mesh%rr(k, vv_mesh%jj(n, m)) - H_mesh%rr(k, H_mesh%jj(n, m)))&
-                             > 5.d-14) THEN
-                           write(*, *) 'error', m, n, vv_mesh%rr(k, vv_mesh%jj(1:3, m)), H_mesh%rr(k, H_mesh%jj(1:3, m))
-                        end if
-                     end do
                      error = error + MAXVAL(ABS(vv_mesh%rr(k, vv_mesh%jj(n, :)) - H_mesh%rr(k, H_mesh%jj(n, 1:vv_mesh%me))))
                   END DO
                END DO
@@ -1388,12 +1382,13 @@ CONTAINS
          ELSE
             interface_H_mu%mes = 0
          END IF
-
+         write(*,*) 'a1'
          IF (H_mesh%me * phi_mesh%me /=0) THEN
             CALL load_interface(H_mesh, phi_mesh, inputs%list_inter_H_phi, interface_H_phi, .TRUE.)
          ELSE
             interface_H_phi%mes = 0
          END IF
+         write(*,*) 'a2'
          !===JLG july 20, 2019, p3 mesh
          !===Use increasing vertex index enumeration
          !CALL incr_vrtx_indx_enumeration_for_interfaces(interface_H_phi,inputs%type_fe_H+1,inputs%type_fe_phi+1)
