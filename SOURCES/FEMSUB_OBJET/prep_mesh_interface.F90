@@ -149,7 +149,8 @@ CONTAINS
          r_norm = SUM(ABS(mesh_master%rrs_extra(:, n1_ks(1), ms1) - mesh_master%rrs_extra(:, n1_ks(2), ms1)))
          epsilon = eps_ref * r_norm
          okay = .FALSE.
-         write(*, *) 'err', mesh_master%rrs_extra(1, n1_ks, ms1), mesh_master%rrs_extra(2, n1_ks, ms1), n, mesh_master%jjs_extra(:, ms1), mesh_master%jj_extra(:, m1)
+         write(*, *) 'err', mesh_master%rrs_extra(1, n1_ks, ms1), mesh_master%rrs_extra(2, n1_ks, ms1), n, &
+              mesh_master%jjs_extra(:, ms1), mesh_master%jj_extra(:, m1)
          lp3 : DO ms2 = 1, mesh_slave%mes_extra
             IF(MINVAL(ABS(list_inter - mesh_slave%sides_extra(ms2))) /= 0) CYCLE !not on interface
 
