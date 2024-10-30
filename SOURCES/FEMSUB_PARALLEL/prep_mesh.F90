@@ -671,7 +671,7 @@ CONTAINS
          END IF
       END DO
 
-      DO ms = 1, mes
+      DO ms = 1, mesh%mes
          IF (mesh%jjs(1, ms) >  mesh%jjs(2, ms)) THEN
             m = mesh%jjs(1, ms)
             mesh%jjs(1, ms) = mesh%jjs(2, ms)
