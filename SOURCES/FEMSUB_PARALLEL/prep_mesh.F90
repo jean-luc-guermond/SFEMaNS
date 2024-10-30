@@ -2519,8 +2519,8 @@ CONTAINS
          mesh%sides(mes + ms) = mesh_p1%sides(ms)
 
                      IF(proc == 1) count =  count + 1
-            IF(proc == 1) write(*,*) iso, interface, mesh_p1%sides(ms), mes, count
          CALL is_on_curved_interface(mesh_p1%sides(ms), iso, interface)
+                     IF(proc == 1) write(*,*) iso, interface, mesh_p1%sides(ms), mes, count
          IF (iso) THEN
 
             !CALL rescale_to_curved_boundary(mesh%rr(:, mesh%jj(k, m)), interface)
