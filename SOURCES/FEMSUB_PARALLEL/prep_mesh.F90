@@ -2676,7 +2676,7 @@ CONTAINS
                IF (mesh_p1%jj_extra(n_ks(k), m) < mesh_p1%disp(p_j + 1))  EXIT
             END DO
 
-            mesh%jjs_extra(1, mextra) = mesh_p1%jj_extra(n_ks(k), m1) + mesh_p1%disedge(p_j) - 1
+            mesh%jjs_extra(1, mextra) = mesh%jj_extra(1, m2)
             mesh%rrs_extra(:, 1, mextra) = mesh_p1%rrs_extra(:, n_ks(k), m)
 
             IF (n == 1) THEN
