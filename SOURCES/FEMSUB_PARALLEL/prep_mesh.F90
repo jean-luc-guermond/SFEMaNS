@@ -661,13 +661,13 @@ CONTAINS
       !===Re-order at cell level to get proper edges orientation
       DO m = 1, mesh%me
          IF (mesh%jj(1, m) >  mesh%jj(2, m)) THEN
-            CALL switch_cell_vertices(mesh%jj, m, 1, 2)
+            CALL switch_cell_vertices(mesh, m, 1, 2)
          END IF
          IF (mesh%jj(2, m) >  mesh%jj(3, m)) THEN
-            CALL switch_cell_vertices(mesh%jj, m, 2, 3)
+            CALL switch_cell_vertices(mesh, m, 2, 3)
          END IF
          IF (mesh%jj(1, m) >  mesh%jj(2, m)) THEN
-            CALL switch_cell_vertices(mesh%jj, m, 1, 2)
+            CALL switch_cell_vertices(mesh, m, 1, 2)
          END IF
       END DO
 
