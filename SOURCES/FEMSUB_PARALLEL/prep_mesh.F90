@@ -679,8 +679,6 @@ CONTAINS
       CLOSE(20)
       CLOSE(30)
 
-
-
    END SUBROUTINE load_dg_mesh_free_format
 
    !------------------------------------------------------------------------------
@@ -2302,7 +2300,7 @@ CONTAINS
       INTEGER, DIMENSION(2) :: n_ks
       REAL(KIND = 8) :: epsilon = 1.d-13, dist, d1, d2, s1, s2, s3, shalf, ref, scc, infinity
       INTEGER :: ns, ns1, index, nb_angle, f_dof, edge_g, edge_l, n_new_start, proc, nb_proc, edges, p, cell_g, cell_l
-      INTEGER :: m1, m2, interface, m_center
+      INTEGER :: m1, m2, interface, m_center, tab1, tab2
       LOGICAL :: iso
 
       IF (mesh_p1%me == 0) THEN
@@ -2672,21 +2670,38 @@ CONTAINS
             DO p_j = 1, nb_proc
                IF (mesh_p1%jj_extra(n_ks(k), m) < mesh_p1%disp(p_j + 1))  EXIT
             END DO
-            mesh%jjs_extra(1, mextra) = mesh_p1%jj_extra(n_ks(k), m1) + mesh_p1%disedge(p_j) - 1
-            mesh%jjs_extra(2, mextra) = mesh%jj_extra(k, m1)
             mesh%neighs_extra(mextra) = mesh%discell(p_c) - 1 + 4 * (cell_l - 1) + 1 + n_ks(k)
+            DO m2 = 1, mesh%mextra !find associated extra cell
+               IF (mesh%jcc_extra(m2) == mesh%discell(p_c) - 1 + 4 * (cell_l - 1) + 1) EXIT
+            END DO
+            mesh%jjs_extra(1, mextra) = mesh_p1%jj_extra(n_ks(k), m1) + mesh_p1%disedge(p_j) - 1
+            mesh%jjs_extra(2, mextra) = mesh%jj_extra(n, m2)
 
             mesh%rrs_extra(:, 1, mextra) = mesh_p1%rrs_extra(:, n_ks(k), m)
-            mesh%rrs_extra(:, 2, mextra) = (mesh_p1%rrs_extra(:, n_ks(k), m) &
-                 + mesh_p1%rrs_extra(:, n_ks(MODULO(k, 2) + 1), m)) / 2
-            IF (iso) THEN
-               CALL rescale_to_curved_boundary(mesh%rrs_extra(:, 2, mextra), interface)
+            IF (n == 1) THEN
+               tab1 = 2
+               tab2 = 3
+            ELSE IF (n == 3) THEN
+               tab1 = 3
+               tab2 = 2
+            ELSE
+               IF (k == 1) THEN
+                  tab1 = 2
+                  tab2 = 3
+               ELSE
+                  tab1 = 3
+                  tab2 = 2
+               END IF
             END IF
-            mesh%rrs_extra(:, 3, mextra) = (mesh_p1%rrs_extra(:, n_ks(k), m) &
-                 + mesh_p1%rrs_extra(:, n, m)) / 2
-            write(*,*) n, mesh%rrs_extra(1, :, mextra), mesh_p1%rrs_extra(1, :, m)
+            mesh%rrs_extra(:, tab1, mextra) = (mesh_p1%rrs_extra(:, n_ks(1), m) + mesh_p1%rrs_extra(:, n_ks(2), m)) / 2
+            IF (iso) THEN
+               CALL rescale_to_curved_boundary(mesh%rrs_extra(:, tab1, mextra), interface)
+            END IF
+            mesh%rrs_extra(:, tab2, mextra) = (mesh_p1%rrs_extra(:, n_ks(k), m) + mesh_p1%rrs_extra(:, n, m)) / 2
+            write(*, *) n, mesh%rrs_extra(1, :, mextra), mesh_p1%rrs_extra(1, :, m)
          END DO
       END DO
+
 
       !jjs_extra !(extra layer of cells not own by proc but with dofs own by proc)
       !rrs_extra  ! coordinates for cells at interfaces
@@ -2848,7 +2863,7 @@ CONTAINS
    END FUNCTION sgn
 
    SUBROUTINE switch_cell_vertices(jj, neigh, m, i1, i2)
-      INTEGER, DIMENSION(:,:), INTENT(INOUT) :: jj, neigh
+      INTEGER, DIMENSION(:, :), INTENT(INOUT) :: jj, neigh
       INTEGER :: m, i1, i2, save
       save = jj(i1, m)
       jj(i1, m) = jj(i2, m)
