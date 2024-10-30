@@ -88,7 +88,6 @@ CONTAINS
                   CYCLE  ! two identical triangles
                END IF
 
-
                ms = ms + 1
                interface_mesh1(ms) = ms1
                interface_mesh2(ms) = ms2
@@ -150,17 +149,14 @@ CONTAINS
          r_norm = SUM(ABS(mesh_master%rrs_extra(:, n1_ks(1), ms1) - mesh_master%rrs_extra(:, n1_ks(2), ms1)))
          epsilon = eps_ref * r_norm
          okay = .FALSE.
-
+         write(*, *) 'err', mesh_master%rrs_extra(1, n1_ks, ms2), mesh_master%rrs_extra(2, n2_ks, ms2)
          lp3 : DO ms2 = 1, mesh_slave%mes_extra
             IF(MINVAL(ABS(list_inter - mesh_slave%sides_extra(ms2))) /= 0) CYCLE !not on interface
-
-
 
             cell_g = mesh_slave%neighs_extra(ms2)
             DO m2 = 1, mesh_slave%mextra !find associated extra cell
                IF (mesh_slave%jcc_extra(m2) == cell_g) EXIT
             END DO
-
 
             DO n = 1, dim + 1 !===find side in cell
                IF (MINVAL(ABS(mesh_slave%jj_extra(n, m2) - mesh_slave%jjs_extra(:, ms2)))/=0) THEN
@@ -206,11 +202,6 @@ CONTAINS
             END DO
          END DO lp3
          IF (.NOT.okay) THEN
-            write(*,*) 'err1',  mesh_master%rrs_extra(1, n1_ks, ms1), mesh_master%rrs_extra(1, 1:3, ms1)
-            write(*,*) 'err1',  mesh_master%rrs_extra(2, n1_ks, ms1), mesh_master%rrs_extra(2, 1:3, ms1)
-            DO ms2 = 1, mesh_slave%mes_extra
-            write(*,*) 'err',  mesh_master%rrs_extra(1, 1:3, ms2), mesh_master%rrs_extra(2, 1:3, ms2)
-            END DO
             WRITE(*, *) ' BUG in load_interface extras: .NOT.okay'
             STOP
          END IF

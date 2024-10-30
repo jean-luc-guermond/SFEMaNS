@@ -2667,13 +2667,13 @@ CONTAINS
          DO k = 1, nws
             mextra = mextra + 1
             mesh%sides_extra(mextra) = mesh_p1%sides_extra(m)
-
-            DO p_j = 1, nb_proc
-               IF (mesh_p1%jj_extra(n_ks(k), m) < mesh_p1%disp(p_j + 1))  EXIT
-            END DO
             mesh%neighs_extra(mextra) = mesh%discell(p_c) - 1 + 4 * (cell_l - 1) + 1 + n_ks(k)
             DO m2 = 1, mesh%mextra !find associated extra cell
                IF (mesh%jcc_extra(m2) == mesh%neighs_extra(mextra)) EXIT
+            END DO
+
+            DO p_j = 1, nb_proc
+               IF (mesh_p1%jj_extra(n_ks(k), m) < mesh_p1%disp(p_j + 1))  EXIT
             END DO
 
             mesh%jjs_extra(1, mextra) = mesh_p1%jj_extra(n_ks(k), m1) + mesh_p1%disedge(p_j) - 1
