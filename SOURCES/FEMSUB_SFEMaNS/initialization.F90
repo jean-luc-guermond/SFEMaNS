@@ -1316,22 +1316,6 @@ CONTAINS
                          - (H_mesh%rr(2, H_mesh%jj(3, 1:vv_mesh%me)) + H_mesh%rr(2, H_mesh%jj(1, 1:vv_mesh%me))) / 2))&
                     + MAXVAL(ABS(vv_mesh%rr(2, vv_mesh%jj(6, :)) &
                          - (H_mesh%rr(2, H_mesh%jj(1, 1:vv_mesh%me)) + H_mesh%rr(2, H_mesh%jj(2, 1:vv_mesh%me))) / 2))
-               DO m = 1, vv_mesh%me
-                  write(*, *) vv_mesh%rr(1, vv_mesh%jj(1:3, m)) - H_mesh%rr(1, H_mesh%jj(1:3, m)), &
-                       vv_mesh%rr(1, vv_mesh%jj(4, m)) &
-                            - (H_mesh%rr(1, H_mesh%jj(2, m)) + H_mesh%rr(1, H_mesh%jj(3, m))) / 2, &
-                       + vv_mesh%rr(1, vv_mesh%jj(5, m)) &
-                            - (H_mesh%rr(1, H_mesh%jj(3, m)) + H_mesh%rr(1, H_mesh%jj(1, m))) / 2, &
-                       + vv_mesh%rr(1, vv_mesh%jj(6, m)) &
-                            - (H_mesh%rr(1, H_mesh%jj(1, m)) + H_mesh%rr(1, H_mesh%jj(2, m))) / 2, m, vv_mesh%neigh(:, m)
-               END DO
-               write(*, *) vv_mesh%rr(2, vv_mesh%jj(1:3, 15)) - H_mesh%rr(2, H_mesh%jj(1:3, 16)), &
-                    vv_mesh%rr(2, vv_mesh%jj(4, 15)) &
-                         - (H_mesh%rr(2, H_mesh%jj(2, 16)) + H_mesh%rr(2, H_mesh%jj(3, 16))) / 2, &
-                    + vv_mesh%rr(2, vv_mesh%jj(5, 15)) &
-                         - (H_mesh%rr(2, H_mesh%jj(3, 16)) + H_mesh%rr(2, H_mesh%jj(2, 16))) / 2, &
-                    + vv_mesh%rr(2, vv_mesh%jj(6, 15)) &
-                         - (H_mesh%rr(2, H_mesh%jj(2, 16)) + H_mesh%rr(2, H_mesh%jj(2, 16))) / 2, 16, vv_mesh%neigh(:, 16)
                IF (error / MAXVAL(ABS(H_mesh%rr(1, 1) - H_mesh%rr(1, :))) .GE. 5.d-14) THEN
                   WRITE(*, *) ' WARNING: vv_mesh and H_mesh do not coincide on the NS domain.'
                   WRITE(*, *) ' WARNING: Either you use curved elements P2 elements or BUG, ', &
