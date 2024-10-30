@@ -361,6 +361,27 @@ CONTAINS
          READ(30) rr_lect
       END IF
 
+      !===Re-order at cell level to get proper edges orientation
+      DO m = 1, me
+         IF (jj_lect(1, m) >  v(2, m)) THEN
+            CALL switch_cell_vertices(jj_lect, neigh_lect, m, 1, 2)
+         END IF
+         IF (jj_lect(2, m) >  jj_lect(3, m)) THEN
+            CALL switch_cell_vertices(jj_lect, neigh_lect, m, 2, 3)
+         END IF
+         IF (jj_lect(1, m) >  jj_lect(2, m)) THEN
+            CALL switch_cell_vertices(jj_lect, neigh_lect, m, 1, 2)
+         END IF
+      END DO
+
+      DO ms = 1, mes
+         IF (jjs_lect(1, ms) >  jjs_lect(2, ms)) THEN
+            m = jjs_lect(1, ms)
+            jjs_lect(1, ms) = jjs_lect(2, ms)
+            jjs_lect(2, ms) = m
+         END IF
+      END DO
+
       ! Identify the status of faces
       ! stat = 1 (interface to be forgotten), stat = 2 (boundary), stat = 3 (real interface)
       ALLOCATE (stat(mes))
@@ -641,27 +662,6 @@ CONTAINS
 
       mesh%nis = 0
       ALLOCATE(mesh%isolated_jjs(0), mesh%isolated_interfaces(0, 2))
-
-      !===Re-order at cell level to get proper edges orientation
-      DO m = 1, mesh%me
-         IF (mesh%jj(1, m) >  mesh%jj(2, m)) THEN
-            CALL switch_cell_vertices(mesh, m, 1, 2)
-         END IF
-         IF (mesh%jj(2, m) >  mesh%jj(3, m)) THEN
-            CALL switch_cell_vertices(mesh, m, 2, 3)
-         END IF
-         IF (mesh%jj(1, m) >  mesh%jj(2, m)) THEN
-            CALL switch_cell_vertices(mesh, m, 1, 2)
-         END IF
-      END DO
-
-      DO ms = 1, mesh%mes
-         IF (mesh%jjs(1, ms) >  mesh%jjs(2, ms)) THEN
-            m = mesh%jjs(1, ms)
-            mesh%jjs(1, ms) = mesh%jjs(2, ms)
-            mesh%jjs(2, ms) = m
-         END IF
-      END DO
 
       !===Prepare face structures (jce, jev)
       CALL prep_jce_jev(mesh)
@@ -2846,17 +2846,17 @@ CONTAINS
       ENDIF
    END FUNCTION sgn
 
-   SUBROUTINE switch_cell_vertices(mesh, m, i1, i2)
-      USE def_type_mesh
+   SUBROUTINE switch_cell_vertices(jj, neigh, m, i1, i2)
+      INTEGER, DIMENSION(:,:), POINTER, INTENT(IN) :: jj, neigh
       TYPE(mesh_type) :: mesh
       INTEGER :: m, i1, i2, save
-      save = mesh%jj(i1, m)
-      mesh%jj(i1, m) = mesh%jj(i2, m)
-      mesh%jj(i2, m) = save
+      save = jj(i1, m)
+      jj(i1, m) = jj(i2, m)
+      jj(i2, m) = save
 
-      save = mesh%neigh(i1, m)
-      mesh%neigh(i1, m) = mesh%neigh(i2, m)
-      mesh%neigh(i2, m) = save
+      save = neigh(i1, m)
+      neigh(i1, m) = neigh(i2, m)
+      neigh(i2, m) = save
 
    END SUBROUTINE switch_cell_vertices
 
