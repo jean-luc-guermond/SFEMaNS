@@ -2302,6 +2302,7 @@ CONTAINS
       INTEGER :: ns, ns1, index, nb_angle, f_dof, edge_g, edge_l, n_new_start, proc, nb_proc, edges, p, cell_g, cell_l
       INTEGER :: m1, m2, interface, m_center, tab1, tab2
       LOGICAL :: iso
+      INTEGER, SAVE  :: count = 0
 
       IF (mesh_p1%me == 0) THEN
          RETURN
@@ -2517,9 +2518,11 @@ CONTAINS
          mesh%sides(ms) = mesh_p1%sides(ms)
          mesh%sides(mes + ms) = mesh_p1%sides(ms)
 
+                     IF(proc == 1) count =  count + 1
+            IF(proc == 1) write(*,*) iso, interface, mesh_p1%sides(ms), mes, count
          CALL is_on_curved_interface(mesh_p1%sides(ms), iso, interface)
          IF (iso) THEN
-            IF(proc == 1) write(*,*) iso, interface, mesh_p1%sides(ms), mes
+
             !CALL rescale_to_curved_boundary(mesh%rr(:, mesh%jj(k, m)), interface)
          END IF
       ENDDO
