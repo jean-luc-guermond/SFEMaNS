@@ -2684,6 +2684,7 @@ CONTAINS
             END IF
             mesh%rrs_extra(:, 3, mextra) = (mesh%rrs_extra(:, n_ks(k), m) &
                  + mesh%rrs_extra(:, n, m)) / 2
+            write(*,*) mesh%rrs_extra(:, :, mextra)
          END DO
       END DO
 
