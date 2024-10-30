@@ -2672,12 +2672,11 @@ CONTAINS
             END DO
             mesh%neighs_extra(mextra) = mesh%discell(p_c) - 1 + 4 * (cell_l - 1) + 1 + n_ks(k)
             DO m2 = 1, mesh%mextra !find associated extra cell
-               IF (mesh%jcc_extra(m2) == mesh%discell(p_c) - 1 + 4 * (cell_l - 1) + 1) EXIT
+               IF (mesh%jcc_extra(m2) == mesh%neighs_extra(mextra)) EXIT
             END DO
             mesh%jjs_extra(1, mextra) = mesh_p1%jj_extra(n_ks(k), m1) + mesh_p1%disedge(p_j) - 1
-            mesh%jjs_extra(2, mextra) = mesh%jj_extra(n, m2)
-
             mesh%rrs_extra(:, 1, mextra) = mesh_p1%rrs_extra(:, n_ks(k), m)
+
             IF (n == 1) THEN
                tab1 = 2
                tab2 = 3
@@ -2693,6 +2692,7 @@ CONTAINS
                   tab2 = 2
                END IF
             END IF
+            mesh%jjs_extra(2, mextra) = mesh%jj_extra(tab1, m2)
             mesh%rrs_extra(:, tab1, mextra) = (mesh_p1%rrs_extra(:, n_ks(1), m) + mesh_p1%rrs_extra(:, n_ks(2), m)) / 2
             IF (iso) THEN
                CALL rescale_to_curved_boundary(mesh%rrs_extra(:, tab1, mextra), interface)
