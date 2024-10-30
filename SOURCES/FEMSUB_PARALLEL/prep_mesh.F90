@@ -658,6 +658,27 @@ CONTAINS
       CLOSE(20)
       CLOSE(30)
 
+      !===Re-order at cell level to get proper edges orientation
+      DO m = 1, mesh%me
+         IF (mesh%jj(1, m) >  mesh%jj(2, m)) THEN
+            CALL switch_cell_vertices(mesh%jj, m, 1, 2)
+         END IF
+         IF (mesh%jj(2, m) >  mesh%jj(3, m)) THEN
+            CALL switch_cell_vertices(mesh%jj, m, 2, 3)
+         END IF
+         IF (mesh%jj(1, m) >  mesh%jj(2, m)) THEN
+            CALL switch_cell_vertices(mesh%jj, m, 1, 2)
+         END IF
+      END DO
+
+      DO ms = 1, mes
+         IF (mesh%jjs(1, ms) >  mesh%jjs(2, ms)) THEN
+            m = mesh%jjs(1, ms)
+            mesh%jjs(1, ms) = mesh%jjs(2, ms)
+            mesh%jjs(2, ms) = m
+         END IF
+      END DO
+
    END SUBROUTINE load_dg_mesh_free_format
 
    !------------------------------------------------------------------------------
@@ -2822,5 +2843,23 @@ CONTAINS
          out = 0.d0
       ENDIF
    END FUNCTION sgn
+
+   SUBROUTINE switch_cell_vertices(mesh, m, i1, i2)
+      TYPE(mesh_type) :: mesh
+      INTEGER :: m, i1, i2, save
+      save = mesh%jj(i1, m)
+      mesh%jj(i1, m) = mesh%jj(i2, m)
+      mesh%jj(i2, m) = save
+
+      save = mesh%neigh(i1, m)
+      mesh%neigh(i1, m) = mesh%neigh(i2, m)
+      mesh%neigh(i2, m) = save
+
+      save = mesh%jce(i1, m)
+      mesh%jce(i1, m) = mesh%jce(i2, m)
+      mesh%jce(i2, m) = save
+
+
+   END SUBROUTINE switch_cell_vertices
 
 END MODULE prep_maill
