@@ -654,14 +654,15 @@ CONTAINS
       INTEGER, DIMENSION(:), ALLOCATABLE :: H_in_to_new, H_in_to_new_ref
       INTEGER, DIMENSION(:), ALLOCATABLE :: temp_in_to_new, temp_in_to_new_ref
       INTEGER, DIMENSION(:), ALLOCATABLE :: vv_in_to_new
+      INTEGER, DIMENSION(:, :), ALLOCATABLE :: tabss
       !!$    CHARACTER(len=200)                      :: data_file
       CHARACTER(len = 200) :: data_directory
       CHARACTER(len = 200) :: tit_part, mesh_part_name
       CHARACTER(len = 200) :: data_fichier
       INTEGER :: nsize
-      INTEGER :: k, kp, m, n, i, j, nm
+      INTEGER :: k, kp, m, n, i, j, nm, cell_g, m1
       INTEGER :: code, rank, rank_S, nb_procs, petsc_rank, bloc_size, m_max_pad
-            INTEGER, DIMENSION(2) :: n_ks, m_ks
+      INTEGER, DIMENSION(2) :: n_ks, m_ks
       REAL(KIND = 8) :: time_u, time_h, time_T, error, max_vel_S
       REAL(KIND = 8) :: time_conc
       LOGICAL :: ns_periodic, mxw_periodic, temp_periodic
@@ -1228,6 +1229,16 @@ CONTAINS
          IF (petsc_rank == 0) CALL plot_const_p1_label(vv_mesh%jj, vv_mesh%rr, 1.d0 * vv_mesh%jj(1, :), 'vv.plt')
          IF (petsc_rank == 0) CALL plot_const_p1_label(H_mesh%jj, H_mesh%rr, 1.d0 * H_mesh%jj(1, :), 'HH.plt')
          IF (petsc_rank == 0) CALL plot_const_p1_label(pmag_mesh%jj, pmag_mesh%rr, 1.d0 * pmag_mesh%jj(1, :), 'pp.plt')
+         ALLOCATE(tabss(3, H_mesh%mes_extra))
+         DO m = 1, H_mesh%mes_extra
+            cell_g = H_mesh%neighs_extra(m)
+            DO m1 = 1, H_mesh%mextra !find associated extra cell
+               IF (H_mesh%jcc_extra(m1) == cell_g) EXIT
+            END DO
+
+            tabss(:, m) = H_mesh%extra(:, mextra)
+         END DO
+         IF (petsc_rank == 0) CALL plot_const_p1_label(H_mesh%jj_extra, H_mesh%rrs_extra, H_mesh%rrs_extra(1, 1, :), 'extras.plt')
          !===Verify that pmag_mesh and H_mesh coincide================================
          IF (pmag_mesh%me/=0) THEN
             error = 0.d0
@@ -1382,13 +1393,13 @@ CONTAINS
          ELSE
             interface_H_mu%mes = 0
          END IF
-         write(*,*) 'a1'
+         write(*, *) 'a1'
          IF (H_mesh%me * phi_mesh%me /=0) THEN
             CALL load_interface(H_mesh, phi_mesh, inputs%list_inter_H_phi, interface_H_phi, .TRUE.)
          ELSE
             interface_H_phi%mes = 0
          END IF
-         write(*,*) 'a2'
+         write(*, *) 'a2'
          !===JLG july 20, 2019, p3 mesh
          !===Use increasing vertex index enumeration
          !CALL incr_vrtx_indx_enumeration_for_interfaces(interface_H_phi,inputs%type_fe_H+1,inputs%type_fe_phi+1)
