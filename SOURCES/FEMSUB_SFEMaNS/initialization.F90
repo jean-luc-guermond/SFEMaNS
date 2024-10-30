@@ -1237,7 +1237,7 @@ CONTAINS
                END DO
             END DO
             IF (error / MAXVAL(ABS(H_mesh%rr(1, 1) - H_mesh%rr(1, :))) .GE. 5.d-14) THEN
-               CALL error_Petsc('BUG in INIT, (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14')
+               CALL error_Petsc('BUG in INIT, (pmag - H_mesh/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14')
             END IF
          END IF
 
@@ -1251,7 +1251,7 @@ CONTAINS
                   END DO
                END DO
                IF (error / MAXVAL(ABS(H_mesh%rr(1, 1) - H_mesh%rr(1, :))) .GE. 5.d-14) THEN
-                  CALL error_Petsc('BUG in INIT, (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14')
+                  CALL error_Petsc('BUG in INIT, (temp - H_mesh/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14')
                END IF
 
                error = error + MAXVAL(ABS(temp_mesh%rr(1, temp_mesh%jj(4, 1:temp_mesh%me)) &
@@ -1301,7 +1301,7 @@ CONTAINS
                   END DO
                END DO
                IF (error / MAXVAL(ABS(H_mesh%rr(1, 1) - H_mesh%rr(1, :))) .GE. 5.d-14) THEN
-                  CALL error_Petsc('BUG in INIT, (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14')
+                  CALL error_Petsc('BUG in INIT, (vv_mesh - H_mesh/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14')
                END IF
 
                error = error + MAXVAL(ABS(vv_mesh%rr(1, vv_mesh%jj(4, 1:vv_mesh%me)) &
@@ -1361,7 +1361,7 @@ CONTAINS
                   END DO
                END DO
                IF (error / MAXVAL(ABS(H_mesh%rr(1, 1) - H_mesh%rr(1, :))) .GE. 5.d-14) THEN
-                  CALL error_Petsc('BUG in INIT, (error/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14')
+                  CALL error_Petsc('BUG in INIT, (conc - H/MAXVAL(ABS(H_mesh%rr(1,1) -H_mesh%rr(1,:))) .GE. 5.d-14')
                END IF
 
                error = error + MAXVAL(ABS(conc_mesh%rr(1, conc_mesh%jj(4, 1:conc_mesh%me)) &
@@ -1500,7 +1500,7 @@ CONTAINS
                END DO
             END DO
             IF (error / MAXVAL(ABS(temp_mesh%rr(1, 1) - temp_mesh%rr(1, :))) .GE. 5.d-14) THEN
-               CALL error_Petsc('BUG in INIT, (error/MAXVAL(ABS(temp_mesh%rr(1,1) -temp_mesh%rr(1,:))) .GE. 5.d-14')
+               CALL error_Petsc('BUG in INIT, (vv - temp/MAXVAL(ABS(temp_mesh%rr(1,1) -temp_mesh%rr(1,:))) .GE. 5.d-14')
             END IF
 
             error = error + MAXVAL(ABS(vv_mesh%rr(1, vv_mesh%jj(4, 1:vv_mesh%me)) &
@@ -1544,7 +1544,7 @@ CONTAINS
                   END DO
                END DO
                IF (error / MAXVAL(ABS(temp_mesh%rr(1, 1) - temp_mesh%rr(1, :))) .GE. 5.d-14) THEN
-                  CALL error_Petsc('BUG in INIT, (error/MAXVAL(ABS(temp_mesh%rr(1,1) -temp_mesh%rr(1,:))) .GE. 5.d-14')
+                  CALL error_Petsc('BUG in INIT, (conc - temp/MAXVAL(ABS(temp_mesh%rr(1,1) -temp_mesh%rr(1,:))) .GE. 5.d-14')
                END IF
 
                error = error + MAXVAL(ABS(conc_mesh%rr(1, conc_mesh%jj(4, 1:conc_mesh%me)) &
@@ -1633,7 +1633,7 @@ CONTAINS
                END DO
             END DO
             IF (error / MAXVAL(ABS(vv_mesh%rr(1, 1) - vv_mesh%rr(1, :))) .GE. 5.d-14) THEN
-               CALL error_Petsc('BUG in INIT, (error/MAXVAL(ABS(conc_mesh%rr(1,1) -conc_mesh%rr(1,:))) .GE. 5.d-14')
+               CALL error_Petsc('BUG in INIT, (conc - vv/MAXVAL(ABS(conc_mesh%rr(1,1) -conc_mesh%rr(1,:))) .GE. 5.d-14')
             END IF
 
             error = error + MAXVAL(ABS(conc_mesh%rr(1, conc_mesh%jj(4, 1:conc_mesh%me)) &
