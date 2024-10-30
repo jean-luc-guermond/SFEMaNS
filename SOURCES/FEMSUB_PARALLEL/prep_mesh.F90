@@ -2676,9 +2676,9 @@ CONTAINS
             mesh%jjs_extra(2, mextra) = mesh%jj_extra(k, m1)
             mesh%neighs_extra(mextra) = mesh%discell(p_c) - 1 + 4 * (cell_l - 1) + 1 + n_ks(k)
 
-            mesh%rrs_extra(:, 1, mextra) = mesh%rrs_extra(:, n_ks(k), m)
-            mesh%rrs_extra(:, 2, mextra) = (mesh%rrs_extra(:, n_ks(k), m) &
-                 + mesh%rrs_extra(:, n_ks(MODULO(k + 1, 2) + 1), m)) / 2
+            mesh%rrs_extra(:, 1, mextra) = mesh_p1%rrs_extra(:, n_ks(k), m)
+            mesh%rrs_extra(:, 2, mextra) = (mesh_p1%rrs_extra(:, n_ks(k), m) &
+                 + mesh_p1%rrs_extra(:, n_ks(MODULO(k + 1, 2) + 1), m)) / 2
             IF (iso) THEN
                CALL rescale_to_curved_boundary(mesh%rrs_extra(:, 2, mextra), interface)
             END IF
