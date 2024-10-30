@@ -2698,7 +2698,6 @@ CONTAINS
                CALL rescale_to_curved_boundary(mesh%rrs_extra(:, tab1, mextra), interface)
             END IF
             mesh%rrs_extra(:, tab2, mextra) = (mesh_p1%rrs_extra(:, n_ks(k), m) + mesh_p1%rrs_extra(:, n, m)) / 2
-            write(*, *) n, mesh%rrs_extra(1, :, mextra), mesh_p1%rrs_extra(1, :, m)
          END DO
       END DO
 
