@@ -642,22 +642,6 @@ CONTAINS
       mesh%nis = 0
       ALLOCATE(mesh%isolated_jjs(0), mesh%isolated_interfaces(0, 2))
 
-      !===Prepare face structures (jce, jev)
-      CALL prep_jce_jev(mesh)
-      ALLOCATE(mesh%disedge(2), mesh%domedge(1))
-      mesh%disedge = (/1, mesh%medge + 1/)
-      mesh%domedge = (/mesh%medge/)
-      mesh%medges = 0
-
-      ALLOCATE(mesh%jees(0), mesh%jecs(0))
-      WRITE (20, *)  'np ', mesh%np, 'me ', mesh%me, 'mes ', mesh%mes, 'nps ', mesh%nps
-
-      mesh%edge_stab = .FALSE.
-      mesh%mi = 0
-
-      CLOSE(20)
-      CLOSE(30)
-
       !===Re-order at cell level to get proper edges orientation
       DO m = 1, mesh%me
          IF (mesh%jj(1, m) >  mesh%jj(2, m)) THEN
@@ -678,6 +662,24 @@ CONTAINS
             mesh%jjs(2, ms) = m
          END IF
       END DO
+
+      !===Prepare face structures (jce, jev)
+      CALL prep_jce_jev(mesh)
+      ALLOCATE(mesh%disedge(2), mesh%domedge(1))
+      mesh%disedge = (/1, mesh%medge + 1/)
+      mesh%domedge = (/mesh%medge/)
+      mesh%medges = 0
+
+      ALLOCATE(mesh%jees(0), mesh%jecs(0))
+      WRITE (20, *)  'np ', mesh%np, 'me ', mesh%me, 'mes ', mesh%mes, 'nps ', mesh%nps
+
+      mesh%edge_stab = .FALSE.
+      mesh%mi = 0
+
+      CLOSE(20)
+      CLOSE(30)
+
+
 
    END SUBROUTINE load_dg_mesh_free_format
 
@@ -2855,10 +2857,6 @@ CONTAINS
       save = mesh%neigh(i1, m)
       mesh%neigh(i1, m) = mesh%neigh(i2, m)
       mesh%neigh(i2, m) = save
-
-      save = mesh%jce(i1, m)
-      mesh%jce(i1, m) = mesh%jce(i2, m)
-      mesh%jce(i2, m) = save
 
    END SUBROUTINE switch_cell_vertices
 
