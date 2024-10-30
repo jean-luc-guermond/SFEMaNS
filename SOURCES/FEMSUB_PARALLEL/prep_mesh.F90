@@ -2655,6 +2655,7 @@ CONTAINS
             IF (MINVAL(ABS(mesh_p1%jj_extra(n, m1) - mesh_p1%jjs_extra(:, m)))/=0) THEN
                EXIT
             END IF
+            IF (n == 3) write(*, *) 'BUG in refinement : didnt find face in extra cell for extra edge'
          ENDDO
 
          !==cell index of edge
@@ -2699,7 +2700,7 @@ CONTAINS
                CALL rescale_to_curved_boundary(mesh%rrs_extra(:, tab1, mextra), interface)
             END IF
             mesh%rrs_extra(:, tab2, mextra) = (mesh_p1%rrs_extra(:, n_ks(k), m) + mesh_p1%rrs_extra(:, n, m)) / 2
-            write(*,*) mesh%rrs_extra(1, 1, mextra), mesh%rrs_extra(1, tab1, mextra)
+            write(*, *) mesh%rrs_extra(1, 1, mextra), mesh%rrs_extra(1, tab1, mextra)
          END DO
       END DO
 
