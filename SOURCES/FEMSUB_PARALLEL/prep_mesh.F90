@@ -2845,6 +2845,7 @@ CONTAINS
    END FUNCTION sgn
 
    SUBROUTINE switch_cell_vertices(mesh, m, i1, i2)
+      USE def_type_mesh
       TYPE(mesh_type) :: mesh
       INTEGER :: m, i1, i2, save
       save = mesh%jj(i1, m)
@@ -2858,7 +2859,6 @@ CONTAINS
       save = mesh%jce(i1, m)
       mesh%jce(i1, m) = mesh%jce(i2, m)
       mesh%jce(i2, m) = save
-
 
    END SUBROUTINE switch_cell_vertices
 
