@@ -1134,6 +1134,7 @@ CONTAINS
          CALL gauss_points_2d(pp_mesh, inputs%type_fe_velocity - 1)
          !===JLG july 20, 2019, p3 mesh
                   IF (petsc_rank == 0) CALL plot_const_p1_label(vv_mesh%jj, vv_mesh%rr, 1.d0 * vv_mesh%jj(1, :), 'vv.plt')
+         IF (petsc_rank == 0) CALL plot_const_p1_label(pp_mesh%jj, pp_mesh%rr, 1.d0 * pp_mesh%jj(1, :), 'pp.plt')
       END IF !=== (if_momentum .OR. inputs%type_pb=='mxx')
 
       !===Extract local meshes from global meshes for Maxwell=========================
