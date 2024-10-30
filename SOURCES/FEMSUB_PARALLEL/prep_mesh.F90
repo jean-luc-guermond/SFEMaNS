@@ -2847,8 +2847,7 @@ CONTAINS
    END FUNCTION sgn
 
    SUBROUTINE switch_cell_vertices(jj, neigh, m, i1, i2)
-      INTEGER, DIMENSION(:,:), INTENT(IN) :: jj, neigh
-      TYPE(mesh_type) :: mesh
+      INTEGER, DIMENSION(:,:), INTENT(INOUT) :: jj, neigh
       INTEGER :: m, i1, i2, save
       save = jj(i1, m)
       jj(i1, m) = jj(i2, m)
