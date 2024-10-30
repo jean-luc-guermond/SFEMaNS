@@ -2682,8 +2682,8 @@ CONTAINS
             IF (iso) THEN
                CALL rescale_to_curved_boundary(mesh%rrs_extra(:, 2, mextra), interface)
             END IF
-            mesh%rrs_extra(:, 3, mextra) = (mesh%rrs_extra(:, n_ks(k), m) &
-                 + mesh%rrs_extra(:, n, m)) / 2
+            mesh%rrs_extra(:, 3, mextra) = (mesh_p1%rrs_extra(:, n_ks(k), m) &
+                 + mesh_p1%rrs_extra(:, n, m)) / 2
             write(*,*) mesh%rrs_extra(:, :, mextra)
          END DO
       END DO
