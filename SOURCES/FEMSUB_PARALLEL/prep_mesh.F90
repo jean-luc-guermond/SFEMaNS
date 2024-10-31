@@ -2386,7 +2386,7 @@ CONTAINS
          edges_l = edges_g - mesh_p1%disedge(proc) + 1
          m_center = 4 * (m - 1) + 1
          !===Center cell
-         mesh%i_d(m_center) = mesh%discell(proc) - 1 + m_center
+         mesh%i_d(m_center) = mesh%i_d(m)
          DO i = 1, nw
             !===Creating the new points
             IF (edges_l(i) <=0) THEN
@@ -2409,7 +2409,7 @@ CONTAINS
 
             !===Setting up neighbours and edges
             mesh%neigh(i, m_center) = m_center + i
-            mesh%i_d(mesh%neigh(i, m_center)) = mesh%discell(proc) - 1 + mesh%neigh(i, m_center)
+            mesh%i_d(mesh%neigh(i, m_center)) = mesh%i_d(m)
             mesh%jce(i, m_center) = mesh%disedge(proc) - 1 + 2 * mesh_p1%medge + 3 * (m - 1) + i
          END DO
 
