@@ -30,7 +30,8 @@
 100
 ===Check numerical stability (true/false)
 .t.
-
+===Number of refinements
+1
 ============================================
               Periodicity
 ============================================

@@ -24,7 +24,8 @@
 1.0d-2 4
 ===Coefficient for Lorentz force
 0.d0
-
+===Number of refinements
+1
 ============================================
               Mesh-NAVIER-STOKES
 ============================================

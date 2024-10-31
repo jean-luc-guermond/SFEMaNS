@@ -20,7 +20,8 @@
 .f.
 ===Time step and number of time iterations
 1.d10, 1
-
+===Number of refinements
+1
 ============================================
               H-MAXWELL
 ============================================

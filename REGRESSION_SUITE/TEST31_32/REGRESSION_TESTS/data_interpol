@@ -45,7 +45,8 @@
 1
 ===Indices of periodic boundaries and corresponding vectors
 4 2 .0d0 1.d0
-
+===Number of refinements
+1
 ============================================
               Mesh-NAVIER-STOKES
 ============================================

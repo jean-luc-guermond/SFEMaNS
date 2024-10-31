@@ -22,7 +22,8 @@
 1.d40 1
 ===Is the mesh symmetric (true/false)?
 .f.
-
+===Number of refinements
+1
 ============================================
               H-MAXWELL
 ============================================

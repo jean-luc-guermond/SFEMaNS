@@ -21,7 +21,8 @@
 0.0005d0 100
 ===Use penalty in NS domain (true/false)?
 .t.
-
+===Number of refinements
+1
 ============================================
               Mesh-NAVIER-STOKES
 ============================================

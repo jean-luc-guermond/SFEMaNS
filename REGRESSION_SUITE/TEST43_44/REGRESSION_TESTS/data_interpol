@@ -53,7 +53,8 @@ xx4 2 .0d0 1.d0
 1
 ===List of subdomains for concentration mesh
 2
-
+===Number of refinements
+1
 ============================================
               Mesh-NAVIER-STOKES
 ============================================

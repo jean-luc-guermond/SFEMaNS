@@ -16,7 +16,8 @@
 .f.
 ===Time step and number of time iterations
 1.d-2 100
-
+===Number of refinements
+1
 ============================================
               Periodicity
 ============================================

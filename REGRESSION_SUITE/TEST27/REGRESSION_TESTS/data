@@ -18,7 +18,8 @@
 .f.
 ===Time step and number of time iterations
 0.01,100
-
+===Number of refinements
+1
 ============================================
               H-MAXWELL
 ============================================
