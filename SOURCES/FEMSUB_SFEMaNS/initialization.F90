@@ -1055,6 +1055,7 @@ CONTAINS
       IF (petsc_rank == 0) CALL plot_const_p1_label(p1_mesh_glob%jj, p1_mesh_glob%rr, 1.d0 * part, 'dd_base.plt')
 
       !===Extract local meshes from global meshes=====================================
+      WRITE(tit, '(i1)') petsc_rank
 
       !===Specific to momentum (velocity)
       IF (if_momentum .OR. inputs%type_pb=='mxx') THEN
@@ -1134,8 +1135,8 @@ CONTAINS
          CALL gauss_points_2d(vv_mesh, inputs%type_fe_velocity)
          CALL gauss_points_2d(pp_mesh, inputs%type_fe_velocity - 1)
          !===JLG july 20, 2019, p3 mesh
-                  IF (petsc_rank == 0) CALL plot_const_p1_label(vv_mesh%jj, vv_mesh%rr, 1.d0 * vv_mesh%jj(1, :), 'vv.plt')
-         IF (petsc_rank == 0) CALL plot_const_p1_label(pp_mesh%jj, pp_mesh%rr, 1.d0 * pp_mesh%jj(1, :), 'pp.plt')
+         CALL plot_const_p1_label(vv_mesh%jj, vv_mesh%rr, 1.d0 * vv_mesh%jj(1, :), 'vv' // tit // '.plt')
+         CALL plot_const_p1_label(pp_mesh%jj, pp_mesh%rr, 1.d0 * pp_mesh%jj(1, :), 'pp' // tit // '.plt')
       END IF !=== (if_momentum .OR. inputs%type_pb=='mxx')
 
       !===Extract local meshes from global meshes for Maxwell=========================
@@ -1225,13 +1226,13 @@ CONTAINS
          CALL free_mesh(p1_c0_mesh_glob)
 
       END IF
-WRITE(tit, '(i1)') petsc_rank
+
       !===Specific to induction equation==============================================
       IF (if_induction) THEN
          !IF (petsc_rank == 0) CALL plot_const_p1_label(vv_mesh%jj, vv_mesh%rr, 1.d0 * vv_mesh%jj(1, :), 'vv.plt')
-         CALL plot_const_p1_label(H_mesh%jj, H_mesh%rr, 1.d0 * H_mesh%jj(1, :), 'HH'// tit //'.plt')
-         CALL plot_const_p1_label(pmag_mesh%jj, pmag_mesh%rr, 1.d0 * pmag_mesh%jj(1, :),&
-              'pp'// tit //'.plt')
+         CALL plot_const_p1_label(H_mesh%jj, H_mesh%rr, 1.d0 * H_mesh%jj(1, :), 'HH' // tit // '.plt')
+         CALL plot_const_p1_label(pmag_mesh%jj, pmag_mesh%rr, 1.d0 * pmag_mesh%jj(1, :), &
+              'pp' // tit // '.plt')
          !===Verify that pmag_mesh and H_mesh coincide================================
          IF (pmag_mesh%me/=0) THEN
             error = 0.d0
@@ -1463,7 +1464,7 @@ WRITE(tit, '(i1)') petsc_rank
                   ENDIF
                ENDDO
             END DO
-            CALL plot_pressure_label(H_mesh%jj, H_mesh%rr, mu_H_field, 'mu'// tit //'.plt')
+            CALL plot_pressure_label(H_mesh%jj, H_mesh%rr, mu_H_field, 'mu' // tit // '.plt')
          END IF
          !===Create mu_H_field========================================================
          !===Artificial boundary condition on phi on sphere of radius R
