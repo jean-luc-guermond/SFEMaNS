@@ -1457,6 +1457,7 @@ WRITE(tit, '(i1)') petsc_rank
          ELSE
             DO m = 1, H_mesh%me
                DO k = 1, inputs%nb_dom_H
+                  mu_H_field = -5.d0
                   IF (H_mesh%i_d(m) == list_dom_H(k)) THEN
                      mu_H_field(H_mesh%jj(:, m)) = inputs%mu_H(H_in_to_new(k))
                   ENDIF
