@@ -21,7 +21,7 @@
 ===Time step and number of time iterations
 2d-2, 20
 ===Number of refinements
-1
+0
 ============================================
               Mesh-NAVIER-STOKES
 ============================================
@@ -176,11 +176,11 @@ MUMPS
             Spherical interfaces
 ===========================================
 ===How many spherical boundary pieces ?
-0
+2
 ===List of spherical boundary pieces
 2 4
 ===Radius of spherical boundary pieces
-.53846d0 1.53846d0
+1.53846154d0 0.53846154d0
 ===R coordinate of origin of spherical boundary pieces
 0.d0 0.d0
 ===Z coordinate of origin of spherical boundary pieces
