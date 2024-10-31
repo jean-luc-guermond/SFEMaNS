@@ -1462,7 +1462,7 @@ WRITE(tit, '(i1)') petsc_rank
                   ENDIF
                ENDDO
             END DO
-            CALL plot_vit_2d(H_mesh%jj, H_mesh%rr, mu_H_field, 'mu'// tit //'.plt')
+            CALL plot_pressure_label(H_mesh%jj, H_mesh%rr, mu_H_field, 'mu'// tit //'.plt')
          END IF
          !===Create mu_H_field========================================================
          !===Artificial boundary condition on phi on sphere of radius R
