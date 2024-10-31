@@ -1455,8 +1455,7 @@ WRITE(tit, '(i1)') petsc_rank
          IF (inputs%analytical_permeability) THEN !===JLG + DCQ, June 26 2013
             mu_H_field = mu_bar_in_fourier_space(H_mesh, 1, H_mesh%np)
          ELSE
-                              mu_H_field = -5.d0
-
+            mu_H_field = 2.d0
             DO m = 1, H_mesh%me
                DO k = 1, inputs%nb_dom_H
                   IF (H_mesh%i_d(m) == list_dom_H(k)) THEN
