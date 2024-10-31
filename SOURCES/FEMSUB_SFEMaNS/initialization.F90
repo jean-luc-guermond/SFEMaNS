@@ -658,6 +658,7 @@ CONTAINS
       CHARACTER(len = 200) :: data_directory
       CHARACTER(len = 200) :: tit_part, mesh_part_name
       CHARACTER(len = 200) :: data_fichier
+      CHARACTER(len = 1) :: tit
       INTEGER :: nsize
       INTEGER :: k, kp, m, n, i, j, nm
       INTEGER :: code, rank, rank_S, nb_procs, petsc_rank, bloc_size, m_max_pad
@@ -1224,12 +1225,13 @@ CONTAINS
          CALL free_mesh(p1_c0_mesh_glob)
 
       END IF
-
+WRITE(tit, '(i1)') petsc_rank
       !===Specific to induction equation==============================================
       IF (if_induction) THEN
          !IF (petsc_rank == 0) CALL plot_const_p1_label(vv_mesh%jj, vv_mesh%rr, 1.d0 * vv_mesh%jj(1, :), 'vv.plt')
-         IF (petsc_rank == 0) CALL plot_const_p1_label(H_mesh%jj, H_mesh%rr, 1.d0 * H_mesh%jj(1, :), 'HH.plt')
-         IF (petsc_rank == 0) CALL plot_const_p1_label(pmag_mesh%jj, pmag_mesh%rr, 1.d0 * pmag_mesh%jj(1, :), 'pp.plt')
+         CALL plot_const_p1_label(H_mesh%jj, H_mesh%rr, 1.d0 * H_mesh%jj(1, :), 'HH'// tit //'.plt')
+         CALL plot_const_p1_label(pmag_mesh%jj, pmag_mesh%rr, 1.d0 * pmag_mesh%jj(1, :),&
+              'pp'// tit //'.plt')
          !===Verify that pmag_mesh and H_mesh coincide================================
          IF (pmag_mesh%me/=0) THEN
             error = 0.d0
@@ -1460,6 +1462,7 @@ CONTAINS
                   ENDIF
                ENDDO
             END DO
+            CALL plot_vit_2d(H_mesh%jj, H_mesh%rr, mu_H_field, 'mu'// tit //'.plt')
          END IF
          !===Create mu_H_field========================================================
          !===Artificial boundary condition on phi on sphere of radius R
