@@ -62,7 +62,8 @@ CONTAINS
            list_dom_ns_in, list_dom_temp, list_dom_temp_in, list_dom_phi, list_dom_H_in, list_dom, part, &
            list_mode, controle_H, controle_phi, &
            controle_vv, controle_pp, controle_temp, controle_conc, vel_in_to_new, temp_in_to_new, H_in_to_new, &
-           l_t_g_vv, l_t_g_pp, l_t_g_H, l_t_g_phi, l_t_g_temp, l_t_g_conc
+           l_t_g_vv, l_t_g_pp, l_t_g_H, l_t_g_phi, l_t_g_temp, l_t_g_conc, &
+           nb_refinements
       INTEGER, DIMENSION(:), ALLOCATABLE :: list_dom_H_ref, H_in_to_new_ref, list_dom_temp_ref, temp_in_to_new_ref
       REAL(KIND = 8), DIMENSION(:, :, :), POINTER :: Hn, Hn1, Bn, Bn1, phin, phin1
       REAL(KIND = 8), DIMENSION(:, :, :), POINTER :: Hn_glob, Hn1_glob, Bn_glob, Bn1_glob, phin_glob, phin1_glob
@@ -126,6 +127,12 @@ CONTAINS
          if_concentration = if_concentration_in
          inter_mesh = .FALSE.
          if_read_partition = .TRUE.
+         CALL find_string(22, '===Number of refinements (Input)', test)
+         IF (test) THEN
+            READ (22, *) nb_refinements
+         ELSE
+            nb_refinements = 0
+         END IF
       ELSE
          CALL read_until(22, '===Number of processors in meridian section (Output)')
          READ(22, *) nb_S
@@ -148,6 +155,12 @@ CONTAINS
          CALL read_until(22, '===Should data be interpolated on new mesh? (True/False)')
          READ(22, *) inter_mesh
          if_read_partition = .FALSE.
+         CALL find_string(22, '===Number of refinements (Output)', test)
+         IF (test) THEN
+            READ (22, *) nb_refinements
+         ELSE
+            nb_refinements = 0
+         END IF
       END IF
 
       !===Set rw_ns, rw_mxw and rw_temp (function of Problem type (Input))
