@@ -56,7 +56,7 @@ CONTAINS
 
     IF (vv_mesh%np/=0) THEN
        error=norm_SF(comm_one_d, 'L2', vv_mesh, list_mode, un)
-       !CALL plot_vit_2d(vv_mesh%jj, vv_mesh%rr, un(:,1,1))
+       CALL plot_vit_2d(vv_mesh%jj, vv_mesh%rr, un(:,1,1))
        WRITE(22,*) error
        READ(21,*) error_ref
        error_cumul = error_cumul + ABS(error-error_ref)
