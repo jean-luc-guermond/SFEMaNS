@@ -625,7 +625,7 @@ CONTAINS
       END DO
       !===End reordring
       mesh%gauss%n_ws = SIZE(mesh%jjs, 1)
-      mesh%gauss%n_w = SIZE(mesh_glob%jj, 1)
+      mesh%gauss%n_w = SIZE(mesh%jj, 1)
 
       DEALLOCATE(jj_lect, neigh_lect, i_d_lect)
       DEALLOCATE(jjs_lect, neighs_lect, sides_lect)
