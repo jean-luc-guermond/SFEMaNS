@@ -53,7 +53,7 @@ CONTAINS
            nb_dom_conc, nb_dom_ns, nb_dom_temp, nb_dom_H, nb_dom_phi, nsize, code, m, &
            m_max_c, rank_S, nb_inter, nb_inter_mu, nb_inter_c_v, nb_inter_v_T, &
            k, kp, i, nb_mode, rang_conc_S, rang_ns_S, rang_temp_S, rang_S, l, lblank, nb_fluid, &
-           nb_refinements, n
+           nb_refinements, nb_refinements_m, old_nb_refinements, new_nb_refinements, n
       INTEGER :: nb_fic, index_start
       REAL(KIND = 8) :: time_h, time_u, time_T, time_conc, max_vel
       TYPE(periodic_data) :: my_periodic
@@ -127,12 +127,6 @@ CONTAINS
          if_concentration = if_concentration_in
          inter_mesh = .FALSE.
          if_read_partition = .TRUE.
-         CALL find_string(22, '===Number of refinements (Input)', test)
-         IF (test) THEN
-            READ (22, *) nb_refinements
-         ELSE
-            nb_refinements = 0
-         END IF
       ELSE
          CALL read_until(22, '===Number of processors in meridian section (Output)')
          READ(22, *) nb_S
@@ -155,12 +149,6 @@ CONTAINS
          CALL read_until(22, '===Should data be interpolated on new mesh? (True/False)')
          READ(22, *) inter_mesh
          if_read_partition = .FALSE.
-         CALL find_string(22, '===Number of refinements (Output)', test)
-         IF (test) THEN
-            READ (22, *) nb_refinements
-         ELSE
-            nb_refinements = 0
-         END IF
       END IF
 
       !===Set rw_ns, rw_mxw and rw_temp (function of Problem type (Input))
@@ -236,15 +224,28 @@ CONTAINS
       READ(22, *) old_directory, old_filename
       CALL read_until(22, '===Is input mesh file formatted (true/false)?')
       READ(22, *) old_is_form
+      CALL find_string(22, '===Number of refinements (Input)', test)
+      IF (test) THEN
+         READ (22, *) old_nb_refinements
+      ELSE
+         old_nb_refinements = 0
+      END IF
       IF (is_in) THEN !Interpolation is done at second step only
          new_directory = old_directory
          new_filename = old_filename
          new_is_form = old_is_form
+         new_nb_refinements = old_nb_refinements
       ELSE
          CALL read_until(22, '===Directory and name of output mesh file')
          READ(22, *) new_directory, new_filename
          CALL read_until(22, '===Is output mesh file formatted (true/false)?')
          READ(22, *) new_is_form
+         CALL find_string(22, '===Number of refinements (Output)', test)
+         IF (test) THEN
+            READ (22, *) new_nb_refinements
+         ELSE
+            new_nb_refinements = 0
+         END IF
       END IF
 
       !===Data for concentration
@@ -649,20 +650,24 @@ CONTAINS
          directory = old_directory
          file_name = old_filename
          iformatted = old_is_form
+         nb_refinements = old_nb_refinements
       ELSE
          directory = new_directory
          file_name = new_filename
          iformatted = new_is_form
+         nb_refinements = new_nb_refinements
       END IF
 
       IF (is_in) THEN
          directory_m = new_directory
          file_name_m = new_filename
          is_form_m = new_is_form
+         nb_refinements_m = new_nb_refinements
       ELSE
          directory_m = old_directory
          file_name_m = old_filename
          is_form_m = old_is_form
+         nb_refinements_m = old_nb_refinements
       END IF
 
       !===Check coherence
@@ -721,12 +726,9 @@ CONTAINS
       !===Extract local meshes from global meshes
       IF (if_conc) THEN
          CALL extract_mesh(comm_one_d(1), nb_S, p1_c0_mesh_glob_conc, part, list_dom_conc, p1_conc_mesh)
-         !         DO n = 1, nb_refinements !===Create refined mesh
-         !            CALL refinement_iso_grid_distributed(p1_conc_mesh)
-         !         END DO
-         !         DO n = 1, nb_refinements !===Create refined mesh
-         !            CALL refinement_iso_grid_distributed(p1_conc_mesh_glob)
-         !         END DO
+         DO n = 1, nb_refinements !===Create refined mesh
+            CALL refinement_iso_grid_distributed(p1_conc_mesh)
+         END DO
          CALL create_iso_grid_distributed(p1_conc_mesh, conc_mesh, 2)
 
          ALLOCATE(comm_one_d_conc(2))
@@ -741,12 +743,9 @@ CONTAINS
 
       IF (if_momentum) THEN
          CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_ns, pp_mesh)
-         !         DO n = 1, nb_refinements !===Create refined mesh
-         !            CALL refinement_iso_grid_distributed(pp_mesh)
-         !         END DO
-         !         DO n = 1, nb_refinements !===Create refined mesh
-         !            CALL refinement_iso_grid_distributed(pp_mesh_glob)
-         !         END DO
+         DO n = 1, nb_refinements !===Create refined mesh
+            CALL refinement_iso_grid_distributed(pp_mesh)
+         END DO
          CALL create_iso_grid_distributed(pp_mesh, vv_mesh, 2)
 
          ALLOCATE(comm_one_d_ns(2))
@@ -761,13 +760,11 @@ CONTAINS
 
       IF (if_energy) THEN
          CALL extract_mesh(comm_one_d(1), nb_S, p1_c0_mesh_glob_temp, part, list_dom_temp, p1_temp_mesh)
-         !         DO n = 1, nb_refinements !===Create refined mesh
-         !            CALL refinement_iso_grid_distributed(p1_temp_mesh)
-         !         END DO
-         !         DO n = 1, nb_refinements !===Create refined mesh
-         !            CALL refinement_iso_grid_distributed(p1_temp_mesh_glob)
-         !         END DO
+         DO n = 1, nb_refinements !===Create refined mesh
+            CALL refinement_iso_grid_distributed(p1_temp_mesh)
+         END DO
          CALL create_iso_grid_distributed(p1_temp_mesh, temp_mesh, 2)
+
          ALLOCATE(comm_one_d_temp(2))
          CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_temp(2), code)
          CALL MPI_COMM_RANK(comm_one_d(1), rank_S, code)
@@ -780,21 +777,15 @@ CONTAINS
 
       IF (if_induction) THEN
          CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_H, p1_H_mesh)
-         !         DO n = 1, nb_refinements !===Create refined mesh
-         !            CALL refinement_iso_grid_distributed(p1_H_mesh)
-         !         END DO
-         !         DO n = 1, nb_refinements !===Create refined mesh
-         !            CALL refinement_iso_grid_distributed(p1_H_mesh_glob)
-         !         END DO
+         DO n = 1, nb_refinements !===Create refined mesh
+            CALL refinement_iso_grid_distributed(p1_H_mesh)
+         END DO
          CALL create_iso_grid_distributed(p1_H_mesh, H_mesh, type_fe_H)
 
          CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_phi, p1_phi_mesh)
-         !         DO n = 1, nb_refinements !===Create refined mesh
-         !            CALL refinement_iso_grid_distributed(p1_phi_mesh)
-         !         END DO
-         !         DO n = 1, nb_refinements !===Create refined mesh
-         !            CALL refinement_iso_grid_distributed(p1_phi_mesh_glob)
-         !         END DO
+         DO n = 1, nb_refinements !===Create refined mesh
+            CALL refinement_iso_grid_distributed(p1_phi_mesh)
+         END DO
          CALL create_iso_grid_distributed(p1_phi_mesh, phi_mesh, type_fe_phi)
       END IF
 
@@ -812,6 +803,9 @@ CONTAINS
       !===Load meshes for monoproc
       IF (if_conc) THEN
          CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_conc, list_inter_conc, 1, p1_conc_mesh_glob, is_form_m)
+         DO n = 1, nb_refinements_m !===Create refined mesh
+            CALL refinement_iso_grid_distributed(p1_phi_mesh_glob)
+         END DO
          CALL create_iso_grid_distributed(p1_conc_mesh_glob, conc_mesh_glob, 2)
          IF (check_plt) THEN
             CALL plot_const_p1_label(conc_mesh_glob%jj, conc_mesh_glob%rr, 1.d0 * conc_mesh_glob%i_d, 'conc.plt')
@@ -819,6 +813,9 @@ CONTAINS
       END IF
       IF (if_momentum) THEN
          CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_ns, list_inter_conc, 1, pp_mesh_glob, is_form_m)
+         DO n = 1, nb_refinements_m !===Create refined mesh
+            CALL refinement_iso_grid_distributed(pp_mesh_glob)
+         END DO
          CALL create_iso_grid_distributed(pp_mesh_glob, vv_mesh_glob, 2)
          IF (check_plt) THEN
             CALL plot_const_p1_label(vv_mesh_glob%jj, vv_mesh_glob%rr, 1.d0 * vv_mesh_glob%i_d, 'vv.plt')
@@ -826,6 +823,9 @@ CONTAINS
       END IF
       IF (if_energy) THEN
          CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_temp, list_inter_conc, 1, p1_temp_mesh_glob, is_form_m)
+         DO n = 1, nb_refinements_m !===Create refined mesh
+            CALL refinement_iso_grid_distributed(p1_temp_mesh_glob)
+         END DO
          CALL create_iso_grid_distributed(p1_temp_mesh_glob, temp_mesh_glob, 2)
          IF (check_plt) THEN
             CALL plot_const_p1_label(temp_mesh_glob%jj, temp_mesh_glob%rr, 1.d0 * temp_mesh_glob%i_d, 'temp.plt')
@@ -834,9 +834,15 @@ CONTAINS
       IF (if_induction) THEN
          CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_H, list_inter_mu, 1, p1_H_mesh_glob, &
               is_form_m)
+         DO n = 1, nb_refinements_m !===Create refined mesh
+            CALL refinement_iso_grid_distributed(p1_H_mesh_glob)
+         END DO
          CALL create_iso_grid_distributed(p1_H_mesh_glob, H_mesh_glob, type_fe_H)
          CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_phi, list_inter_conc, type_fe_phi, &
               phi_mesh_glob, is_form_m)
+         DO n = 1, nb_refinements_m !===Create refined mesh
+            CALL refinement_iso_grid_distributed(phi_mesh_glob)
+         END DO
          IF (check_plt) THEN
             CALL plot_const_p1_label(H_mesh_glob%jj, H_mesh_glob%rr, 1.d0 * H_mesh_glob%i_d, 'HH.plt')
             CALL plot_const_p1_label(phi_mesh_glob%jj, phi_mesh_glob%rr, 1.d0 * phi_mesh_glob%i_d, 'phi.plt')
