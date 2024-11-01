@@ -1607,6 +1607,7 @@ CONTAINS
       !===Specific to concentration=====================================================
       IF (if_concentration) THEN
          !===Verify if vv_mesh and conc_mesh coincide on the conc domain=======================
+         CALL plot_const_p1_label(conc_mesh%jj, conc_mesh%rr, 1.d0 * conc_mesh%jj(1, :), 'cc' // tit // '.plt')
          IF (vv_mesh%me/=0) THEN
             error = 0.d0
             DO k = 1, 2
