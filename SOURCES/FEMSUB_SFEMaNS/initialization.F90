@@ -1135,8 +1135,8 @@ CONTAINS
          CALL gauss_points_2d(vv_mesh, inputs%type_fe_velocity)
          CALL gauss_points_2d(pp_mesh, inputs%type_fe_velocity - 1)
          !===JLG july 20, 2019, p3 mesh
-         CALL plot_const_p1_label(vv_mesh%jj, vv_mesh%rr, 1.d0 * vv_mesh%jj(1, :), 'vv' // tit // '.plt')
-         CALL plot_const_p1_label(pp_mesh%jj, pp_mesh%rr, 1.d0 * pp_mesh%jj(1, :), 'pp' // tit // '.plt')
+         !CALL plot_const_p1_label(vv_mesh%jj, vv_mesh%rr, 1.d0 * vv_mesh%jj(1, :), 'vv' // tit // '.plt')
+         !CALL plot_const_p1_label(pp_mesh%jj, pp_mesh%rr, 1.d0 * pp_mesh%jj(1, :), 'pp' // tit // '.plt')
       END IF !=== (if_momentum .OR. inputs%type_pb=='mxx')
 
       !===Extract local meshes from global meshes for Maxwell=========================
@@ -1229,10 +1229,9 @@ CONTAINS
 
       !===Specific to induction equation==============================================
       IF (if_induction) THEN
-         !IF (petsc_rank == 0) CALL plot_const_p1_label(vv_mesh%jj, vv_mesh%rr, 1.d0 * vv_mesh%jj(1, :), 'vv.plt')
-         CALL plot_const_p1_label(H_mesh%jj, H_mesh%rr, 1.d0 * H_mesh%jj(1, :), 'HH' // tit // '.plt')
-         CALL plot_const_p1_label(pmag_mesh%jj, pmag_mesh%rr, 1.d0 * pmag_mesh%jj(1, :), &
-              'pp' // tit // '.plt')
+         !CALL plot_const_p1_label(H_mesh%jj, H_mesh%rr, 1.d0 * H_mesh%jj(1, :), 'HH' // tit // '.plt')
+         !CALL plot_const_p1_label(pmag_mesh%jj, pmag_mesh%rr, 1.d0 * pmag_mesh%jj(1, :), &
+         !     'pp' // tit // '.plt')
          !===Verify that pmag_mesh and H_mesh coincide================================
          IF (pmag_mesh%me/=0) THEN
             error = 0.d0
@@ -1387,13 +1386,11 @@ CONTAINS
          ELSE
             interface_H_mu%mes = 0
          END IF
-         write(*, *) 'a1'
          IF (H_mesh%me * phi_mesh%me /=0) THEN
             CALL load_interface(H_mesh, phi_mesh, inputs%list_inter_H_phi, interface_H_phi, .TRUE.)
          ELSE
             interface_H_phi%mes = 0
          END IF
-         write(*, *) 'a2'
          !===JLG july 20, 2019, p3 mesh
          !===Use increasing vertex index enumeration
          !CALL incr_vrtx_indx_enumeration_for_interfaces(interface_H_phi,inputs%type_fe_H+1,inputs%type_fe_phi+1)
@@ -1464,7 +1461,6 @@ CONTAINS
                   ENDIF
                ENDDO
             END DO
-            CALL plot_pressure_label(H_mesh%jj, H_mesh%rr, mu_H_field, 'mu' // tit // '.plt')
          END IF
          !===Create mu_H_field========================================================
          !===Artificial boundary condition on phi on sphere of radius R
