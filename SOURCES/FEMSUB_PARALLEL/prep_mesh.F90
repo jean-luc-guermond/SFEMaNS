@@ -362,25 +362,25 @@ CONTAINS
       END IF
 
       !===Re-order at cell level to get proper edges orientation
-      DO m = 1, me
-         IF (jj_lect(1, m) >  jj_lect(2, m)) THEN
-            CALL switch_cell_vertices(jj_lect, neigh_lect, m, 1, 2)
-         END IF
-         IF (jj_lect(2, m) >  jj_lect(3, m)) THEN
-            CALL switch_cell_vertices(jj_lect, neigh_lect, m, 2, 3)
-         END IF
-         IF (jj_lect(1, m) >  jj_lect(2, m)) THEN
-            CALL switch_cell_vertices(jj_lect, neigh_lect, m, 1, 2)
-         END IF
-      END DO
-
-      DO ms = 1, mes
-         IF (jjs_lect(1, ms) >  jjs_lect(2, ms)) THEN
-            m = jjs_lect(1, ms)
-            jjs_lect(1, ms) = jjs_lect(2, ms)
-            jjs_lect(2, ms) = m
-         END IF
-      END DO
+!      DO m = 1, me
+!         IF (jj_lect(1, m) >  jj_lect(2, m)) THEN
+!            CALL switch_cell_vertices(jj_lect, neigh_lect, m, 1, 2)
+!         END IF
+!         IF (jj_lect(2, m) >  jj_lect(3, m)) THEN
+!            CALL switch_cell_vertices(jj_lect, neigh_lect, m, 2, 3)
+!         END IF
+!         IF (jj_lect(1, m) >  jj_lect(2, m)) THEN
+!            CALL switch_cell_vertices(jj_lect, neigh_lect, m, 1, 2)
+!         END IF
+!      END DO
+!
+!      DO ms = 1, mes
+!         IF (jjs_lect(1, ms) >  jjs_lect(2, ms)) THEN
+!            m = jjs_lect(1, ms)
+!            jjs_lect(1, ms) = jjs_lect(2, ms)
+!            jjs_lect(2, ms) = m
+!         END IF
+!      END DO
 
       ! Identify the status of faces
       ! stat = 1 (interface to be forgotten), stat = 2 (boundary), stat = 3 (real interface)
