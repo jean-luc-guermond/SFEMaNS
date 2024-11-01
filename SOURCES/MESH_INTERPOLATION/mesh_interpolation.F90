@@ -739,8 +739,7 @@ CONTAINS
       END IF
 
       IF (if_momentum) THEN
-         CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_ns, pp_mesh, &
-              opt_mesh_glob = pp_mesh_glob)
+         CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_ns, pp_mesh)
          !         DO n = 1, nb_refinements !===Create refined mesh
          !            CALL refinement_iso_grid_distributed(pp_mesh)
          !         END DO
