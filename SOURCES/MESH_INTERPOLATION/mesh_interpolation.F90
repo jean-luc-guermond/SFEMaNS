@@ -825,41 +825,41 @@ CONTAINS
       m_max_c = nb_mode / nb_F
 
       !===Load meshes for monoproc
-!      IF (if_conc) THEN
-!         CALL free_mesh(conc_mesh_glob)
-!         CALL load_mesh_free_format(directory_m, file_name_m, list_dom_conc, 2, conc_mesh_glob, is_form_m)
-!         IF (check_plt) THEN
-!            CALL plot_const_p1_label(conc_mesh_glob%jj, conc_mesh_glob%rr, 1.d0 * conc_mesh_glob%i_d, 'conc.plt')
-!         END IF
-!      END IF
-!      IF (if_momentum) THEN
-!         CALL free_mesh(vv_mesh_glob)
-!         CALL free_mesh(pp_mesh_glob)
-!         CALL load_mesh_free_format(directory_m, file_name_m, list_dom_ns, 2, vv_mesh_glob, is_form_m)
-!         CALL load_mesh_free_format(directory_m, file_name_m, list_dom_ns, 1, pp_mesh_glob, is_form_m)
-!         IF (check_plt) THEN
-!            CALL plot_const_p1_label(vv_mesh_glob%jj, vv_mesh_glob%rr, 1.d0 * vv_mesh_glob%i_d, 'vv.plt')
-!         END IF
-!      END IF
-!      IF (if_energy) THEN
-!         CALL free_mesh(temp_mesh_glob)
-!         CALL load_mesh_free_format(directory_m, file_name_m, list_dom_temp, 2, temp_mesh_glob, is_form_m)
-!         IF (check_plt) THEN
-!            CALL plot_const_p1_label(temp_mesh_glob%jj, temp_mesh_glob%rr, 1.d0 * temp_mesh_glob%i_d, 'temp.plt')
-!         END IF
-!      END IF
-!      IF (if_induction) THEN
-!         CALL free_mesh(H_mesh_glob)
-!         CALL free_mesh(phi_mesh_glob)
-!         CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_H, list_inter_mu, type_fe_H, p1_H_mesh_glob, &
-!              is_form_m)
-!         CALL create_iso_grid_distributed(p1_H_mesh_glob, H_mesh_glob, type_fe_H)
-!         CALL load_mesh_free_format(directory_m, file_name_m, list_dom_phi, type_fe_phi, phi_mesh_glob, is_form_m)
-!         IF (check_plt) THEN
-!            CALL plot_const_p1_label(H_mesh_glob%jj, H_mesh_glob%rr, 1.d0 * H_mesh_glob%i_d, 'HH.plt')
-!            CALL plot_const_p1_label(phi_mesh_glob%jj, phi_mesh_glob%rr, 1.d0 * phi_mesh_glob%i_d, 'phi.plt')
-!         END IF
-!      END IF
+      IF (if_conc) THEN
+         CALL free_mesh(conc_mesh_glob)
+         CALL load_mesh_free_format(directory_m, file_name_m, list_dom_conc, 2, conc_mesh_glob, is_form_m)
+         IF (check_plt) THEN
+            CALL plot_const_p1_label(conc_mesh_glob%jj, conc_mesh_glob%rr, 1.d0 * conc_mesh_glob%i_d, 'conc.plt')
+         END IF
+      END IF
+      IF (if_momentum) THEN
+         CALL free_mesh(vv_mesh_glob)
+         CALL free_mesh(pp_mesh_glob)
+         CALL load_mesh_free_format(directory_m, file_name_m, list_dom_ns, 2, vv_mesh_glob, is_form_m)
+         CALL load_mesh_free_format(directory_m, file_name_m, list_dom_ns, 1, pp_mesh_glob, is_form_m)
+         IF (check_plt) THEN
+            CALL plot_const_p1_label(vv_mesh_glob%jj, vv_mesh_glob%rr, 1.d0 * vv_mesh_glob%i_d, 'vv.plt')
+         END IF
+      END IF
+      IF (if_energy) THEN
+         CALL free_mesh(temp_mesh_glob)
+         CALL load_mesh_free_format(directory_m, file_name_m, list_dom_temp, 2, temp_mesh_glob, is_form_m)
+         IF (check_plt) THEN
+            CALL plot_const_p1_label(temp_mesh_glob%jj, temp_mesh_glob%rr, 1.d0 * temp_mesh_glob%i_d, 'temp.plt')
+         END IF
+      END IF
+      IF (if_induction) THEN
+         CALL free_mesh(H_mesh_glob)
+         CALL free_mesh(phi_mesh_glob)
+         CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_H, list_inter_mu, type_fe_H, p1_H_mesh_glob, &
+              is_form_m)
+         CALL create_iso_grid_distributed(p1_H_mesh_glob, H_mesh_glob, type_fe_H)
+         CALL load_mesh_free_format(directory_m, file_name_m, list_dom_phi, type_fe_phi, phi_mesh_glob, is_form_m)
+         IF (check_plt) THEN
+            CALL plot_const_p1_label(H_mesh_glob%jj, H_mesh_glob%rr, 1.d0 * H_mesh_glob%i_d, 'HH.plt')
+            CALL plot_const_p1_label(phi_mesh_glob%jj, phi_mesh_glob%rr, 1.d0 * phi_mesh_glob%i_d, 'phi.plt')
+         END IF
+      END IF
 
       !===Array allocation
       IF (if_conc) THEN
