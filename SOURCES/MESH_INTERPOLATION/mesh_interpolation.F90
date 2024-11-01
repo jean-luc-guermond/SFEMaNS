@@ -1125,13 +1125,13 @@ CONTAINS
                CALL interp_mesh(phi_mesh_in, phi_mesh_out, phin_in, phin_out, controle_phi, type_fe_phi)
                CALL interp_mesh(phi_mesh_in, phi_mesh_out, phin1_in, phin1_out, controle_phi, type_fe_phi)
 
-               IF (MIN(MINVAL(controle_H), MINVAL(controle_phi)) == 0) THEN
+               !IF (MIN(MINVAL(controle_H), MINVAL(controle_phi)) == 0) THEN
                   write(600, *) controle_H
                   write(600, *) controle_phi
                   write(600, *) 'certains points non trouve H/phi 2'
                   Hn_out(:,1,1) = 1.d0 * controle_H
                   CALL plot_vit_2d(H_mesh_out%jj, H_mesh_out%rr, Hn_out(:,1,1))
-               END IF
+               !END IF
 
                CALL write_restart_maxwell(comm_one_d, H_mesh_out, phi_mesh_out, time_h, list_mode, Hn_out, Hn1_out, &
                     Bn_out, Bn1_out, phin_out, phin1_out, new_filename, m, 1, opt_mono = mono_out)
