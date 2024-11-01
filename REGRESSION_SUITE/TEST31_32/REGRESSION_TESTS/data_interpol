@@ -11,6 +11,8 @@
 '../../MESHES' 'SOLID_FLUID_10.FEM'
 ===Is input mesh file formatted (true/false)?
 .t.
+===Number of refinements (Input)
+1
 
 ============================================
               Output information
@@ -25,6 +27,8 @@
 '../../MESHES' 'SOLID_FLUID_20.FEM'
 ===Is output mesh file formatted (true/false)?
 .t.
+===Number of refinements (Output)
+1
 
 ============================================
               What should be done?
@@ -45,8 +49,7 @@
 1
 ===Indices of periodic boundaries and corresponding vectors
 4 2 .0d0 1.d0
-===Number of refinements
-1
+
 ============================================
               Mesh-NAVIER-STOKES
 ============================================

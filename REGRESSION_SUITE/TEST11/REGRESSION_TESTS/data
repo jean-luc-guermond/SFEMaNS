@@ -21,7 +21,7 @@
 ===Time step and number of time iterations
 2d-2, 20
 ===Number of refinements
-0
+1
 ============================================
               Mesh-NAVIER-STOKES
 ============================================

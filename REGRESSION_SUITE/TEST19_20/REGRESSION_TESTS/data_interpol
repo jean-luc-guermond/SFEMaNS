@@ -9,6 +9,8 @@
 '../../MESHES' 'Mesh_10_form.FEM'
 ===Is input mesh file formatted (true/false)?
 .t.
+===Number of refinements (Input)
+1
 
 ============================================
               Output information
@@ -21,6 +23,8 @@
 '../../MESHES' 'Mesh_10_form.FEM'
 ===Is output mesh file formatted (true/false)?
 .t.
+===Number of refinements (Output)
+1
 
 ============================================
               What should be done?
@@ -33,8 +37,7 @@
 2
 ===Number of Fourier modes
 4
-===Number of refinements
-1
+
 ============================================
               Mesh-NAVIER-STOKES
 ============================================
