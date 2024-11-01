@@ -1850,6 +1850,8 @@ CONTAINS
          ALLOCATE(mesh%jecs(SIZE(mesh_p1%jecs)))
          mesh%jecs = mesh_p1%jecs
 
+         mesh%gauss%n_w = 3
+         mesh%gauss%n_ws = 2
          RETURN
       ELSE IF (type_fe==2) THEN
          mesh%me = mesh_p1%me
@@ -1911,6 +1913,9 @@ CONTAINS
          mesh%jees = mesh_p1%jees
          ALLOCATE(mesh%jecs(SIZE(mesh_p1%jecs)))
          mesh%jecs = mesh_p1%jecs
+
+         mesh%gauss%n_w = 6
+         mesh%gauss%n_ws = 3
       ELSE IF (type_fe==3) THEN
          mesh%me = mesh_p1%me
          mesh%mes = mesh_p1%mes
@@ -1970,6 +1975,9 @@ CONTAINS
          mesh%jees = mesh_p1%jees
          ALLOCATE(mesh%jecs(SIZE(mesh_p1%jecs)))
          mesh%jecs = mesh_p1%jecs
+
+         mesh%gauss%n_w = 10
+         mesh%gauss%n_ws = 4
       END IF
 
       nb_angle = 0
