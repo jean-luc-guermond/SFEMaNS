@@ -809,23 +809,23 @@ CONTAINS
       END IF
 
       m_max_c = nb_mode / nb_F
-
+      ALLOCATE(list_inter_conc(0))
       !===Load meshes for monoproc
       IF (if_conc) THEN
-         CALL load_mesh_free_format(directory_m, file_name_m, list_dom_conc, 2, conc_mesh_glob, is_form_m)
+         CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_conc, list_inter_conc, 2, conc_mesh_glob, is_form_m)
          IF (check_plt) THEN
             CALL plot_const_p1_label(conc_mesh_glob%jj, conc_mesh_glob%rr, 1.d0 * conc_mesh_glob%i_d, 'conc.plt')
          END IF
       END IF
       IF (if_momentum) THEN
-         CALL load_mesh_free_format(directory_m, file_name_m, list_dom_ns, 2, vv_mesh_glob, is_form_m)
-         CALL load_mesh_free_format(directory_m, file_name_m, list_dom_ns, 1, pp_mesh_glob, is_form_m)
+         CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_ns, list_inter_conc, 2, vv_mesh_glob, is_form_m)
+         CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_ns, list_inter_conc, 1, pp_mesh_glob, is_form_m)
          IF (check_plt) THEN
             CALL plot_const_p1_label(vv_mesh_glob%jj, vv_mesh_glob%rr, 1.d0 * vv_mesh_glob%i_d, 'vv.plt')
          END IF
       END IF
       IF (if_energy) THEN
-         CALL load_mesh_free_format(directory_m, file_name_m, list_dom_temp, 2, temp_mesh_glob, is_form_m)
+         CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_temp, list_inter_conc, 2, temp_mesh_glob, is_form_m)
          IF (check_plt) THEN
             CALL plot_const_p1_label(temp_mesh_glob%jj, temp_mesh_glob%rr, 1.d0 * temp_mesh_glob%i_d, 'temp.plt')
          END IF
