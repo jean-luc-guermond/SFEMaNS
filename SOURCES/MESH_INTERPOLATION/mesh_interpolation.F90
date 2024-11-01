@@ -729,8 +729,7 @@ CONTAINS
          !            CALL refinement_iso_grid_distributed(p1_conc_mesh_glob)
          !         END DO
          CALL create_iso_grid_distributed(p1_conc_mesh, conc_mesh, 2)
-         CALL create_iso_grid_distributed(p1_conc_mesh_glob, conc_mesh_glob, 2)
-         CALL gauss_points_2d(conc_mesh_glob, 2)
+
          ALLOCATE(comm_one_d_conc(2))
          CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_conc(2), code)
          CALL MPI_COMM_RANK(comm_one_d(1), rank_S, code)
@@ -751,11 +750,7 @@ CONTAINS
          !            CALL refinement_iso_grid_distributed(pp_mesh_glob)
          !         END DO
          CALL create_iso_grid_distributed(pp_mesh, vv_mesh, 2)
-         CALL create_iso_grid_distributed(pp_mesh_glob, vv_mesh_glob, 2)
-         CALL gauss_points_2d(pp_mesh, 1)
-         CALL gauss_points_2d(vv_mesh, 2)
-         CALL gauss_points_2d(pp_mesh_glob, 1)
-         CALL gauss_points_2d(vv_mesh_glob, 2)
+
          ALLOCATE(comm_one_d_ns(2))
          CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_ns(2), code)
          CALL MPI_COMM_RANK(comm_one_d(1), rank_S, code)
@@ -776,9 +771,6 @@ CONTAINS
          !            CALL refinement_iso_grid_distributed(p1_temp_mesh_glob)
          !         END DO
          CALL create_iso_grid_distributed(p1_temp_mesh, temp_mesh, 2)
-         CALL gauss_points_2d(temp_mesh, 2)
-         CALL create_iso_grid_distributed(p1_temp_mesh_glob, temp_mesh_glob, 2)
-         CALL gauss_points_2d(temp_mesh_glob, 2)
          ALLOCATE(comm_one_d_temp(2))
          CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_temp(2), code)
          CALL MPI_COMM_RANK(comm_one_d(1), rank_S, code)
@@ -799,9 +791,6 @@ CONTAINS
          !            CALL refinement_iso_grid_distributed(p1_H_mesh_glob)
          !         END DO
          CALL create_iso_grid_distributed(p1_H_mesh, H_mesh, type_fe_H)
-         CALL gauss_points_2d(H_mesh, type_fe_H)
-         CALL create_iso_grid_distributed(p1_H_mesh_glob, H_mesh_glob, type_fe_H)
-         CALL gauss_points_2d(H_mesh_glob, type_fe_H)
 
          CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_phi, p1_phi_mesh, &
               opt_mesh_glob = p1_phi_mesh_glob)
@@ -812,10 +801,6 @@ CONTAINS
          !            CALL refinement_iso_grid_distributed(p1_phi_mesh_glob)
          !         END DO
          CALL create_iso_grid_distributed(p1_phi_mesh, phi_mesh, type_fe_phi)
-         CALL gauss_points_2d(phi_mesh, type_fe_phi)
-         CALL create_iso_grid_distributed(p1_phi_mesh_glob, phi_mesh_glob, type_fe_phi)
-         CALL gauss_points_2d(phi_mesh_glob, type_fe_phi)
-
       END IF
 
       !===Cleanup
@@ -1124,15 +1109,10 @@ CONTAINS
                CALL interp_mesh(H_mesh_in, H_mesh_out, Bn1_in, Bn1_out, controle_H, type_fe_H)
                CALL interp_mesh(phi_mesh_in, phi_mesh_out, phin_in, phin_out, controle_phi, type_fe_phi)
                CALL interp_mesh(phi_mesh_in, phi_mesh_out, phin1_in, phin1_out, controle_phi, type_fe_phi)
-               WRITE(tit, '(i1)') petsc_rank
 
-               !IF (MIN(MINVAL(controle_H), MINVAL(controle_phi)) == 0) THEN
-                  write(600, *) controle_H
-                  write(600, *) controle_phi
-                  write(600, *) 'certains points non trouve H/phi 2'
-                  Hn_out(:,1,1) = 1.d0 * controle_H
-                  CALL plot_pressure_p1_label(H_mesh_out%jj, H_mesh_out%rr, Hn_out(:,1,1), tit // '.plt')
-               !END IF
+               IF (MIN(MINVAL(controle_H), MINVAL(controle_phi)) == 0) THEN
+                  CALL error_Petsc('certains points non trouve H/phi 2')
+               END IF
 
                CALL write_restart_maxwell(comm_one_d, H_mesh_out, phi_mesh_out, time_h, list_mode, Hn_out, Hn1_out, &
                     Bn_out, Bn1_out, phin_out, phin1_out, new_filename, m, 1, opt_mono = mono_out)
