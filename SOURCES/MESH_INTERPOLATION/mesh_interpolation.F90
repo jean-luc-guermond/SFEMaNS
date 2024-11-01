@@ -687,15 +687,18 @@ CONTAINS
 
       !===Prepare meshes and pointers
       CALL load_dg_mesh_free_format(directory, file_name, list_dom, list_inter, 1, p1_mesh_glob, iformatted)
+      CALL create_iso_grid_distributed(p1_mesh_glob, p2_mesh_glob, 2)
       IF (if_conc) THEN
          !       CALL load_dg_mesh_free_format(directory, file_name, list_dom, &
          CALL load_dg_mesh_free_format(directory, file_name, list_dom_conc, & !TEST LC
               list_inter_conc, 1, p1_c0_mesh_glob_conc, iformatted)
+         CALL create_iso_grid_distributed(p1_c0_mesh_glob_conc, p2_c0_mesh_glob_conc, 2)
       END IF
       IF (if_energy) THEN
          !       CALL load_dg_mesh_free_format(directory, file_name, list_dom, &
          CALL load_dg_mesh_free_format(directory, file_name, list_dom_temp, & !TEST LC
               list_inter_temp, 1, p1_c0_mesh_glob_temp, iformatted)
+         CALL create_iso_grid_distributed(p1_c0_mesh_glob_temp, p2_c0_mesh_glob_temp, 2)
       END IF
 
       !===Start Metis mesh generation=================================================
@@ -815,11 +818,14 @@ CONTAINS
 
       !===Cleanup
       CALL free_mesh(p1_mesh_glob)
+      CALL free_mesh(p2_mesh_glob)
       IF (if_conc) THEN
          DEALLOCATE(list_inter_conc)
+         CALL free_mesh(p2_c0_mesh_glob_conc)
       END IF
       IF (if_energy) THEN
          DEALLOCATE(list_inter_temp)
+         CALL free_mesh(p2_c0_mesh_glob_temp)
       END IF
 
       m_max_c = nb_mode / nb_F
