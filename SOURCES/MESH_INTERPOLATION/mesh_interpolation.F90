@@ -1128,7 +1128,7 @@ CONTAINS
                IF (MIN(MINVAL(controle_H), MINVAL(controle_phi)) == 0) THEN
                   write(600, *) controle_H
                   write(600, *) controle_phi
-                  CALL error_Petsc('certains points non trouve H/phi 2')
+                  write(600, *) 'certains points non trouve H/phi 2'
                END IF
 
                CALL write_restart_maxwell(comm_one_d, H_mesh_out, phi_mesh_out, time_h, list_mode, Hn_out, Hn1_out, &

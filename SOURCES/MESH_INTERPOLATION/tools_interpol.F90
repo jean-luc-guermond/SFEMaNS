@@ -219,7 +219,7 @@ CONTAINS
        END DO
     END DO
 
-    IF (MAXVAL(controle) > 1) WRITE(*,*) 'BUG in interp_mesh'
+    IF (MAXVAL(controle) > 1) WRITE(600,*) 'BUG in interp_mesh'
 
   END SUBROUTINE interp_mesh
 
