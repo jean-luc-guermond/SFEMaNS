@@ -2571,19 +2571,15 @@ CONTAINS
       IMPLICIT NONE
       TYPE(mesh_type) :: mesh
 
-      DEALLOCATE(mesh%jj, mesh%i_d,  mesh%rr, mesh%neigh)
+      DEALLOCATE(mesh%jj, mesh%i_d, mesh%loc_to_glob, mesh%rr, mesh%neigh)
       DEALLOCATE(mesh%jjs, mesh%sides, mesh%neighs)
-      DEALLOCATE(mesh%disedge, mesh%domedge, mesh%discell, mesh%domcell)
+      DEALLOCATE(mesh%disp, mesh%domnp, mesh%disedge, mesh%domedge, mesh%discell, mesh%domcell)
       DEALLOCATE(mesh%jce, mesh%jees, mesh%jecs)
 
       DEALLOCATE(mesh%jj_extra, mesh%jce_extra, mesh%jjs_extra, mesh%jcc_extra, mesh%rrs_extra)
       DEALLOCATE(mesh%sides_extra, mesh%neighs_extra) !interfaces
       DEALLOCATE(mesh%isolated_jjs, mesh%isolated_interfaces)
 
-      NULLIFY(mesh%loc_to_glob)
-      NULLIFY(mesh%disp)
-      NULLIFY(mesh%domnp)
-      NULLIFY(mesh%j_s)
       !IF (mesh%edge_stab) THEN
       !   DEALLOCATE(mesh%iis)
       !   NULLIFY(mesh%jji)
