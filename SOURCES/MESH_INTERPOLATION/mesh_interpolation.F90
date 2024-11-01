@@ -790,8 +790,7 @@ CONTAINS
       END IF
 
       IF (if_induction) THEN
-         CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_H, p1_H_mesh, &
-              opt_mesh_glob = p1_H_mesh_glob)
+         CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_H, p1_H_mesh)
          !         DO n = 1, nb_refinements !===Create refined mesh
          !            CALL refinement_iso_grid_distributed(p1_H_mesh)
          !         END DO
@@ -799,12 +798,8 @@ CONTAINS
          !            CALL refinement_iso_grid_distributed(p1_H_mesh_glob)
          !         END DO
          CALL create_iso_grid_distributed(p1_H_mesh, H_mesh, type_fe_H)
-         CALL gauss_points_2d(H_mesh, type_fe_H)
-         CALL create_iso_grid_distributed(p1_H_mesh_glob, H_mesh_glob, type_fe_H)
-         CALL gauss_points_2d(H_mesh_glob, type_fe_H)
 
-         CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_phi, p1_phi_mesh, &
-              opt_mesh_glob = p1_phi_mesh_glob)
+         CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_phi, p1_phi_mesh)
          !         DO n = 1, nb_refinements !===Create refined mesh
          !            CALL refinement_iso_grid_distributed(p1_phi_mesh)
          !         END DO
@@ -813,9 +808,6 @@ CONTAINS
          !         END DO
          CALL create_iso_grid_distributed(p1_phi_mesh, phi_mesh, type_fe_phi)
          CALL gauss_points_2d(phi_mesh, type_fe_phi)
-         CALL create_iso_grid_distributed(p1_phi_mesh_glob, phi_mesh_glob, type_fe_phi)
-         CALL gauss_points_2d(phi_mesh_glob, type_fe_phi)
-
       END IF
 
       !===Cleanup
