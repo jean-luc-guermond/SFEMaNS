@@ -730,6 +730,7 @@ CONTAINS
             CALL refinement_iso_grid_distributed(p1_conc_mesh)
          END DO
          CALL create_iso_grid_distributed(p1_conc_mesh, conc_mesh, 2)
+         CALL free_mesh(p1_conc_mesh)
 
          ALLOCATE(comm_one_d_conc(2))
          CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_conc(2), code)
@@ -764,6 +765,7 @@ CONTAINS
             CALL refinement_iso_grid_distributed(p1_temp_mesh)
          END DO
          CALL create_iso_grid_distributed(p1_temp_mesh, temp_mesh, 2)
+         CALL free_mesh(p1_temp_mesh)
 
          ALLOCATE(comm_one_d_temp(2))
          CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_temp(2), code)
@@ -781,12 +783,14 @@ CONTAINS
             CALL refinement_iso_grid_distributed(p1_H_mesh)
          END DO
          CALL create_iso_grid_distributed(p1_H_mesh, H_mesh, type_fe_H)
+         CALL free_mesh(p1_H_mesh)
 
          CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_phi, p1_phi_mesh)
          DO n = 1, nb_refinements !===Create refined mesh
             CALL refinement_iso_grid_distributed(p1_phi_mesh)
          END DO
          CALL create_iso_grid_distributed(p1_phi_mesh, phi_mesh, type_fe_phi)
+         CALL free_mesh(p1_phi_mesh)
       END IF
 
       !===Cleanup
@@ -807,6 +811,8 @@ CONTAINS
             CALL refinement_iso_grid_distributed(p1_phi_mesh_glob)
          END DO
          CALL create_iso_grid_distributed(p1_conc_mesh_glob, conc_mesh_glob, 2)
+         CALL free_mesh(p1_conc_mesh_glob)
+
          IF (check_plt) THEN
             CALL plot_const_p1_label(conc_mesh_glob%jj, conc_mesh_glob%rr, 1.d0 * conc_mesh_glob%i_d, 'conc.plt')
          END IF
@@ -817,6 +823,7 @@ CONTAINS
             CALL refinement_iso_grid_distributed(pp_mesh_glob)
          END DO
          CALL create_iso_grid_distributed(pp_mesh_glob, vv_mesh_glob, 2)
+
          IF (check_plt) THEN
             CALL plot_const_p1_label(vv_mesh_glob%jj, vv_mesh_glob%rr, 1.d0 * vv_mesh_glob%i_d, 'vv.plt')
          END IF
@@ -827,6 +834,8 @@ CONTAINS
             CALL refinement_iso_grid_distributed(p1_temp_mesh_glob)
          END DO
          CALL create_iso_grid_distributed(p1_temp_mesh_glob, temp_mesh_glob, 2)
+         CALL free_mesh(p1_temp_mesh_glob)
+
          IF (check_plt) THEN
             CALL plot_const_p1_label(temp_mesh_glob%jj, temp_mesh_glob%rr, 1.d0 * temp_mesh_glob%i_d, 'temp.plt')
          END IF
@@ -838,11 +847,16 @@ CONTAINS
             CALL refinement_iso_grid_distributed(p1_H_mesh_glob)
          END DO
          CALL create_iso_grid_distributed(p1_H_mesh_glob, H_mesh_glob, type_fe_H)
-         CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_phi, list_inter_conc, type_fe_phi, &
-              phi_mesh_glob, is_form_m)
+         CALL free_mesh(p1_H_mesh_glob)
+
+         CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_phi, list_inter_conc, 1, &
+              p1_phi_mesh_glob, is_form_m)
          DO n = 1, nb_refinements_m !===Create refined mesh
-            CALL refinement_iso_grid_distributed(phi_mesh_glob)
+            CALL refinement_iso_grid_distributed(p1_phi_mesh_glob)
          END DO
+         CALL create_iso_grid_distributed(p1_phi_mesh_glob, phi_mesh_glob, type_fe_phi)
+         CALL free_mesh(p1_phi_mesh_glob)
+
          IF (check_plt) THEN
             CALL plot_const_p1_label(H_mesh_glob%jj, H_mesh_glob%rr, 1.d0 * H_mesh_glob%i_d, 'HH.plt')
             CALL plot_const_p1_label(phi_mesh_glob%jj, phi_mesh_glob%rr, 1.d0 * phi_mesh_glob%i_d, 'phi.plt')
