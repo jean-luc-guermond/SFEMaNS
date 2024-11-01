@@ -1231,7 +1231,7 @@ CONTAINS
       IF (if_induction) THEN
          CALL plot_const_p1_label(H_mesh%jj, H_mesh%rr, 1.d0 * H_mesh%jj(1, :), 'HH' // tit // '.plt')
          CALL plot_const_p1_label(pmag_mesh%jj, pmag_mesh%rr, 1.d0 * pmag_mesh%jj(1, :), &
-         !     'pp' // tit // '.plt')
+              'pp' // tit // '.plt')
          !===Verify that pmag_mesh and H_mesh coincide================================
          IF (pmag_mesh%me/=0) THEN
             error = 0.d0
