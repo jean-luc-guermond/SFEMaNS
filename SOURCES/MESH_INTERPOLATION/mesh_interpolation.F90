@@ -808,7 +808,7 @@ CONTAINS
       IF (if_conc) THEN
          CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_conc, list_inter_conc, 1, p1_conc_mesh_glob, is_form_m)
          DO n = 1, nb_refinements_m !===Create refined mesh
-            CALL refinement_iso_grid_distributed(p1_phi_mesh_glob)
+            CALL refinement_iso_grid_distributed(p1_conc_mesh_glob)
          END DO
          CALL create_iso_grid_distributed(p1_conc_mesh_glob, conc_mesh_glob, 2)
          CALL free_mesh(p1_conc_mesh_glob)
