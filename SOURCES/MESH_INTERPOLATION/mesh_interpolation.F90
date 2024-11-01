@@ -1121,7 +1121,7 @@ CONTAINS
                CALL interp_mesh(phi_mesh_in, phi_mesh_out, phin1_in, phin1_out, controle_phi, type_fe_phi)
 
                IF (MIN(MINVAL(controle_H), MINVAL(controle_phi)) == 0) THEN
-                  write(600, *) control_H, controle_phi
+                  write(600, *) controle_H, controle_phi
                   CALL error_Petsc('certains points non trouve H/phi 2')
                END IF
 
