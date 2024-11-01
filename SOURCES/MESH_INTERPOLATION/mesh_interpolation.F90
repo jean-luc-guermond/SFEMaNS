@@ -63,7 +63,7 @@ CONTAINS
            list_mode, controle_H, controle_phi, &
            controle_vv, controle_pp, controle_temp, controle_conc, vel_in_to_new, temp_in_to_new, H_in_to_new, &
            l_t_g_vv, l_t_g_pp, l_t_g_H, l_t_g_phi, l_t_g_temp, l_t_g_conc, &
-           nb_refinements
+           nb_refinements, n
       INTEGER, DIMENSION(:), ALLOCATABLE :: list_dom_H_ref, H_in_to_new_ref, list_dom_temp_ref, temp_in_to_new_ref
       REAL(KIND = 8), DIMENSION(:, :, :), POINTER :: Hn, Hn1, Bn, Bn1, phin, phin1
       REAL(KIND = 8), DIMENSION(:, :, :), POINTER :: Hn_glob, Hn1_glob, Bn_glob, Bn1_glob, phin_glob, phin1_glob
