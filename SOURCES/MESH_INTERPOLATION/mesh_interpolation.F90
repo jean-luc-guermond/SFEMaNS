@@ -1129,7 +1129,8 @@ CONTAINS
                   write(600, *) controle_H
                   write(600, *) controle_phi
                   write(600, *) 'certains points non trouve H/phi 2'
-                  CALL plot_vit_2d(H_mesh_out%jj, H_mesh_out%rr, 1.d0 * controle_H)
+                  Hn_out = 1.d0 * controle_H
+                  CALL plot_vit_2d(H_mesh_out%jj, H_mesh_out%rr, Hn_out)
                END IF
 
                CALL write_restart_maxwell(comm_one_d, H_mesh_out, phi_mesh_out, time_h, list_mode, Hn_out, Hn1_out, &
