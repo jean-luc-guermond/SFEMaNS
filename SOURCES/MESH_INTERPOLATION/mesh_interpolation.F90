@@ -722,12 +722,12 @@ CONTAINS
       IF (if_conc) THEN
          CALL extract_mesh(comm_one_d(1), nb_S, p1_c0_mesh_glob_conc, part, list_dom_conc, p1_conc_mesh, &
               opt_mesh_glob = p1_conc_mesh_glob)
-         DO n = 1, nb_refinements !===Create refined mesh
-            CALL refinement_iso_grid_distributed(p1_conc_mesh)
-         END DO
-         DO n = 1, nb_refinements !===Create refined mesh
-            CALL refinement_iso_grid_distributed(p1_conc_mesh_glob)
-         END DO
+!         DO n = 1, nb_refinements !===Create refined mesh
+!            CALL refinement_iso_grid_distributed(p1_conc_mesh)
+!         END DO
+!         DO n = 1, nb_refinements !===Create refined mesh
+!            CALL refinement_iso_grid_distributed(p1_conc_mesh_glob)
+!         END DO
          CALL create_iso_grid_distributed(p1_conc_mesh, conc_mesh, 2)
          CALL create_iso_grid_distributed(p1_conc_mesh_glob, conc_mesh_glob, 2)
          CALL gauss_points_2d(conc_mesh_glob, 2)
@@ -744,12 +744,12 @@ CONTAINS
       IF (if_momentum) THEN
          CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_ns, pp_mesh, &
               opt_mesh_glob = pp_mesh_glob)
-         DO n = 1, nb_refinements !===Create refined mesh
-            CALL refinement_iso_grid_distributed(pp_mesh)
-         END DO
-         DO n = 1, nb_refinements !===Create refined mesh
-            CALL refinement_iso_grid_distributed(pp_mesh_glob)
-         END DO
+!         DO n = 1, nb_refinements !===Create refined mesh
+!            CALL refinement_iso_grid_distributed(pp_mesh)
+!         END DO
+!         DO n = 1, nb_refinements !===Create refined mesh
+!            CALL refinement_iso_grid_distributed(pp_mesh_glob)
+!         END DO
          CALL create_iso_grid_distributed(pp_mesh, vv_mesh, 2)
          CALL create_iso_grid_distributed(pp_mesh_glob, vv_mesh_glob, 2)
          CALL gauss_points_2d(pp_mesh_glob, 1)
@@ -767,12 +767,12 @@ CONTAINS
       IF (if_energy) THEN
          CALL extract_mesh(comm_one_d(1), nb_S, p1_c0_mesh_glob_temp, part, list_dom_temp, p1_temp_mesh, &
               opt_mesh_glob = p1_temp_mesh_glob)
-         DO n = 1, nb_refinements !===Create refined mesh
-            CALL refinement_iso_grid_distributed(p1_temp_mesh)
-         END DO
-         DO n = 1, nb_refinements !===Create refined mesh
-            CALL refinement_iso_grid_distributed(p1_temp_mesh_glob)
-         END DO
+!         DO n = 1, nb_refinements !===Create refined mesh
+!            CALL refinement_iso_grid_distributed(p1_temp_mesh)
+!         END DO
+!         DO n = 1, nb_refinements !===Create refined mesh
+!            CALL refinement_iso_grid_distributed(p1_temp_mesh_glob)
+!         END DO
          CALL create_iso_grid_distributed(p1_temp_mesh, temp_mesh, 2)
          CALL create_iso_grid_distributed(p1_temp_mesh_glob, temp_mesh_glob, 2)
          CALL gauss_points_2d(temp_mesh_glob, 2)
@@ -789,24 +789,24 @@ CONTAINS
       IF (if_induction) THEN
          CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_H, p1_H_mesh, &
               opt_mesh_glob = p1_H_mesh_glob)
-         DO n = 1, nb_refinements !===Create refined mesh
-            CALL refinement_iso_grid_distributed(p1_H_mesh)
-         END DO
-         DO n = 1, nb_refinements !===Create refined mesh
-            CALL refinement_iso_grid_distributed(p1_H_mesh_glob)
-         END DO
+!         DO n = 1, nb_refinements !===Create refined mesh
+!            CALL refinement_iso_grid_distributed(p1_H_mesh)
+!         END DO
+!         DO n = 1, nb_refinements !===Create refined mesh
+!            CALL refinement_iso_grid_distributed(p1_H_mesh_glob)
+!         END DO
          CALL create_iso_grid_distributed(p1_H_mesh, H_mesh, type_fe_H)
          CALL create_iso_grid_distributed(p1_H_mesh_glob, H_mesh_glob, type_fe_H)
          CALL gauss_points_2d(H_mesh_glob, type_fe_H)
 
          CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_phi, p1_phi_mesh, &
               opt_mesh_glob = p1_phi_mesh_glob)
-         DO n = 1, nb_refinements !===Create refined mesh
-            CALL refinement_iso_grid_distributed(p1_phi_mesh)
-         END DO
-         DO n = 1, nb_refinements !===Create refined mesh
-            CALL refinement_iso_grid_distributed(p1_phi_mesh_glob)
-         END DO
+!         DO n = 1, nb_refinements !===Create refined mesh
+!            CALL refinement_iso_grid_distributed(p1_phi_mesh)
+!         END DO
+!         DO n = 1, nb_refinements !===Create refined mesh
+!            CALL refinement_iso_grid_distributed(p1_phi_mesh_glob)
+!         END DO
          CALL create_iso_grid_distributed(p1_phi_mesh, phi_mesh, type_fe_phi)
          CALL create_iso_grid_distributed(p1_phi_mesh_glob, phi_mesh_glob, type_fe_phi)
          CALL gauss_points_2d(phi_mesh_glob, type_fe_phi)
