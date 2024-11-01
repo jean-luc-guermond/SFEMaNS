@@ -52,7 +52,8 @@ CONTAINS
       INTEGER :: nb_S, nb_F, nb_procs, rank, type_fe_H, type_fe_phi, &
            nb_dom_conc, nb_dom_ns, nb_dom_temp, nb_dom_H, nb_dom_phi, nsize, code, m, &
            m_max_c, rank_S, nb_inter, nb_inter_mu, nb_inter_c_v, nb_inter_v_T, &
-           k, kp, i, nb_mode, rang_conc_S, rang_ns_S, rang_temp_S, rang_S, l, lblank, nb_fluid
+           k, kp, i, nb_mode, rang_conc_S, rang_ns_S, rang_temp_S, rang_S, l, lblank, nb_fluid, &
+           nb_refinements, n
       INTEGER :: nb_fic, index_start
       REAL(KIND = 8) :: time_h, time_u, time_T, time_conc, max_vel
       TYPE(periodic_data) :: my_periodic
@@ -62,8 +63,7 @@ CONTAINS
            list_dom_ns_in, list_dom_temp, list_dom_temp_in, list_dom_phi, list_dom_H_in, list_dom, part, &
            list_mode, controle_H, controle_phi, &
            controle_vv, controle_pp, controle_temp, controle_conc, vel_in_to_new, temp_in_to_new, H_in_to_new, &
-           l_t_g_vv, l_t_g_pp, l_t_g_H, l_t_g_phi, l_t_g_temp, l_t_g_conc, &
-           nb_refinements, n
+           l_t_g_vv, l_t_g_pp, l_t_g_H, l_t_g_phi, l_t_g_temp, l_t_g_conc
       INTEGER, DIMENSION(:), ALLOCATABLE :: list_dom_H_ref, H_in_to_new_ref, list_dom_temp_ref, temp_in_to_new_ref
       REAL(KIND = 8), DIMENSION(:, :, :), POINTER :: Hn, Hn1, Bn, Bn1, phin, phin1
       REAL(KIND = 8), DIMENSION(:, :, :), POINTER :: Hn_glob, Hn1_glob, Bn_glob, Bn1_glob, phin_glob, phin1_glob
