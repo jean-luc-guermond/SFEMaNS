@@ -36,6 +36,7 @@ CONTAINS
     CALL MPI_COMM_RANK(communicator(1),rang_S,code)
     CALL MPI_COMM_RANK(communicator(2),rang_F,code)
 
+    write(*,*) '???',  it/freq_restart
     WRITE(tit,'(i3)') it/freq_restart
     lblank = eval_blank(3,tit)
     DO l = 1, lblank - 1
