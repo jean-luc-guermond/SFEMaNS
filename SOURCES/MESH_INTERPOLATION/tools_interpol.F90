@@ -268,7 +268,7 @@ CONTAINS
          abc(2) = pd_scal(X3, R2)
          abc(3) = pd_scal(X1, R3)
 
-         IF (MINVAL(abc) > 1.d-12 .OR. MAXVAL(abc) < -1.d-12) THEN
+         IF (MINVAL(abc) > -1.d-12 .OR. MAXVAL(abc) < 1.d-12) THEN
             m = n
             abc = abc / SUM(abc)
             EXIT
