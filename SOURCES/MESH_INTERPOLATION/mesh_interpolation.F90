@@ -720,7 +720,8 @@ CONTAINS
 
       !===Extract local meshes from global meshes
       IF (if_conc) THEN
-         CALL extract_mesh(comm_one_d(1), nb_S, p1_c0_mesh_glob_conc, part, list_dom_conc, p1_conc_mesh)
+         CALL extract_mesh(comm_one_d(1), nb_S, p1_c0_mesh_glob_conc, part, list_dom_conc, p1_conc_mesh, &
+              opt_mesh_glob = p1_conc_mesh_glob)
          !         DO n = 1, nb_refinements !===Create refined mesh
          !            CALL refinement_iso_grid_distributed(p1_conc_mesh)
          !         END DO
@@ -728,6 +729,8 @@ CONTAINS
          !            CALL refinement_iso_grid_distributed(p1_conc_mesh_glob)
          !         END DO
          CALL create_iso_grid_distributed(p1_conc_mesh, conc_mesh, 2)
+         CALL create_iso_grid_distributed(p1_conc_mesh_glob, conc_mesh_glob, 2)
+         CALL gauss_points_2d(conc_mesh_glob, 2)
          ALLOCATE(comm_one_d_conc(2))
          CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_conc(2), code)
          CALL MPI_COMM_RANK(comm_one_d(1), rank_S, code)
@@ -739,7 +742,8 @@ CONTAINS
       END IF
 
       IF (if_momentum) THEN
-         CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_ns, pp_mesh)
+         CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_ns, pp_mesh, &
+              opt_mesh_glob = pp_mesh_glob)
          !         DO n = 1, nb_refinements !===Create refined mesh
          !            CALL refinement_iso_grid_distributed(pp_mesh)
          !         END DO
@@ -747,6 +751,11 @@ CONTAINS
          !            CALL refinement_iso_grid_distributed(pp_mesh_glob)
          !         END DO
          CALL create_iso_grid_distributed(pp_mesh, vv_mesh, 2)
+         CALL create_iso_grid_distributed(pp_mesh_glob, vv_mesh_glob, 2)
+         CALL gauss_points_2d(pp_mesh, 1)
+         CALL gauss_points_2d(vv_mesh, 2)
+         CALL gauss_points_2d(pp_mesh_glob, 1)
+         CALL gauss_points_2d(vv_mesh_glob, 2)
          ALLOCATE(comm_one_d_ns(2))
          CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_ns(2), code)
          CALL MPI_COMM_RANK(comm_one_d(1), rank_S, code)
@@ -758,7 +767,8 @@ CONTAINS
       END IF
 
       IF (if_energy) THEN
-         CALL extract_mesh(comm_one_d(1), nb_S, p1_c0_mesh_glob_temp, part, list_dom_temp, p1_temp_mesh)
+         CALL extract_mesh(comm_one_d(1), nb_S, p1_c0_mesh_glob_temp, part, list_dom_temp, p1_temp_mesh, &
+              opt_mesh_glob = p1_temp_mesh_glob)
          !         DO n = 1, nb_refinements !===Create refined mesh
          !            CALL refinement_iso_grid_distributed(p1_temp_mesh)
          !         END DO
@@ -766,7 +776,9 @@ CONTAINS
          !            CALL refinement_iso_grid_distributed(p1_temp_mesh_glob)
          !         END DO
          CALL create_iso_grid_distributed(p1_temp_mesh, temp_mesh, 2)
-
+         CALL gauss_points_2d(temp_mesh, 2)
+         CALL create_iso_grid_distributed(p1_temp_mesh_glob, temp_mesh_glob, 2)
+         CALL gauss_points_2d(temp_mesh_glob, 2)
          ALLOCATE(comm_one_d_temp(2))
          CALL MPI_COMM_DUP(comm_one_d(2), comm_one_d_temp(2), code)
          CALL MPI_COMM_RANK(comm_one_d(1), rank_S, code)
@@ -778,7 +790,8 @@ CONTAINS
       END IF
 
       IF (if_induction) THEN
-         CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_H, p1_H_mesh)
+         CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_H, p1_H_mesh, &
+              opt_mesh_glob = p1_H_mesh_glob)
          !         DO n = 1, nb_refinements !===Create refined mesh
          !            CALL refinement_iso_grid_distributed(p1_H_mesh)
          !         END DO
@@ -786,8 +799,12 @@ CONTAINS
          !            CALL refinement_iso_grid_distributed(p1_H_mesh_glob)
          !         END DO
          CALL create_iso_grid_distributed(p1_H_mesh, H_mesh, type_fe_H)
+         CALL gauss_points_2d(H_mesh, type_fe_H)
+         CALL create_iso_grid_distributed(p1_H_mesh_glob, H_mesh_glob, type_fe_H)
+         CALL gauss_points_2d(H_mesh_glob, type_fe_H)
 
-         CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_phi, p1_phi_mesh)
+         CALL extract_mesh(comm_one_d(1), nb_S, p1_mesh_glob, part, list_dom_phi, p1_phi_mesh, &
+              opt_mesh_glob = p1_phi_mesh_glob)
          !         DO n = 1, nb_refinements !===Create refined mesh
          !            CALL refinement_iso_grid_distributed(p1_phi_mesh)
          !         END DO
@@ -796,6 +813,9 @@ CONTAINS
          !         END DO
          CALL create_iso_grid_distributed(p1_phi_mesh, phi_mesh, type_fe_phi)
          CALL gauss_points_2d(phi_mesh, type_fe_phi)
+         CALL create_iso_grid_distributed(p1_phi_mesh_glob, phi_mesh_glob, type_fe_phi)
+         CALL gauss_points_2d(phi_mesh_glob, type_fe_phi)
+
       END IF
 
       !===Cleanup
@@ -811,12 +831,15 @@ CONTAINS
 
       !===Load meshes for monoproc
       IF (if_conc) THEN
+         CALL free_mesh(conc_mesh_glob)
          CALL load_mesh_free_format(directory_m, file_name_m, list_dom_conc, 2, conc_mesh_glob, is_form_m)
          IF (check_plt) THEN
             CALL plot_const_p1_label(conc_mesh_glob%jj, conc_mesh_glob%rr, 1.d0 * conc_mesh_glob%i_d, 'conc.plt')
          END IF
       END IF
       IF (if_momentum) THEN
+         CALL free_mesh(vv_mesh_glob)
+         CALL free_mesh(pp_mesh_glob)
          CALL load_mesh_free_format(directory_m, file_name_m, list_dom_ns, 2, vv_mesh_glob, is_form_m)
          CALL load_mesh_free_format(directory_m, file_name_m, list_dom_ns, 1, pp_mesh_glob, is_form_m)
          IF (check_plt) THEN
@@ -824,12 +847,15 @@ CONTAINS
          END IF
       END IF
       IF (if_energy) THEN
+         CALL free_mesh(temp_mesh_glob)
          CALL load_mesh_free_format(directory_m, file_name_m, list_dom_temp, 2, temp_mesh_glob, is_form_m)
          IF (check_plt) THEN
             CALL plot_const_p1_label(temp_mesh_glob%jj, temp_mesh_glob%rr, 1.d0 * temp_mesh_glob%i_d, 'temp.plt')
          END IF
       END IF
       IF (if_induction) THEN
+         CALL free_mesh(H_mesh_glob)
+         CALL free_mesh(phi_mesh_glob)
          CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_H, list_inter_mu, type_fe_H, p1_H_mesh_glob, &
               is_form_m)
          CALL create_iso_grid_distributed(p1_H_mesh_glob, H_mesh_glob, type_fe_H)
