@@ -1415,7 +1415,7 @@ CONTAINS
       INTEGER, DIMENSION(mesh_glob%medge) :: old_edge_to_new
       INTEGER, DIMENSION(mesh_glob%mes) :: parts
       INTEGER, DIMENSION(nb_proc) :: nblmt_per_proc, start, displ
-      INTEGER, DIMENSION(2) :: np_loc, me_loc, mes_loc
+      INTEGER, DIMENSION(2) :: np_loc, me_loc, mes_loc, mes_int_loc
       INTEGER, DIMENSION(:), ALLOCATABLE :: list_m, tab, tabs
       INTEGER :: nb_proc, ms, i, index, m, mop, n, j
       PetscErrorCode :: ierr
@@ -1604,7 +1604,35 @@ CONTAINS
       END DO
       ! End re-order jjs
 
+      DEALLOCATE(tabs)
+      ! Create mes_int_loc
+      nblmt_per_proc = 0
+      DO ms = 1, mesh_glob%mes_int
+         IF (MINVAL(ABS(list_dom - mesh_glob%i_d(mesh_glob%neighs_int(ms))))/=0) CYCLE
+         n = parts(ms)
+         nblmt_per_proc(n) = nblmt_per_proc(n) + 1
+      END DO
+      start(1) = 0
+      DO n = 2, nb_proc
+         start(n) = start(n - 1) + nblmt_per_proc(n - 1)
+      END DO
+      mes_int_loc(1) = start(rank + 1) + 1
+      mes_int_loc(2) = start(rank + 1) + nblmt_per_proc(rank + 1)
+      mesh%mes_int = SUM(nblmt_per_proc)
+      ! End create mes_loc
+
+      ALLOCATE(tabs(mesh%mes_int))
+      ! Create tabs and sbat
+      ALLOCATE(tabs(mesh%mes))
+      DO ms = 1, mesh_glob%mes_int
+         IF (MINVAL(ABS(list_dom - mesh_glob%i_d(mesh_glob%neighs_int(ms))))/=0) CYCLE
+         start(parts(ms)) = start(parts(ms)) + 1
+         tabs(start(parts(ms))) = ms
+      END DO
+      ! End create tabs and sbat
+
       ! Create neighs_int
+      mesh%mes_int = mesh_glob%mes_int
       ALLOCATE(mesh%neighs_int(mesh%mes_int))
       mesh%neighs_int = bat(mesh_glob%neighs_int(tabs))
       ! End create neighs_int
@@ -1662,7 +1690,7 @@ CONTAINS
       mesh%domcell = (/ mesh%me /)
       mesh%disedge = (/ 1, mesh%medge + 1 /)
       mesh%domedge = (/ mesh%medge /)
-      CALL create_local_mesh_with_extra_layer(communicator, mesh, mesh_loc, me_loc, mes_loc, np_loc)
+      CALL create_local_mesh_with_extra_layer(communicator, mesh, mesh_loc, me_loc, mes_loc, mes_int_loc, np_loc)
 
       IF (PRESENT(opt_mesh_glob)) THEN
          CALL copy_mesh(mesh, opt_mesh_glob)
@@ -2093,13 +2121,13 @@ CONTAINS
 
    END SUBROUTINE create_local_mesh
 
-   SUBROUTINE create_local_mesh_with_extra_layer(communicator, mesh, mesh_loc, me_loc, mes_loc, np_loc)
+   SUBROUTINE create_local_mesh_with_extra_layer(communicator, mesh, mesh_loc, me_loc, mes_loc, mes_int_loc, np_loc)
       USE def_type_mesh
       USE my_util
       USE sub_plot
       IMPLICIT NONE
       TYPE(mesh_type) :: mesh, mesh_loc
-      INTEGER, DIMENSION(2), INTENT(IN) :: me_loc, mes_loc, np_loc
+      INTEGER, DIMENSION(2), INTENT(IN) :: me_loc, mes_loc, np_loc, mes_int_loc
       INTEGER, DIMENSION(2) :: is1, is2
       INTEGER, DIMENSION(mesh%me) :: m_glob_to_loc, m_loc_to_glob
       INTEGER, DIMENSION(mesh%np) :: glob_to_loc, loc_to_glob
@@ -2196,6 +2224,7 @@ CONTAINS
       dom_np = np_loc(2) - np_loc(1) + 1
       mesh_loc%me = dom_me
       mesh_loc%mes = dom_mes
+      mesh_loc%mes_int = mes_int_loc(2) - mes_int_loc(1) + 1
       mesh_loc%dom_me = dom_me
       mesh_loc%dom_np = dom_np
       mesh_loc%dom_mes = dom_mes
@@ -2358,6 +2387,23 @@ CONTAINS
       ALLOCATE(mesh_loc%jjs(nws, mesh_loc%mes))
       DO ns = 1, nws
          mesh_loc%jjs(ns, :) = glob_to_loc(mesh%jjs(ns, mes_loc(1):mes_loc(2)))
+      END DO
+      !==End re-order jjs
+
+      !==Re-order neighs_int
+      ALLOCATE(mesh_loc%neighs_int(mesh_loc%mes_int))
+      mesh_loc%neighs_int = m_glob_to_loc(mesh%neighs_int(mes_int_loc(1):mes_int_loc(2)))
+      !==End re-order neighs
+
+      !==Re-order sides
+      ALLOCATE(mesh_loc%sides_int(mesh_loc%mes_int))
+      mesh_loc%sides_int = mesh%sides_int(mes_int_loc(1):mes_int_loc(2))
+      !==End re-order sides
+
+      !==Re-order jjs
+      ALLOCATE(mesh_loc%jjs_int(nws, mesh_loc%mes_int))
+      DO ns = 1, nws
+         mesh_loc%jjs_int(ns, :) = glob_to_loc(mesh%jjs_int(ns, mes_int_loc(1):mes_int_loc(2)))
       END DO
       !==End re-order jjs
 
