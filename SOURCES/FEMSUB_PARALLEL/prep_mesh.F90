@@ -292,7 +292,7 @@ CONTAINS
       REAL(KIND = 8), ALLOCATABLE, DIMENSION(:, :) :: rr_lect
       LOGICAL :: t1, t2
       INTEGER :: mnouv, nnouv, i, dom
-      INTEGER :: n, m, mop, ms, msnouv, neighs1, neighs2
+      INTEGER :: n, m, mop, ms, msnouv, neighs1, neighs2, mes_int
       INTEGER :: d_end, f_end
       INTEGER :: np, nw, me, nws, mes, kd, nwneigh
       CHARACTER(len = 40) :: text
@@ -418,11 +418,11 @@ CONTAINS
          IF (t1) THEN
             IF (t2) THEN
                IF (SIZE(list_inter)==0) THEN
-                  stat(ms) = 1 ! internal interface
+                  stat(ms) = 4 ! internal interface
                ELSE IF (MINVAL(ABS(sides_lect(ms) - list_inter))==0) THEN
                   stat(ms) = 3 ! real interface
                ELSE
-                  stat(ms) = 1 ! internal interface
+                  stat(ms) = 4 ! internal interface
                END IF
             ELSE
                stat(ms) = 2 ! face at the boundary of the domain of interest
@@ -445,6 +445,7 @@ CONTAINS
       mnouv = 0
       msnouv = 0
       nnouv = 0
+      mes_int = 0
       DO dom = 1, SIZE(list_dom)
          DO m = 1, me ! Count new nodes from domain: i_d=dom
             IF (list_dom(dom) /= i_d_lect(m))  CYCLE ! i_d(m) pas dans la liste
@@ -466,37 +467,42 @@ CONTAINS
 
             !I test if ms touches the current domain of interest: i_d = dom
             IF (stat(ms) == 1) CYCLE
-            neighs1 = neighs_lect(ms)
-            DO n = 1, nw
-               IF (MINVAL(ABS(jjs_lect(:, ms) - jj_lect(n, neighs1))) /= 0) EXIT
-               ! exit when n is not on the interface
-            END DO
-            neighs2 = neigh_lect(n, neighs1)
-            IF (i_d_lect(neighs1) /= list_dom(dom)) THEN
-               IF (neighs2 == 0) CYCLE ! face on the boundary and does not touch dom yet
-               IF (i_d_lect(neighs2) /= list_dom(dom)) CYCLE ! dom is on neither sides
-            END IF
-            !End test if ms touches the domain of interest
+            IF (stat(ms) == 4)  THEN ! if internal interface
+               mes_int = ms_int + 1
+            ELSE
+               neighs1 = neighs_lect(ms)
+               DO n = 1, nw
+                  IF (MINVAL(ABS(jjs_lect(:, ms) - jj_lect(n, neighs1))) /= 0) EXIT
+                  ! exit when n is not on the interface
+               END DO
+               neighs2 = neigh_lect(n, neighs1)
+               IF (i_d_lect(neighs1) /= list_dom(dom)) THEN
+                  IF (neighs2 == 0) CYCLE ! face on the boundary and does not touch dom yet
+                  IF (i_d_lect(neighs2) /= list_dom(dom)) CYCLE ! dom is on neither sides
+               END IF
+               !End test if ms touches the domain of interest
 
-            IF (virgin_ms(ms)) THEN !New interface
-               virgin_ms(ms) = .FALSE.
-               msnouv = msnouv + 1
-            END IF
-            IF (stat(ms) ==3) THEN
-               ! Nodes and sides on the interface are virgin again
-               virgin_nd(jjs_lect(:, ms)) = .TRUE. ! interface nodes are virgin again
-               virgin_ms(ms) = .TRUE.
+               IF (virgin_ms(ms)) THEN !New interface
+                  virgin_ms(ms) = .FALSE.
+                  msnouv = msnouv + 1
+               END IF
+               IF (stat(ms) ==3) THEN
+                  ! Nodes and sides on the interface are virgin again
+                  virgin_nd(jjs_lect(:, ms)) = .TRUE. ! interface nodes are virgin again
+                  virgin_ms(ms) = .TRUE.
+               END IF
             END IF
          END DO
       END DO
       mesh%me = mnouv
       mesh%np = nnouv
       mesh%mes = msnouv
-
+      mesh%mes_int = mes_int
 
       !===Re-ordering
       ALLOCATE(mesh%jj(nw, mesh%me), mesh%neigh(nwneigh, mesh%me), mesh%i_d(mesh%me))
       ALLOCATE(mesh%jjs(nws, mesh%mes), mesh%neighs(mesh%mes), mesh%sides(mesh%mes))
+      ALLOCATE(mesh%jjs_int(nws, mesh%mes_int), mesh%neighs_int(mesh%mes_int), mesh%sides_int(mesh%mes_int))
       ALLOCATE(mesh%rr(kd, mesh%np))
 
       virgin_nd = .TRUE.
@@ -540,6 +546,7 @@ CONTAINS
          DO ms = 1, mes
             !I test if ms touches the current domain of interest: i_d = dom
             IF (stat(ms) == 1) CYCLE
+            IF (stat(ms) == 4) CYCLE
             neighs1 = neighs_lect(ms)
             DO n = 1, nw
                IF (MINVAL(ABS(jjs_lect(:, ms) - jj_lect(n, neighs1))) /= 0) EXIT
@@ -588,6 +595,7 @@ CONTAINS
             END IF
          END DO
 
+         mes_int = 0
          !Loop again on mes and update
          DO ms = 1, mes
 
@@ -604,22 +612,29 @@ CONTAINS
                IF (i_d_lect(neighs2) /= list_dom(dom)) CYCLE ! dom is on neither sides
             END IF
             !End test if ms touches the domain of interest
-
-            mesh%jjs(:, nouv_els(ms)) = nouv_nd(jjs_lect(:, ms))
-            mesh%neighs(nouv_els(ms)) = nouv_el(neighs_lect(ms))
-            mesh%sides(nouv_els(ms)) = sides_lect(ms)
-            IF (stat(ms)==3) THEN ! side is an interface to be kept
-               neighs1 = neighs_lect(ms)
-               DO n = 1, nw
-                  IF (MINVAL(ABS(jjs_lect(:, ms) - jj_lect(n, neighs1))) /= 0) EXIT ! n not on the interface
-               END DO
-               mesh%neigh(n, nouv_el(neighs1)) = 0
-               neighs2 = neigh_lect(n, neighs1)
-               DO n = 1, nw
-                  IF (MINVAL(ABS(jjs_lect(:, ms) - jj_lect(n, neighs2))) /= 0) EXIT ! n not on the interface
-               END DO
-               mesh%neigh(n, nouv_el(neighs2)) = 0
+            IF (stat(ms) == 4) THEN
+               mes_int = mes_int + 1
+               mesh%jjs_int(:, mes_int) = nouv_nd(jjs_lect(:, ms))
+               mesh%neighs_int(mes_int) = nouv_el(neighs_lect(ms))
+               mesh%sides_int(mes_int) = sides_lect(ms)
+            ELSE
+               mesh%jjs(:, nouv_els(ms)) = nouv_nd(jjs_lect(:, ms))
+               mesh%neighs(nouv_els(ms)) = nouv_el(neighs_lect(ms))
+               mesh%sides(nouv_els(ms)) = sides_lect(ms)
+               IF (stat(ms)==3) THEN ! side is an interface to be kept
+                  neighs1 = neighs_lect(ms)
+                  DO n = 1, nw
+                     IF (MINVAL(ABS(jjs_lect(:, ms) - jj_lect(n, neighs1))) /= 0) EXIT ! n not on the interface
+                  END DO
+                  mesh%neigh(n, nouv_el(neighs1)) = 0
+                  neighs2 = neigh_lect(n, neighs1)
+                  DO n = 1, nw
+                     IF (MINVAL(ABS(jjs_lect(:, ms) - jj_lect(n, neighs2))) /= 0) EXIT ! n not on the interface
+                  END DO
+                  mesh%neigh(n, nouv_el(neighs2)) = 0
+               END IF
             END IF
+
          END DO
 
       END DO
@@ -2074,19 +2089,16 @@ CONTAINS
                n_end = n1
             END IF
 
-            !===test if side is on the boundary
-            DO ms = 1, SIZE(mesh_p1%neighs) + 1
-               IF (ms == SIZE(mesh_p1%neighs) + 1) THEN
-                  iso = .FALSE.
-                  EXIT
-               END IF
-               IF (mesh_p1%neighs(ms) == m) THEN
-                  CALL is_on_curved_interface(mesh_p1%sides(ms), iso, interface)
-                  write(*, *) 'uh', iso, interface, m_op_k, m, mesh_p1%neighs(ms), mesh_p1%sides(ms), &
-                       inputs%list_spherical, inputs%list_curved
-                  EXIT
-               END IF
-            END DO
+            iso = .FALSE.
+            IF (m_op_k == 0) THEN  !===the side is on the boundary
+               DO ms = 1, SIZE(mesh_p1%neighs) + 1
+                  IF (ms == SIZE(mesh_p1%neighs) + 1) WRITE(*, *) &
+                       'BUG in create_iso_grid: cell near boundary isnt in neighs', m_op_k, m
+                  IF (mesh_p1%neighs(ms) == m) EXIT
+               END DO
+               CALL is_on_curved_interface(mesh_p1%sides(ms), iso, interface)
+
+            END IF
 
             IF (virgin(edge_l)) THEN !===This side is new
                DO l = 1, f_dof
@@ -2124,18 +2136,6 @@ CONTAINS
       DO edges = 1, mesh_p1%medges
          edge_g = mesh_p1%jees(edges)
          m = mesh_p1%jecs(edges)
-         !===test if side is on the boundary
-         DO ms = 1, SIZE(mesh_p1%neighs) + 1
-            IF (ms == SIZE(mesh_p1%neighs) + 1) THEN
-               iso = .FALSE.
-               EXIT
-            END IF
-            IF (mesh_p1%neighs(ms) == m) THEN
-               CALL is_on_curved_interface(mesh_p1%sides(ms), iso, interface)
-               EXIT
-            END IF
-         END DO
-
          DO k = 1, nw
             IF (mesh_p1%jce(k, m) == edge_g) THEN
                EXIT
@@ -2168,9 +2168,6 @@ CONTAINS
             j_mid((k - 1) * f_dof + l, m) = l + n_new_start
             mesh%rr(:, n_new_start + l) = mesh_p1%rr(:, n_start) &
                  + l * (mesh_p1%rr(:, n_end) - mesh_p1%rr(:, n_start)) / type_fe
-            IF (iso) THEN
-               CALL rescale_to_curved_boundary(mesh%rr(:, n_new_start + l), interface)
-            END IF
             mesh%loc_to_glob(n_new_start + l) = l + (edge_l - 1) * f_dof + mesh_p1%domnp(p) + mesh%disp(p) - 1
          END DO
 
@@ -2551,6 +2548,37 @@ CONTAINS
          END IF
       ENDDO
 
+      !===Internal surface elements
+      DO ms = 1, mes_int
+         m = mesh_p1%neighs_int(ms)
+         !===Finding the corresponding side in the cell
+         DO k = 1, nw
+            IF (MINVAL(ABS(mesh_p1%jj(k, m) - mesh_p1%jjs_int(:, ms)))/=0) EXIT
+         ENDDO
+
+         n_ks = (/MODULO(k, nw) + 1, MODULO(k + 1, nw) + 1/)
+         IF (n_ks(1)>n_ks(2)) THEN
+            n_ks = (/n_ks(2), n_ks(1)/)
+         END IF
+
+         mesh%jjs_int(1, ms) = mesh_p1%jj(n_ks(1), m)
+         IF (mesh%jjs_int(1, ms) > mesh_p1%dom_np) mesh%jjs_int(1, ms) = mesh%jjs_int(1, ms) + mesh%dom_np - mesh_p1%dom_np
+         mesh%jjs_int(1, mes + ms) = mesh_p1%jj(n_ks(2), m)
+         IF (mesh%jjs_int(1, mes + ms) > mesh_p1%dom_np) mesh%jjs_int(1, mes + ms) = mesh%jjs_int(1, mes + ms) &
+              + mesh%dom_np - mesh_p1%dom_np
+         mesh%jjs_int(2, ms) = mesh%jj(k, 4 * (m - 1) + 1)
+         mesh%jjs_int(2, mes + ms) = mesh%jj(k, 4 * (m - 1) + 1)
+         mesh%neighs_int(ms) = mesh%neigh(n_ks(1), 4 * (m - 1) + 1)
+         mesh%neighs_int(mes + ms) = mesh%neigh(n_ks(2), 4 * (m - 1) + 1)
+         mesh%sides_int(ms) = mesh_p1%sides_int(ms)
+         mesh%sides_int(mes + ms) = mesh_p1%sides_int(ms)
+
+         CALL is_on_curved_interface(mesh_p1%sides_int(ms), iso, interface)
+         IF (iso) THEN
+            CALL rescale_to_curved_boundary(mesh%rr(:, mesh%jj(k, 4 * (m - 1) + 1)), interface)
+         END IF
+      ENDDO
+
       !===Counting number of new extra cells
       mesh%mextra = 0
       !===Need to rework that to do it the smart way and the update conditions when constructing cells
@@ -2780,7 +2808,10 @@ CONTAINS
       END DO
       IF (SIZE(mesh%rr, 1)==2) THEN
          IF (edge/=(3 * mesh%me - mesh%mes) / 2 + mesh%mes) THEN
-            WRITE(*, *) ' BUG in prep_jce_jev, edge/=(3*mesh%me - mesh%mes)/2+mesh%mes OR internal interfaces'
+            WRITE(*, *) ' BUG in prep_jce_jev, edge/=(3*mesh%me - mesh%mes)/2+mesh%mes'
+            WRITE(*, *) ' edge ', edge, (3 * mesh%me - mesh%mes) / 2 + mesh%mes
+            WRITE(*, *) ' mesh%mes ', mesh%mes, ' mesh%me ', mesh%me
+            STOP
          END IF
       END IF
 
@@ -2909,6 +2940,7 @@ CONTAINS
 
       mesh2%me = mesh1%me
       mesh2%mes = mesh1%mes
+      mesh2%mes_int = mesh1%mes
       mesh2%np = mesh1%np
       mesh2%nps = mesh1%nps
       mesh2%mi = mesh1%mi
@@ -2939,6 +2971,13 @@ CONTAINS
       mesh2%neighs = mesh1%neighs
       ALLOCATE(mesh2%i_d(SIZE(mesh1%i_d)))
       mesh2%i_d = mesh1%i_d
+
+      ALLOCATE(mesh2%jjs_int(SIZE(mesh1%jjs_int, 1), SIZE(mesh1%jjs_int, 2)))
+      mesh2%jjs_int = mesh1%jjs_int
+      ALLOCATE(mesh2%sides_int(SIZE(mesh1%sides_int)))
+      mesh2%sides_int = mesh1%sides_int
+      ALLOCATE(mesh2%neighs_int(SIZE(mesh1%neighs_int)))
+      mesh2%neighs_int = mesh1%neighs_int
 
       ALLOCATE(mesh2%sides_extra(SIZE(mesh1%sides_extra)))
       mesh2%sides_extra = mesh1%sides_extra
@@ -2991,6 +3030,7 @@ CONTAINS
 
       DEALLOCATE(mesh%jj, mesh%i_d, mesh%loc_to_glob, mesh%rr, mesh%neigh)
       DEALLOCATE(mesh%jjs, mesh%sides, mesh%neighs)
+      DEALLOCATE(mesh%jjs_int, mesh%sides_int, mesh%neighs_int)
       DEALLOCATE(mesh%disp, mesh%domnp, mesh%disedge, mesh%domedge, mesh%discell, mesh%domcell)
       DEALLOCATE(mesh%jce, mesh%jees, mesh%jecs)
 

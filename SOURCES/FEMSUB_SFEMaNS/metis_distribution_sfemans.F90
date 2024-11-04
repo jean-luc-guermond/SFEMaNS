@@ -1601,13 +1601,36 @@ CONTAINS
          DO n = 1, 3
             IF (MINVAL(ABS(mesh%jjs(:, ms) - mesh%jj(n, mesh%neighs(ms)))) /= 0) EXIT ! n not on the interface
          END DO
-         IF (mesh%jj(n, mesh%neighs(ms)) > 0) THEN
-            IF (mesh%neigh(n, mesh%neighs(ms)) > mesh%neighs(ms)) THEN
-               mesh%neighs(ms) = mesh%neigh(n, mesh%neighs(ms))
-            END IF
-         END IF
       END DO
       ! End re-order jjs
+
+      ! Create neighs_int
+      ALLOCATE(mesh%neighs_int(mesh%mes_int))
+      mesh%neighs_int = bat(mesh_glob%neighs_int(tabs))
+      ! End create neighs_int
+
+      ! Re-order sides_int
+      ALLOCATE(mesh%sides_int(mesh%mes_int))
+      mesh%sides_int = mesh_glob%sides_int(tabs)
+      ! End re-order sides_int
+
+      ! Re-order jjs_int
+      ALLOCATE(mesh%jjs_int(SIZE(mesh_glob%jjs, 1), mesh%mes_int))
+
+      DO n = 1, SIZE(mesh%jjs, 1)
+         mesh%jjs_int(n, :) = i_old_to_new(mesh_glob%jjs_int(n, tabs))
+      END DO
+      DO ms = 1, mesh%mes_int
+         DO n = 1, 3
+            IF (MINVAL(ABS(mesh%jjs_int(:, ms) - mesh%jj(n, mesh%neighs_int(ms)))) /= 0) EXIT ! n not on the interface
+            IF (mesh%jj(n, mesh%neighs(ms)) > 0) THEN
+               IF (mesh%neigh(n, mesh%neighs_int(ms)) > mesh%neighs_int(ms)) THEN
+                  mesh%neighs_int(ms) = mesh%neigh(n, mesh%neighs_int(ms))
+               END IF
+            END IF
+         END DO
+      END DO
+      ! End re-order jjs_int
 
       !==We create the local mesh now
       mesh%edge_stab = .FALSE.
@@ -2101,6 +2124,7 @@ CONTAINS
          mesh_loc%me = mesh%me
          mesh_loc%np = mesh%np
          mesh_loc%mes = mesh%mes
+         mesh_loc%mes_int = mesh_loc%mes
          mesh_loc%dom_me = mesh%me
          mesh_loc%dom_np = mesh%np
          mesh_loc%dom_mes = mesh%mes
@@ -2132,6 +2156,13 @@ CONTAINS
          mesh_loc%sides = mesh%sides
          ALLOCATE(mesh_loc%jjs(nws, mesh_loc%mes))
          mesh_loc%jjs = mesh%jjs
+
+         ALLOCATE(mesh_loc%neighs_int(mesh_loc%mes_int))
+         mesh_loc%neighs_int = mesh%neighs_int
+         ALLOCATE(mesh_loc%sides_int(mesh_loc%mes_int))
+         mesh_loc%sides_int = mesh%sides_int
+         ALLOCATE(mesh_loc%jjs_int(nws, mesh_loc%mes_int))
+         mesh_loc%jjs_int = mesh%jjs_int
 
          ALLOCATE(mesh_loc%neighs_extra(mesh_loc%mes_extra))
          ALLOCATE(mesh_loc%sides_extra(mesh_loc%mes_extra))
@@ -2607,6 +2638,7 @@ CONTAINS
 
       DEALLOCATE(mesh%disp, mesh%domnp, mesh%disedge, mesh%domedge, mesh%discell, mesh%domcell)
       DEALLOCATE(mesh%jce, mesh%jees, mesh%jecs)
+      DEALLOCATE(mesh%jjs_int, mesh%sides_int, mesh%neighs_int)
 
       DEALLOCATE(mesh%jj_extra, mesh%jce_extra, mesh%jjs_extra, mesh%jcc_extra, mesh%rrs_extra)
       DEALLOCATE(mesh%sides_extra, mesh%neighs_extra) !interfaces
