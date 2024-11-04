@@ -644,7 +644,6 @@ CONTAINS
       !===End reordring
       mesh%gauss%n_ws = SIZE(mesh%jjs, 1)
       mesh%gauss%n_w = SIZE(mesh%jj, 1)
-      write(*, *) 'lul', mesh%neighs_int, mesh%mes_int
       DEALLOCATE(jj_lect, neigh_lect, i_d_lect)
       DEALLOCATE(jjs_lect, neighs_lect, sides_lect)
       DEALLOCATE(rr_lect, virgin_nd, virgin_ms, stat)
@@ -2556,7 +2555,7 @@ CONTAINS
             CALL rescale_to_curved_boundary(mesh%rr(:, mesh%jj(k, 4 * (m - 1) + 1)), interface)
          END IF
       ENDDO
-
+      write(*,*) '????', mesh_p1%neighs_int
       !===Internal surface elements
       DO ms = 1, mes_int
          m = mesh_p1%neighs_int(ms)
@@ -2773,7 +2772,6 @@ CONTAINS
       !rrs_extra  ! coordinates for cells at interfaces
       !sides_extra, neighs_extra !interfaces
       !mes_extra
-      write(*,*) 'cat',  mesh_p1%mes_int, mesh_p1%jjs_int, mesh_p1%sides_int, mesh_p1%neighs_int
 
       CALL free_mesh(mesh_p1)
       CALL copy_mesh(mesh, mesh_p1)
@@ -2981,7 +2979,6 @@ CONTAINS
       mesh2%neighs = mesh1%neighs
       ALLOCATE(mesh2%i_d(SIZE(mesh1%i_d)))
       mesh2%i_d = mesh1%i_d
-      write(*,*) 'cat2',  mesh1%mes_int, mesh1%jjs_int, mesh1%sides_int, mesh1%neighs_int
 
       ALLOCATE(mesh2%jjs_int(SIZE(mesh1%jjs_int, 1), SIZE(mesh1%jjs_int, 2)))
       mesh2%jjs_int = mesh1%jjs_int
