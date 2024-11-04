@@ -1623,7 +1623,6 @@ CONTAINS
 
       ALLOCATE(tabs(mesh%mes_int))
       ! Create tabs and sbat
-      ALLOCATE(tabs(mesh%mes))
       DO ms = 1, mesh_glob%mes_int
          IF (MINVAL(ABS(list_dom - mesh_glob%i_d(mesh_glob%neighs_int(ms))))/=0) CYCLE
          start(parts(ms)) = start(parts(ms)) + 1
