@@ -2392,7 +2392,7 @@ CONTAINS
       ALLOCATE(mesh_loc%neighs_int(mesh_loc%mes_int))
       mesh_loc%neighs_int = m_glob_to_loc(mesh%neighs_int(mes_int_loc(1):mes_int_loc(2)))
       !==End re-order neighs
-
+      write(*,*) '????',  mesh%neighs_int
       !==Re-order sides
       ALLOCATE(mesh_loc%sides_int(mesh_loc%mes_int))
       mesh_loc%sides_int = mesh%sides_int(mes_int_loc(1):mes_int_loc(2))
