@@ -2327,7 +2327,7 @@ CONTAINS
       INTEGER, DIMENSION(2) :: n_ks
       REAL(KIND = 8) :: epsilon = 1.d-13, dist, d1, d2, s1, s2, s3, shalf, ref, scc, infinity
       INTEGER :: ns, ns1, index, nb_angle, f_dof, edge_g, edge_l, n_new_start, proc, nb_proc, edges, p, cell_g, cell_l
-      INTEGER :: m1, m2, interface, m_center, tab1, tab2
+      INTEGER :: m1, m2, interface, m_center, tab1, tab2, mes_int
       LOGICAL :: iso
       INTEGER, SAVE :: count = 0
 
