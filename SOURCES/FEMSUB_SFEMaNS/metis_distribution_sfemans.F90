@@ -2701,7 +2701,7 @@ CONTAINS
                list(ns) = MODULO(ns - 1 + k, 2) + 1
             END DO
             IF (MAXVAL(ABS(mesh%rr(:, mesh%jjs(list, ms1)) - mesh%rr(:, mesh%jjs(1:2, ms2)))) >= epsilon) CYCLE
-
+            IF (mesh%jjs(list, ms1) == mesh%jjs(1:2, ms2)) EXIT lp2
             m2 = mesh%neighs(ms2)
             r_norm = SUM(ABS(mesh%rr(:, mesh%jj(1:3, m1)) - mesh%rr(:, mesh%jj(1:3, m2))))
             IF (r_norm <= 1d-9) THEN

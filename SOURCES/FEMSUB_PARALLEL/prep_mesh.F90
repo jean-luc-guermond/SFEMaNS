@@ -272,7 +272,7 @@ CONTAINS
       END DO
    END SUBROUTINE incr_vrtx_indx_enumeration_for_interfaces
 
-   SUBROUTINE load_dg_mesh_free_format(dir, fil, list_dom, list_inter, type_fe, &
+   SUBROUTINE load_dg_mesh_free_format(dir, fil, list_dom, list_inter, list_inter_int, type_fe, &
         mesh, mesh_formatted)
       USE def_type_mesh
       USE chaine_caractere
@@ -280,7 +280,7 @@ CONTAINS
       USE my_util
       IMPLICIT NONE
       CHARACTER(len = 200), INTENT(IN) :: dir, fil
-      INTEGER, DIMENSION(:), INTENT(IN) :: list_dom, list_inter
+      INTEGER, DIMENSION(:), INTENT(IN) :: list_dom, list_inter, list_inter_int
       INTEGER, INTENT(IN) :: type_fe
       TYPE(mesh_type) :: mesh
       LOGICAL, INTENT(IN) :: mesh_formatted !formatted <=> mesh_formatted=.true.
@@ -383,7 +383,7 @@ CONTAINS
       END DO
 
       ! Identify the status of faces
-      ! stat = 1 (interface to be forgotten), stat = 2 (boundary), stat = 3 (real interface)
+      ! stat = 1 (interface to be forgotten), stat = 2 (boundary), stat = 3 (real interface), stat = 4 (internal interface)
       ALLOCATE (stat(mes))
       DO ms = 1, mes
          neighs1 = neighs_lect(ms)
@@ -418,11 +418,11 @@ CONTAINS
          IF (t1) THEN
             IF (t2) THEN
                IF (SIZE(list_inter)==0) THEN
-                  stat(ms) = 1 ! no inteface to treat
+                  stat(ms) = 4 ! internal interface
                ELSE IF (MINVAL(ABS(sides_lect(ms) - list_inter))==0) THEN
                   stat(ms) = 3 ! real interface
                ELSE
-                  stat(ms) = 1 ! interface to be forgotten
+                  stat(ms) = 4 ! internal interface
                END IF
             ELSE
                stat(ms) = 2 ! face at the boundary of the domain of interest
@@ -459,7 +459,7 @@ CONTAINS
          END DO
 
          DO ms = 1, mes
-            IF (stat(ms) /= 1 .AND. stat(ms) /=2 .AND. stat(ms) /=3) THEN
+            IF (stat(ms) /= 1 .AND. stat(ms) /=2 .AND. stat(ms) /=3 .AND. stat(ms) /=4) THEN
                WRITE(*, *) ' BUG in prep_mesh, stat out of bounds '
                STOP
             END IF
