@@ -1583,16 +1583,6 @@ CONTAINS
       ! Create neighs
       ALLOCATE(mesh%neighs(mesh%mes))
       mesh%neighs = bat(mesh_glob%neighs(tabs))
-      DO ms = 1, mesh%mes
-         DO n = 1, 3
-            IF (MINVAL(ABS(mesh%jjs(:, ms) - mesh%jj(n, mesh%neighs(ms)))) /= 0) EXIT ! n not on the interface
-         END DO
-         IF (mesh%jj(n, mesh%neighs(ms)) > 0) THEN
-            IF (mesh%neigh(n, mesh%neighs(ms)) > mesh%neighs(ms)) THEN
-               mesh%neighs(ms) = mesh%neigh(n, mesh%neighs(ms))
-            END IF
-         END IF
-      END DO
       ! End create neighs
 
       ! Re-order sides
@@ -1606,6 +1596,16 @@ CONTAINS
 
       DO n = 1, SIZE(mesh%jjs, 1)
          mesh%jjs(n, :) = i_old_to_new(mesh_glob%jjs(n, tabs))
+      END DO
+      DO ms = 1, mesh%mes
+         DO n = 1, 3
+            IF (MINVAL(ABS(mesh%jjs(:, ms) - mesh%jj(n, mesh%neighs(ms)))) /= 0) EXIT ! n not on the interface
+         END DO
+         IF (mesh%jj(n, mesh%neighs(ms)) > 0) THEN
+            IF (mesh%neigh(n, mesh%neighs(ms)) > mesh%neighs(ms)) THEN
+               mesh%neighs(ms) = mesh%neigh(n, mesh%neighs(ms))
+            END IF
+         END IF
       END DO
       ! End re-order jjs
 
