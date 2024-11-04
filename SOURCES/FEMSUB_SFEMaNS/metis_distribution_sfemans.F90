@@ -2151,7 +2151,7 @@ CONTAINS
          mesh_loc%me = mesh%me
          mesh_loc%np = mesh%np
          mesh_loc%mes = mesh%mes
-         mesh_loc%mes_int = mesh_loc%mes
+         mesh_loc%mes_int = mesh_loc%mes_int
          mesh_loc%dom_me = mesh%me
          mesh_loc%dom_np = mesh%np
          mesh_loc%dom_mes = mesh%mes
