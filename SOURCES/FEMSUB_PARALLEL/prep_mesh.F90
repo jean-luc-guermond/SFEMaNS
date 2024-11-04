@@ -2974,6 +2974,7 @@ CONTAINS
       mesh2%neighs = mesh1%neighs
       ALLOCATE(mesh2%i_d(SIZE(mesh1%i_d)))
       mesh2%i_d = mesh1%i_d
+      write(*,*) 'cat',  mesh1%mes_int, mesh1%jjs_int, mesh1%sides_int, mesh1%neighs_int
 
       ALLOCATE(mesh2%jjs_int(SIZE(mesh1%jjs_int, 1), SIZE(mesh1%jjs_int, 2)))
       mesh2%jjs_int = mesh1%jjs_int
