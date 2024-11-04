@@ -2082,7 +2082,7 @@ CONTAINS
                END IF
                IF (mesh_p1%neighs(ms) == m) THEN
                   CALL is_on_curved_interface(mesh_p1%sides(ms), iso, interface)
-                  write(*, *) 'uh', iso, interface, m_op_k, m, mesh_p1%neighs(ms)
+                  write(*, *) 'uh', iso, interface, m_op_k, m, mesh_p1%neighs(ms), mesh_p1%sides(ms)
                   EXIT
                END IF
             END DO
