@@ -468,7 +468,7 @@ CONTAINS
             !I test if ms touches the current domain of interest: i_d = dom
             IF (stat(ms) == 1) CYCLE
             IF (stat(ms) == 4)  THEN ! if internal interface
-               mes_int = ms_int + 1
+               mes_int = mes_int + 1
             ELSE
                neighs1 = neighs_lect(ms)
                DO n = 1, nw
@@ -2549,7 +2549,7 @@ CONTAINS
       ENDDO
 
       !===Internal surface elements
-      DO ms = 1, mes_int
+      DO ms = 1, mesh_p1%mes_int
          m = mesh_p1%neighs_int(ms)
          !===Finding the corresponding side in the cell
          DO k = 1, nw
