@@ -2122,6 +2122,18 @@ CONTAINS
       DO edges = 1, mesh_p1%medges
          edge_g = mesh_p1%jees(edges)
          m = mesh_p1%jecs(edges)
+         !===test if side is on the boundary
+         DO ms = 1, SIZE(mesh_p1%neighs) + 1
+            IF (ms == SIZE(mesh_p1%neighs) + 1) THEN
+               iso = .FALSE.
+               EXIT
+            END IF
+            IF (mesh_p1%neighs(ms) == m) THEN
+               CALL is_on_curved_interface(mesh_p1%sides(ms), iso, interface)
+               EXIT
+            END IF
+         END DO
+
          DO k = 1, nw
             IF (mesh_p1%jce(k, m) == edge_g) THEN
                EXIT
@@ -2154,6 +2166,9 @@ CONTAINS
             j_mid((k - 1) * f_dof + l, m) = l + n_new_start
             mesh%rr(:, n_new_start + l) = mesh_p1%rr(:, n_start) &
                  + l * (mesh_p1%rr(:, n_end) - mesh_p1%rr(:, n_start)) / type_fe
+            IF (iso) THEN
+               CALL rescale_to_curved_boundary(mesh%rr(:, n_new_start + l), interface)
+            END IF
             mesh%loc_to_glob(n_new_start + l) = l + (edge_l - 1) * f_dof + mesh_p1%domnp(p) + mesh%disp(p) - 1
          END DO
 
