@@ -468,8 +468,10 @@ CONTAINS
             !I test if ms touches the current domain of interest: i_d = dom
             IF (stat(ms) == 1) CYCLE
             IF (stat(ms) == 4)  THEN ! if internal interface
-               mes_int = mes_int + 1
-               virgin_ms(ms) = .TRUE.
+               IF (virgin_ms(ms)) THEN
+                  mes_int = mes_int + 1
+                  virgin_ms(ms) = .TRUE.
+               END IF
             ELSE
                neighs1 = neighs_lect(ms)
                DO n = 1, nw
@@ -642,7 +644,7 @@ CONTAINS
       !===End reordring
       mesh%gauss%n_ws = SIZE(mesh%jjs, 1)
       mesh%gauss%n_w = SIZE(mesh%jj, 1)
-      write(*,*) 'lul', mesh%neighs_int, mesh%mes_int
+      write(*, *) 'lul', mesh%neighs_int, mesh%mes_int
       DEALLOCATE(jj_lect, neigh_lect, i_d_lect)
       DEALLOCATE(jjs_lect, neighs_lect, sides_lect)
       DEALLOCATE(rr_lect, virgin_nd, virgin_ms, stat)
