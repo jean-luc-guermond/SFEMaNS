@@ -1658,7 +1658,7 @@ CONTAINS
          END DO
       END DO
       ! End re-order jjs_int
-
+      write(*,*) 'cat',  mesh%mes_int, mesh%jjs_int, mesh%sides_int, mesh%neighs_int
       !==We create the local mesh now
       mesh%edge_stab = .FALSE.
       ALLOCATE(mesh%jees(0), mesh%jecs(0))
