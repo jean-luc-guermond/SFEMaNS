@@ -641,7 +641,7 @@ CONTAINS
       !===End reordring
       mesh%gauss%n_ws = SIZE(mesh%jjs, 1)
       mesh%gauss%n_w = SIZE(mesh%jj, 1)
-
+      write(*,*) 'lul', mesh%neighs_int, mesh%mes_int
       DEALLOCATE(jj_lect, neigh_lect, i_d_lect)
       DEALLOCATE(jjs_lect, neighs_lect, sides_lect)
       DEALLOCATE(rr_lect, virgin_nd, virgin_ms, stat)
