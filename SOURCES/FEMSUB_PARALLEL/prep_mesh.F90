@@ -2168,6 +2168,7 @@ CONTAINS
                  + l * (mesh_p1%rr(:, n_end) - mesh_p1%rr(:, n_start)) / type_fe
             IF (iso) THEN
                CALL rescale_to_curved_boundary(mesh%rr(:, n_new_start + l), interface)
+               write(*,*) 'uh', iso, interface
             END IF
             mesh%loc_to_glob(n_new_start + l) = l + (edge_l - 1) * f_dof + mesh_p1%domnp(p) + mesh%disp(p) - 1
          END DO
@@ -2756,7 +2757,7 @@ CONTAINS
          nt = 3
          f_dof = nws - 2
       ELSE
-         WRITE(*, *) ' BUG: prep_interfaces, 3D not programmed yet '
+         WRITE(*, *) ' BUG: prep_jce_jev, 3D not programmed yet '
          STOP
          nt = 4
       END IF
@@ -2778,7 +2779,7 @@ CONTAINS
       END DO
       IF (SIZE(mesh%rr, 1)==2) THEN
          IF (edge/=(3 * mesh%me - mesh%mes) / 2 + mesh%mes) THEN
-            WRITE(*, *) ' BUG in prep_interfaces, edge/=(3*mesh%me - mesh%mes)/2+mesh%mes OR internal interfaces'
+            WRITE(*, *) ' BUG in prep_jce_jev, edge/=(3*mesh%me - mesh%mes)/2+mesh%mes OR internal interfaces'
          END IF
       END IF
 
