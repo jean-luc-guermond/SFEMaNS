@@ -2683,7 +2683,6 @@ CONTAINS
 
       DEALLOCATE(mesh%disp, mesh%domnp, mesh%disedge, mesh%domedge, mesh%discell, mesh%domcell)
       DEALLOCATE(mesh%jce, mesh%jees, mesh%jecs)
-      DEALLOCATE(mesh%jjs_int, mesh%sides_int, mesh%neighs_int)
 
       DEALLOCATE(mesh%jj_extra, mesh%jce_extra, mesh%jjs_extra, mesh%jcc_extra, mesh%rrs_extra)
       DEALLOCATE(mesh%sides_extra, mesh%neighs_extra) !interfaces
