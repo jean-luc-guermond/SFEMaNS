@@ -272,7 +272,7 @@ CONTAINS
       END DO
    END SUBROUTINE incr_vrtx_indx_enumeration_for_interfaces
 
-   SUBROUTINE load_dg_mesh_free_format(dir, fil, list_dom, list_inter, list_inter_int, type_fe, &
+   SUBROUTINE load_dg_mesh_free_format(dir, fil, list_dom, list_inter, type_fe, &
         mesh, mesh_formatted)
       USE def_type_mesh
       USE chaine_caractere
@@ -280,7 +280,7 @@ CONTAINS
       USE my_util
       IMPLICIT NONE
       CHARACTER(len = 200), INTENT(IN) :: dir, fil
-      INTEGER, DIMENSION(:), INTENT(IN) :: list_dom, list_inter, list_inter_int
+      INTEGER, DIMENSION(:), INTENT(IN) :: list_dom, list_inter
       INTEGER, INTENT(IN) :: type_fe
       TYPE(mesh_type) :: mesh
       LOGICAL, INTENT(IN) :: mesh_formatted !formatted <=> mesh_formatted=.true.
@@ -2074,16 +2074,17 @@ CONTAINS
                n_end = n1
             END IF
 
-            iso = .FALSE.
-            IF (m_op_k == 0) THEN  !===the side is on the boundary
-               DO ms = 1, SIZE(mesh_p1%neighs) + 1
-                  IF (ms == SIZE(mesh_p1%neighs) + 1) WRITE(*, *) &
-                       'BUG in create_iso_grid: cell near boundary isnt in neighs', m_op_k, m
-                  IF (mesh_p1%neighs(ms) == m) EXIT
-               END DO
-               CALL is_on_curved_interface(mesh_p1%sides(ms), iso, interface)
-
-            END IF
+            !===test if side is on the boundary
+            DO ms = 1, SIZE(mesh_p1%neighs) + 1
+               IF (ms == SIZE(mesh_p1%neighs) + 1) THEN
+                  iso = .FALSE.
+                  EXIT
+               END IF
+               IF (mesh_p1%neighs(ms) == m) THEN
+                  CALL is_on_curved_interface(mesh_p1%sides(ms), iso, interface)
+                  EXIT
+               END IF
+            END DO
 
             IF (virgin(edge_l)) THEN !===This side is new
                DO l = 1, f_dof

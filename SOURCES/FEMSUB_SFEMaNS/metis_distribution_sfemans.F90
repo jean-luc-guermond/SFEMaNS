@@ -1583,6 +1583,16 @@ CONTAINS
       ! Create neighs
       ALLOCATE(mesh%neighs(mesh%mes))
       mesh%neighs = bat(mesh_glob%neighs(tabs))
+      DO ms = 1, mesh%mes
+         DO n = 1, nw
+            IF (MINVAL(ABS(mesh%jjs(:, ms) - mesh%jj(n, mesh%neighs(ms)))) /= 0) EXIT ! n not on the interface
+         END DO
+         IF (mesh%jj(n, mesh%neighs(ms) > 0)) THEN
+            IF (mesh%neigh(n, mesh%neighs(ms)) > mesh%neighs(ms)) THEN
+               mesh%neighs(ms) = mesh%neigh(n, mesh%neighs(ms))
+            END IF
+         END IF
+      END DO
       ! End create neighs
 
       ! Re-order sides
@@ -2701,7 +2711,7 @@ CONTAINS
                list(ns) = MODULO(ns - 1 + k, 2) + 1
             END DO
             IF (MAXVAL(ABS(mesh%rr(:, mesh%jjs(list, ms1)) - mesh%rr(:, mesh%jjs(1:2, ms2)))) >= epsilon) CYCLE
-            IF (mesh%jjs(list, ms1) == mesh%jjs(1:2, ms2)) EXIT lp2
+            IF (mesh%jjs(list(1), ms1) == mesh%jjs(1, ms2) .AND. mesh%jjs(list(2), ms1) == mesh%jjs(2, ms2)) EXIT lp2
             m2 = mesh%neighs(ms2)
             r_norm = SUM(ABS(mesh%rr(:, mesh%jj(1:3, m1)) - mesh%rr(:, mesh%jj(1:3, m2))))
             IF (r_norm <= 1d-9) THEN
