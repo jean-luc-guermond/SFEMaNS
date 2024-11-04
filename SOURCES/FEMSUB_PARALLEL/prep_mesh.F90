@@ -2778,10 +2778,7 @@ CONTAINS
       END DO
       IF (SIZE(mesh%rr, 1)==2) THEN
          IF (edge/=(3 * mesh%me - mesh%mes) / 2 + mesh%mes) THEN
-            WRITE(*, *) ' BUG in prep_interfaces, edge/=(3*mesh%me - mesh%mes)/2+mesh%mes'
-            WRITE(*, *) ' edge ', edge, (3 * mesh%me - mesh%mes) / 2 + mesh%mes
-            WRITE(*, *) ' mesh%mes ', mesh%mes, ' mesh%me ', mesh%me
-            STOP
+            WRITE(*, *) ' BUG in prep_interfaces, edge/=(3*mesh%me - mesh%mes)/2+mesh%mes OR internal interfaces'
          END IF
       END IF
 
