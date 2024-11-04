@@ -2346,6 +2346,7 @@ CONTAINS
 
       mesh%me = 4 * mesh_p1%me
       mesh%mes = 2 * mesh_p1%mes !---> something with news to take into account
+      mesh%mes_int = 2 * mesh_p1%mes_int
       mesh%np = mesh_p1%np + mesh_p1%medge + mesh_p1%medges
       mesh%medge = 2 * mesh_p1%medge + 3 * mesh_p1%me
       mesh%medges = 2 * mesh_p1%medges
@@ -2364,6 +2365,10 @@ CONTAINS
       ALLOCATE(mesh%sides(mesh%mes))   !---> still don't know what this is ?? done ?
       ALLOCATE(mesh%neighs(mesh%mes))  !--->done
       ALLOCATE(mesh%i_d(mesh%me)) !--->done
+
+      ALLOCATE(mesh%jjs_int(nws, mesh%mes_int))  !--->done
+      ALLOCATE(mesh%neighs_int(mesh%mes_int)) !--->done
+      ALLOCATE(mesh%sides_int(mesh%mes_int))
 
       mesh%dom_me = 4 * mesh_p1%dom_me
       mesh%dom_np = mesh_p1%dom_np + mesh_p1%medge
@@ -2767,6 +2772,7 @@ CONTAINS
       !rrs_extra  ! coordinates for cells at interfaces
       !sides_extra, neighs_extra !interfaces
       !mes_extra
+      write(*,*) 'cat',  mesh_p1%mes_int, mesh_p1%jjs_int, mesh_p1%sides_int, mesh_p1%neighs_int
 
       CALL free_mesh(mesh_p1)
       CALL copy_mesh(mesh, mesh_p1)
