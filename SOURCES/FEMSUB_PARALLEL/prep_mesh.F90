@@ -2341,6 +2341,7 @@ CONTAINS
       np = mesh_p1%np            !===number of P1 vertices connected to grid
       dom_np = mesh_p1%dom_np    !===number of P1 vertices attributed to proc
       mes = SIZE(mesh_p1%jjs, 2)
+      mes_int = SIZE(mesh_p1%jjs_int, 2)
       nws = SIZE(mesh_p1%jjs, 1)
       nb_proc = SIZE(mesh_p1%domnp)
 
@@ -2557,7 +2558,7 @@ CONTAINS
       ENDDO
 
       !===Internal surface elements
-      DO ms = 1, mesh_p1%mes_int
+      DO ms = 1, mes_int
          m = mesh_p1%neighs_int(ms)
          !===Finding the corresponding side in the cell
          DO k = 1, nw
@@ -2571,15 +2572,15 @@ CONTAINS
 
          mesh%jjs_int(1, ms) = mesh_p1%jj(n_ks(1), m)
          IF (mesh%jjs_int(1, ms) > mesh_p1%dom_np) mesh%jjs_int(1, ms) = mesh%jjs_int(1, ms) + mesh%dom_np - mesh_p1%dom_np
-         mesh%jjs_int(1, mes + ms) = mesh_p1%jj(n_ks(2), m)
-         IF (mesh%jjs_int(1, mes + ms) > mesh_p1%dom_np) mesh%jjs_int(1, mes + ms) = mesh%jjs_int(1, mes + ms) &
+         mesh%jjs_int(1, mes_int + ms) = mesh_p1%jj(n_ks(2), m)
+         IF (mesh%jjs_int(1, mes_int + ms) > mesh_p1%dom_np) mesh%jjs_int(1, mes_int + ms) = mesh%jjs_int(1, mes + ms) &
               + mesh%dom_np - mesh_p1%dom_np
          mesh%jjs_int(2, ms) = mesh%jj(k, 4 * (m - 1) + 1)
-         mesh%jjs_int(2, mes + ms) = mesh%jj(k, 4 * (m - 1) + 1)
+         mesh%jjs_int(2, mes_int + ms) = mesh%jj(k, 4 * (m - 1) + 1)
          mesh%neighs_int(ms) = mesh%neigh(n_ks(1), 4 * (m - 1) + 1)
-         mesh%neighs_int(mes + ms) = mesh%neigh(n_ks(2), 4 * (m - 1) + 1)
+         mesh%neighs_int(mes_int + ms) = mesh%neigh(n_ks(2), 4 * (m - 1) + 1)
          mesh%sides_int(ms) = mesh_p1%sides_int(ms)
-         mesh%sides_int(mes + ms) = mesh_p1%sides_int(ms)
+         mesh%sides_int(mes_int + ms) = mesh_p1%sides_int(ms)
 
          CALL is_on_curved_interface(mesh_p1%sides_int(ms), iso, interface)
          IF (iso) THEN
