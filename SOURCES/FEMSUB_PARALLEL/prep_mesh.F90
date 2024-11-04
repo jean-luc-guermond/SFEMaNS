@@ -469,6 +469,7 @@ CONTAINS
             IF (stat(ms) == 1) CYCLE
             IF (stat(ms) == 4)  THEN ! if internal interface
                mes_int = mes_int + 1
+               virgin_ms(ms) = .TRUE.
             ELSE
                neighs1 = neighs_lect(ms)
                DO n = 1, nw
