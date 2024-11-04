@@ -2082,6 +2082,7 @@ CONTAINS
                END IF
                IF (mesh_p1%neighs(ms) == m) THEN
                   CALL is_on_curved_interface(mesh_p1%sides(ms), iso, interface)
+                  write(*, *) 'uh', iso, interface, m_op_k, m
                   EXIT
                END IF
             END DO
@@ -2094,7 +2095,6 @@ CONTAINS
                        + l * (mesh_p1%rr(:, n_end) - mesh_p1%rr(:, n_start)) / type_fe
                   IF (iso) THEN
                      CALL rescale_to_curved_boundary(mesh%rr(:, l + n_new_start), interface)
-                                    write(*,*) 'uh', iso, interface, m_op_k
                   END IF
                   mesh%loc_to_glob(l + n_new_start) = l + n_new_start + mesh%disp(proc) - 1
                END DO
