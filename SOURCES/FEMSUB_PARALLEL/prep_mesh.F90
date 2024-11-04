@@ -418,11 +418,11 @@ CONTAINS
          IF (t1) THEN
             IF (t2) THEN
                IF (SIZE(list_inter)==0) THEN
-                  stat(ms) = 4 ! internal interface
+                  stat(ms) = 1 ! internal interface
                ELSE IF (MINVAL(ABS(sides_lect(ms) - list_inter))==0) THEN
                   stat(ms) = 3 ! real interface
                ELSE
-                  stat(ms) = 4 ! internal interface
+                  stat(ms) = 1 ! internal interface
                END IF
             ELSE
                stat(ms) = 2 ! face at the boundary of the domain of interest
