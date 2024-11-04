@@ -470,7 +470,7 @@ CONTAINS
             IF (stat(ms) == 4)  THEN ! if internal interface
                IF (virgin_ms(ms)) THEN
                   mes_int = mes_int + 1
-                  virgin_ms(ms) = .TRUE.
+                  virgin_ms(ms) = .FALSE.
                END IF
             ELSE
                neighs1 = neighs_lect(ms)
