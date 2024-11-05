@@ -86,7 +86,8 @@ MODULE def_type_mesh
       INTEGER, POINTER, DIMENSION(:, :) :: neigh
       INTEGER, POINTER, DIMENSION(:, :) :: neighi ! (JLG April 2009)
       INTEGER, POINTER, DIMENSION(:) :: sides, neighs, sides_extra, neighs_extra !interfaces
-      INTEGER, POINTER, DIMENSION(:) :: sides_int, neighs_int
+      INTEGER, POINTER, DIMENSION(:) :: sides_int
+      INTEGER, POINTER, DIMENSION(:, :) :: neighs_int
       INTEGER, POINTER, DIMENSION(:) :: i_d
       !==Parallel structure
       INTEGER, POINTER, DIMENSION(:) :: loc_to_glob ! (JLG+FL, January 2011)

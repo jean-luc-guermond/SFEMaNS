@@ -505,7 +505,7 @@ CONTAINS
       !===Re-ordering
       ALLOCATE(mesh%jj(nw, mesh%me), mesh%neigh(nwneigh, mesh%me), mesh%i_d(mesh%me))
       ALLOCATE(mesh%jjs(nws, mesh%mes), mesh%neighs(mesh%mes), mesh%sides(mesh%mes))
-      ALLOCATE(mesh%jjs_int(nws, mesh%mes_int), mesh%neighs_int(mesh%mes_int), mesh%sides_int(mesh%mes_int))
+      ALLOCATE(mesh%jjs_int(nws, mesh%mes_int), mesh%neighs_int(2, mesh%mes_int), mesh%sides_int(mesh%mes_int))
       ALLOCATE(mesh%rr(kd, mesh%np))
 
       virgin_nd = .TRUE.
@@ -599,6 +599,7 @@ CONTAINS
          END DO
 
          mes_int = 0
+         mesh%neighs_int = -1
          !Loop again on mes and update
          DO ms = 1, mes
 
@@ -618,7 +619,7 @@ CONTAINS
             IF (stat(ms) == 4) THEN
                mes_int = mes_int + 1
                mesh%jjs_int(:, mes_int) = nouv_nd(jjs_lect(:, ms))
-               mesh%neighs_int(mes_int) = nouv_el(neighs_lect(ms))
+               mesh%neighs_int(1, mes_int) = nouv_el(neighs_lect(ms))
                mesh%sides_int(mes_int) = sides_lect(ms)
             ELSE
                mesh%jjs(:, nouv_els(ms)) = nouv_nd(jjs_lect(:, ms))
@@ -2367,7 +2368,7 @@ CONTAINS
       ALLOCATE(mesh%i_d(mesh%me)) !--->done
 
       ALLOCATE(mesh%jjs_int(nws, mesh%mes_int))  !--->done
-      ALLOCATE(mesh%neighs_int(mesh%mes_int)) !--->done
+      ALLOCATE(mesh%neighs_int(2, mesh%mes_int)) !--->done
       ALLOCATE(mesh%sides_int(mesh%mes_int))
 
       mesh%dom_me = 4 * mesh_p1%dom_me
@@ -2555,10 +2556,10 @@ CONTAINS
             CALL rescale_to_curved_boundary(mesh%rr(:, mesh%jj(k, 4 * (m - 1) + 1)), interface)
          END IF
       ENDDO
-      write(*,*) '????', mesh_p1%neighs_int
+      write(*, *) '????', mesh_p1%neighs_int
       !===Internal surface elements
       DO ms = 1, mes_int
-         m = mesh_p1%neighs_int(ms)
+         m = mesh_p1%neighs_int(1, ms)
          !===Finding the corresponding side in the cell
          DO k = 1, nw
             IF (MINVAL(ABS(mesh_p1%jj(k, m) - mesh_p1%jjs_int(:, ms)))/=0) EXIT
@@ -2576,8 +2577,8 @@ CONTAINS
               + mesh%dom_np - mesh_p1%dom_np
          mesh%jjs_int(2, ms) = mesh%jj(k, 4 * (m - 1) + 1)
          mesh%jjs_int(2, mes_int + ms) = mesh%jj(k, 4 * (m - 1) + 1)
-         mesh%neighs_int(ms) = mesh%neigh(n_ks(1), 4 * (m - 1) + 1)
-         mesh%neighs_int(mes_int + ms) = mesh%neigh(n_ks(2), 4 * (m - 1) + 1)
+         mesh%neighs_int(1, ms) = mesh%neigh(n_ks(1), 4 * (m - 1) + 1)
+         mesh%neighs_int(1, mes_int + ms) = mesh%neigh(n_ks(2), 4 * (m - 1) + 1)
          mesh%sides_int(ms) = mesh_p1%sides_int(ms)
          mesh%sides_int(mes_int + ms) = mesh_p1%sides_int(ms)
 
@@ -2984,7 +2985,7 @@ CONTAINS
       mesh2%jjs_int = mesh1%jjs_int
       ALLOCATE(mesh2%sides_int(SIZE(mesh1%sides_int)))
       mesh2%sides_int = mesh1%sides_int
-      ALLOCATE(mesh2%neighs_int(SIZE(mesh1%neighs_int)))
+      ALLOCATE(mesh2%neighs_int(2,SIZE(mesh1%neighs_int, 2)))
       mesh2%neighs_int = mesh1%neighs_int
 
       ALLOCATE(mesh2%sides_extra(SIZE(mesh1%sides_extra)))

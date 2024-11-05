@@ -1608,7 +1608,7 @@ CONTAINS
       ! Create mes_int_loc
       nblmt_per_proc = 0
       DO ms = 1, mesh_glob%mes_int
-         IF (MINVAL(ABS(list_dom - mesh_glob%i_d(mesh_glob%neighs_int(ms))))/=0) CYCLE
+         IF (MINVAL(ABS(list_dom - mesh_glob%i_d(mesh_glob%neighs_int(1, ms))))/=0) CYCLE
          n = parts(ms)
          nblmt_per_proc(n) = nblmt_per_proc(n) + 1
       END DO
@@ -1624,7 +1624,7 @@ CONTAINS
       ALLOCATE(tabs(mesh%mes_int))
       ! Create tabs and sbat
       DO ms = 1, mesh_glob%mes_int
-         IF (MINVAL(ABS(list_dom - mesh_glob%i_d(mesh_glob%neighs_int(ms))))/=0) CYCLE
+         IF (MINVAL(ABS(list_dom - mesh_glob%i_d(mesh_glob%neighs_int(1, ms))))/=0) CYCLE
          start(parts(ms)) = start(parts(ms)) + 1
          tabs(start(parts(ms))) = ms
       END DO
@@ -1632,8 +1632,9 @@ CONTAINS
 
       ! Create neighs_int
       mesh%mes_int = mesh_glob%mes_int
-      ALLOCATE(mesh%neighs_int(mesh%mes_int))
-      mesh%neighs_int = bat(mesh_glob%neighs_int(tabs))
+      ALLOCATE(mesh%neighs_int(2, mesh%mes_int))
+      mesh%neighs_int = -1
+      mesh%neighs_int(1, :) = bat(mesh_glob%neighs_int(1, tabs))
       ! End create neighs_int
 
       ! Re-order sides_int
@@ -1649,12 +1650,8 @@ CONTAINS
       END DO
       DO ms = 1, mesh%mes_int
          DO n = 1, 3
-            IF (MINVAL(ABS(mesh%jjs_int(:, ms) - mesh%jj(n, mesh%neighs_int(ms)))) /= 0) EXIT ! n not on the interface
-            IF (mesh%jj(n, mesh%neighs(ms)) > 0) THEN
-               IF (mesh%neigh(n, mesh%neighs_int(ms)) > mesh%neighs_int(ms)) THEN
-                  mesh%neighs_int(ms) = mesh%neigh(n, mesh%neighs_int(ms))
-               END IF
-            END IF
+            IF (MINVAL(ABS(mesh%jjs_int(:, ms) - mesh%jj(n, mesh%neighs_int(1, ms)))) /= 0) EXIT ! n not on the interface
+            mesh%neighs_int(2, ms) = mesh%neigh(n, mesh%neighs_int(1, ms))
          END DO
       END DO
       ! End re-order jjs_int
@@ -1753,7 +1750,7 @@ CONTAINS
       INTEGER :: nb_proc, ms, i, index, m, mop, n
       PetscErrorCode :: ierr
       PetscMPIInt    :: rank
-      MPI_Comm       :: communicator
+      MPI_Comm :: communicator
       CALL MPI_Comm_rank(communicator, rank, ierr)
 
       ! Create parts
@@ -2137,7 +2134,7 @@ CONTAINS
       LOGICAL :: test
       INTEGER :: dim, nws, nw, m, ms, mop, ns, msup, minf, dof, proc, m2, &
            dom_me, nwc, dom_mes, dom_np, n, i, ierr, dom_np_glob, nb_extra, nb_proc, e_glob, medge, medges, j
-      MPI_Comm       :: communicator
+      MPI_Comm :: communicator
 
       dim = SIZE(mesh%rr, 1)
       nws = SIZE(mesh%jjs, 1)
@@ -2183,7 +2180,7 @@ CONTAINS
          ALLOCATE(mesh_loc%jjs(nws, mesh_loc%mes))
          mesh_loc%jjs = mesh%jjs
 
-         ALLOCATE(mesh_loc%neighs_int(mesh_loc%mes_int))
+         ALLOCATE(mesh_loc%neighs_int(2, mesh_loc%mes_int))
          mesh_loc%neighs_int = mesh%neighs_int
          ALLOCATE(mesh_loc%sides_int(mesh_loc%mes_int))
          mesh_loc%sides_int = mesh%sides_int
@@ -2389,10 +2386,15 @@ CONTAINS
       !==End re-order jjs
 
       !==Re-order neighs_int
-      ALLOCATE(mesh_loc%neighs_int(mesh_loc%mes_int))
-      mesh_loc%neighs_int = m_glob_to_loc(mesh%neighs_int(mes_int_loc(1):mes_int_loc(2)))
+      ALLOCATE(mesh_loc%neighs_int(2, mesh_loc%mes_int))
+      mesh_loc%neighs_int = m_glob_to_loc(mesh%neighs_int(:, mes_int_loc(1):mes_int_loc(2)))
+      DO m = 1, mesh_loc%mes_int
+         IF (mesh_loc%neighs_int(2, m) > mesh_loc%neighs_int(1, m)) THEN
+            mesh_loc%neighs_int(:, m) = (/mesh_loc%neighs_int(2, m), mesh_loc%neighs_int(1, m) /)
+         END IF
+      END DO
       !==End re-order neighs
-      write(*,*) '??????',  mesh%neighs_int(mes_int_loc(1):mes_int_loc(2)),  mesh_loc%neighs_int
+      write(*,*) '??????',  mesh%neighs_int(1,mes_int_loc(1):mes_int_loc(2)),  mesh_loc%neighs_int(1,:)
       !==Re-order sides
       ALLOCATE(mesh_loc%sides_int(mesh_loc%mes_int))
       mesh_loc%sides_int = mesh%sides_int(mes_int_loc(1):mes_int_loc(2))
