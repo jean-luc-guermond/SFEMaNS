@@ -1984,7 +1984,6 @@ CONTAINS
 
       !===Initialize velocity (time-independent) if mxw===============================
       IF ((inputs%type_pb=='mxw') .AND. (H_mesh%me/=0)) THEN
-         write(*,*) 'H_mesh', H_mesh%np
          DO i = 1, m_max_c       !===Initialization of vel
             v_to_Max(:, :, i) = Vexact(list_mode(i), H_mesh)
          END DO
