@@ -1611,7 +1611,7 @@ CONTAINS
             mesh%neighs_int(:, ms) = (/mesh%neighs_int(2, ms), mesh%neighs_int(1, ms) /)
          END IF
       END DO
-      write(*,*) '???',  mesh%neighs_int(1, :), mesh%neighs_int(2, :)
+      write(*,*) '???',  mesh%neighs_int(1, :), '???', mesh%neighs_int(2, :)
       ! End create neighs_int
 
       ! Re-order sides_int
