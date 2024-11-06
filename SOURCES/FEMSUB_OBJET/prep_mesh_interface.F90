@@ -146,8 +146,6 @@ CONTAINS
          ENDDO
          !==cell index of edge
          n1_ks = (/MODULO(k1, nw) + 1, MODULO(k1 + 1, nw) + 1/)
-         write(*,*) mesh_master%rrs_extra(:, n1_ks(1), ms1), mesh_master%rrs_extra(:, n1_ks(2), ms1), &
-              mesh_master%rrs_extra(:, k1, ms1), ms1
 
          r_norm = SUM(ABS(mesh_master%rrs_extra(:, n1_ks(1), ms1) - mesh_master%rrs_extra(:, n1_ks(2), ms1)))
          epsilon = eps_ref * r_norm
@@ -205,7 +203,7 @@ CONTAINS
             END DO
          END DO lp3
          IF (.NOT.okay) THEN
-            WRITE(*, *) ' BUG in load_interface extras: .NOT.okay', ms1
+            WRITE(*, *) ' BUG in load_interface extras: .NOT.okay'
             !STOP
          END IF
       END DO
