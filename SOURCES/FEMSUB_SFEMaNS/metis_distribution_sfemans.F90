@@ -1609,7 +1609,8 @@ CONTAINS
       nblmt_per_proc = 0
       write(*, *) 'ok1', mesh_glob%neighs_int(1, :), mesh_glob%neighs_int(2, :), mesh_glob%mes_int
       DO ms = 1, mesh_glob%mes_int
-         IF (MINVAL(ABS(list_dom - mesh_glob%i_d(mesh_glob%neighs_int(1, ms))))/=0) CYCLE
+         IF (MINVAL(ABS(list_dom - mesh_glob%i_d(mesh_glob%neighs_int(1, ms)))) .OR. &
+              MINVAL(ABS(list_dom - mesh_glob%i_d(mesh_glob%neighs_int(2, ms))))/=0) CYCLE
          n = parts(ms)
          nblmt_per_proc(n) = nblmt_per_proc(n) + 1
       END DO
@@ -2391,7 +2392,7 @@ CONTAINS
       ALLOCATE(mesh_loc%neighs_int(2, mesh_loc%mes_int))
       mesh_loc%neighs_int(1, :) = m_glob_to_loc(mesh%neighs_int(1, mes_int_loc(1):mes_int_loc(2)))
       mesh_loc%neighs_int(2, :) = m_glob_to_loc(mesh%neighs_int(2, mes_int_loc(1):mes_int_loc(2)))
-            write(*, *) 'ok4', mesh%neighs_int(2, mes_int_loc(1):mes_int_loc(2)), mesh_loc%neighs_int(2, :)
+      write(*, *) 'ok4', mesh%neighs_int(2, mes_int_loc(1):mes_int_loc(2)), mesh_loc%neighs_int(2, :)
       DO m = 1, mesh_loc%mes_int
          IF (mesh_loc%neighs_int(2, m) > mesh_loc%neighs_int(1, m)) THEN
             mesh_loc%neighs_int(:, m) = (/mesh_loc%neighs_int(2, m), mesh_loc%neighs_int(1, m) /)
