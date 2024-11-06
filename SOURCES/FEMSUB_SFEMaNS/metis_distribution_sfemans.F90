@@ -1597,11 +1597,6 @@ CONTAINS
       DO n = 1, SIZE(mesh%jjs, 1)
          mesh%jjs(n, :) = i_old_to_new(mesh_glob%jjs(n, tabs))
       END DO
-      DO ms = 1, mesh%mes
-         DO n = 1, 3
-            IF (MINVAL(ABS(mesh%jjs(:, ms) - mesh%jj(n, mesh%neighs(ms)))) /= 0) EXIT ! n not on the interface
-         END DO
-      END DO
       ! End re-order jjs
 
       ! Create mes_int_loc
@@ -2779,7 +2774,7 @@ CONTAINS
                list(ns) = MODULO(ns - 1 + k, 2) + 1
             END DO
             IF (MAXVAL(ABS(mesh%rr(:, mesh%jjs(list, ms1)) - mesh%rr(:, mesh%jjs(1:2, ms2)))) >= epsilon) CYCLE
-            IF (mesh%jjs(list(1), ms1) == mesh%jjs(1, ms2) .AND. mesh%jjs(list(2), ms1) == mesh%jjs(2, ms2)) EXIT lp2
+
             m2 = mesh%neighs(ms2)
             r_norm = SUM(ABS(mesh%rr(:, mesh%jj(1:3, m1)) - mesh%rr(:, mesh%jj(1:3, m2))))
             IF (r_norm <= 1d-9) THEN
