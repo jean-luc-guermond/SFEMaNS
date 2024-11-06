@@ -617,10 +617,13 @@ CONTAINS
             END IF
             !End test if ms touches the domain of interest
             IF (stat(ms) == 4) THEN
-               mes_int = mes_int + 1
-               mesh%jjs_int(:, mes_int) = nouv_nd(jjs_lect(:, ms))
-               mesh%neighs_int(1, mes_int) = nouv_el(neighs_lect(ms))
-               mesh%sides_int(mes_int) = sides_lect(ms)
+               IF (virgin_ms(ms)) THEN
+                  mes_int = mes_int + 1
+                  mesh%jjs_int(:, mes_int) = nouv_nd(jjs_lect(:, ms))
+                  mesh%neighs_int(1, mes_int) = nouv_el(neighs_lect(ms))
+                  mesh%sides_int(mes_int) = sides_lect(ms)
+                  virgin_ms(ms) = .FALSE.
+               END IF
             ELSE
                mesh%jjs(:, nouv_els(ms)) = nouv_nd(jjs_lect(:, ms))
                mesh%neighs(nouv_els(ms)) = nouv_el(neighs_lect(ms))
