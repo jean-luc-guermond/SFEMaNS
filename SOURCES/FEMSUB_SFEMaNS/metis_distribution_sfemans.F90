@@ -1606,6 +1606,11 @@ CONTAINS
       ALLOCATE(mesh%neighs_int(2, mesh%mes_int))
       mesh%neighs_int(1, :) = bat(mesh_glob%neighs_int(1, :))
       mesh%neighs_int(2, :) = bat(mesh_glob%neighs_int(2, :))
+      DO m = 1, mesh%mes_int
+         IF (mesh%neighs_int(2, ms) > mesh%neighs_int(1, ms)) THEN
+            mesh%neighs_int(:, ms) = (/mesh%neighs_int(2, ms), mesh%neighs_int(1, ms) /)
+         END IF
+      END DO
       ! End create neighs_int
 
       ! Re-order sides_int
