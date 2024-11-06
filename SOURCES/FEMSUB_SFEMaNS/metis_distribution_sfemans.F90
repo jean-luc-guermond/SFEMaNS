@@ -2385,7 +2385,7 @@ CONTAINS
 
             mesh_loc%sides_int(ms) = mesh%sides_int(m)
             DO ns = 1, nws
-               mesh_loc%jjs_int(ns, ms) = glob_to_loc(mesh%jjs_int(ns, m)
+               mesh_loc%jjs_int(ns, ms) = glob_to_loc(mesh%jjs_int(ns, m))
             END DO
          END IF
       END DO
