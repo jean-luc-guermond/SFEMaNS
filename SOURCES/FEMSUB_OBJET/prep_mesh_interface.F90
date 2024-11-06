@@ -204,7 +204,7 @@ CONTAINS
             END DO
          END DO lp3
          IF (.NOT.okay) THEN
-            WRITE(*, *) ' BUG in load_interface extras: .NOT.okay'
+            WRITE(*, *) ' BUG in load_interface extras: .NOT.okay', ms1
             !STOP
          END IF
       END DO
