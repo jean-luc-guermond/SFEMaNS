@@ -1609,7 +1609,7 @@ CONTAINS
       nblmt_per_proc = 0
       write(*, *) 'ok1', mesh_glob%neighs_int(1, :), mesh_glob%neighs_int(2, :), mesh_glob%mes_int
       DO ms = 1, mesh_glob%mes_int
-         IF (MINVAL(ABS(list_dom - mesh_glob%i_d(mesh_glob%neighs_int(1, ms)))) .OR. &
+         IF (MINVAL(ABS(list_dom - mesh_glob%i_d(mesh_glob%neighs_int(1, ms)))) /=0 .OR. &
               MINVAL(ABS(list_dom - mesh_glob%i_d(mesh_glob%neighs_int(2, ms))))/=0) CYCLE
          n = parts(ms)
          nblmt_per_proc(n) = nblmt_per_proc(n) + 1
