@@ -659,7 +659,6 @@ CONTAINS
       DEALLOCATE(jjs_lect, neighs_lect, sides_lect)
       DEALLOCATE(rr_lect, virgin_nd, virgin_ms, stat)
       DEALLOCATE(nouv_nd, nouv_el, nouv_els)
-      write(*, *) 'ok0', mesh%neighs_int(1, :), mesh%neighs_int(2, :), mes_int, mesh%mes_int
       !===Prepare actual mesh (works in 2D only)
       IF (kd==3) THEN
          WRITE(*, *) 'k_d==3 not programmed yet'
@@ -2361,7 +2360,6 @@ CONTAINS
       mesh%np = mesh_p1%np + mesh_p1%medge + mesh_p1%medges
       mesh%medge = 2 * mesh_p1%medge + 3 * mesh_p1%me
       mesh%medges = 2 * mesh_p1%medges
-      write(*,*) 'mes_int', mes_int, mesh%mes_int
       ALLOCATE(mesh%jj(nw, mesh%me)) !--->done
       ALLOCATE(mesh%jjs(nws, mesh%mes))  !--->done
       ALLOCATE(mesh%rr(kd, mesh%np)) !--->done
@@ -2566,7 +2564,7 @@ CONTAINS
             CALL rescale_to_curved_boundary(mesh%rr(:, mesh%jj(k, 4 * (m - 1) + 1)), interface)
          END IF
       ENDDO
-      write(*, *) '????', mesh_p1%neighs_int
+
       !===Internal surface elements
       DO ms = 1, mes_int
          m = mesh_p1%neighs_int(1, ms)
