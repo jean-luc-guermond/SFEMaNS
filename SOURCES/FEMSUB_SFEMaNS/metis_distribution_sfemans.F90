@@ -1602,7 +1602,7 @@ CONTAINS
       mesh%mes_int = 0
       ! Create mes_int_loc
       DO ms = 1, mesh_glob%mes_int
-         IF (MAXVAL(bat(mesh_glob%neighs_int(:, 1))) > 0) THEN
+         IF (MAXVAL(bat(mesh_glob%neighs_int(:, ms))) > 0) THEN
             mesh%mes_int = mesh%mes_int + 1
          END IF
       END DO
@@ -1627,6 +1627,7 @@ CONTAINS
             END DO
          END IF
       END DO
+      write(*,*) 'lol', mesh%neighs_int(1, :), mesh%neighs_int(2, :)
       ! End create neighs_int
 
 
