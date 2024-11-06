@@ -652,6 +652,7 @@ CONTAINS
          END DO
          mesh%neighs_int(2, ms) = mesh%neigh(n, mesh%neighs_int(1, ms))
       END DO
+      write(*,*) 'lol', mesh%neighs_int(1, :), mesh%neighs_int(2, :)
       !===End reordring
       mesh%gauss%n_ws = SIZE(mesh%jjs, 1)
       mesh%gauss%n_w = SIZE(mesh%jj, 1)
