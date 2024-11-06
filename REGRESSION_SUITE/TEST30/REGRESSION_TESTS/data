@@ -29,7 +29,7 @@
 ===Check numerical stability (true/false)
 .t.
 ===Number of refinements
-1
+2
 ============================================
               Mesh-NAVIER-STOKES
 ============================================

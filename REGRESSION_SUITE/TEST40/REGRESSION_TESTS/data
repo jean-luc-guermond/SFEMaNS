@@ -31,7 +31,7 @@
 ===Penalty coefficient for artifical compression
 1.0d0
 ===Number of refinements
-1
+2
 ============================================
               Mesh-NAVIER-STOKES
 ============================================

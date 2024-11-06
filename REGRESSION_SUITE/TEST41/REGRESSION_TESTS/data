@@ -36,7 +36,7 @@ xx.t.
 xx===Penalty coefficient for artifical compression
 xx1.0d0
 ===Number of refinements
-1
+2
 ============================================
               Mesh-NAVIER-STOKES
 ============================================

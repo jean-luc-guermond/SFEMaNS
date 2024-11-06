@@ -21,7 +21,7 @@
 ===Time step and number of time iterations
 1.0d-2 10
 ===Number of refinements
-1
+2
 ===========================================
           Data for post processing
 ===========================================
@@ -50,7 +50,7 @@
 ===Amplitude of J0
 -2.d3
 ===Number of refinements
-1
+2
 ============================================
               Mesh-NAVIER-STOKES
 ============================================
