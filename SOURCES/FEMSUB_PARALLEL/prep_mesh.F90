@@ -2583,7 +2583,7 @@ CONTAINS
          mesh%jjs_int(1, ms) = mesh_p1%jj(n_ks(1), m)
          IF (mesh%jjs_int(1, ms) > mesh_p1%dom_np) mesh%jjs_int(1, ms) = mesh%jjs_int(1, ms) + mesh%dom_np - mesh_p1%dom_np
          mesh%jjs_int(1, mes_int + ms) = mesh_p1%jj(n_ks(2), m)
-         IF (mesh%jjs_int(1, mes_int + ms) > mesh_p1%dom_np) mesh%jjs_int(1, mes_int + ms) = mesh%jjs_int(1, mes + ms) &
+         IF (mesh%jjs_int(1, mes_int + ms) > mesh_p1%dom_np) mesh%jjs_int(1, mes_int + ms) = mesh%jjs_int(1, mes_int + ms) &
               + mesh%dom_np - mesh_p1%dom_np
          mesh%jjs_int(2, ms) = mesh%jj(k, 4 * (m - 1) + 1)
          mesh%jjs_int(2, mes_int + ms) = mesh%jj(k, 4 * (m - 1) + 1)
