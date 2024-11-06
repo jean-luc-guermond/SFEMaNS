@@ -2364,7 +2364,11 @@ CONTAINS
       mesh_loc%mes_int = 0
       !===Count number of internal edges
       DO ms = 1, mesh%mes_int
-         IF (MINVAL(m_glob_to_loc(mesh%neighs_int(:, ms))) > 0)  THEN
+         test = m_glob_to_loc(mesh%neighs_int(1, ms)) > 0
+         IF (mesh%neighs_int(2, ms) > 0) THEN
+            test = test .OR. m_glob_to_loc(mesh%neighs_int(2, ms))
+         END IF
+         IF (test)  THEN
             mesh_loc%mes_int = mesh_loc%mes_int + 1
          END IF
       END DO
@@ -2376,7 +2380,11 @@ CONTAINS
 
       ms = 0
       DO m = 1, mesh%mes_int
-         IF (MINVAL(m_glob_to_loc(mesh%neighs_int(:, ms))) > 0)  THEN
+         test = m_glob_to_loc(mesh%neighs_int(1, ms)) > 0
+         IF (mesh%neighs_int(2, ms) > 0) THEN
+            test = test .OR. m_glob_to_loc(mesh%neighs_int(2, ms))
+         END IF
+         IF (test)  THEN
             ms = ms + 1
             mesh_loc%neighs_int(:, ms) = m_glob_to_loc(mesh%neighs_int(:, m))
             IF (mesh_loc%neighs_int(2, ms) > mesh_loc%neighs_int(1, ms)) THEN
