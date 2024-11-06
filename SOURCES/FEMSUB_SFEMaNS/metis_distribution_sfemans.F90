@@ -1627,7 +1627,6 @@ CONTAINS
             END DO
          END IF
       END DO
-      write(*,*) 'lol', mesh%neighs_int(1, :), mesh%neighs_int(2, :)
       ! End create neighs_int
 
 
