@@ -649,7 +649,7 @@ CONTAINS
       DEALLOCATE(jjs_lect, neighs_lect, sides_lect)
       DEALLOCATE(rr_lect, virgin_nd, virgin_ms, stat)
       DEALLOCATE(nouv_nd, nouv_el, nouv_els)
-      write(*,*) 'ok0', mesh%neighs_int(1, mes_int), mesh%neighs_int(2, mes_int), mes_int
+      write(*,*) 'ok0', mesh%neighs_int(1, :), mesh%neighs_int(2, :), mes_int
       !===Prepare actual mesh (works in 2D only)
       IF (kd==3) THEN
          WRITE(*, *) 'k_d==3 not programmed yet'
