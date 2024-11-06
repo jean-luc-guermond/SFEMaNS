@@ -1607,7 +1607,7 @@ CONTAINS
       DEALLOCATE(tabs)
       ! Create mes_int_loc
       nblmt_per_proc = 0
-      write(*,*) 'ok1', mesh_glob%neighs_int(1, ms), mesh_glob%neighs_int(2, ms), mesh_glob%mes_int
+      write(*,*) 'ok1', mesh_glob%neighs_int(1, :), mesh_glob%neighs_int(2, :), mesh_glob%mes_int
       DO ms = 1, mesh_glob%mes_int
          IF (MINVAL(ABS(list_dom - mesh_glob%i_d(mesh_glob%neighs_int(1, ms))))/=0) CYCLE
          n = parts(ms)
