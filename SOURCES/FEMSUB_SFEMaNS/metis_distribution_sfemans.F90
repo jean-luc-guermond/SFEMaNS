@@ -2366,7 +2366,7 @@ CONTAINS
       DO ms = 1, mesh%mes_int
          test = m_glob_to_loc(mesh%neighs_int(1, ms)) > 0
          IF (mesh%neighs_int(2, ms) > 0) THEN
-            test = test .OR. m_glob_to_loc(mesh%neighs_int(2, ms))
+            test = test .OR. m_glob_to_loc(mesh%neighs_int(2, ms)) > 0
          END IF
          IF (test)  THEN
             mesh_loc%mes_int = mesh_loc%mes_int + 1
@@ -2382,7 +2382,7 @@ CONTAINS
       DO m = 1, mesh%mes_int
          test = m_glob_to_loc(mesh%neighs_int(1, ms)) > 0
          IF (mesh%neighs_int(2, ms) > 0) THEN
-            test = test .OR. m_glob_to_loc(mesh%neighs_int(2, ms))
+            test = test .OR. m_glob_to_loc(mesh%neighs_int(2, ms)) > 0
          END IF
          IF (test)  THEN
             ms = ms + 1
