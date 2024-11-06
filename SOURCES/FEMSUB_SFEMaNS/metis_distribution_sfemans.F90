@@ -2372,7 +2372,6 @@ CONTAINS
       !==Re-order neighs_int
       ALLOCATE(mesh_loc%neighs_int(2, mesh_loc%mes_int))
       ms = 0
-      write(*, *) 'ok4', mesh%neighs_int(2, mes_int_loc(1):mes_int_loc(2)), mesh_loc%neighs_int(2, :)
       DO m = 1, mesh%mes_int
          IF (MINVAL(m_glob_to_loc(mesh%neighs_int(:, ms))) > 0)  THEN
             ms = ms + 1
@@ -2383,7 +2382,7 @@ CONTAINS
          END IF
       END DO
       !==End re-order neighs
-      write(*, *) '??????', mesh%neighs_int(1, mes_int_loc(1):mes_int_loc(2)), mesh_loc%neighs_int(1, :)
+      write(*, *) '??????', mesh_loc%neighs_int(1, :), mesh_loc%neighs_int(2, :)
       !==Re-order sides
       ALLOCATE(mesh_loc%sides_int(mesh_loc%mes_int))
       mesh_loc%sides_int = mesh%sides_int(mes_int_loc(1):mes_int_loc(2))
