@@ -1607,7 +1607,7 @@ CONTAINS
       DEALLOCATE(tabs)
       ! Create mes_int_loc
       nblmt_per_proc = 0
-      write(*,*) 'ok1', mesh_glob%neighs_int(1, :), mesh_glob%neighs_int(2, :), mesh_glob%mes_int
+      write(*, *) 'ok1', mesh_glob%neighs_int(1, :), mesh_glob%neighs_int(2, :), mesh_glob%mes_int
       DO ms = 1, mesh_glob%mes_int
          IF (MINVAL(ABS(list_dom - mesh_glob%i_d(mesh_glob%neighs_int(1, ms))))/=0) CYCLE
          n = parts(ms)
@@ -1652,11 +1652,11 @@ CONTAINS
       DO ms = 1, mesh%mes_int
          DO n = 1, 3
             IF (MINVAL(ABS(mesh%jjs_int(:, ms) - mesh%jj(n, mesh%neighs_int(1, ms)))) /= 0) EXIT ! n not on the interface
-            mesh%neighs_int(2, ms) = mesh%neigh(n, mesh%neighs_int(1, ms))
          END DO
+         mesh%neighs_int(2, ms) = mesh%neigh(n, mesh%neighs_int(1, ms))
       END DO
       ! End re-order jjs_int
-      write(*,*) 'ok3',  mesh%neighs_int(2, :)
+      write(*, *) 'ok3', mesh%neighs_int(2, :)
       !==We create the local mesh now
       mesh%edge_stab = .FALSE.
       ALLOCATE(mesh%jees(0), mesh%jecs(0))
@@ -2397,7 +2397,7 @@ CONTAINS
          END IF
       END DO
       !==End re-order neighs
-      write(*,*) '??????',  mesh%neighs_int(1,mes_int_loc(1):mes_int_loc(2)),  mesh_loc%neighs_int(1,:)
+      write(*, *) '??????', mesh%neighs_int(1, mes_int_loc(1):mes_int_loc(2)), mesh_loc%neighs_int(1, :)
       !==Re-order sides
       ALLOCATE(mesh_loc%sides_int(mesh_loc%mes_int))
       mesh_loc%sides_int = mesh%sides_int(mes_int_loc(1):mes_int_loc(2))
