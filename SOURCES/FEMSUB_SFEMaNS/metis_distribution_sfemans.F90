@@ -2387,7 +2387,8 @@ CONTAINS
 
       !==Re-order neighs_int
       ALLOCATE(mesh_loc%neighs_int(2, mesh_loc%mes_int))
-      mesh_loc%neighs_int = m_glob_to_loc(mesh%neighs_int(:, mes_int_loc(1):mes_int_loc(2)))
+      mesh_loc%neighs_int(1, :) = m_glob_to_loc(mesh%neighs_int(1, mes_int_loc(1):mes_int_loc(2)))
+      mesh_loc%neighs_int(2, :) = m_glob_to_loc(mesh%neighs_int(2, mes_int_loc(1):mes_int_loc(2)))
       DO m = 1, mesh_loc%mes_int
          IF (mesh_loc%neighs_int(2, m) > mesh_loc%neighs_int(1, m)) THEN
             mesh_loc%neighs_int(:, m) = (/mesh_loc%neighs_int(2, m), mesh_loc%neighs_int(1, m) /)
