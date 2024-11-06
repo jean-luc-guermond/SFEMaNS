@@ -131,6 +131,7 @@ CONTAINS
       nw = 3
       ms = 0
       DO ms1 = 1, mesh_master%mes_extra
+
          IF(MINVAL(ABS(list_inter - mesh_master%sides_extra(ms1))) /= 0) CYCLE !not on interface
 
          cell_g = mesh_master%neighs_extra(ms1)
@@ -145,6 +146,7 @@ CONTAINS
          ENDDO
          !==cell index of edge
          n1_ks = (/MODULO(k1, nw) + 1, MODULO(k1 + 1, nw) + 1/)
+         write(*,*) mesh_master%rrs_extra(:, n1_ks(1), ms1), mesh_master%rrs_extra(:, n1_ks(2), ms1)
 
          r_norm = SUM(ABS(mesh_master%rrs_extra(:, n1_ks(1), ms1) - mesh_master%rrs_extra(:, n1_ks(2), ms1)))
          epsilon = eps_ref * r_norm
