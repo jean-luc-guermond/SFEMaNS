@@ -2380,9 +2380,9 @@ CONTAINS
 
       ms = 0
       DO m = 1, mesh%mes_int
-         test = m_glob_to_loc(mesh%neighs_int(1, ms)) > 0
+         test = m_glob_to_loc(mesh%neighs_int(1, m)) > 0
          IF (mesh%neighs_int(2, ms) > 0) THEN
-            test = test .OR. m_glob_to_loc(mesh%neighs_int(2, ms)) > 0
+            test = test .OR. m_glob_to_loc(mesh%neighs_int(2, m)) > 0
          END IF
          IF (test)  THEN
             ms = ms + 1
