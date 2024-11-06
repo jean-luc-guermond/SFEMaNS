@@ -645,6 +645,13 @@ CONTAINS
          END DO
 
       END DO
+
+      DO ms = 1, mesh%mes_int
+         DO n = 1, 3
+            IF (MINVAL(ABS(mesh%jjs_int(:, ms) - mesh%jj(n, mesh%neighs_int(1, ms)))) /= 0) EXIT ! n not on the interface
+         END DO
+         mesh%neighs_int(2, ms) = mesh%neigh(n, mesh%neighs_int(1, ms))
+      END DO
       !===End reordring
       mesh%gauss%n_ws = SIZE(mesh%jjs, 1)
       mesh%gauss%n_w = SIZE(mesh%jj, 1)
