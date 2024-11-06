@@ -2398,7 +2398,7 @@ CONTAINS
          END IF
       END DO
       !==End re-order neighs
-      write(*, *) '??????', mesh%neighs_int(2, mes_int_loc(1):mes_int_loc(2)), mesh_loc%neighs_int(2, :)
+      write(*, *) '??????', mesh%neighs_int(1, mes_int_loc(1):mes_int_loc(2)), mesh_loc%neighs_int(1, :)
       !==Re-order sides
       ALLOCATE(mesh_loc%sides_int(mesh_loc%mes_int))
       mesh_loc%sides_int = mesh%sides_int(mes_int_loc(1):mes_int_loc(2))
