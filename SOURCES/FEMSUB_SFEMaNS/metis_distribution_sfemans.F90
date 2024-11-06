@@ -1614,7 +1614,7 @@ CONTAINS
 
       m = 0
       DO ms = 1, mesh_glob%mes_int
-         IF (MAXVAL(bat(mesh_glob%neighs_int(:, 1))) > 0) THEN
+         IF (MAXVAL(bat(mesh_glob%neighs_int(:, ms))) > 0) THEN
             m = m + 1
             mesh%neighs_int(1, m) = bat(mesh_glob%neighs_int(1, ms))
             mesh%neighs_int(2, m) = bat(mesh_glob%neighs_int(2, ms))
