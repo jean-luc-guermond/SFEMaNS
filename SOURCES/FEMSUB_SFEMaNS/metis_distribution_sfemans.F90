@@ -1656,6 +1656,7 @@ CONTAINS
          END DO
       END DO
       ! End re-order jjs_int
+      write(*,*) 'ok3',  mesh%neighs_int(2, :)
       !==We create the local mesh now
       mesh%edge_stab = .FALSE.
       ALLOCATE(mesh%jees(0), mesh%jecs(0))
@@ -2389,7 +2390,7 @@ CONTAINS
       !==Re-order neighs_int
       ALLOCATE(mesh_loc%neighs_int(2, mesh_loc%mes_int))
       mesh_loc%neighs_int(1, :) = m_glob_to_loc(mesh%neighs_int(1, mes_int_loc(1):mes_int_loc(2)))
-      mesh_loc%neighs_int(2, :) = -1
+      mesh_loc%neighs_int(2, :) = m_glob_to_loc(mesh%neighs_int(1, mes_int_loc(1):mes_int_loc(2)))
       DO m = 1, mesh_loc%mes_int
          IF (mesh_loc%neighs_int(2, m) > mesh_loc%neighs_int(1, m)) THEN
             mesh_loc%neighs_int(:, m) = (/mesh_loc%neighs_int(2, m), mesh_loc%neighs_int(1, m) /)
