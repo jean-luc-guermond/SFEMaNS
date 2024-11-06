@@ -1656,7 +1656,7 @@ CONTAINS
          mesh%neighs_int(2, ms) = mesh%neigh(n, mesh%neighs_int(1, ms))
       END DO
       ! End re-order jjs_int
-      write(*, *) 'ok3', mesh%neighs_int(2, :)
+      write(*, *) 'ok3', mesh%neighs_int(1, :), mesh%neighs_int(2, :)
       !==We create the local mesh now
       mesh%edge_stab = .FALSE.
       ALLOCATE(mesh%jees(0), mesh%jecs(0))
