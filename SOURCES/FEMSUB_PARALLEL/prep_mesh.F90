@@ -513,6 +513,7 @@ CONTAINS
       virgin_ms = .TRUE.
       nnouv = 0
       msnouv = 0
+      mes_int = 0
       DO dom = 1, SIZE(list_dom)
          !Loop on me and get nouv_el and nouv_nd right
          DO m = 1, me
@@ -599,7 +600,6 @@ CONTAINS
             END IF
          END DO
 
-         mes_int = 0
          !Loop again on mes and update
          DO ms = 1, mes
 
