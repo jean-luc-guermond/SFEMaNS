@@ -2391,13 +2391,14 @@ CONTAINS
       ALLOCATE(mesh_loc%neighs_int(2, mesh_loc%mes_int))
       mesh_loc%neighs_int(1, :) = m_glob_to_loc(mesh%neighs_int(1, mes_int_loc(1):mes_int_loc(2)))
       mesh_loc%neighs_int(2, :) = m_glob_to_loc(mesh%neighs_int(2, mes_int_loc(1):mes_int_loc(2)))
+            write(*, *) 'ok4', mesh%neighs_int(2, mes_int_loc(1):mes_int_loc(2)), mesh_loc%neighs_int(2, :)
       DO m = 1, mesh_loc%mes_int
          IF (mesh_loc%neighs_int(2, m) > mesh_loc%neighs_int(1, m)) THEN
             mesh_loc%neighs_int(:, m) = (/mesh_loc%neighs_int(2, m), mesh_loc%neighs_int(1, m) /)
          END IF
       END DO
       !==End re-order neighs
-      write(*, *) '??????', mesh%neighs_int(1, mes_int_loc(1):mes_int_loc(2)), mesh_loc%neighs_int(1, :)
+      write(*, *) '??????', mesh%neighs_int(2, mes_int_loc(1):mes_int_loc(2)), mesh_loc%neighs_int(2, :)
       !==Re-order sides
       ALLOCATE(mesh_loc%sides_int(mesh_loc%mes_int))
       mesh_loc%sides_int = mesh%sides_int(mes_int_loc(1):mes_int_loc(2))
