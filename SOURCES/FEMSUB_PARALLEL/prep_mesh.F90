@@ -2361,7 +2361,7 @@ CONTAINS
       mesh%np = mesh_p1%np + mesh_p1%medge + mesh_p1%medges
       mesh%medge = 2 * mesh_p1%medge + 3 * mesh_p1%me
       mesh%medges = 2 * mesh_p1%medges
-
+      write(*,*) 'mes_int', mes_int, mesh%mes_int
       ALLOCATE(mesh%jj(nw, mesh%me)) !--->done
       ALLOCATE(mesh%jjs(nws, mesh%mes))  !--->done
       ALLOCATE(mesh%rr(kd, mesh%np)) !--->done
