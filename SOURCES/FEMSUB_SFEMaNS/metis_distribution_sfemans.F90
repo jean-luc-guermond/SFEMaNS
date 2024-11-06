@@ -1602,7 +1602,7 @@ CONTAINS
       mesh%mes_int = 0
       ! Create mes_int_loc
       DO ms = 1, mesh_glob%mes_int
-         IF (MAXVAL(bat(mesh_glob%neighs_int(:, 1)) > 0)) THEN
+         IF (MAXVAL(bat(mesh_glob%neighs_int(:, 1))) > 0) THEN
             mesh%mes_int = mesh%mes_int + 1
          END IF
       END DO
@@ -1614,7 +1614,7 @@ CONTAINS
 
       m = 0
       DO ms = 1, mesh_glob%mes_int
-         IF (MAXVAL(bat(mesh_glob%neighs_int(:, 1)) > 0)) THEN
+         IF (MAXVAL(bat(mesh_glob%neighs_int(:, 1))) > 0) THEN
             m = m + 1
             mesh%neighs_int(1, m) = bat(mesh_glob%neighs_int(1, m))
             mesh%neighs_int(2, m) = bat(mesh_glob%neighs_int(2, m))
