@@ -617,13 +617,11 @@ CONTAINS
             END IF
             !End test if ms touches the domain of interest
             IF (stat(ms) == 4) THEN
-               IF (virgin_ms(ms)) THEN
-                  mes_int = mes_int + 1
-                  mesh%jjs_int(:, mes_int) = nouv_nd(jjs_lect(:, ms))
-                  mesh%neighs_int(1, mes_int) = nouv_el(neighs_lect(ms))
-                  mesh%sides_int(mes_int) = sides_lect(ms)
-                  virgin_ms(ms) = .FALSE.
-               END IF
+               mes_int = mes_int + 1
+               mesh%jjs_int(:, mes_int) = nouv_nd(jjs_lect(:, ms))
+               mesh%neighs_int(1, mes_int) = nouv_el(neighs_lect(ms))
+               mesh%sides_int(mes_int) = sides_lect(ms)
+               virgin_ms(ms) = .FALSE.
             ELSE
                mesh%jjs(:, nouv_els(ms)) = nouv_nd(jjs_lect(:, ms))
                mesh%neighs(nouv_els(ms)) = nouv_el(neighs_lect(ms))
@@ -652,7 +650,7 @@ CONTAINS
       DEALLOCATE(jjs_lect, neighs_lect, sides_lect)
       DEALLOCATE(rr_lect, virgin_nd, virgin_ms, stat)
       DEALLOCATE(nouv_nd, nouv_el, nouv_els)
-      write(*, *) 'ok0', mesh%neighs_int(1, :), mesh%neighs_int(2, :), mes_int
+      write(*, *) 'ok0', mesh%neighs_int(1, :), mesh%neighs_int(2, :), mes_int, mesh%mes_int
       !===Prepare actual mesh (works in 2D only)
       IF (kd==3) THEN
          WRITE(*, *) 'k_d==3 not programmed yet'
