@@ -2371,6 +2371,9 @@ CONTAINS
 
       !==Re-order neighs_int
       ALLOCATE(mesh_loc%neighs_int(2, mesh_loc%mes_int))
+      ALLOCATE(mesh_loc%sides_int(mesh_loc%mes_int))
+      ALLOCATE(mesh_loc%jjs_int(nws, mesh_loc%mes_int))
+
       ms = 0
       DO m = 1, mesh%mes_int
          IF (MINVAL(m_glob_to_loc(mesh%neighs_int(:, ms))) > 0)  THEN
@@ -2379,21 +2382,16 @@ CONTAINS
             IF (mesh_loc%neighs_int(2, ms) > mesh_loc%neighs_int(1, ms)) THEN
                mesh_loc%neighs_int(:, ms) = (/mesh_loc%neighs_int(2, ms), mesh_loc%neighs_int(1, ms) /)
             END IF
+
+            mesh_loc%sides_int(ms) = mesh%sides_int(m)
+            DO ns = 1, nws
+               mesh_loc%jjs_int(ns, ms) = glob_to_loc(mesh%jjs_int(ns, m)
+            END DO
          END IF
       END DO
       !==End re-order neighs
       write(*, *) '??????', mesh_loc%neighs_int(1, :), mesh_loc%neighs_int(2, :)
-      !==Re-order sides
-      ALLOCATE(mesh_loc%sides_int(mesh_loc%mes_int))
-      mesh_loc%sides_int = mesh%sides_int(mes_int_loc(1):mes_int_loc(2))
-      !==End re-order sides
 
-      !==Re-order jjs
-      ALLOCATE(mesh_loc%jjs_int(nws, mesh_loc%mes_int))
-      DO ns = 1, nws
-         mesh_loc%jjs_int(ns, :) = glob_to_loc(mesh%jjs_int(ns, mes_int_loc(1):mes_int_loc(2)))
-      END DO
-      !==End re-order jjs
 
       !==Re-order jce
       ALLOCATE(mesh_loc%jce(SIZE(mesh%jce, 1), mesh_loc%me))
