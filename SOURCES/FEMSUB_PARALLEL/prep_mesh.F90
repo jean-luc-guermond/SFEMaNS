@@ -507,6 +507,7 @@ CONTAINS
       ALLOCATE(mesh%jjs(nws, mesh%mes), mesh%neighs(mesh%mes), mesh%sides(mesh%mes))
       ALLOCATE(mesh%jjs_int(nws, mesh%mes_int), mesh%neighs_int(2, mesh%mes_int), mesh%sides_int(mesh%mes_int))
       ALLOCATE(mesh%rr(kd, mesh%np))
+      mesh%neighs_int = -1
 
       virgin_nd = .TRUE.
       virgin_ms = .TRUE.
@@ -599,7 +600,6 @@ CONTAINS
          END DO
 
          mes_int = 0
-         mesh%neighs_int = -1
          !Loop again on mes and update
          DO ms = 1, mes
 
@@ -649,7 +649,7 @@ CONTAINS
       DEALLOCATE(jjs_lect, neighs_lect, sides_lect)
       DEALLOCATE(rr_lect, virgin_nd, virgin_ms, stat)
       DEALLOCATE(nouv_nd, nouv_el, nouv_els)
-      write(*,*) 'ok0', mesh%neighs_int(1, :), mesh%neighs_int(2, :), mes_int
+      write(*, *) 'ok0', mesh%neighs_int(1, :), mesh%neighs_int(2, :), mes_int
       !===Prepare actual mesh (works in 2D only)
       IF (kd==3) THEN
          WRITE(*, *) 'k_d==3 not programmed yet'
@@ -2985,7 +2985,7 @@ CONTAINS
       mesh2%jjs_int = mesh1%jjs_int
       ALLOCATE(mesh2%sides_int(SIZE(mesh1%sides_int)))
       mesh2%sides_int = mesh1%sides_int
-      ALLOCATE(mesh2%neighs_int(2,SIZE(mesh1%neighs_int, 2)))
+      ALLOCATE(mesh2%neighs_int(2, SIZE(mesh1%neighs_int, 2)))
       mesh2%neighs_int = mesh1%neighs_int
 
       ALLOCATE(mesh2%sides_extra(SIZE(mesh1%sides_extra)))
