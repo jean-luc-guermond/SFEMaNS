@@ -1415,7 +1415,7 @@ CONTAINS
       INTEGER, DIMENSION(mesh_glob%medge) :: old_edge_to_new
       INTEGER, DIMENSION(mesh_glob%mes) :: parts
       INTEGER, DIMENSION(nb_proc) :: nblmt_per_proc, start, displ
-      INTEGER, DIMENSION(2) :: np_loc, me_loc, mes_loc, mes_int_loc
+      INTEGER, DIMENSION(2) :: np_loc, me_loc, mes_loc
       INTEGER, DIMENSION(:), ALLOCATABLE :: list_m, tab, tabs
       INTEGER :: nb_proc, ms, i, index, m, mop, n, j
       PetscErrorCode :: ierr
@@ -1604,51 +1604,25 @@ CONTAINS
       END DO
       ! End re-order jjs
 
-      DEALLOCATE(tabs)
       ! Create mes_int_loc
-      nblmt_per_proc = 0
-      write(*, *) 'ok1', mesh_glob%neighs_int(1, :), mesh_glob%neighs_int(2, :), mesh_glob%mes_int
-      DO ms = 1, mesh_glob%mes_int
-         IF (MINVAL(ABS(list_dom - mesh_glob%i_d(mesh_glob%neighs_int(1, ms)))) /=0 .OR. &
-              MINVAL(ABS(list_dom - mesh_glob%i_d(mesh_glob%neighs_int(2, ms))))/=0) CYCLE
-         n = parts(ms)
-         nblmt_per_proc(n) = nblmt_per_proc(n) + 1
-      END DO
-      start(1) = 0
-      DO n = 2, nb_proc
-         start(n) = start(n - 1) + nblmt_per_proc(n - 1)
-      END DO
-      mes_int_loc(1) = start(rank + 1) + 1
-      mes_int_loc(2) = start(rank + 1) + nblmt_per_proc(rank + 1)
-      mesh%mes_int = SUM(nblmt_per_proc)
-      ! End create mes_loc
-
-      ALLOCATE(tabs(mesh%mes_int))
-      ! Create tabs and sbat
-      DO ms = 1, mesh_glob%mes_int
-         IF (MINVAL(ABS(list_dom - mesh_glob%i_d(mesh_glob%neighs_int(1, ms))))/=0) CYCLE
-         start(parts(ms)) = start(parts(ms)) + 1
-         tabs(start(parts(ms))) = ms
-      END DO
-      ! End create tabs and sbat
 
       ! Create neighs_int
       mesh%mes_int = mesh_glob%mes_int
       ALLOCATE(mesh%neighs_int(2, mesh%mes_int))
-      mesh%neighs_int = -1
-      mesh%neighs_int(1, :) = bat(mesh_glob%neighs_int(1, tabs))
+      mesh%neighs_int(1, :) = bat(mesh_glob%neighs_int(1, :))
+      mesh%neighs_int(2, :) = bat(mesh_glob%neighs_int(2, :))
       ! End create neighs_int
 
       ! Re-order sides_int
       ALLOCATE(mesh%sides_int(mesh%mes_int))
-      mesh%sides_int = mesh_glob%sides_int(tabs)
+      mesh%sides_int = mesh_glob%sides_int(:)
       ! End re-order sides_int
 
       ! Re-order jjs_int
       ALLOCATE(mesh%jjs_int(SIZE(mesh_glob%jjs, 1), mesh%mes_int))
 
       DO n = 1, SIZE(mesh%jjs, 1)
-         mesh%jjs_int(n, :) = i_old_to_new(mesh_glob%jjs_int(n, tabs))
+         mesh%jjs_int(n, :) = i_old_to_new(mesh_glob%jjs_int(n, :))
       END DO
       DO ms = 1, mesh%mes_int
          DO n = 1, 3
@@ -1688,7 +1662,7 @@ CONTAINS
       mesh%domcell = (/ mesh%me /)
       mesh%disedge = (/ 1, mesh%medge + 1 /)
       mesh%domedge = (/ mesh%medge /)
-      CALL create_local_mesh_with_extra_layer(communicator, mesh, mesh_loc, me_loc, mes_loc, mes_int_loc, np_loc)
+      CALL create_local_mesh_with_extra_layer(communicator, mesh, mesh_loc, me_loc, mes_loc, np_loc)
 
       IF (PRESENT(opt_mesh_glob)) THEN
          CALL copy_mesh(mesh, opt_mesh_glob)
@@ -2119,13 +2093,13 @@ CONTAINS
 
    END SUBROUTINE create_local_mesh
 
-   SUBROUTINE create_local_mesh_with_extra_layer(communicator, mesh, mesh_loc, me_loc, mes_loc, mes_int_loc, np_loc)
+   SUBROUTINE create_local_mesh_with_extra_layer(communicator, mesh, mesh_loc, me_loc, mes_loc, np_loc)
       USE def_type_mesh
       USE my_util
       USE sub_plot
       IMPLICIT NONE
       TYPE(mesh_type) :: mesh, mesh_loc
-      INTEGER, DIMENSION(2), INTENT(IN) :: me_loc, mes_loc, np_loc, mes_int_loc
+      INTEGER, DIMENSION(2), INTENT(IN) :: me_loc, mes_loc, np_loc
       INTEGER, DIMENSION(2) :: is1, is2
       INTEGER, DIMENSION(mesh%me) :: m_glob_to_loc, m_loc_to_glob
       INTEGER, DIMENSION(mesh%np) :: glob_to_loc, loc_to_glob
@@ -2222,7 +2196,6 @@ CONTAINS
       dom_np = np_loc(2) - np_loc(1) + 1
       mesh_loc%me = dom_me
       mesh_loc%mes = dom_mes
-      mesh_loc%mes_int = mes_int_loc(2) - mes_int_loc(1) + 1
       mesh_loc%dom_me = dom_me
       mesh_loc%dom_np = dom_np
       mesh_loc%dom_mes = dom_mes
@@ -2387,6 +2360,14 @@ CONTAINS
          mesh_loc%jjs(ns, :) = glob_to_loc(mesh%jjs(ns, mes_loc(1):mes_loc(2)))
       END DO
       !==End re-order jjs
+
+      mesh_loc%mes_int = 0
+      !===Count number of internal edges
+      DO ms = 1, mesh%mes_int
+         IF (MINVAL(m_glob_to_loc(mesh%neighs_int(:, ms))) > 0)  THEN
+            mesh_loc%mes_int = mesh_loc%mes_int + 1
+         END IF
+      END DO
 
       !==Re-order neighs_int
       ALLOCATE(mesh_loc%neighs_int(2, mesh_loc%mes_int))
