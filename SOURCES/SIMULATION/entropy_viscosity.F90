@@ -8,13 +8,13 @@ CONTAINS
        un, un_m1, un_m2, pn_m1, rotv_v_m1, visco_entro_grad_u, density, tempn, concn)
     USE def_type_mesh
     USE fem_M_axi
-    USE solve_petsc
+    USE solver_petsc
     USE prep_periodic
-    USE rhs_gauss_computing
-    USE rhs_para_assembling
-    USE Dir_nodes_petsc
+    USE computing_rhs_gauss
+    USE assembling_rhs
+    USE dir_nodes_petsc
     USE st_matrix
-    USE sft_parallele
+    USE fft_parallele
     USE tn_axi
     USE input_data
     USE my_util
@@ -202,13 +202,13 @@ CONTAINS
        rotb_b_m1, visco_dyn_m1, density_m2, density_m1, density, tempn, concn, visc_entro_real, visc_entro_level_real)
     USE def_type_mesh
     USE fem_M_axi
-    USE solve_petsc
+    USE solver_petsc
     USE prep_periodic
-    USE rhs_gauss_computing
-    USE rhs_para_assembling
-    USE Dir_nodes_petsc
+    USE computing_rhs_gauss
+    USE assembling_rhs
+    USE dir_nodes_petsc
     USE st_matrix
-    USE sft_parallele
+    USE fft_parallele
     USE tn_axi
     USE input_data
     USE my_util
@@ -490,13 +490,13 @@ CONTAINS
        rotb_b_m1, density, tempn, concn, visc_entro_real)
     USE def_type_mesh
     USE fem_M_axi
-    USE solve_petsc
+    USE solver_petsc
     USE prep_periodic
-    USE rhs_gauss_computing
-    USE rhs_para_assembling
-    USE Dir_nodes_petsc
+    USE computing_rhs_gauss
+    USE assembling_rhs
+    USE dir_nodes_petsc
     USE st_matrix
-    USE sft_parallele
+    USE fft_parallele
     USE tn_axi
     USE input_data
     USE my_util
@@ -675,7 +675,7 @@ CONTAINS
 
   SUBROUTINE smb_explicit_grad_vel_LES(mesh, list_mode, vel, V_out)
     USE associate_gauss
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE boundary
     USE input_data
@@ -750,7 +750,7 @@ CONTAINS
 
   SUBROUTINE smb_explicit_strain_rate_tensor(mesh, list_mode, vel, V_out)
     USE associate_gauss
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE boundary
     USE input_data
@@ -844,7 +844,7 @@ CONTAINS
 
   SUBROUTINE smb_explicit_strain_rate_tensor_bdy(mesh, list_mode, vel, V_out)
     USE associate_gauss
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE boundary
     USE input_data
@@ -958,7 +958,7 @@ CONTAINS
 
   SUBROUTINE smb_explicit_strain_rate_tensor_bdy_mom(communicator, mesh, list_mode, visc_dyn, vel, V_out)
     USE associate_gauss
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE boundary
     USE input_data
@@ -1095,7 +1095,7 @@ CONTAINS
 
   SUBROUTINE smb_explicit_tensor_bdy(mesh, list_mode, tensor, V_out)
     USE associate_gauss
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE boundary
     USE input_data
@@ -1152,7 +1152,7 @@ CONTAINS
 
   SUBROUTINE compute_res_mass_gauss(mesh, list_mode, density_m2, density, momentum_m1, c_out)
     USE associate_gauss
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE boundary
     USE input_data

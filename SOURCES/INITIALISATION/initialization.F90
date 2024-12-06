@@ -626,19 +626,19 @@ CONTAINS
       USE boundary
       USE sub_plot
       USE def_type_mesh
-      USE create_comm
+      USE create_communicators
       USE mesh_metis_distribution
       !===JLG July 20, 2019, p3 mesh
       USE gauss_points_2d
       !===JLG July 20, 2019, p3 mesh
       USE st_matrix
-      USE st_csr_mhd
+      USE st_matrix_mhd
       USE matrix_type
       USE symmetric_field
       USE tn_axi
       USE fourier_to_real_for_vtu
       USE subroutine_mass
-      USE sft_parallele
+      USE fft_parallele
       USE update_taylor_navier_stokes
 #include "petsc/finclude/petsc.h"
       USE petsc

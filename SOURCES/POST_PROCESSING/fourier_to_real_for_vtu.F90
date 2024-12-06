@@ -276,8 +276,8 @@ CONTAINS
   SUBROUTINE vtu_3d(comm_one_d,field, name_of_mesh, header, name_of_field, what, opt_it, opt_grad_curl, opt_2D, opt_mesh_in)
     USE dyn_line
     USE def_type_mesh
-    USE vtk_viz
-    USE sft_parallele
+    USE plot_vtk
+    USE fft_parallele
     USE input_data
     USE my_util
     USE tn_axi
@@ -398,8 +398,8 @@ CONTAINS
   SUBROUTINE vtu_3d_base(field_in, name_of_mesh, header, name_of_field, what, opt_it)
     USE dyn_line
     USE def_type_mesh
-    USE vtk_viz
-    USE sft_parallele
+    USE plot_vtk
+    USE fft_parallele
     USE input_data
     USE my_util
     IMPLICIT NONE
@@ -603,8 +603,8 @@ CONTAINS
        header, name_of_field, what, list_mode, opt_it)
     USE dyn_line
     USE def_type_mesh
-    USE vtk_viz
-    USE sft_parallele
+    USE plot_vtk
+    USE fft_parallele
     USE input_data
     USE my_util
     IMPLICIT NONE
@@ -837,7 +837,7 @@ CONTAINS
 
   SUBROUTINE divide_mesh(communicator, mesh, local_mesh, loc_to_glob)
     USE def_type_mesh
-    USE vtk_viz
+    USE plot_vtk
     IMPLICIT NONE
     TYPE(mesh_type),              INTENT(IN)  :: mesh
     TYPE(mesh_type),              INTENT(OUT) :: local_mesh
@@ -930,7 +930,7 @@ CONTAINS
     USE my_util
     USE fem_M_axi
     USE st_matrix
-    USE solve_petsc
+    USE solver_petsc
     IMPLICIT NONE
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)    :: field_in
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT) :: field_out
@@ -1025,7 +1025,7 @@ CONTAINS
     USE my_util
     USE fem_M_axi
     USE st_matrix
-    USE solve_petsc
+    USE solver_petsc
     IMPLICIT NONE
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)    :: field_in
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT) :: field_out
@@ -1126,7 +1126,7 @@ CONTAINS
     USE my_util
     USE fem_M_axi
     USE st_matrix
-    USE solve_petsc
+    USE solver_petsc
     IMPLICIT NONE
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)    :: field_in
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT) :: field_out
@@ -1496,7 +1496,7 @@ CONTAINS
   SUBROUTINE make_vtu_file_2D(communicator, mesh_in, header, field_in, field_name, what, opt_it)
     USE def_type_mesh
     USE my_util
-    USE vtk_viz
+    USE plot_vtk
     IMPLICIT NONE
     TYPE(mesh_type),       INTENT(IN), TARGET :: mesh_in
     TYPE(mesh_type),               POINTER    :: mesh

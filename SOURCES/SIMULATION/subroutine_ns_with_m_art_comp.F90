@@ -18,19 +18,19 @@ CONTAINS
     USE fem_M_axi
     USE fem_rhs_axi
     USE fem_tn_axi
-    USE Dir_nodes_petsc
+    USE dir_nodes_petsc
     USE prep_periodic
     USE st_matrix
-    USE solve_petsc
+    USE solver_petsc
     USE dyn_line
     USE boundary
     USE chaine_caractere
     USE sub_plot
     USE st_matrix
     USE input_data
-    USE sft_parallele
-    USE rhs_gauss_computing
-    USE rhs_para_assembling
+    USE fft_parallele
+    USE computing_rhs_gauss
+    USE assembling_rhs
     USE tn_axi
     USE verbose
     USE entropy_viscosity
@@ -665,7 +665,7 @@ CONTAINS
 
   SUBROUTINE smb_CurlH_cross_B_gauss_sft_par(communicator,mesh,list_mode,V_in,W_in,V_out)
     !=================================
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE input_data
     USE def_type_mesh
@@ -753,7 +753,7 @@ CONTAINS
   SUBROUTINE smb_explicit_diffu_correction(communicator, mesh, list_mode, nb_procs, visc_dyn, stab_mom, &
        vel, mom, V_out, V2_out)
     USE associate_gauss
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE boundary
     USE input_data
@@ -934,7 +934,7 @@ CONTAINS
 
   SUBROUTINE smb_explicit_div_correction(communicator, mesh, list_mode, stab, vel, mom, c_out)
     USE associate_gauss
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE boundary
     USE input_data
@@ -1005,7 +1005,7 @@ CONTAINS
 
 !!$  SUBROUTINE smb_explicit_div_correction_new(communicator, mesh, list_mode, nb_procs, visc_dyn, stab, vel, mom, c_out)
 !!$    USE associate_gauss
-!!$    USE sft_parallele
+!!$    USE fft_parallele
 !!$    USE chaine_caractere
 !!$    USE boundary
 !!$    USE input_data
@@ -1091,7 +1091,7 @@ CONTAINS
   SUBROUTINE smb_compute_tensor_gauss(communicator, mesh, list_mode, vel, mom, nb_procs, &
        bloc_size, m_max_pad, tensor, tensor_gauss)
     USE associate_gauss
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE boundary
     USE input_data

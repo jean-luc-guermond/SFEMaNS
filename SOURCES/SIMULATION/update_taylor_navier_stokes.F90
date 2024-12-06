@@ -136,14 +136,14 @@ CONTAINS
     USE def_type_mesh
     USE fem_M_axi
     USE fem_rhs_axi
-    USE Dir_nodes_petsc
+    USE dir_nodes_petsc
     USE prep_periodic
     USE st_matrix
-    USE solve_petsc
+    USE solver_petsc
     USE boundary
     USE st_matrix
     USE input_data
-    USE rhs_para_assembling
+    USE assembling_rhs
     USE tn_axi
     USE verbose
     USE my_util
@@ -721,14 +721,14 @@ CONTAINS
     USE def_type_mesh
     USE fem_M_axi
     USE fem_rhs_axi
-    USE Dir_nodes_petsc
+    USE dir_nodes_petsc
     USE prep_periodic
     USE st_matrix
-    USE solve_petsc
+    USE solver_petsc
     USE boundary
     USE st_matrix
     USE input_data
-    USE rhs_para_assembling
+    USE assembling_rhs
     USE tn_axi
     USE verbose
     USE my_util
@@ -1489,7 +1489,7 @@ CONTAINS
   !===PRECESSION 28/07/09
   SUBROUTINE smb_cross_prod_gauss_sft_par(communicator,mesh,list_mode,V_in,V_out,precession_in)
     !=================================
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE input_data
     USE def_type_mesh
@@ -1648,7 +1648,7 @@ CONTAINS
     USE my_util
     USE input_data
     USE fem_rhs_axi
-    USE sft_parallele
+    USE fft_parallele
     USE boundary
     IMPLICIT NONE
     TYPE(mesh_type)                                        :: vv_mesh, pp_mesh

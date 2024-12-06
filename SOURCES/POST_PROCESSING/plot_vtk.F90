@@ -1,4 +1,4 @@
-MODULE vtk_viz
+MODULE plot_vtk
 #include "petsc/finclude/petsc.h"
   USE petsc
   PUBLIC ::  create_pvd_file, check_list,&
@@ -1197,4 +1197,4 @@ CONTAINS
 !!$    END IF
 !!$  END FUNCTION nb_digit
 !!$
-END MODULE vtk_viz
+END MODULE plot_vtk

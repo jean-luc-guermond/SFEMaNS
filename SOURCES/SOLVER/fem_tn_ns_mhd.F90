@@ -1,7 +1,7 @@
 !
 !Authors: Jean-Luc Guermond Copyrights 2005
 !
-MODULE fem_tn_NS_MHD
+MODULE fem_tn_ns_mhd
   IMPLICIT NONE
 
 CONTAINS
@@ -393,7 +393,7 @@ CONTAINS
 
   SUBROUTINE  norme_interface(H_mesh,phi_mesh,INTERFACE,mu_H_field,mu_phi,H,phi,mode,x)
     USE def_type_mesh
-    USE Dir_nodes
+    USE dir_nodes
     USE associate_gauss
 
     IMPLICIT NONE
@@ -540,7 +540,7 @@ CONTAINS
 
   SUBROUTINE  norme_interface_H_mu(H_mesh,INTERFACE,mu_H_field,H,x)
     USE def_type_mesh
-    USE Dir_nodes
+    USE dir_nodes
     USE associate_gauss
 
     IMPLICIT NONE
@@ -616,4 +616,4 @@ CONTAINS
 
   END SUBROUTINE  norme_interface_H_mu
 
-END MODULE fem_tn_NS_MHD
+END MODULE fem_tn_ns_mhd

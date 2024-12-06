@@ -15,7 +15,7 @@ CONTAINS
     USE my_util
     USE tn_axi
     USE subroutine_ns_with_u
-    USE sft_parallele
+    USE fft_parallele
     USE sub_plot
 #include "petsc/finclude/petsc.h"
     USE petsc
@@ -135,7 +135,7 @@ CONTAINS
     USE my_util
     USE tn_axi
     USE subroutine_ns_with_u
-    USE sft_parallele
+    USE fft_parallele
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
@@ -828,7 +828,7 @@ CONTAINS
     USE my_util
     USE tn_axi
     USE subroutine_ns_with_u
-    USE sft_parallele
+    USE fft_parallele
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE

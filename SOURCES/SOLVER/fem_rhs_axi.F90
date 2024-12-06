@@ -366,7 +366,7 @@ CONTAINS
     USE chaine_caractere
     USE my_util
     USE input_data
-    USE rhs_para_assembling
+    USE assembling_rhs
     !USE sub_plot
     IMPLICIT NONE
     TYPE(petsc_csr_LA)                                     :: vv_3_LA

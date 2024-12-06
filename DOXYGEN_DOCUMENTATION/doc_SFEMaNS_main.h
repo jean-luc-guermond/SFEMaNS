@@ -369,7 +369,7 @@ We give a description of the subroutine <tt>my_post_processing</tt> of the templ
     USE chaine_caractere
     USE tn_axi
     USE boundary
-    USE sft_parallele
+    USE fft_parallele
     USE verbose
 \endcode
 <li>The declaration of local variables is done as follows.

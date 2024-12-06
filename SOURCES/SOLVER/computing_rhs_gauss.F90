@@ -1,4 +1,4 @@
-MODULE rhs_gauss_computing
+MODULE computing_rhs_gauss
   PUBLIC:: rhs_ns_gauss_3x3, rhs_residual_ns_gauss_3x3, rhs_residual_ns_gauss_3x3_mom,&
        rhs_ns_gauss_3x3_art_comp_mom
   PRIVATE
@@ -12,7 +12,7 @@ CONTAINS
     USE my_util
     USE input_data
     USE fem_rhs_axi
-    USE sft_parallele
+    USE fft_parallele
     USE boundary
     IMPLICIT NONE
     TYPE(mesh_type)                                        :: vv_mesh, pp_mesh
@@ -153,7 +153,7 @@ CONTAINS
     USE my_util
     USE input_data
     USE fem_rhs_axi
-    USE sft_parallele
+    USE fft_parallele
     USE boundary
     IMPLICIT NONE
     TYPE(mesh_type)                                        :: vv_mesh, pp_mesh
@@ -256,7 +256,7 @@ CONTAINS
     USE my_util
     USE input_data
     USE fem_rhs_axi
-    USE sft_parallele
+    USE fft_parallele
     USE boundary
     IMPLICIT NONE
     TYPE(mesh_type)                                        :: vv_mesh, pp_mesh
@@ -342,7 +342,7 @@ CONTAINS
     USE my_util
     USE input_data
     USE fem_rhs_axi
-    USE sft_parallele
+    USE fft_parallele
     USE boundary
     IMPLICIT NONE
     TYPE(mesh_type)                                        :: vv_mesh, pp_mesh
@@ -458,4 +458,4 @@ CONTAINS
 !!$    END IF
 !!$
 !!$  END SUBROUTINE inject
-END MODULE rhs_gauss_computing
+END MODULE computing_rhs_gauss

@@ -8,7 +8,7 @@ CONTAINS
       USE chaine_caractere
       USE def_type_mesh
       USE my_util
-      USE create_comm
+      USE create_communicators
       USE interpolation_tools
       USE mesh_metis_distribution
       USE load_mesh

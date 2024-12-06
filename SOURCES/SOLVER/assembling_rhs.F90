@@ -1,4 +1,4 @@
-MODULE rhs_para_assembling
+MODULE assembling_rhs
 
 CONTAINS
 
@@ -356,4 +356,4 @@ CONTAINS
   END SUBROUTINE rhs_3x3_art_comp
 
 
-END MODULE rhs_para_assembling
+END MODULE assembling_rhs

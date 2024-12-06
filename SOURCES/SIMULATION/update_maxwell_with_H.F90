@@ -23,14 +23,14 @@ CONTAINS
        H_phi_per, LA_H, LA_pmag, LA_phi, LA_mhd, one_over_sigma_ns_in, jj_v_to_H)
     USE def_type_mesh
     USE chaine_caractere
-    USE solve_petsc
+    USE solver_petsc
     USE boundary
     USE tn_axi
-    USE Dir_nodes_petsc
+    USE dir_nodes_petsc
     USE st_matrix
-    USE Dir_nodes
+    USE dir_nodes
     USE my_util
-    USE sft_parallele
+    USE fft_parallele
     USE sub_plot
     USE prep_periodic
     USE input_data
@@ -803,7 +803,7 @@ CONTAINS
        mode, mu_H_field, mu_phi, c_mass, stab, R_fourier, index_fourier, &
        LA_H, LA_pmag, LA_phi, H_p_phi_mat1, H_p_phi_mat2, sigma_nj_m, sigma)
     USE def_type_mesh
-    USE Dir_nodes
+    USE dir_nodes
     USE associate_gauss
     USE boundary
     USE input_data ! MODIFICATION: to call sigma_min and mu_min
@@ -2482,7 +2482,7 @@ CONTAINS
   SUBROUTINE mat_dirichlet_maxwell(H_mesh, jj_v_to_H, Dirichlet_bdy_H_sides, &
        mode, stab, LA_H, H_p_phi_mat1, H_p_phi_mat2, sigma_np, sigma)
     USE def_type_mesh
-    USE Dir_nodes
+    USE dir_nodes
     USE associate_gauss
     USE boundary
     USE my_util
@@ -4649,7 +4649,7 @@ CONTAINS
   SUBROUTINE smb_sigma_prod_curl(communicator, mesh, jj_v_to_H, list_mode, H_in, one_over_sigma_in, sigma_nj_m,&
        sigma, V_out)
     !=================================
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE input_data
     USE def_type_mesh
@@ -4753,7 +4753,7 @@ CONTAINS
   SUBROUTINE smb_sigma_prod_curl_bdy(communicator, mesh, jj_v_to_H, Dirichlet_bdy_H_sides, list_mode, &
        H_in, one_over_sigma_in, sigma_np, sigma, V_out)
     !=================================
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE input_data
     USE def_type_mesh
@@ -4869,7 +4869,7 @@ CONTAINS
   SUBROUTINE smb_sigma_prod_curl_inter_mu(communicator, mesh, jj_v_to_H, interface_H_mu, list_mode, &
        H_in, one_over_sigma_in, sigma_np, sigma, V_out)
     !=================================
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE input_data
     USE def_type_mesh
@@ -5051,7 +5051,7 @@ CONTAINS
 
   SUBROUTINE smb_current_over_sigma(communicator, mesh, jj_v_to_H, list_mode, B_in, &
        mu_H_field, mu_phi, one_over_sigma_tot, time, sigma, J_over_sigma_gauss)
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE input_data
     USE def_type_mesh
@@ -5142,7 +5142,7 @@ CONTAINS
 
   SUBROUTINE smb_current_over_sigma_bdy(communicator, mesh, jj_v_to_H, Dirichlet_bdy_H_sides, list_mode, B_in, &
        mu_H_field, mu_phi, one_over_sigma_tot, time, sigma, J_over_sigma_gauss)
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE input_data
     USE def_type_mesh
@@ -5238,7 +5238,7 @@ CONTAINS
 
   SUBROUTINE smb_current_over_sigma_inter_mu(communicator, mesh, jj_v_to_H, interface_H_mu, list_mode, B_in, &
        mu_H_field, mu_phi, one_over_sigma_tot, time, sigma, J_over_sigma_gauss)
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE input_data
     USE def_type_mesh
@@ -5394,7 +5394,7 @@ CONTAINS
 
   SUBROUTINE smb_sigma_Neumann(communicator, mesh, Neumann_bdy_H_sides, list_mode, &
        one_over_sigma_tot, sigma_tot_gauss_Neumann)
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE input_data
     USE def_type_mesh

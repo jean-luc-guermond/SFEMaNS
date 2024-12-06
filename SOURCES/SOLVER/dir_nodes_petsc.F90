@@ -1,7 +1,7 @@
 !
 !Authors: Jean-Luc Guermond, Franky Luddens, Copyright 2011
 !
-MODULE Dir_nodes_petsc
+MODULE dir_nodes_petsc
 
 CONTAINS
    !-------------------------------------------------------------------------------
@@ -352,4 +352,4 @@ CONTAINS
          END IF
       END DO
    END SUBROUTINE scalar_without_glob_js_D
-END MODULE Dir_nodes_petsc
+END MODULE dir_nodes_petsc

@@ -1,4 +1,4 @@
-MODULE fem_s_M
+MODULE fem_sparsekit
 
 CONTAINS
 
@@ -2838,4 +2838,4 @@ CONTAINS
     END DO
   END SUBROUTINE edge_stab_M
 
-END MODULE fem_s_M
+END MODULE fem_sparsekit

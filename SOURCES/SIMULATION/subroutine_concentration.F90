@@ -20,15 +20,15 @@ CONTAINS
     USE fem_M_axi
     USE fem_rhs_axi
     USE fem_tn_axi
-    USE Dir_nodes_petsc
+    USE dir_nodes_petsc
     USE prep_periodic
     USE st_matrix
-    USE solve_petsc
+    USE solver_petsc
     USE dyn_line
     USE chaine_caractere
     USE sub_plot
     USE st_matrix
-    USE sft_parallele
+    USE fft_parallele
     USE input_data
 #include "petsc/finclude/petsc.h"
     USE petsc
@@ -243,7 +243,7 @@ CONTAINS
   SUBROUTINE smb_ugradc_gauss_fft_par_conc(communicator,mesh,list_mode,V_in,c_in,c_out)
     !=================================
     USE associate_gauss
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE boundary
 #include "petsc/finclude/petsc.h"

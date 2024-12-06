@@ -9,7 +9,7 @@ CONTAINS
   FUNCTION dot_product_SF(communicator, mesh, list_mode, v, w) RESULT(norm)
     USE def_type_mesh
     USE chaine_caractere
-    USE fem_tn_NS_MHD
+    USE fem_tn_ns_mhd
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
@@ -39,7 +39,7 @@ CONTAINS
   FUNCTION norm_SF(communicator, norm_type, mesh, list_mode, v) RESULT(norm)
     USE def_type_mesh
     USE chaine_caractere
-    USE fem_tn_NS_MHD
+    USE fem_tn_ns_mhd
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
@@ -87,7 +87,7 @@ CONTAINS
   FUNCTION norm_S(communicator, norm_type, mesh, list_mode, v) RESULT(norm)
     USE def_type_mesh
     USE chaine_caractere
-    USE fem_tn_NS_MHD
+    USE fem_tn_ns_mhd
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
@@ -134,7 +134,7 @@ CONTAINS
   FUNCTION norm_S_L1_zero_mode(communicator,mesh, list_mode, v) RESULT(norm)
     USE def_type_mesh
     USE chaine_caractere
-    USE fem_tn_NS_MHD
+    USE fem_tn_ns_mhd
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
@@ -183,7 +183,7 @@ CONTAINS
 
   FUNCTION norme_L2_champ_par(communicator, mesh, list_mode, v) RESULT(norm)
     USE def_type_mesh
-    USE fem_tn_NS_MHD
+    USE fem_tn_ns_mhd
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
@@ -204,7 +204,7 @@ CONTAINS
 
   FUNCTION norme_H1_champ_par(communicator, mesh, list_mode, v) RESULT(norm)
     USE def_type_mesh
-    USE fem_tn_NS_MHD
+    USE fem_tn_ns_mhd
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
@@ -221,7 +221,7 @@ CONTAINS
 
   FUNCTION norme_div_par(communicator, H_mesh, list_mode, v) RESULT(norm)
     USE def_type_mesh
-    USE fem_tn_NS_MHD
+    USE fem_tn_ns_mhd
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
@@ -238,7 +238,7 @@ CONTAINS
 
   FUNCTION norme_curl_par(communicator, H_mesh, list_mode, v) RESULT(norm)
     USE def_type_mesh
-    USE fem_tn_NS_MHD
+    USE fem_tn_ns_mhd
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE

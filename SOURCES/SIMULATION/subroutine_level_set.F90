@@ -23,16 +23,16 @@ CONTAINS
     USE fem_M_axi
     USE fem_rhs_axi
     USE fem_tn_axi
-    USE Dir_nodes_petsc
+    USE dir_nodes_petsc
     USE prep_periodic
     USE st_matrix
-    USE solve_petsc
+    USE solver_petsc
     USE dyn_line
     USE boundary
     USE chaine_caractere
     USE sub_plot
     USE st_matrix
-    USE sft_parallele
+    USE fft_parallele
     USE input_data
     IMPLICIT NONE
     REAL(KIND=8)                                        :: time, dt
@@ -356,7 +356,7 @@ CONTAINS
   SUBROUTINE smb_ugradc_gauss_fft_par(communicator,mesh,list_mode,V_in,c_in, nb_procs, c_out)
     !=================================
     USE associate_gauss
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE boundary
     IMPLICIT NONE
@@ -458,7 +458,7 @@ CONTAINS
   SUBROUTINE smb_compression_gauss_fft_par(communicator,mesh,list_mode,V_in,c_in, nb_procs, c_out)
     !=================================
     USE associate_gauss
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE boundary
     USE tn_axi
@@ -662,7 +662,7 @@ CONTAINS
        coeff1_in_level, nb_procs, V_out, c_out)
     !=================================
     USE associate_gauss
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE boundary
     USE input_data
@@ -756,7 +756,7 @@ CONTAINS
        coeff1_in_level, nb_procs, V_out, c_out)
     !=================================
     USE associate_gauss
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE boundary
     USE input_data

@@ -21,17 +21,17 @@ CONTAINS
     USE fem_M_axi
     USE fem_rhs_axi
     USE fem_tn_axi
-    USE Dir_nodes_petsc
+    USE dir_nodes_petsc
     USE prep_periodic
     USE st_matrix
-    USE solve_petsc
+    USE solver_petsc
     USE dyn_line
     USE boundary
     USE chaine_caractere
     USE sub_plot
     USE st_matrix
     USE input_data
-    USE sft_parallele
+    USE fft_parallele
     USE tn_axi
     USE verbose
     USE entropy_viscosity
@@ -726,7 +726,7 @@ CONTAINS
 
   SUBROUTINE smb_CurlH_cross_B_gauss_sft_par(communicator,mesh,list_mode,V_in,W_in,V_out)
     !=================================
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE input_data
     USE def_type_mesh
@@ -823,7 +823,7 @@ CONTAINS
 
   SUBROUTINE smb_explicit_diffu_sym(communicator, mesh, list_mode, nb_procs, visc_dyn, vel, V_out)
     USE associate_gauss
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE boundary
     USE input_data
@@ -947,7 +947,7 @@ CONTAINS
 
   SUBROUTINE smb_explicit_LES(communicator, mesh, list_mode, nb_procs, visc_entro_real, mom, V_out)
     USE associate_gauss
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE boundary
     USE input_data
@@ -1031,7 +1031,7 @@ CONTAINS
 
   SUBROUTINE smb_surface_tension(communicator, mesh, list_mode, nb_procs, level_set, tensor_surface_gauss)
     USE associate_gauss
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE boundary
     USE input_data
@@ -1091,7 +1091,7 @@ CONTAINS
   SUBROUTINE smb_buoyancy(communicator, mesh_P2, mesh_P1, list_mode, level_set, temperature, V_out)
     !=================================
     USE associate_gauss
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE boundary
     USE subroutine_mass
@@ -1129,7 +1129,7 @@ CONTAINS
 
   SUBROUTINE momentum_dirichlet(communicator, mesh, list_mode, t, nb_procs, density, momentum_exact, vv_js_D)
     USE associate_gauss
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE boundary
     USE input_data

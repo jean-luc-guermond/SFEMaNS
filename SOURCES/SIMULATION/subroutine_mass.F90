@@ -93,7 +93,7 @@ CONTAINS
   SUBROUTINE reconstruct_variable(comm_one_d, list_mode, mesh_P1, mesh_P2, level_set, values, variable)
     !==============================
     USE def_type_mesh
-    USE sft_parallele
+    USE fft_parallele
     USE input_data
 #include "petsc/finclude/petsc.h"
     USE petsc
@@ -189,7 +189,7 @@ CONTAINS
   SUBROUTINE total_mass(comm_one_d, list_mode, mass_mesh, level_set, mass_tot)
     !==============================
     USE def_type_mesh
-    USE sft_parallele
+    USE fft_parallele
     USE input_data
 #include "petsc/finclude/petsc.h"
     USE petsc

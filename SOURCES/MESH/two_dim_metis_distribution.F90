@@ -1,4 +1,4 @@
-MODULE metis_reorder_elements
+MODULE two_dim_metis_distribution
   !#include "petsc/finclude/petsc.h"
   USE petsc
   PUBLIC :: reorder_mesh, free_mesh_after
@@ -514,4 +514,4 @@ CONTAINS
     mesh%edge_stab = .FALSE.
 
   END SUBROUTINE FREE_MESH_after
-END MODULE metis_reorder_elements
+END MODULE two_dim_metis_distribution

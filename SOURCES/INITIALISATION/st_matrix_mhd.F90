@@ -1,4 +1,4 @@
-MODULE st_csr_mhd
+MODULE st_matrix_mhd
    PUBLIC :: st_scr_maxwell_mu_H_p_phi
 
    PRIVATE
@@ -728,4 +728,4 @@ CONTAINS
    END SUBROUTINE SEARCH_INDEX_BLOCK
 
 
-END MODULE st_csr_mhd
+END MODULE st_matrix_mhd

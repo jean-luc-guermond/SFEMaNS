@@ -1,4 +1,4 @@
-MODULE create_comm
+MODULE create_communicators
   PUBLIC :: create_cart_comm
   PRIVATE
 CONTAINS
@@ -41,4 +41,4 @@ CONTAINS
     END DO
   END SUBROUTINE create_cart_comm
 
-END MODULE create_comm
+END MODULE create_communicators

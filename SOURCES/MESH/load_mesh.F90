@@ -15,7 +15,7 @@ CONTAINS
         mesh, mesh_formatted)
       USE def_type_mesh
       USE chaine_caractere
-      USE Dir_nodes
+      USE dir_nodes
       USE my_util
       IMPLICIT NONE
       CHARACTER(len = 200), INTENT(IN) :: dir, fil

@@ -151,11 +151,11 @@ CONTAINS
     USE chaine_caractere
     USE tn_axi
     USE boundary
-    USE sft_parallele
+    USE fft_parallele
     USE verbose
     USE user_data
     USE sfemans_tools
-    USE vtk_viz
+    USE plot_vtk
     USE subroutine_mass
     USE subroutine_ns_with_u
     IMPLICIT NONE
@@ -940,7 +940,7 @@ CONTAINS
     USE def_type_mesh
     USE input_data
     USE boundary
-    USE sft_parallele
+    USE fft_parallele
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
@@ -1018,7 +1018,7 @@ CONTAINS
     USE def_type_mesh
     USE input_data
     USE boundary
-    USE sft_parallele
+    USE fft_parallele
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
@@ -1107,7 +1107,7 @@ CONTAINS
 
 !!$  SUBROUTINE interface_mpr(rank_in)
 !!$    USE sfemans_tools
-!!$    USE sft_parallele
+!!$    USE fft_parallele
 !!$    !USE user_data !===We could read r_mpr and z_mpr from user_data ...
 !!$    INTEGER      :: rank_in
 !!$    REAL(KIND=8) :: dist, dist_glob, r_mpr=0.030435d0, z_mpr=0.d0
@@ -1171,7 +1171,7 @@ CONTAINS
     USE def_type_mesh
     USE input_data
     USE boundary
-    USE sft_parallele
+    USE fft_parallele
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
@@ -1253,7 +1253,7 @@ CONTAINS
     USE def_type_mesh
     USE input_data
     USE boundary
-    USE sft_parallele
+    USE fft_parallele
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
@@ -1303,7 +1303,7 @@ CONTAINS
     USE def_type_mesh
     USE input_data
     USE boundary
-    USE sft_parallele
+    USE fft_parallele
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
@@ -1352,7 +1352,7 @@ CONTAINS
     USE def_type_mesh
     USE input_data
     USE boundary
-    USE sft_parallele
+    USE fft_parallele
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
@@ -1416,7 +1416,7 @@ CONTAINS
 !!$    USE def_type_mesh
 !!$    USE user_data
 !!$    USE boundary
-!!$    USE sft_parallele
+!!$    USE fft_parallele
 !!$#include "petsc/finclude/petsc.h"
 !!$    USE petsc
 !!$    IMPLICIT NONE

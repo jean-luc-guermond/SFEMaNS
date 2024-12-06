@@ -19,18 +19,18 @@ CONTAINS
     USE fem_M_axi
     USE fem_rhs_axi
     USE fem_tn_axi
-    USE Dir_nodes_petsc
+    USE dir_nodes_petsc
     USE prep_periodic
     USE st_matrix
-    USE solve_petsc
+    USE solver_petsc
     USE dyn_line
     USE boundary
     USE chaine_caractere
     USE sub_plot
     USE st_matrix
     USE input_data
-    USE rhs_gauss_computing
-    USE rhs_para_assembling
+    USE computing_rhs_gauss
+    USE assembling_rhs
     USE tn_axi
     USE verbose
     USE entropy_viscosity
@@ -486,7 +486,7 @@ CONTAINS
   ! cas PRECESSION 28/07/09
   SUBROUTINE smb_cross_prod_gauss_sft_par(communicator,mesh,list_mode,V_in,V_out,precession_in)
     !=================================
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE input_data
     USE def_type_mesh
@@ -604,7 +604,7 @@ CONTAINS
 
   SUBROUTINE smb_CurlH_cross_B_gauss_sft_par(communicator,mesh,list_mode,V_in,W_in,V_out)
     !=================================
-    USE sft_parallele
+    USE fft_parallele
     USE chaine_caractere
     USE input_data
     USE def_type_mesh
@@ -701,7 +701,7 @@ CONTAINS
 
   SUBROUTINE smb_kelvin_force_gauss_fft_par(communicator,mesh,list_mode,scal_in,vect_in,vect_out)
     USE associate_gauss
-    USE sft_parallele
+    USE fft_parallele
     USE def_type_mesh
     USE boundary
     IMPLICIT NONE
@@ -777,7 +777,7 @@ CONTAINS
 
   SUBROUTINE smb_helmholtz_force_gauss_fft_par(communicator,mesh,list_mode,scal_in,vect_in,vect_out)
     USE associate_gauss
-    USE sft_parallele
+    USE fft_parallele
     USE def_type_mesh
     USE boundary
     IMPLICIT NONE
@@ -853,7 +853,7 @@ CONTAINS
 
   SUBROUTINE smb_nu_tilde_fft_par(communicator,list_mode,scal_inout) ! MODIFICATION: computation of nu tilde function of temperature
     USE associate_gauss
-    USE sft_parallele
+    USE fft_parallele
     USE def_type_mesh
     USE boundary
     IMPLICIT NONE

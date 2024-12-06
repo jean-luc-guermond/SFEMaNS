@@ -1,7 +1,7 @@
 !
 !Authors: Jean-Luc Guermond, Lugi Quartapelle, Copyright 1994
 !
-MODULE Dir_nodes
+MODULE dir_nodes
 
 CONTAINS
 
@@ -551,4 +551,4 @@ CONTAINS
   END SUBROUTINE dirichlet_nodes_bloc
 
 
-END MODULE Dir_nodes
+END MODULE dir_nodes

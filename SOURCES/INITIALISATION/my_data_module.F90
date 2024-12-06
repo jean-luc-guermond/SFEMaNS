@@ -1,6 +1,6 @@
 MODULE my_data_module
    USE def_type_mesh
-   USE solve_petsc
+   USE solver_petsc
    TYPE my_data
       LOGICAL :: iformatted
       CHARACTER(LEN = 200) :: directory, file_name

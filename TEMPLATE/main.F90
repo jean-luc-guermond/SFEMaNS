@@ -147,9 +147,9 @@ CONTAINS
     USE chaine_caractere
     USE tn_axi
     USE boundary
-    USE sft_parallele
+    USE fft_parallele
     USE verbose
-    USE vtk_viz
+    USE plot_vtk
     USE sfemans_tools
     USE subroutine_mass
     USE user_data
@@ -422,7 +422,7 @@ CONTAINS
     USE def_type_mesh
     USE input_data
     USE boundary
-    USE sft_parallele
+    USE fft_parallele
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE
@@ -500,7 +500,7 @@ CONTAINS
     USE def_type_mesh
     USE input_data
     USE boundary
-    USE sft_parallele
+    USE fft_parallele
 #include "petsc/finclude/petsc.h"
     USE petsc
     IMPLICIT NONE

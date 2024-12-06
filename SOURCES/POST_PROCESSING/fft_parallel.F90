@@ -1,7 +1,7 @@
 !
 !Authors:  Katarzyna Boronska, Jean-Luc Guermond, Copyrights 2007
 !
-MODULE sft_parallele
+MODULE fft_parallele
 #include "petsc/finclude/petsc.h"
   USE petsc
   IMPLICIT NONE
@@ -4597,4 +4597,4 @@ CONTAINS
          MPI_MIN, communicator, code)
   END SUBROUTINE FFT_MAX_MIN_VEL_DCL
 
-END MODULE sft_parallele
+END MODULE fft_parallele

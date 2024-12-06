@@ -1,4 +1,4 @@
-MODULE solve_petsc
+MODULE solver_petsc
   USE my_util
   TYPE solver_param
      INTEGER:: it_max
@@ -269,4 +269,4 @@ CONTAINS
   END SUBROUTINE create_local_petsc_block_matrix
 
 
-END MODULE solve_petsc
+END MODULE solver_petsc
