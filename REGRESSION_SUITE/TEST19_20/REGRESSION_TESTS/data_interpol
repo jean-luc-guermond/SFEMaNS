@@ -10,7 +10,7 @@
 ===Is input mesh file formatted (true/false)?
 .t.
 ===Number of refinements (Input)
-1
+0
 
 ============================================
               Output information
@@ -24,7 +24,7 @@
 ===Is output mesh file formatted (true/false)?
 .t.
 ===Number of refinements (Output)
-1
+0
 
 ============================================
               What should be done?
