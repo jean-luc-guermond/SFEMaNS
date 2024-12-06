@@ -21,7 +21,7 @@
 ===Do we kill level set overshoot? (true/false)
 .f.
 ===Number of refinements
-2
+0
 ============================================
               Mesh-NAVIER-STOKES
 ============================================

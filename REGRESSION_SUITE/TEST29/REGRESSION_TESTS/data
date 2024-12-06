@@ -20,7 +20,7 @@
 ===Time step and number of time iterations
 0.01  10 !628 iterations = one turn since omega=1.0
 ===Number of refinements
-2
+0
 ============================================
               Mesh-NAVIER-STOKES
 ============================================

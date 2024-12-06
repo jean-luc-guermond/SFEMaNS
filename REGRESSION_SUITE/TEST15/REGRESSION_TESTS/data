@@ -17,7 +17,7 @@
 ===Time step and number of time iterations
 5.d-2, 10
 ===Number of refinements
-2
+0
 ============================================
               Mesh-NAVIER-STOKES
 ============================================

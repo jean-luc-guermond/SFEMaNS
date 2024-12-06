@@ -21,7 +21,7 @@
 ===Time step and number of time iterations
 1.d0, 1
 ===Number of refinements
-2
+0
 ============================================
               H-MAXWELL
 ============================================
