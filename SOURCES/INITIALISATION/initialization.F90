@@ -643,12 +643,8 @@ CONTAINS
 #include "petsc/finclude/petsc.h"
       USE petsc
       IMPLICIT NONE
-      TYPE(mesh_type) :: vv_mesh_glob, pp_mesh_glob
-      TYPE(mesh_type) :: H_mesh_glob, phi_mesh_glob, pmag_mesh_glob, temp_mesh_glob
-      TYPE(mesh_type) :: conc_mesh_glob
       TYPE(mesh_type) :: p1_mesh_glob, p1_c0_mesh_glob, p1_c0_mesh_glob_temp
       TYPE(mesh_type) :: p1_c0_mesh_glob_conc, dummy_mesh_loc
-      TYPE(interface_type) :: interface_H_phi_glob, interface_H_mu_glob
       INTEGER, DIMENSION(:), ALLOCATABLE :: list_dom_H, list_dom_H_ref
       INTEGER, DIMENSION(:), ALLOCATABLE :: list_dom_temp, list_dom_temp_ref
       INTEGER, DIMENSION(:), ALLOCATABLE :: list_dom_ns
@@ -662,9 +658,8 @@ CONTAINS
       CHARACTER(len = 200) :: data_fichier
       CHARACTER(len = 1) :: tit
       INTEGER :: nsize
-      INTEGER :: k, kp, m, n, i, j, nm
+      INTEGER :: k, kp, m, n, i, j
       INTEGER :: code, rank, rank_S, nb_procs, petsc_rank, bloc_size, m_max_pad
-      INTEGER, DIMENSION(2) :: n_ks, m_ks
       REAL(KIND = 8) :: time_u, time_h, time_T, error, max_vel_S
       REAL(KIND = 8) :: time_conc
       LOGICAL :: ns_periodic, mxw_periodic, temp_periodic
@@ -1032,7 +1027,7 @@ CONTAINS
       !===Create meshes===============================================================
       !===Meshes using p1_mesh_glob
       CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom, &
-           list_inter, 1, p1_mesh_glob, inputs%iformatted)
+           list_inter, p1_mesh_glob, inputs%iformatted)
 
 
       !===Start Metis mesh generation=================================================
@@ -1166,7 +1161,7 @@ CONTAINS
       IF (if_concentration) THEN
          !===MODIFICATION: Dirichlet nodes in temp_mesh not created if list_dom > list_dom_conc
          CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, inputs%list_dom_conc, &
-              list_inter_conc, 1, p1_c0_mesh_glob_conc, inputs%iformatted)
+              list_inter_conc, p1_c0_mesh_glob_conc, inputs%iformatted)
 
          CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_c0_mesh_glob_conc, part, inputs%list_dom_conc, dummy_mesh_loc)
          DO n = 1, inputs%nb_refinements !===Create refined mesh
@@ -1192,7 +1187,7 @@ CONTAINS
       IF (if_energy) THEN
          !===MODIFICATION: Dirichlet nodes in temp_mesh not created if list_dom > list_dom_temp
          CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom_temp, &
-              list_inter_temp, 1, p1_c0_mesh_glob_temp, inputs%iformatted)
+              list_inter_temp, p1_c0_mesh_glob_temp, inputs%iformatted)
 
          CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_c0_mesh_glob_temp, part, list_dom_temp, dummy_mesh_loc)
          DO n = 1, inputs%nb_refinements !===Create refined mesh
@@ -1218,7 +1213,7 @@ CONTAINS
       IF (if_induction) THEN
          ALLOCATE(list_dummy(0))
          CALL load_dg_mesh_free_format(inputs%directory, inputs%file_name, list_dom, &
-              inputs%list_inter_H_phi, 1, p1_c0_mesh_glob, inputs%iformatted)
+              inputs%list_inter_H_phi, p1_c0_mesh_glob, inputs%iformatted)
 
          CALL extract_mesh(comm_one_d(1), nb_procs_S, p1_c0_mesh_glob, part, list_dom_H, pmag_mesh)
          DO n = 1, inputs%nb_refinements !===Create refined mesh

@@ -21,9 +21,9 @@ CONTAINS
       USE petsc
       IMPLICIT NONE
 
-      TYPE(mesh_type) :: p1_mesh_glob, p2_mesh_glob
-      TYPE(mesh_type) :: p1_c0_mesh_glob_temp, p2_c0_mesh_glob_temp
-      TYPE(mesh_type) :: p1_c0_mesh_glob_conc, p2_c0_mesh_glob_conc
+      TYPE(mesh_type) :: p1_mesh_glob
+      TYPE(mesh_type) :: p1_c0_mesh_glob_temp
+      TYPE(mesh_type) :: p1_c0_mesh_glob_conc
 
       TYPE(mesh_type), TARGET :: p1_H_mesh, H_mesh, p1_phi_mesh, phi_mesh
       TYPE(mesh_type), TARGET :: p1_H_mesh_glob, H_mesh_glob, p1_phi_mesh_glob, phi_mesh_glob
@@ -693,16 +693,16 @@ CONTAINS
       END IF
 
       !===Prepare meshes and pointers
-      CALL load_dg_mesh_free_format(directory, file_name, list_dom, list_inter, 1, p1_mesh_glob, iformatted)
+      CALL load_dg_mesh_free_format(directory, file_name, list_dom, list_inter, p1_mesh_glob, iformatted)
       IF (if_conc) THEN
          !       CALL load_dg_mesh_free_format(directory, file_name, list_dom, &
          CALL load_dg_mesh_free_format(directory, file_name, list_dom_conc, & !TEST LC
-              list_inter_conc, 1, p1_c0_mesh_glob_conc, iformatted)
+              list_inter_conc, p1_c0_mesh_glob_conc, iformatted)
       END IF
       IF (if_energy) THEN
          !       CALL load_dg_mesh_free_format(directory, file_name, list_dom, &
          CALL load_dg_mesh_free_format(directory, file_name, list_dom_temp, & !TEST LC
-              list_inter_temp, 1, p1_c0_mesh_glob_temp, iformatted)
+              list_inter_temp, p1_c0_mesh_glob_temp, iformatted)
       END IF
 
       !===Start Metis mesh generation=================================================
@@ -808,7 +808,7 @@ CONTAINS
       ALLOCATE(list_inter_conc(0))
       !===Load meshes for monoproc
       IF (if_conc) THEN
-         CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_conc, list_inter_conc, 1, p1_conc_mesh_glob, is_form_m)
+         CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_conc, list_inter_conc, p1_conc_mesh_glob, is_form_m)
          DO n = 1, nb_refinements_m !===Create refined mesh
             CALL refinement_iso_grid_distributed(p1_conc_mesh_glob)
          END DO
@@ -820,7 +820,7 @@ CONTAINS
          END IF
       END IF
       IF (if_momentum) THEN
-         CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_ns, list_inter_conc, 1, pp_mesh_glob, is_form_m)
+         CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_ns, list_inter_conc, pp_mesh_glob, is_form_m)
          DO n = 1, nb_refinements_m !===Create refined mesh
             CALL refinement_iso_grid_distributed(pp_mesh_glob)
          END DO
@@ -831,7 +831,7 @@ CONTAINS
          END IF
       END IF
       IF (if_energy) THEN
-         CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_temp, list_inter_conc, 1, p1_temp_mesh_glob, is_form_m)
+         CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_temp, list_inter_conc, p1_temp_mesh_glob, is_form_m)
          DO n = 1, nb_refinements_m !===Create refined mesh
             CALL refinement_iso_grid_distributed(p1_temp_mesh_glob)
          END DO
@@ -843,7 +843,7 @@ CONTAINS
          END IF
       END IF
       IF (if_induction) THEN
-         CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_H, list_inter_mu, 1, p1_H_mesh_glob, &
+         CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_H, list_inter_mu, p1_H_mesh_glob, &
               is_form_m)
          DO n = 1, nb_refinements_m !===Create refined mesh
             CALL refinement_iso_grid_distributed(p1_H_mesh_glob)
@@ -851,7 +851,7 @@ CONTAINS
          CALL create_iso_grid_distributed(p1_H_mesh_glob, H_mesh_glob, type_fe_H)
          CALL free_mesh(p1_H_mesh_glob)
 
-         CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_phi, list_inter_conc, 1, &
+         CALL load_dg_mesh_free_format(directory_m, file_name_m, list_dom_phi, list_inter_conc, &
               p1_phi_mesh_glob, is_form_m)
          DO n = 1, nb_refinements_m !===Create refined mesh
             CALL refinement_iso_grid_distributed(p1_phi_mesh_glob)

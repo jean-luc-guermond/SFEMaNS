@@ -131,7 +131,7 @@ CONTAINS
     REAL(KIND=8),                     OPTIONAL,     INTENT(IN) :: opt_dt
     REAL(KIND=8)                                               :: max_vel_loc, dt_read, dt_ratio
     INTEGER     :: code, n, i, mode, j, rang_S, nb_procs_S, rang_F, nb_procs_F, nlignes, rank
-    INTEGER     :: m_max_cr, nb_procs_r, nb_procs_Sr, k
+    INTEGER     :: m_max_cr, nb_procs_r, nb_procs_Sr
     INTEGER     :: m_max_c, nb_mode_r, mode_cherche
     LOGICAL     :: trouve, okay
     INTEGER     :: npv, npp

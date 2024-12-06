@@ -21,14 +21,10 @@ CONTAINS
       LOGICAL, DIMENSION(:), ALLOCATABLE :: virgin
       INTEGER, DIMENSION(:, :), ALLOCATABLE :: j_mid, jjs_mid
       INTEGER :: np, me, mes, nw, nws, kd, n, m, k, l, n_dof, dom_np
-      INTEGER :: n1, n2, n3, n4, ms, n_start, n_end, n1_g, n2_g
-      INTEGER :: n_k1, n_k2, m_op_k, kk, i, mm, ms_bord, p_e, p_c
+      INTEGER :: n1, n2, ms, n_start, n_end
+      INTEGER :: n_k1, n_k2, m_op_k, kk, i, mm, p_e, p_c
       REAL(KIND = 8), DIMENSION(:), ALLOCATABLE :: r_mid
-      INTEGER, DIMENSION(type_fe + 1) :: ns3
-      REAL(KIND = 8), DIMENSION(2) :: rz
-      REAL(KIND = 8), DIMENSION(type_fe + 1) :: scos
-      REAL(KIND = 8) :: epsilon = 1.d-13, dist, d1, d2, s1, s2, s3, shalf, ref, scc, infinity, rescale
-      INTEGER :: ns, ns1, index, nb_angle, f_dof, edge_g, edge_l, n_new_start, proc, nb_proc, edges, p, cell_g, cell_l
+      INTEGER :: nb_angle, f_dof, edge_g, edge_l, n_new_start, proc, nb_proc, edges, p, cell_g, cell_l
       INTEGER :: interface
       LOGICAL :: iso
 
@@ -561,19 +557,14 @@ CONTAINS
       USE def_type_mesh
       IMPLICIT NONE
       TYPE(mesh_type) :: mesh_p1, mesh
-      LOGICAL, DIMENSION(:), ALLOCATABLE :: virgin
-      INTEGER, DIMENSION(:, :), ALLOCATABLE :: j_mid, jjs_mid
-      INTEGER :: np, me, mes, nw, nws, kd, n, m, k, l, n_dof, dom_np, e_g, a, mextra
-      INTEGER :: n1, n2, n3, n4, ms, n_start, n_end, n1_g, n2_g, neigh, k_neigh, n_kneigh1, n_kneigh2, swap
-      INTEGER :: n_k1, n_k2, m_op_k, kk, i, mm, ms_bord, p_e, p_c, m_new, e_k, p_j, n_kks
-      REAL(KIND = 8), DIMENSION(:), ALLOCATABLE :: r_mid
+      INTEGER :: np, me, mes, nw, nws, kd, n, m, k, n_dof, dom_np, e_g, mextra
+      INTEGER :: n1, n2, ms, neigh, k_neigh, n_kneigh1, n_kneigh2, swap
+      INTEGER :: i, p_c, m_new, e_k, p_j
       INTEGER, DIMENSION(3) :: edges_g, edges_l, p_es
       INTEGER, DIMENSION(2) :: n_ks
-      REAL(KIND = 8) :: epsilon = 1.d-13, dist, d1, d2, s1, s2, s3, shalf, ref, scc, infinity
-      INTEGER :: ns, ns1, index, nb_angle, f_dof, edge_g, edge_l, n_new_start, proc, nb_proc, edges, p, cell_g, cell_l
+      INTEGER :: proc, nb_proc, p, cell_g, cell_l
       INTEGER :: m1, m2, interface, m_center, tab1, tab2, mes_int
       LOGICAL :: iso
-      INTEGER, SAVE :: count = 0
 
       IF (mesh_p1%me == 0) THEN
          RETURN

@@ -11,8 +11,7 @@ MODULE load_mesh
 
 CONTAINS
 
-   SUBROUTINE load_dg_mesh_free_format(dir, fil, list_dom, list_inter, type_fe, &
-        mesh, mesh_formatted)
+   SUBROUTINE load_dg_mesh_free_format(dir, fil, list_dom, list_inter, mesh, mesh_formatted)
       USE def_type_mesh
       USE chaine_caractere
       USE dir_nodes
@@ -20,7 +19,6 @@ CONTAINS
       IMPLICIT NONE
       CHARACTER(len = 200), INTENT(IN) :: dir, fil
       INTEGER, DIMENSION(:), INTENT(IN) :: list_dom, list_inter
-      INTEGER, INTENT(IN) :: type_fe
       TYPE(mesh_type) :: mesh
       LOGICAL, INTENT(IN) :: mesh_formatted !formatted <=> mesh_formatted=.true.
 
@@ -454,7 +452,7 @@ CONTAINS
       IMPLICIT NONE
       TYPE(mesh_type) :: mesh
       LOGICAL, DIMENSION(mesh%me) :: virgin
-      INTEGER :: m, mop, nw, me, l, lop, n, n1, n2, nmin, nmax, edge, nt, nws, f_dof, start, endf, nop
+      INTEGER :: m, mop, nw, me, n, n1, n2, nmin, nmax, edge, nt, nws, f_dof, nop
       LOGICAL :: test
       nw = SIZE(mesh%jj, 1)
       nws = SIZE(mesh%jjs, 1)
