@@ -619,6 +619,8 @@ CONTAINS
       USE chaine_caractere
       USE prep_periodic
       USE load_mesh
+      USE mesh_tools
+      USE refine_mesh
       USE prep_interface
       USE restart
       USE boundary
