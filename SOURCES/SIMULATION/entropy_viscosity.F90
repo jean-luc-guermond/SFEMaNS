@@ -674,7 +674,7 @@ CONTAINS
   END SUBROUTINE compute_entropy_viscosity_mom_no_level_set
 
   SUBROUTINE smb_explicit_grad_vel_LES(mesh, list_mode, vel, V_out)
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -749,7 +749,7 @@ CONTAINS
   END SUBROUTINE smb_explicit_grad_vel_LES
 
   SUBROUTINE smb_explicit_strain_rate_tensor(mesh, list_mode, vel, V_out)
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -843,7 +843,7 @@ CONTAINS
   END SUBROUTINE smb_explicit_strain_rate_tensor
 
   SUBROUTINE smb_explicit_strain_rate_tensor_bdy(mesh, list_mode, vel, V_out)
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -957,7 +957,7 @@ CONTAINS
   END SUBROUTINE smb_explicit_strain_rate_tensor_bdy
 
   SUBROUTINE smb_explicit_strain_rate_tensor_bdy_mom(communicator, mesh, list_mode, visc_dyn, vel, V_out)
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -1094,7 +1094,7 @@ CONTAINS
   END SUBROUTINE smb_explicit_strain_rate_tensor_bdy_mom
 
   SUBROUTINE smb_explicit_tensor_bdy(mesh, list_mode, tensor, V_out)
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -1151,7 +1151,7 @@ CONTAINS
   END SUBROUTINE smb_explicit_tensor_bdy
 
   SUBROUTINE compute_res_mass_gauss(mesh, list_mode, density_m2, density, momentum_m1, c_out)
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE chaine_caractere
     USE boundary

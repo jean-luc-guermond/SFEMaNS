@@ -355,7 +355,7 @@ CONTAINS
 
   SUBROUTINE smb_ugradc_gauss_fft_par(communicator,mesh,list_mode,V_in,c_in, nb_procs, c_out)
     !=================================
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -457,7 +457,7 @@ CONTAINS
 
   SUBROUTINE smb_compression_gauss_fft_par(communicator,mesh,list_mode,V_in,c_in, nb_procs, c_out)
     !=================================
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -661,7 +661,7 @@ CONTAINS
   SUBROUTINE smb_compr_visc_entro_gauss_fft_par(communicator, mesh, list_mode, c_in, c_reg_in, visc_entro_real,&
        coeff1_in_level, nb_procs, V_out, c_out)
     !=================================
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -755,7 +755,7 @@ CONTAINS
   SUBROUTINE smb_visc_entro_gauss_fft_par(communicator, mesh, list_mode, c_in, visc_entro_real,&
        coeff1_in_level, nb_procs, V_out, c_out)
     !=================================
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -836,7 +836,7 @@ CONTAINS
 
   SUBROUTINE compute_int_mass_correct(communicator, mesh, list_mode, c1_in, c2_in, int_out)
     !=================================
-    USE Gauss_points
+    USE associate_gauss
     IMPLICIT NONE
     TYPE(mesh_type), TARGET                     :: mesh
     INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode

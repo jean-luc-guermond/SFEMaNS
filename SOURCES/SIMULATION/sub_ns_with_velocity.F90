@@ -700,7 +700,7 @@ CONTAINS
   END SUBROUTINE smb_CurlH_cross_B_gauss_sft_par
 
   SUBROUTINE smb_kelvin_force_gauss_fft_par(communicator,mesh,list_mode,scal_in,vect_in,vect_out)
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE def_type_mesh
     USE boundary
@@ -776,7 +776,7 @@ CONTAINS
   END SUBROUTINE smb_kelvin_force_gauss_fft_par
 
   SUBROUTINE smb_helmholtz_force_gauss_fft_par(communicator,mesh,list_mode,scal_in,vect_in,vect_out)
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE def_type_mesh
     USE boundary
@@ -852,7 +852,7 @@ CONTAINS
   END SUBROUTINE smb_helmholtz_force_gauss_fft_par
 
   SUBROUTINE smb_nu_tilde_fft_par(communicator,list_mode,scal_inout) ! MODIFICATION: computation of nu tilde function of temperature
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE def_type_mesh
     USE boundary

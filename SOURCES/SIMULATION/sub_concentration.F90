@@ -242,7 +242,7 @@ CONTAINS
 
   SUBROUTINE smb_ugradc_gauss_fft_par_conc(communicator,mesh,list_mode,V_in,c_in,c_out)
     !=================================
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE chaine_caractere
     USE boundary

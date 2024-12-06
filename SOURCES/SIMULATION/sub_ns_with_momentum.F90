@@ -822,7 +822,7 @@ CONTAINS
   END SUBROUTINE smb_CurlH_cross_B_gauss_sft_par
 
   SUBROUTINE smb_explicit_diffu_sym(communicator, mesh, list_mode, nb_procs, visc_dyn, vel, V_out)
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -946,7 +946,7 @@ CONTAINS
   END SUBROUTINE smb_explicit_diffu_sym
 
   SUBROUTINE smb_explicit_LES(communicator, mesh, list_mode, nb_procs, visc_entro_real, mom, V_out)
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -1030,7 +1030,7 @@ CONTAINS
   END SUBROUTINE smb_explicit_LES
 
   SUBROUTINE smb_surface_tension(communicator, mesh, list_mode, nb_procs, level_set, tensor_surface_gauss)
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -1090,7 +1090,7 @@ CONTAINS
 
   SUBROUTINE smb_buoyancy(communicator, mesh_P2, mesh_P1, list_mode, level_set, temperature, V_out)
     !=================================
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -1128,7 +1128,7 @@ CONTAINS
   END SUBROUTINE smb_buoyancy
 
   SUBROUTINE momentum_dirichlet(communicator, mesh, list_mode, t, nb_procs, density, momentum_exact, vv_js_D)
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE chaine_caractere
     USE boundary

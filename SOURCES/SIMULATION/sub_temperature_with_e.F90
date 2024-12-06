@@ -395,7 +395,7 @@ CONTAINS
 
   SUBROUTINE smb_ugradc_gauss_fft_par(communicator,mesh,list_mode,heat_capa_in,V_in,c_in,c_out)
     !=================================
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -535,7 +535,7 @@ CONTAINS
   END SUBROUTINE mass_tot
 
   SUBROUTINE smb_pyromag_gauss_fft_par(communicator,mesh,list_mode,scal_in,vect_1_in,vect_2_in,vect_3_in,scal_out)
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE def_type_mesh
     USE input_data
@@ -669,7 +669,7 @@ CONTAINS
 
 
   SUBROUTINE e_dirichlet(communicator, mesh, list_mode, t, nb_procs, heat_density, e_exact, temp_js_D)
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -800,7 +800,7 @@ CONTAINS
 
   SUBROUTINE smb_kgradT_gauss_fft_par(communicator, mesh, list_mode, k_in, c_in, V_out)
     !=================================
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE chaine_caractere
     USE boundary

@@ -871,7 +871,7 @@ CONTAINS
        LA_H, LA_pmag, LA_phi, H_p_phi_mat1, H_p_phi_mat2, sigma_nj_m, sigma)
     USE def_type_mesh
     USE Dir_nodes
-    USE gauss_points
+    USE associate_gauss
     USE boundary
     USE input_data
 #include "petsc/finclude/petsc.h"
@@ -2892,7 +2892,7 @@ CONTAINS
        mode, stab, mu_H_field, LA_H, H_p_phi_mat1, H_p_phi_mat2, sigma_np, sigma)
     USE def_type_mesh
     USE Dir_nodes
-    USE gauss_points
+    USE associate_gauss
     USE boundary
     USE my_util
     USE input_data
@@ -3430,7 +3430,7 @@ CONTAINS
     !pour le probleme en entier
 
     USE def_type_mesh
-    USE gauss_points
+    USE associate_gauss
     USE boundary
     USE my_util
     USE input_data
@@ -4225,7 +4225,7 @@ CONTAINS
   SUBROUTINE  mat_maxwell_mu(H_mesh, jj_v_to_H, interface_H_mu, mode, stab, &
        mu_H_field, sigma, LA_H, H_p_phi_mat1, H_p_phi_mat2, sigma_np)
     USE def_type_mesh
-    USE gauss_points
+    USE associate_gauss
     USE my_util
     USE input_data
 #include "petsc/finclude/petsc.h"
@@ -4925,7 +4925,7 @@ CONTAINS
     !forcage faisant intervenir J, volumique et interface pour H et phi
     !pour le probleme en entier
     USE def_type_mesh
-    USE gauss_points
+    USE associate_gauss
     USE boundary
     USE input_data
 #include "petsc/finclude/petsc.h"

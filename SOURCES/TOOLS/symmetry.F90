@@ -149,7 +149,7 @@ CONTAINS
     !type_sym = 1 pour un champ pair
     !type_sym = -1 pour un champ impair
 
-    USE Gauss_points
+    USE associate_gauss
     USE def_type_mesh
     USE tn_axi
 
@@ -216,7 +216,7 @@ CONTAINS
     !type_sym = 1 pour un champ pair
     !type_sym = -1 pour un champ impair
 
-    USE Gauss_points
+    USE associate_gauss
     USE def_type_mesh
     USE tn_axi
 
@@ -276,7 +276,7 @@ CONTAINS
     !    type_sym =-1.d0
     !    type_sym = 1.d0
 
-    USE Gauss_points
+    USE associate_gauss
     USE def_type_mesh
     USE tn_axi
 
@@ -327,7 +327,7 @@ CONTAINS
 
   SUBROUTINE val_ener_north_south(communicator, mesh, list_mode, v, e_north, e_south, e_tot)
 
-    USE Gauss_points
+    USE associate_gauss
     USE def_type_mesh
     USE tn_axi
 
@@ -394,7 +394,7 @@ CONTAINS
     !type_sym = 1 pour un champ pair
     !type_sym = -1 pour un champ impair
 
-    USE Gauss_points
+    USE associate_gauss
     USE def_type_mesh
     USE tn_axi
 

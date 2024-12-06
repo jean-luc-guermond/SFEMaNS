@@ -15,7 +15,7 @@ CONTAINS
       USE mesh_tools
       USE sub_plot
       USE restart
-      USE mod_gauss_points_2d
+      USE gauss_points_2d
 #include "petsc/finclude/petsc.h"
       USE petsc
       IMPLICIT NONE

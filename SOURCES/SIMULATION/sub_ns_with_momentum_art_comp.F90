@@ -752,7 +752,7 @@ CONTAINS
 
   SUBROUTINE smb_explicit_diffu_correction(communicator, mesh, list_mode, nb_procs, visc_dyn, stab_mom, &
        vel, mom, V_out, V2_out)
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -933,7 +933,7 @@ CONTAINS
   END SUBROUTINE smb_explicit_diffu_correction
 
   SUBROUTINE smb_explicit_div_correction(communicator, mesh, list_mode, stab, vel, mom, c_out)
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE chaine_caractere
     USE boundary
@@ -1004,7 +1004,7 @@ CONTAINS
   END SUBROUTINE smb_explicit_div_correction
 
 !!$  SUBROUTINE smb_explicit_div_correction_new(communicator, mesh, list_mode, nb_procs, visc_dyn, stab, vel, mom, c_out)
-!!$    USE Gauss_points
+!!$    USE associate_gauss
 !!$    USE sft_parallele
 !!$    USE chaine_caractere
 !!$    USE boundary
@@ -1090,7 +1090,7 @@ CONTAINS
 
   SUBROUTINE smb_compute_tensor_gauss(communicator, mesh, list_mode, vel, mom, nb_procs, &
        bloc_size, m_max_pad, tensor, tensor_gauss)
-    USE Gauss_points
+    USE associate_gauss
     USE sft_parallele
     USE chaine_caractere
     USE boundary

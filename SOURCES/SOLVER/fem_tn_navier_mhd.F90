@@ -394,7 +394,7 @@ CONTAINS
   SUBROUTINE  norme_interface(H_mesh,phi_mesh,INTERFACE,mu_H_field,mu_phi,H,phi,mode,x)
     USE def_type_mesh
     USE Dir_nodes
-    USE gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
 
@@ -541,7 +541,7 @@ CONTAINS
   SUBROUTINE  norme_interface_H_mu(H_mesh,INTERFACE,mu_H_field,H,x)
     USE def_type_mesh
     USE Dir_nodes
-    USE gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
 

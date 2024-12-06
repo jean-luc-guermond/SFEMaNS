@@ -232,7 +232,7 @@ CONTAINS
           !===Compute radius of Gauss point
           ray = SUM(mesh%rr(1,j_loc)*mesh%gauss%ww(:,l))
 
-          !-calcul des seconds membres pr les termes de forçage, temporels et de gradP
+          !-calcul des seconds membres pr les termes de forï¿½age, temporels et de gradP
           !--------calcul de la premiere composante : u0(1,:) <--> f(r,m,c)
           fs(1) = SUM(ff(j_loc,1) * mesh%gauss%ww(:,l))
           ft(1) = SUM(V1m(j_loc,1) * mesh%gauss%ww(:,l))
@@ -586,7 +586,7 @@ CONTAINS
           !===Compute radius of Gauss point
           ray = SUM(mesh%rr(1,j_loc)*mesh%gauss%ww(:,l))
 
-          !-calcul des seconds membres pr les termes de forçage, temporels et de gradP
+          !-calcul des seconds membres pr les termes de forï¿½age, temporels et de gradP
           !--------calcul de la premiere composante : u0(1,:) <--> f(r,m,c)
           fs(1) = SUM(ff(j_loc,1) * mesh%gauss%ww(:,l))
           ft(1) = SUM(V1m(j_loc,1) * mesh%gauss%ww(:,l))
@@ -1144,7 +1144,7 @@ CONTAINS
           !===Compute radius of Gauss point
           ray = SUM(mesh%rr(1,j_loc)*mesh%gauss%ww(:,l))
 
-          !-calcul des seconds membres pr les termes de forçage, temporels et de gradP
+          !-calcul des seconds membres pr les termes de forï¿½age, temporels et de gradP
           !--------calcul de la premiere composante : u0(1,:) <--> f(r,m,c)
           fs(1)  = SUM(ff(j_loc,1) * mesh%gauss%ww(:,l))
           ft(1)  = SUM(V1m(j_loc,1) * mesh%gauss%ww(:,l))
@@ -1381,7 +1381,7 @@ CONTAINS
           !===Compute radius of Gauss point
           ray = SUM(mesh%rr(1,j_loc)*mesh%gauss%ww(:,l))
 
-          !-calcul des seconds membres pr les termes de forçage, temporels et de gradP
+          !-calcul des seconds membres pr les termes de forï¿½age, temporels et de gradP
           !--------calcul de la premiere composante : u0(1,:) <--> f(r,m,c)
           fs(1) = SUM(ff(j_loc,1) * mesh%gauss%ww(:,l))
           ft(1) = SUM(V1m(j_loc,1) * mesh%gauss%ww(:,l))
@@ -1923,7 +1923,7 @@ CONTAINS
 
   SUBROUTINE qs_00_gauss_H_conc(mesh, j_H_to_conc, conc_1_LA, cb_1, cb_2)
     USE def_type_mesh
-    USE gauss_points
+    USE associate_gauss
     USE boundary
     USE input_data
 #include "petsc/finclude/petsc.h"

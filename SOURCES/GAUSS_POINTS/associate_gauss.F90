@@ -1,7 +1,7 @@
 !
 !Authors: Jean-Luc Guermond, Copyright 2000
 !
-MODULE Gauss_points
+MODULE associate_gauss
 
   USE def_type_mesh
 
@@ -44,4 +44,4 @@ CONTAINS
 
   END SUBROUTINE gauss
 
-END MODULE Gauss_points
+END MODULE associate_gauss

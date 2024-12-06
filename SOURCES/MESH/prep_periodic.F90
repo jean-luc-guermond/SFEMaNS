@@ -6,7 +6,7 @@ MODULE prep_periodic
 
   IMPLICIT NONE
 
-  PUBLIC :: prep_periodic, &
+  PUBLIC :: prep_periodic_scal, &
        prep_periodic_bloc, &
        prep_periodic_H_p_phi_bc, &
        periodic_matrix_petsc, &
@@ -16,7 +16,7 @@ MODULE prep_periodic
 CONTAINS
 
   !jan 29 2007
-  SUBROUTINE prep_periodic(my_periodic, mesh, periodic)
+  SUBROUTINE prep_periodic_scal(my_periodic, mesh, periodic)
     !=========================================
     USE def_type_mesh
     USE chaine_caractere
@@ -61,11 +61,11 @@ CONTAINS
              list_dom(nx) = list_loc(i)
              perlist_dom(nx) = perlist_loc(i)
           ELSE IF (MIN(list_loc(i),perlist_loc(i)) .LE. mesh%dom_np) THEN
-             WRITE(*,*) 'BUG in prep_periodic'
+             WRITE(*,*) 'BUG in prep_periodic_scal'
              STOP
           END IF
        END DO
-       IF (n_b /= nx) WRITE(*,*) 'WARNING, I have removed', n_b-nx, ' periodic pairs in prep_periodic'
+       IF (n_b /= nx) WRITE(*,*) 'WARNING, I have removed', n_b-nx, ' periodic pairs in prep_periodic_scal'
        n_b = nx
 
        ALLOCATE (periodic%list(n)%DIL(n_b), periodic%perlist(n)%DIL(n_b))
@@ -79,7 +79,7 @@ CONTAINS
 
     WRITE (*,*) 'Treatment of periodic-data done'
 
-  END SUBROUTINE prep_periodic
+  END SUBROUTINE prep_periodic_scal
 
   SUBROUTINE prep_periodic_bloc(my_periodic, mesh, periodic, nb_bloc)
     !=========================================

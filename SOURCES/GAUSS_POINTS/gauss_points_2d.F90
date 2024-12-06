@@ -1,12 +1,12 @@
 !===
 !Author: Jean-Luc Guermond, Copyright December 24th 2018
 !===
-MODULE mod_gauss_points_2d
+MODULE gauss_points_2d
   PRIVATE
-  PUBLIC gauss_points_2d
+  PUBLIC create_gauss_points_2d
   INTEGER, PARAMETER :: k_d=2
 CONTAINS
-  SUBROUTINE gauss_points_2d(mesh,type_fe)
+  SUBROUTINE create_gauss_points_2d(mesh,type_fe)
     USE def_type_mesh
     USE GP_2d_p1
     USE GP_2d_p2
@@ -238,7 +238,7 @@ CONTAINS
     CASE DEFAULT
        !Not programmed yet
        mesh%gauss%rnorms_v = 0.d0
-       !WRITE(*,*) 'BUG gauss_points_2d, rnorms_v not programmed yet'
+       !WRITE(*,*) 'BUG create_gauss_points_2d, rnorms_v not programmed yet'
     END SELECT
 
 
@@ -336,5 +336,5 @@ CONTAINS
     END IF
 
     DEALLOCATE(dd,dds,pp,pps,r,rs,ww_s,dds_v,ngauss)
-  END SUBROUTINE gauss_points_2d
-END MODULE mod_gauss_points_2d
+  END SUBROUTINE create_gauss_points_2d
+END MODULE gauss_points_2d

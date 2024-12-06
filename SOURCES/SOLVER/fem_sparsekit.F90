@@ -8,7 +8,7 @@ CONTAINS
 
     !  alpha < w, _ >   ===>   A0    incremental accumulation
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
 
@@ -57,7 +57,7 @@ CONTAINS
 
     !  < D w, vv _ >   ===>   A0    incremental accumulation
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
 
@@ -117,7 +117,7 @@ CONTAINS
 
     !  alpha < w, f _ >   ===>   A0    incremental accumulation
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
 
@@ -173,7 +173,7 @@ CONTAINS
 
     !  alpha << (Dw), (D_) >>   ===>   A0    incremental accumulation
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
 
@@ -223,7 +223,7 @@ CONTAINS
 
     !  alpha << (Dw_h^H), (D(_)_h^H) >>   ===>   bcd    incremental accumulation
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
 
@@ -273,7 +273,7 @@ CONTAINS
 
     !  << (g.D)w, (g.D)_ >> ===> A0 incremental accumulation
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     !--------------------------------------------------------------------------
@@ -343,7 +343,7 @@ CONTAINS
 
     !  <<alpha w + (g.D)w, alpha_ +(g.D)_ >> ===> A0 incremental accumulation
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     !--------------------------------------------------------------------------
@@ -416,7 +416,7 @@ CONTAINS
 
     !  <<w + h(alpha w + (g.D)w), alpha_ +(g.D)_ >> ===> A0 incremental accumulation
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     !--------------------------------------------------------------------------
@@ -494,7 +494,7 @@ CONTAINS
 
     !  << h (g.D)w, (g.D)_ >> ===> A0 incremental accumulation
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     !--------------------------------------------------------------------------
@@ -574,7 +574,7 @@ CONTAINS
     !  +  < w, (g.D)_ >  +  < w, (D.g) _ > / 2
     !  ===>  a0
 
-    USE Gauss_points
+    USE associate_gauss
 
     REAL(KIND=8),                 INTENT(IN)    :: visco, alpha
     REAL(KIND=8), DIMENSION(:,:), INTENT(IN)    :: gg
@@ -665,7 +665,7 @@ CONTAINS
     !  +  < w, (g.D)_ >
     !  ===>  a0
 
-    USE gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
 
@@ -757,7 +757,7 @@ CONTAINS
     !  +  < w, (g.D)_ >/2  -  < _, (g.D) w > / 2
     !  ===>  a0
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8),                 INTENT(IN)    :: visco, alpha
@@ -840,7 +840,7 @@ CONTAINS
     !  +  alpha * < w, _ >
     !  ===>  a0
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
 
@@ -904,7 +904,7 @@ CONTAINS
     !  +  < w, (g.D)_ >  +  < w, (D.g) _ > / 2
     !  ===>  a0
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8), DIMENSION(:,:), INTENT(IN)    :: gg
@@ -979,7 +979,7 @@ CONTAINS
     !  +  < w, (g.D)_ >  +  < w, (D.g) _ > / 2
     !  ===>  a0
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8), DIMENSION(:,:), INTENT(IN)    :: gg
@@ -1061,7 +1061,7 @@ CONTAINS
 
     !  < w, (g.D)_ >   ===>  a0
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8), DIMENSION(:,:), INTENT(IN)    :: gg
@@ -1124,7 +1124,7 @@ CONTAINS
 
     !  < H_loc alpha _, (g.D)w >   ===>  a0
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8), DIMENSION(:,:), INTENT(IN)    :: gg
@@ -1194,7 +1194,7 @@ CONTAINS
 
     !  << (Dw), h* f (D_) >>   ===>   A0    incremental accumulation
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8), DIMENSION(:),   INTENT(IN)  :: ff
@@ -1264,7 +1264,7 @@ CONTAINS
 
     !  << (Dw), f (D_) >>   ===>   A0    incremental accumulation
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8), DIMENSION(:),   INTENT(IN)  :: ff
@@ -1320,7 +1320,7 @@ CONTAINS
 
     !  << (Dw), |vstar.D(ff)|^(p-2) (D_) >> ===> A0 incremental accumulation
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8),                 INTENT(IN)    :: p
@@ -1392,7 +1392,7 @@ CONTAINS
 
     !  << (Dw), |D(ff)|^(p-2) (D_) >> ===> A0 incremental accumulation
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8),                 INTENT(IN)    :: p
@@ -1465,7 +1465,7 @@ CONTAINS
     !  ===>  a0
     !
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8), DIMENSION(:,:), INTENT(IN)    :: gg
@@ -1604,7 +1604,7 @@ CONTAINS
     !  - < J(w,_), f >   ===>   a0    incremental accumulation
     !  < (Dw) x k, ff (D_) >   ===>   a0    incremental accumulation
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8), DIMENSION(:),   INTENT(IN)    :: ff
@@ -1655,7 +1655,7 @@ CONTAINS
 
     !  < ws, fs _ >_s   ===>   A0    incremental accumulation of boundary terms
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8), DIMENSION(:),   INTENT(IN)    :: fs
@@ -1705,7 +1705,7 @@ CONTAINS
 
     !  alpha << (D x w), (D x _) >>  ===>   a0   incremental acc. in 3D
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8),                 INTENT(IN)    :: alpha
@@ -1770,7 +1770,7 @@ CONTAINS
 
     !  << (D x w), gg x (D x _) >>  ===>   a0   incremental acc. in 3D
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8), DIMENSION(:,:), INTENT(IN)    :: gg
@@ -1843,7 +1843,7 @@ CONTAINS
 
     !  < ws x ns, fs (_ x ns) >_s   ===>   A0    incremental accumulation of boundary terms
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8), DIMENSION(:),   INTENT(IN)    :: fs
@@ -1914,7 +1914,7 @@ CONTAINS
 
     !  < ws x ns, (_ x ns) >_s   ===>   A0    incremental accumulation of boundary terms
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8),                 INTENT(IN)    :: alpha
@@ -1985,7 +1985,7 @@ CONTAINS
     !  +  < w, ff _ >
     !  ===>  a0   ! incremental accumulation
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8),                 INTENT(IN)    :: visco
@@ -2054,7 +2054,7 @@ CONTAINS
     !  +  < w, (g.D)_ > ! +  skew * < w, (D.g) _ >
     !  ===>  a0   ! incremental accumulation
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8), DIMENSION(:),   INTENT(IN)    :: ff
@@ -2144,7 +2144,7 @@ CONTAINS
     !  +  < w, ( ff*g.D)_ > ! +  skew * < w, ff*(D.g) _ >
     !  ===>  a0   ! incremental accumulation
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8),                 INTENT(IN)    :: mass
@@ -2232,7 +2232,7 @@ CONTAINS
     !  +  < w, (g.D)_ >  +  < w, (D.g) _ > / 2
     !  ===>  a0   ! incremental accumulation
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8),                 INTENT(IN)    :: alpha
@@ -2319,7 +2319,7 @@ CONTAINS
     !  +  < w, (g.D)_ >  +  < w, (D.g) _ >
     !  ===>  a0   ! incremental accumulation
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8),                 INTENT(IN)    :: alpha
@@ -2400,7 +2400,7 @@ CONTAINS
     !  alpha << (D.w), (D._) >>
     !  ===>   a0   incremental acc. in k_d Dimensions
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8),                 INTENT(IN)    :: alpha
@@ -2466,7 +2466,7 @@ CONTAINS
     !  + alpha << (D.w), (D._) >>
     !  ===>   a0   incremental acc. in k_d Dimensions
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8),                 INTENT(IN)    :: stabh, expdiv
@@ -2532,7 +2532,7 @@ CONTAINS
     ! - (Grad phij, psii) + h^(2(1-exp_sta))*(Grad psij, Grad psii)
     !  ===>   a0   incremental acc. in k_d Dimensions
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8),                 INTENT(IN)    :: stab, exp_sta
@@ -2641,7 +2641,7 @@ CONTAINS
     !  -       << (Dxw)xn, _ >>
     !  ===>   a0   incremental acc. in k_d Dimensions
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     INTEGER,      DIMENSION(:),   INTENT(IN)    :: ia
@@ -2750,7 +2750,7 @@ CONTAINS
 
     !  alpha << (Dw), (D_) >>   ===>   A0    incremental accumulation
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
     REAL(KIND=8),                 INTENT(IN)    :: alpha

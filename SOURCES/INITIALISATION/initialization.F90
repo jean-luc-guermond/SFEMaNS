@@ -627,7 +627,7 @@ CONTAINS
       USE create_comm
       USE mesh_metis_distribution
       !===JLG July 20, 2019, p3 mesh
-      USE mod_gauss_points_2d
+      USE gauss_points_2d
       !===JLG July 20, 2019, p3 mesh
       USE st_matrix
       USE st_csr_mhd
@@ -1098,14 +1098,14 @@ CONTAINS
 
          !===Create periodic structures===============================================
          IF (ns_periodic) THEN
-            CALL prep_periodic(inputs%my_periodic, pp_mesh, pp_per)
-            CALL prep_periodic(inputs%my_periodic, vv_mesh, vvz_per)
+            CALL prep_periodic_scal(inputs%my_periodic, pp_mesh, pp_per)
+            CALL prep_periodic_scal(inputs%my_periodic, vv_mesh, vvz_per)
             CALL prep_periodic_bloc(inputs%my_periodic, vv_mesh, vvrt_per, 2)
             CALL prep_periodic_bloc(inputs%my_periodic, vv_mesh, vvrtz_per, 3)
             IF (inputs%if_level_set_P2) THEN
-               CALL prep_periodic(inputs%my_periodic, vv_mesh, level_set_per)
+               CALL prep_periodic_scal(inputs%my_periodic, vv_mesh, level_set_per)
             ELSE
-               CALL prep_periodic(inputs%my_periodic, pp_mesh, level_set_per)
+               CALL prep_periodic_scal(inputs%my_periodic, pp_mesh, level_set_per)
             END IF
          END IF
 
@@ -1132,8 +1132,8 @@ CONTAINS
          !===JLG july 20, 2019, p3 mesh
          vv_mesh%edge_stab = .FALSE.
          pp_mesh%edge_stab = .FALSE.
-         CALL gauss_points_2d(vv_mesh, inputs%type_fe_velocity)
-         CALL gauss_points_2d(pp_mesh, inputs%type_fe_velocity - 1)
+         CALL create_gauss_points_2d(vv_mesh, inputs%type_fe_velocity)
+         CALL create_gauss_points_2d(pp_mesh, inputs%type_fe_velocity - 1)
          !===JLG july 20, 2019, p3 mesh
          !CALL plot_const_p1_label(vv_mesh%jj, vv_mesh%rr, 1.d0 * vv_mesh%jj(1, :), 'vv' // tit // '.plt')
          !CALL plot_const_p1_label(pp_mesh%jj, pp_mesh%rr, 1.d0 * pp_mesh%jj(1, :), 'pp' // tit // '.plt')
@@ -1430,11 +1430,11 @@ CONTAINS
          pmag_mesh%edge_stab = .FALSE.
          phi_mesh%edge_stab = .FALSE.
          IF (1.LE.inputs%type_fe_H .AND. inputs%type_fe_H.LE.2) THEN
-            CALL gauss_points_2d(H_mesh, inputs%type_fe_H)
+            CALL create_gauss_points_2d(H_mesh, inputs%type_fe_H)
          END IF
-         CALL gauss_points_2d(pmag_mesh, 1)
+         CALL create_gauss_points_2d(pmag_mesh, 1)
          IF (1.LE.inputs%type_fe_phi .AND. inputs%type_fe_phi.LE.2) THEN
-            CALL gauss_points_2d(phi_mesh, inputs%type_fe_phi)
+            CALL create_gauss_points_2d(phi_mesh, inputs%type_fe_phi)
          END IF
          !===JLG july 20, 2019, p3 mesh
 
@@ -1568,7 +1568,7 @@ CONTAINS
          END IF
          !===Create periodic structures for temperature===============================
          IF (temp_periodic) THEN
-            CALL prep_periodic(inputs%my_periodic, temp_mesh, temp_per)
+            CALL prep_periodic_scal(inputs%my_periodic, temp_mesh, temp_per)
          END IF
 
          !===Create csr structure for temperature=====================================
@@ -1578,7 +1578,7 @@ CONTAINS
          !===Start Gauss points generation============================================
          !===JLG July 20, 2019, p3 mesh
          temp_mesh%edge_stab = .FALSE.
-         CALL gauss_points_2d(temp_mesh, 2)
+         CALL create_gauss_points_2d(temp_mesh, 2)
          !===JLG July 20, 2019, p3 mesh
 
 
@@ -1651,7 +1651,7 @@ CONTAINS
 
          !===Create periodic structures for concentration===============================
          IF (conc_periodic) THEN
-            CALL prep_periodic(inputs%my_periodic, conc_mesh, conc_per)
+            CALL prep_periodic_scal(inputs%my_periodic, conc_mesh, conc_per)
          END IF
 
          !===Create csr structure for concentration=====================================
@@ -1661,7 +1661,7 @@ CONTAINS
          !===Start Gauss points generation============================================
          !===JLG July 20, 2019, p3 mesh
          conc_mesh%edge_stab = .FALSE.
-         CALL gauss_points_2d(conc_mesh, 2)
+         CALL create_gauss_points_2d(conc_mesh, 2)
          !===JLG July 20, 2019, p3 mesh
 
 

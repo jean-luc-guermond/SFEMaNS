@@ -10,7 +10,7 @@ CONTAINS
 
     !  sqrt(< f^2 >)   ===>   t
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
 
@@ -53,7 +53,7 @@ CONTAINS
 
     !  sqrt(< f^2 >)   ===>   t
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
 
@@ -97,7 +97,7 @@ CONTAINS
 
     !  < f >   ===>   t
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
 
@@ -139,7 +139,7 @@ CONTAINS
 
     !  < f >/vol   ===>   t
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
 
@@ -202,7 +202,7 @@ CONTAINS
 
     !  sqrt(< f^2 >)   ===>   t
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
 
@@ -250,7 +250,7 @@ CONTAINS
 
     !  sqrt(<< (Df).(Df) >>)   ===>   t
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
 
@@ -302,7 +302,7 @@ CONTAINS
     !(v_rc, v_rs, v_thc, v_ths, v_zc, v_zs)
     !sqrt(<< (Dv).(Dv) >>)   ===>   t
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
 
@@ -364,7 +364,7 @@ CONTAINS
     !semi-norme vectoriel H1 pour une representation de Fourier
     !(v_rc, v_rs, v_zc, v_zs)
 
-    USE Gauss_points
+    USE associate_gauss
 
     IMPLICIT NONE
 
