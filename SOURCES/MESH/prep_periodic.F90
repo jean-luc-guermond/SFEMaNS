@@ -494,4 +494,4 @@ CONTAINS
   END SUBROUTINE periodic_rhs_petsc
 
 
-END MODULE periodic
+END MODULE prep_periodic
