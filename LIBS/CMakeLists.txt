@@ -25,15 +25,8 @@ pkg_check_modules(PETSC PETSc)
 pkg_check_modules(FFTW fftw3)
 
 # Build library sfemans_lib_F
-file(GLOB_RECURSE sfemans_sources_F
-	../SOURCES/FEMSUB/*.F90
-	../SOURCES/FEMSUB_OBJET/*.F90
-	../SOURCES/GAUSS_POINTS_OBJET/*.F90
-	../SOURCES/FEMSUB_PARALLEL/*.F90
-	../SOURCES/FEMSUB_SFEMaNS/*.F90
-	../SOURCES/MHD_DATA_TEST_CONV_PETSC/*.F90
-	../SOURCES/WRITE_BLOCK_MM/*.F90
-  )
+file(GLOB_RECURSE sfemans_sources_F ../SOURCES/*/*.F90)
+
 add_library(sfemans_lib_F SHARED ${sfemans_sources_F})
 target_include_directories(sfemans_lib_F PUBLIC
     ${FFTW_INCLUDEDIR} ${FFTW_INCLUDE_DIRS}
