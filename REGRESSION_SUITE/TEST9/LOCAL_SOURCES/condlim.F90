@@ -144,19 +144,19 @@ CONTAINS
        uz = -(2*r**2/PI)*SIN(2*PI*z)*SIN(t)
        IF (m==0 .AND. TYPE==1) THEN
           vv = r**3*COS(2*PI*z)*COS(t) &
-               + (ur*2*r**2*COS(2*PI*z) - ut*r*SIN(2*PI*z) &
-               - uz*r**3*2*PI*SIN(2*PI*z))*SIN(t) &
-               - (1/Re)*(8*r-(2*pi)**2*r**3)*COS(2*PI*z)*SIN(t)
+               +(-8*r**3/(PI**2)+4*r**5-3*r**3)*SIN(2*PI*z)**2*SIN(t)**2 &
+               +(1/Re)*(4*PI**2*r**3-8*r)*COS(2*PI*z)*SIN(t) &   
+               +0.5d0*(6*r**5*COS(2*PI*z)**2+4*r**3*SIN(2*PI*z)**2 &
+               +16*r**3/(PI**2)*SIN(2*PI*z)**2)*SIN(t)**2
        ELSE IF (m==0 .AND. TYPE==3) THEN
           vv = r**2*SIN(2*PI*z)*COS(t) &
-               + (ur*2*r*SIN(2*PI*z) + ut*r**2*COS(2*PI*z)&
-               + uz*r**2*2*PI*COS(2*PI*z))*SIN(t) &
-               - (1/Re)*(3*SIN(2*PI*z)-(2*PI)**2*r**2*SIN(2*PI*z))*SIN(t)
+               -r**4*COS(2*PI*z)*SIN(2*PI*z)*SIN(t)**2 &
+               +(1/Re)*(4*PI**2*r**2-3)*SIN(2*PI*z)*SIN(t)  
        ELSE IF (m==0 .AND. TYPE==5) THEN
           vv = -(2*r**2/PI)*SIN(2*PI*z)*COS(t) &
-               + (ur*(-(4*r/PI)*SIN(2*PI*z)) &
-               + uz*(-4*r**2*COS(2*PI*z)))*SIN(t) &
-               - (1/Re)*(-(8/PI)+2*PI*4*r**2)*SIN(2*PI*z)*SIN(t)
+               +(-2*PI*r**4-4*r**4/PI+2*PI*r**6)*COS(2*PI*z)*SIN(2*PI*z)*SIN(t)**2 &
+               +(1/Re)*(8/PI-8*PI*r**2)*SIN(2*PI*z)*SIN(t) &
+               + (-2*PI*r**6+2*PI*r**4+8/PI*r**4)*SIN(2*PI*z)*COS(2*PI*z)*SIN(t)**2
        ELSE
           vv =0.d0
        END IF
@@ -381,10 +381,10 @@ CONTAINS
     vv = 0.d0
     CALL error_petsc('concentration_exact: should not be called for this test')
     RETURN
-     !===Dummy variables to avoid warning
+    !===Dummy variables to avoid warning
     nd=TYPE; nd=SIZE(rr,1); nd=m; rd=t
     !===Dummy variables to avoid warning
- END FUNCTION concentration_exact
+  END FUNCTION concentration_exact
 
   !===Can be used to initialize level set in the subroutine init_level_set.
   MODULE FUNCTION level_set_exact(interface_nb,TYPE,rr,m,t)  RESULT (vv)
@@ -660,7 +660,7 @@ CONTAINS
     !===Dummy variables to avoid warning
     nd=SIZE(pt,1); nd=SIZE(pt_id)
     !===Dummy variables to avoid warning
- END FUNCTION grad_mu_bar_in_fourier_space
+  END FUNCTION grad_mu_bar_in_fourier_space
 
   !===Analytical permeability, mu in real space (if needed)
   MODULE FUNCTION mu_in_real_space(H_mesh,angles,nb_angles,nb,ne,time) RESULT(vv)
