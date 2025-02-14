@@ -4,7 +4,7 @@
 !===
 MODULE GP_2d_p2
   PRIVATE
-  PUBLIC element_2d_p2, element_2d_p2_boundary, element_1d_p2
+  PUBLIC element_2d_p2, element_2d_p2_boundary, element_1d_p2, element_1d_p2_at_nodes
 CONTAINS
   SUBROUTINE element_2d_p2 (w, d, p, n_w, l_G)
     !===Triangular element with quadratic  interpolation
@@ -12,9 +12,9 @@ CONTAINS
     !===w(n_w, l_G)    : values of shape functions at Gauss points
     !===d(2, n_w, l_G) : derivatives values of shape functions at Gauss points
     !===p(l_G)         : weight for Gaussian quadrature at Gauss points
-    ! 3
+    ! 3 
     ! 5 4     with orientation 1->2, 1->3, 2->3 (lowest to highest index convention)
-    ! 1 6 2
+    ! 1 6 2   
     IMPLICIT NONE
     INTEGER,                              INTENT(IN)  :: n_w, l_G
     REAL(KIND=8), DIMENSION(   n_w, l_G), INTENT(OUT) :: w
@@ -93,9 +93,9 @@ CONTAINS
     !===w(n_w, l_Gs)    : values of shape functions at Gauss points
     !===d(2, n_w, l_Gs) : derivatives values of shape functions at Gauss points
     !===p(l_Gs)         : weight for Gaussian quadrature at Gauss points
-    ! 3
+    ! 3 
     ! 5 4     with orientation 1->2, 1->3, 2->3 (lowest to highest index convention)
-    ! 1 6 2
+    ! 1 6 2   
     IMPLICIT NONE
     INTEGER,                                INTENT(IN)  :: n_w, l_Gs
     INTEGER,                                INTENT(IN)  :: face
@@ -128,7 +128,7 @@ CONTAINS
     df4y(x, y) =  x * four
     df5y(x, y) = (one - x - two*y) * four
     df6y(x, y) = -x * four
-    IF (face==1) THEN
+    IF (face==1) THEN 
        xx(1) = half + half*SQRT(three/five)
        xx(2) = half
        xx(3) = half - half*SQRT(three/five)
@@ -142,7 +142,7 @@ CONTAINS
        yy(1) = half - half*SQRT(three/five)
        yy(2) = half
        yy(3) = half + half*SQRT(three/five)
-    ELSE
+    ELSE 
        xx(1) = half - half*SQRT(three/five)
        xx(2) = half
        xx(3) = half + half*SQRT(three/five)
@@ -197,10 +197,10 @@ CONTAINS
     df3(x) = -two*x
     xx(1) = -SQRT(three/five)
     xx(2) =  zero
-    xx(3) =  SQRT(three/five)
+    xx(3) =  SQRT(three/five) 
     p(1)  =  five/nine
-    p(2)  =  eight/nine
-    p(3)  =  five/nine
+    p(2)  =  eight/nine 
+    p(3)  =  five/nine 
     DO j = 1, l_Gs
        w(1, j) =  f1(xx(j))
        d(1, 1, j) = df1(xx(j))
@@ -210,4 +210,26 @@ CONTAINS
        d(1, 3, j) = df3(xx(j))
     ENDDO
   END SUBROUTINE element_1d_p2
+  
+  SUBROUTINE element_1d_p2_at_nodes (d, n_ws)
+    IMPLICIT NONE
+    INTEGER,                             INTENT(IN)  :: n_ws
+    REAL(KIND=8), DIMENSION(n_ws, n_ws), INTENT(OUT) :: d
+    INTEGER :: j
+    REAL(KIND=8) ::  one = 1.d0,  two = 2.d0
+    REAL(KIND=8) :: df1, df2, df3, x
+    REAL(KIND=8), DIMENSION(n_ws) :: xx
+    df1(x) = (two*x - one)/two
+    df2(x) = (two*x + one)/two
+    df3(x) = -two*x
+    xx(1) = -1.d0
+    xx(2) = 1.d0
+    xx(3) = 0.d0
+    DO j = 1, n_ws
+       d(1, j) = df1(xx(j))
+       d(2, j) = df2(xx(j))
+       d(3, j) = df3(xx(j))
+    ENDDO
+  END SUBROUTINE element_1d_p2_at_nodes
 END MODULE GP_2d_p2
+

@@ -3,7 +3,7 @@
 !===
 MODULE GP_2d_p3
   PRIVATE
-  PUBLIC element_2d_p3, element_2d_p3_boundary, element_1d_p3
+  PUBLIC element_2d_p3, element_2d_p3_boundary, element_1d_p3, element_1d_p3_at_nodes
 CONTAINS
   SUBROUTINE element_2d_p3 (w, d, p, n_w, l_G)
     !===triangular element with cubic interpolation
@@ -100,7 +100,7 @@ CONTAINS
        xx(10)= 0.053145049844817d0; yy(10)= 0.636502499121399d0; p(10)= 0.082851075618374d0
        xx(11)= 0.636502499121399d0; yy(11)= 0.310352451033784d0; p(11)= 0.082851075618374d0
        xx(12)= 0.310352451033784d0; yy(12)= 0.053145049844817d0; p(12) = 0.082851075618374d0
-       p = p*area
+       p = p*area 
     END IF
 
     DO j = 1, l_G
@@ -301,4 +301,28 @@ CONTAINS
        d(1, 4, j) = df4(xx(j))
     ENDDO
   END SUBROUTINE element_1d_p3
+
+   SUBROUTINE element_1d_p3_at_nodes (d, n_ws)
+    IMPLICIT NONE
+    INTEGER,                             INTENT(IN)  :: n_ws
+    REAL(KIND=8), DIMENSION(n_ws, n_ws), INTENT(OUT) :: d
+    INTEGER :: j
+    REAL(KIND=8) :: df1, df2, df3, df4, x
+    REAL(KIND=8), DIMENSION(n_ws) :: xx
+    df1(x) = 0.1D1/0.16D2 - 0.27D2/0.16D2*x**2 + 0.9D1/0.8D1*x
+    df2(x)  = -0.1D1/0.16D2 + 0.27D2/0.16D2*x**2 + 0.9D1/0.8D1*x
+    df3(x) = -0.27D2/0.16D2 - 0.9D1/0.8D1*x + 0.81D2/0.16D2*x**2
+    df4(x) = -0.9D1/0.8D1*x - 0.81D2/0.16D2*x**2 + 0.27D2/0.16D2
+    xx(1) = -1.d0
+    xx(2) = 1.d0
+    xx(3) = 1.d0/3
+    xx(3) = 2.d0/3
+    DO j = 1, n_ws
+       d(1, j) = df1(xx(j))
+       d(2, j) = df2(xx(j))
+       d(3, j) = df3(xx(j))
+       d(4, j) = df4(xx(j))
+    ENDDO
+  END SUBROUTINE element_1d_p3_at_nodes
 END MODULE GP_2d_p3
+
