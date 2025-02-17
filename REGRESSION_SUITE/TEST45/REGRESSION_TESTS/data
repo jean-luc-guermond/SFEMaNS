@@ -1,0 +1,209 @@
+===Is mesh file formatted (true/false)?
+.t.
+===Directory and name of mesh file
+'../../MESHES' 'Mesh_10_form.FEM'
+===Number of processors in meridian section
+2
+===Number of processors in Fourier space
+5
+===Number of Fourier modes
+5
+===Select Fourier modes? (true/false)
+.f.
+===List of Fourier modes (if select_mode=.TRUE.)
+0 1 2 3 4
+===Problem type: (nst, mxw, mhd, fhd)
+'nst'
+===Restart on velocity (true/false)
+.f.
+===Time step and number of time iterations
+.02d0, 50
+xx===Frequency to write energies
+xx50
+xx===Compute L2 and H1 relative errors (true/false)
+xx.t.
+
+===Do we apply mass correction? (true/false)
+.f.
+===Do we kill level set overshoot? (true/false)
+.f.
+===Do we use P2 finite element for level_set? (true/false)
+.t.
+===Do we solve level set with bdf2 (true/false)?
+.t.
+===Do we solve momentum with bdf2 (true/false)?
+.f.
+===Do we solve heat equation with bdf2 (true/false)?
+.f.
+===Solve Navier-Stokes with art comp scheme (true) or (false)?
+.f.
+===Penalty coefficient for artifical compression
+1.0d0
+
+============================================
+              Periodicity
+============================================
+===How many pieces of periodic boundary?
+1
+===Indices of periodic boundaries and corresponding vectors
+4 2 .0d0 1.d0
+
+============================================
+              Mesh-NAVIER-STOKES
+============================================
+===Number of subdomains in Navier-Stokes mesh
+1
+===List of subdomains for Navier-Stokes mesh
+1
+
+============================================
+              BCs-NAVIER-STOKES
+============================================
+===How many boundary pieces for full Dirichlet BCs on velocity?
+1
+===List of boundary pieces for full Dirichlet BCs on velocity
+5
+
+============================================
+              Dynamics-NAVIER-STOKES
+============================================
+===Solve Navier-Stokes with u (true) or m (false)?
+.f.
+===Reynolds number
+1.d0
+
+============================================
+              LES-NAVIER-STOKES
+============================================
+===Use LES? (true/false)
+.t.
+===Use LES in momentum? (true/false)
+.f.
+===Coefficient multiplying residual
+1.d0          
+===Coefficient for explicit LES
+0.00d0
+
+============================================
+              Solver-velocity-NAVIER-STOKES
+============================================
+===Maximum number of iterations for velocity solver
+100
+===Relative tolerance for velocity solver
+1.d-6
+===Absolute tolerance for velocity solver
+1.d-10
+===Solver type for velocity (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for velocity solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Solver-pressure-NAVIER-STOKES
+============================================
+===Maximum number of iterations for pressure solver
+100
+===Relative tolerance for pressure solver
+1.d-6
+===Absolute tolerance for pressure solver
+1.d-10
+===Solver type for pressure (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for pressure solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Solver-mass-NAVIER-STOKES
+============================================
+===Maximum number of iterations for mass matrix solver
+100
+===Relative tolerance for mass matrix solver
+1.d-6
+===Absolute tolerance for mass matrix solver
+1.d-10
+===Solver type for mass matrix (FGMRES, CG, ...)
+CG
+===Preconditionner type for mass matrix solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Level set
+============================================
+===Is there a level set?
+.t.
+===How many fluids?
+2
+===Compression factor for level set
+0.d0
+===Density of fluid 0, fluid 1, ...
+1.d0 10.d0
+===Dynamic viscosity of fluid 0, fluid 1, ...
+0.1d0 1.d0
+===multiplier for h_min for level set
+1.d0
+===How are the variables reconstructed from the level set function? (lin, reg)
+'lin'
+===How many boundary pieces for Dirichlet BCs on level set?
+1
+===List of boundary pieces for Dirichlet BCs on level set
+5
+
+============================================
+              Solver-level set
+============================================
+===Maximum number of iterations for level set solver
+100
+===Relative tolerance for level set solver
+1.d-6
+===Absolute tolerance for level set solver
+1.d-10
+===Solver type for level set (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for level set solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Temperature
+============================================
+===Is there a temperature field?
+.t.
+===Solve Temperature with T (true) or e (false)?
+.f.
+===Heat capacity of fluid 0, fluid 1, ...
+0.1d0 1.d0
+===Thermal conductivity of fluid 0, fluid 1, ...
+0.01d0 1.d0
+===Thermal expansion coefficient of fluid 0, fluid 1, ...
+1.d0 10.d0
+===Number of subdomains in temperature mesh
+1
+===List of subdomains for temperature mesh
+1
+===Diffusivity coefficient for temperature (1:nb_dom_temp)
+1.d0
+xx===Non-dimensional gravity coefficient
+xx10.d0
+===How many boundary pieces for Dirichlet BCs on temperature?
+1
+===List of boundary pieces for Dirichlet BCs on temperature
+5
+
+============================================
+              Solver-Temperature
+============================================
+===Maximum number of iterations for temperature solver
+100
+===Relative tolerance for temperature solver
+1.d-6
+===Absolute tolerance for temperature solver
+1.d-10
+===Solver type for temperature (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for temperature solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Verbose (diagnostics)
+============================================
+===Verbose timing? (true/false)
+.t.

@@ -213,6 +213,9 @@ CONTAINS
        !===ASSEMBLE MASS MATRIX
        CALL create_local_petsc_matrix(comm_one_d(1), pp_1_LA, mass_mat, CLEAN=.FALSE.)
        CALL qs_diff_mass_scal_M (pp_mesh, pp_1_LA, 0.d0, 1.d0, 0.d0, 0, mass_mat)
+       IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
+          CALL periodic_matrix_petsc(pp_per%n_bord, pp_per%list, pp_per%perlist, mass_mat, pp_1_LA)
+       END IF
        DO i = 1, m_max_c
           IF (list_mode(i)==0) CYCLE
           CALL Dirichlet_M_parallel(mass_mat,pp_mode_global_js_D(i)%DIL)
@@ -223,6 +226,9 @@ CONTAINS
        IF (MINVAL(list_mode)==0) THEN
           CALL create_local_petsc_matrix(comm_one_d(1), pp_1_LA, mass_mat0, CLEAN=.FALSE.)
           CALL qs_diff_mass_scal_M (pp_mesh, pp_1_LA, 0.d0, 1.d0, 0.d0, 0, mass_mat0)
+          IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
+             CALL periodic_matrix_petsc(pp_per%n_bord, pp_per%list, pp_per%perlist, mass_mat0, pp_1_LA)
+          END IF
           DO i = 1, m_max_c
              IF (list_mode(i).NE.0) CYCLE
              CALL Dirichlet_M_parallel(mass_mat0,pp_mode_global_js_D(i)%DIL)
