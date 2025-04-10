@@ -406,8 +406,8 @@ CONTAINS
           ALLOCATE(sigma_curl_gauss_bdy(H_mesh%gauss%l_Gs*SIZE(Dirichlet_bdy_H_sides),6,SIZE(list_mode)))
           ALLOCATE(J_over_sigma_gauss_bdy(H_mesh%gauss%l_Gs*SIZE(Dirichlet_bdy_H_sides),6,SIZE(list_mode)))
        ELSE
-          ALLOCATE(sigma_curl_gauss_bdy(0,0,0))
-          ALLOCATE(J_over_sigma_gauss_bdy(0,0,0))
+          ALLOCATE(sigma_curl_gauss_bdy(0,0,SIZE(list_mode)))
+          ALLOCATE(J_over_sigma_gauss_bdy(0,0,SIZE(list_mode)))
           sigma_curl_gauss_bdy = 0.d0
           J_over_sigma_gauss_bdy = 0.d0
        END IF
@@ -417,9 +417,9 @@ CONTAINS
           ALLOCATE(J_over_sigma_gauss_inter_mu(2*H_mesh%gauss%l_Gs*interface_H_mu%mes,6,SIZE(list_mode)))
           ALLOCATE(minus_grad_times_der_pot_rhoLi(H_mesh%gauss%l_Gs*interface_H_mu%mes,6,SIZE(list_mode)))
        ELSE
-          ALLOCATE(sigma_curl_gauss_inter_mu(0,0,0))
-          ALLOCATE(J_over_sigma_gauss_inter_mu(0,0,0))
-          ALLOCATE(minus_grad_times_der_pot_rhoLi(0,0,0))
+          ALLOCATE(sigma_curl_gauss_inter_mu(0,0,SIZE(list_mode)))
+          ALLOCATE(J_over_sigma_gauss_inter_mu(0,0,SIZE(list_mode)))
+          ALLOCATE(minus_grad_times_der_pot_rhoLi(0,0,SIZE(list_mode)))
           sigma_curl_gauss_inter_mu = 0.d0
           J_over_sigma_gauss_inter_mu = 0.d0
           minus_grad_times_der_pot_rhoLi=0.d0
@@ -431,7 +431,7 @@ CONTAINS
           END IF
           ALLOCATE(sigma_tot_gauss_Neumann(H_mesh%gauss%l_Gs*SIZE(Neumann_bdy_H_sides),2,SIZE(list_mode)))
        ELSE
-          ALLOCATE(sigma_tot_gauss_Neumann(0,0,0))
+          ALLOCATE(sigma_tot_gauss_Neumann(0,0,SIZE(list_mode)))
           sigma_tot_gauss_Neumann = 0.d0
        END IF
        !------------------------------------------------------------------------------

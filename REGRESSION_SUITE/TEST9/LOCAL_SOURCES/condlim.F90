@@ -145,13 +145,13 @@ CONTAINS
        IF (m==0 .AND. TYPE==1) THEN
           vv = r**3*COS(2*PI*z)*COS(t) &
                +(-8*r**3/(PI**2)+4*r**5-3*r**3)*SIN(2*PI*z)**2*SIN(t)**2 &
-               +(1/Re)*(4*PI**2*r**3-8*r)*COS(2*PI*z)*SIN(t) &   
+               +(1/Re)*(4*PI**2*r**3-8*r)*COS(2*PI*z)*SIN(t) &
                +0.5d0*(6*r**5*COS(2*PI*z)**2+4*r**3*SIN(2*PI*z)**2 &
                +16*r**3/(PI**2)*SIN(2*PI*z)**2)*SIN(t)**2
        ELSE IF (m==0 .AND. TYPE==3) THEN
           vv = r**2*SIN(2*PI*z)*COS(t) &
                -r**4*COS(2*PI*z)*SIN(2*PI*z)*SIN(t)**2 &
-               +(1/Re)*(4*PI**2*r**2-3)*SIN(2*PI*z)*SIN(t)  
+               +(1/Re)*(4*PI**2*r**2-3)*SIN(2*PI*z)*SIN(t)
        ELSE IF (m==0 .AND. TYPE==5) THEN
           vv = -(2*r**2/PI)*SIN(2*PI*z)*COS(t) &
                +(-2*PI*r**4-4*r**4/PI+2*PI*r**6)*COS(2*PI*z)*SIN(2*PI*z)*SIN(t)**2 &
