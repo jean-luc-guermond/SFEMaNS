@@ -11,10 +11,10 @@ MODULE subroutine_ns_with_m
   PRIVATE
 CONTAINS
 
-  SUBROUTINE three_level_ns_tensor_sym_with_m(comm_one_d, time, vv_3_LA, pp_1_LA, &
-       dt, Re, list_mode, pp_mesh, vv_mesh, incpn_m1, incpn, pn_m1, pn, un_m1, un,  &
+  SUBROUTINE three_level_ns_tensor_sym_with_m(comm_one_d, time, vv_3_LA, pp_1_LA, vvz_per, pp_per, &
+       dt, Re, list_mode, pp_mesh, vv_mesh, incpn_m1, incpn, pn_m1, pn, un_m1, un, &
        Hn_p2, Bn_p2, density_m1, density, density_p1, visco_dyn, tempn, concn, level_set, level_set_p1, &
-       visc_entro_level, level_set_reg)
+       visc_entro_level, level_set_reg, visc_entro_grad_mom)
 
     !==============================
     USE def_type_mesh
@@ -29,7 +29,6 @@ CONTAINS
     USE boundary
     USE chaine_caractere
     USE sub_plot
-    USE st_matrix
     USE input_data
     USE fft_parallele
     USE tn_axi
@@ -41,6 +40,7 @@ CONTAINS
     INTEGER,      DIMENSION(:),       INTENT(IN)          :: list_mode
     TYPE(mesh_type),                  INTENT(IN)          :: pp_mesh, vv_mesh
     TYPE(petsc_csr_LA)                                    :: vv_3_LA, pp_1_LA
+    TYPE(periodic_type),              INTENT(IN)          :: vvz_per, pp_per
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(INOUT)       :: incpn_m1, incpn
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(INOUT)       :: pn_m1, pn
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(INOUT)       :: un_m1, un
@@ -52,7 +52,10 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: Hn_p2, Bn_p2
     REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode)) :: Hn_p2_aux
     REAL(KIND=8), DIMENSION(:,:),     INTENT(OUT)         :: visc_entro_level
-    REAL(KIND=8), DIMENSION(:,:,:,:),        INTENT(IN)   :: level_set_reg
+    REAL(KIND=8), DIMENSION(:,:,:,:), INTENT(IN)          :: level_set_reg
+    REAL(KIND=8), DIMENSION(:,:,:,:), INTENT(INOUT)       :: visc_entro_grad_mom
+
+    !===Saved variables
     INTEGER,                                         SAVE :: m_max_c
     TYPE(dyn_real_line),DIMENSION(:), ALLOCATABLE,   SAVE :: pp_global_D
     TYPE(dyn_int_line), DIMENSION(:), POINTER,       SAVE :: pp_mode_global_js_D
@@ -60,29 +63,27 @@ CONTAINS
     TYPE(dyn_int_line), DIMENSION(:), POINTER,       SAVE :: vv_mode_global_js_D
     TYPE(dyn_real_line),DIMENSION(:), ALLOCATABLE,   SAVE :: vel_global_D
     LOGICAL,                                         SAVE :: once = .TRUE.
+    LOGICAL,                                         SAVE :: once_LES = .TRUE.
     INTEGER,                                         SAVE :: my_petscworld_rank
     REAL(KIND=8),                                    SAVE :: mu_bar, nu_bar, rho_bar, sqrt_2d_vol
     REAL(KIND=8), DIMENSION(:,:,:), ALLOCATABLE,     SAVE :: momentum, momentum_m1, momentum_m2
     INTEGER,                                         SAVE :: bloc_size, m_max_pad, nb_procs
-    REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:,:),     SAVE :: rotb_b_m1
     REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:,:,:),   SAVE :: visc_grad_vel_m1
     REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:,:,:),   SAVE :: tensor_m1
     REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:),       SAVE :: visc_entro_real
-    !----------FIN SAVE--------------------------------------------------------------------
+    !===End saved variables
 
-    !----------Declaration sans save-------------------------------------------------------
+    !===Other variables
     INTEGER,          POINTER, DIMENSION(:)  :: pp_1_ifrom, vv_3_ifrom
     INTEGER                                  :: i, k, m, n
     INTEGER                                  :: code,nu_mat, mode
     REAL(KIND=8)                             :: moyenne
-    !allocations des variables locales
     REAL(KIND=8), DIMENSION(pp_mesh%np, 2, SIZE(list_mode)) :: div
     REAL(KIND=8), DIMENSION(pp_mesh%np, 2)   :: pn_p1, phi
     REAL(KIND=8), DIMENSION(vv_mesh%np, 2)   :: p_p2
     REAL(KIND=8), DIMENSION(vv_mesh%np, 6)   :: un_p1, src
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode))   :: rotb_b, rotb_b_aux
     REAL(KIND=8), DIMENSION(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: visc_grad_vel
-    REAL(KIND=8), DIMENSION(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: visc_entro_grad_mom
     REAL(KIND=8), DIMENSION(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: tensor_surface_gauss
     REAL(KIND=8), DIMENSION(3,vv_mesh%np,6,SIZE(list_mode))                       :: tensor
     REAL(KIND=8), DIMENSION(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6)                 :: visc_grad_vel_ext
@@ -96,9 +97,9 @@ CONTAINS
     INTEGER        :: n1, n2, n3, n123, nb_inter
     REAL(KIND=8)   :: tps, tps_tot, tps_cumul, coeff, cfl, cfl_max, norm
     INTEGER        :: nb_procs_LES, bloc_size_LES, m_max_pad_LES
-    !April 17th 2008, JLG
     REAL(KIND=8) :: one, zero, three
     DATA zero, one, three/0.d0,1.d0,3.d0/
+    !===End Other variables
 
     !Communicators for Petsc, in space and Fourier------------------------------
     PetscErrorCode                   :: ierr
@@ -112,14 +113,11 @@ CONTAINS
     KSP,                        SAVE :: mass_ksp, mass_ksp0
     !------------------------------END OF DECLARATION--------------------------------------
 
-
     IF (once) THEN
-
        once = .FALSE.
-
        CALL MPI_COMM_RANK(PETSC_COMM_WORLD,my_petscworld_rank,code)
 
-       !-----CREATE PETSC VECTORS AND GHOSTS-----------------------------------------
+       !===CREATE PETSC VECTORS AND GHOSTS
        CALL create_my_ghost(vv_mesh,vv_3_LA,vv_3_ifrom)
        n = 3*vv_mesh%dom_np
        CALL VecCreateGhost(comm_one_d(1), n, &
@@ -135,13 +133,13 @@ CONTAINS
        CALL VecGhostGetLocalForm(px_1, px_1_ghost, ierr)
        CALL VecDuplicate(px_1, pb_1, ierr)
        CALL VecDuplicate(px_1, pb_2, ierr)
-       !------------------------------------------------------------------------------
+       !===End CREATE PETSC VECTORS AND GHOSTS
 
-       !-------------DIMENSIONS-------------------------------------------------------
+       !===Number of modes on proc
        m_max_c = SIZE(list_mode)
-       !------------------------------------------------------------------------------
+       !===End Number of modes on proc
 
-       !-------------MOMENTUM INITIALIZATION------------------------------------------
+       !===Momentum Initialization
        ALLOCATE(momentum(SIZE(un,1),SIZE(un,2), SIZE(un,3)),&
             momentum_m1(SIZE(un,1),SIZE(un,2), SIZE(un,3)), &
             momentum_m2(SIZE(un,1),SIZE(un,2), SIZE(un,3)))
@@ -158,10 +156,9 @@ CONTAINS
           momentum_m1 = un_m1
           momentum = un
        END IF
+       !===End Momentum Initialization
 
-       ALLOCATE(rotb_b_m1(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)))
-       rotb_b_m1 = 0.d0
-
+       !===Tensors_m1 allocation and initialization
        ALLOCATE(tensor_m1(3,vv_mesh%np,6,SIZE(list_mode)))
        bloc_size = SIZE(un,1)/nb_procs+1
        m_max_pad = 3*SIZE(list_mode)*nb_procs/2
@@ -170,17 +167,17 @@ CONTAINS
        ALLOCATE(visc_grad_vel_m1(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)))
        CALL smb_explicit_diffu_sym(comm_one_d(2), vv_mesh, list_mode, nb_procs, &
             visco_dyn/Re, un_m1, visc_grad_vel_m1)
+       !===End Tensors_m1 allocation and initialization
 
+       !===Allocation entropy visc
        CALL MPI_COMM_SIZE(comm_one_d(2), nb_procs_LES, code)
        bloc_size_LES = vv_mesh%gauss%l_G*vv_mesh%dom_me/nb_procs_LES+1
        bloc_size_LES = vv_mesh%gauss%l_G*(bloc_size_LES/vv_mesh%gauss%l_G)+vv_mesh%gauss%l_G
        m_max_pad_LES = 3*SIZE(list_mode)*nb_procs_LES/2
        ALLOCATE(visc_entro_real(2*m_max_pad_LES-1,bloc_size_LES))
        visc_entro_real = 0.d0
+       !===End Allocation entropy visc
 
-       !---------PREPARE pp_js_D ARRAY FOR PRESSURE-----------------------------------
-       !CALL dirichlet_nodes_parallel(pp_mesh, inputs%pp_list_dirichlet_sides, pp_js_D)
-       !------------------------------------------------------------------------------
        !===PREPARE pp_mode_global_js_D ARRAY FOR PRESSURE
        !===ATTENTION pressure BCs are no longer implemented
        !===JLG June 9 2017
@@ -190,6 +187,7 @@ CONTAINS
        DO i = 1, m_max_c
           ALLOCATE(pp_global_D(i)%DRL(SIZE(pp_mode_global_js_D(i)%DIL)))
        END DO
+       !===End PREPARE pp_mode_global_js_D  ARRAY FOR PRESSURE
 
        !===PREPARE TYPE OF BOUNDARY CONDITIONS AND js_D ARRAY FOR VELOCITY
        CALL vector_glob_js_D(vv_mesh, list_mode, vv_3_LA, inputs%vv_list_dirichlet_sides, &
@@ -204,6 +202,9 @@ CONTAINS
        !===ASSEMBLE MASS MATRIX
        CALL create_local_petsc_matrix(comm_one_d(1), pp_1_LA, mass_mat, CLEAN=.FALSE.)
        CALL qs_diff_mass_scal_M (pp_mesh, pp_1_LA, 0.d0, 1.d0, 0.d0, 0, mass_mat)
+       IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
+          CALL periodic_matrix_petsc(pp_per%n_bord, pp_per%list, pp_per%perlist, mass_mat, pp_1_LA)
+       END IF
        DO i = 1, m_max_c
           IF (list_mode(i)==0) CYCLE
           CALL Dirichlet_M_parallel(mass_mat,pp_mode_global_js_D(i)%DIL)
@@ -214,6 +215,9 @@ CONTAINS
        IF (MINVAL(list_mode)==0) THEN
           CALL create_local_petsc_matrix(comm_one_d(1), pp_1_LA, mass_mat0, CLEAN=.FALSE.)
           CALL qs_diff_mass_scal_M (pp_mesh, pp_1_LA, 0.d0, 1.d0, 0.d0, 0, mass_mat0)
+          IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
+             CALL periodic_matrix_petsc(pp_per%n_bord, pp_per%list, pp_per%perlist, mass_mat0, pp_1_LA)
+          END IF
           DO i = 1, m_max_c
              IF (list_mode(i).NE.0) CYCLE
              CALL Dirichlet_M_parallel(mass_mat0,pp_mode_global_js_D(i)%DIL)
@@ -223,7 +227,7 @@ CONTAINS
        END IF
        !===END ASSEMBLE MASS MATRIX
 
-       !-------------ASSEMBLE VELOCITY MATRICES----------------------
+       !===ASSEMBLE VELOCITY-PRESSURE MATRICES
        ALLOCATE(vel_mat(2*m_max_c),vel_ksp(2*m_max_c))
        ALLOCATE(press_mat(m_max_c),press_ksp(m_max_c))
 
@@ -256,6 +260,10 @@ CONTAINS
              CALL qs_diff_mass_vect_3x3 (1, vv_3_LA, vv_mesh, nu_bar/Re, one/dt, &
                   inputs%LES_coeff1_mom, inputs%stab_bdy_ns, i, mode, vel_mat(nu_mat))
           END IF
+          IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
+             CALL periodic_matrix_petsc(vvz_per%n_bord, vvz_per%list,vvz_per%perlist, &
+                  vel_mat(nu_mat), vv_3_LA)
+          END IF
           CALL Dirichlet_M_parallel(vel_mat(nu_mat),vv_mode_global_js_D(i)%DIL)
           CALL init_solver(inputs%my_par_vv_scal,vel_ksp(nu_mat),vel_mat(nu_mat),comm_one_d(1),&
                solver=inputs%my_par_vv_scal%solver,precond=inputs%my_par_vv_scal%precond)
@@ -269,6 +277,10 @@ CONTAINS
              CALL qs_diff_mass_vect_3x3 (2, vv_3_LA, vv_mesh, nu_bar/Re, one/dt, &
                   inputs%LES_coeff1_mom, inputs%stab_bdy_ns, i, mode, vel_mat(nu_mat))
           END IF
+          IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
+             CALL periodic_matrix_petsc(vvz_per%n_bord, vvz_per%list,vvz_per%perlist, &
+                  vel_mat(nu_mat), vv_3_LA)
+          END IF
           CALL Dirichlet_M_parallel(vel_mat(nu_mat),vv_mode_global_js_D(i)%DIL)
           CALL init_solver(inputs%my_par_vv_scal,vel_ksp(nu_mat),vel_mat(nu_mat),comm_one_d(1),&
                solver=inputs%my_par_vv_scal%solver,precond=inputs%my_par_vv_scal%precond)
@@ -276,27 +288,30 @@ CONTAINS
           !---PRESSURE
           CALL create_local_petsc_matrix(comm_one_d(1), pp_1_LA, press_mat(i), clean=.FALSE.)
           CALL qs_diff_mass_scal_M(pp_mesh, pp_1_LA, one, 1.d-10, zero, mode, press_mat(i))
+          IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
+             CALL periodic_matrix_petsc(pp_per%n_bord, pp_per%list, pp_per%perlist, &
+                  press_mat(i), pp_1_LA)
+          END IF
           CALL Dirichlet_M_parallel(press_mat(i),pp_mode_global_js_D(i)%DIL)
           CALL init_solver(inputs%my_par_pp,press_ksp(i),press_mat(i),comm_one_d(1),&
                solver=inputs%my_par_pp%solver,precond=inputs%my_par_pp%precond)
-
        ENDDO
+       !===End ASSEMBLE VELOCITY-PRESSURE MATRICES
 
        CALL twoD_volume(comm_one_d(1),vv_mesh,sqrt_2d_vol)
        sqrt_2d_vol =  SQRT(sqrt_2d_vol)
-
-    ENDIF ! Fin du once
-    tps_tot = user_time()
-    tps_cumul = 0
-
+    ENDIF ! End once
 
     !===Compute rhs by FFT at Gauss points
+    tps_tot = user_time()
+    tps_cumul = 0
     tps = user_time()
 
+    !===Compute extrapolation velocity and momentum
     IF (inputs%if_moment_bdf2) THEN
        uext = 2*un-un_m1
        IF (inputs%if_level_set) THEN
-          ! BDF2: momentumext = rho_np1*(2*un-un_m1)
+          !BDF2: momentumext = rho_np1*(2*un-un_m1)
           CALL FFT_SCALAR_VECT_DCL(comm_one_d(2), uext, density_p1, momentumext, 1,nb_procs, &
                bloc_size, m_max_pad)
        ELSE
@@ -305,13 +320,14 @@ CONTAINS
     ELSE
        uext = un
        IF (inputs%if_level_set) THEN
-          ! BDF1: momentumext = rho_np1*un
+          !BDF1: momentumext = rho_np1*un
           CALL FFT_SCALAR_VECT_DCL(comm_one_d(2), un, density_p1, momentumext, 1, nb_procs, &
                bloc_size, m_max_pad)
        ELSE
           momentumext = momentum
        END IF
     END IF
+    !===End Compute extrapolation velocity and momentum
 
     !===Precession should be in condlim
     IF (inputs%precession) THEN
@@ -341,20 +357,11 @@ CONTAINS
     END IF
     !===End compute Lorentz force if mhd
 
+    !===Compute diffusion/corrections and surface tension
     IF (inputs%if_level_set) THEN
        !===Compute visco_dyn/Re*Grad(un)
        CALL smb_explicit_diffu_sym(comm_one_d(2), vv_mesh, list_mode, nb_procs, &
             visco_dyn/Re, un, visc_grad_vel)
-       !===End compute visco_dyn/Re*Grad(un)
-
-       !===Compute (-LES_coeff1+visc_entro)*Grad(momentumext)
-       IF (inputs%LES.AND.inputs%if_LES_in_momentum) THEN
-          CALL smb_explicit_LES(comm_one_d(2), vv_mesh, list_mode, nb_procs, &
-               visc_entro_real, momentumext, visc_entro_grad_mom)
-       ELSE
-          visc_entro_grad_mom=0.d0
-       END IF
-       !===End compute (-LES_coeff1+visc_entro)*Grad(momentumext)
 
        IF (inputs%if_surface_tension) THEN
           !===Compute coeff_surface*Grad(level_set):Grad(level_set)
@@ -388,6 +395,21 @@ CONTAINS
        tensor_surface_gauss = 0.d0
        buoyancy = 0.d0 !Defined in condlim.F90
     END IF
+    !===End Compute diffusion/corrections and surface tension
+
+    !===First iteration without restart: compute -LES_coeff1*Grad(momentumext) 
+    IF (once_LES) THEN
+       once_LES = .FALSE.
+       IF (.NOT.inputs%irestart_LES) THEN
+          !visc_entro_grad_mom initialized to zero in initialization.F90
+          !visc_entro_real is set to zero in once
+          IF (inputs%LES.AND.inputs%if_LES_in_momentum) THEN
+             CALL smb_explicit_LES(comm_one_d(2), vv_mesh, list_mode, nb_procs, &
+               visc_entro_real, momentumext, visc_entro_grad_mom)
+          END IF
+       END IF
+    END IF
+    !===End First iteration without restart: compute -LES_coeff1*Grad(momentumext)
 
     !===Compute tensor product of momentum by velocity
     CALL FFT_TENSOR_DCL(comm_one_d(2), momentum, un, tensor, nb_procs, bloc_size, m_max_pad)
@@ -396,40 +418,41 @@ CONTAINS
     CALL momentum_dirichlet(comm_one_d(2), vv_mesh, list_mode, time, nb_procs, density_p1, &
          momentum_exact, vv_js_D)
 
+    !-------------------------------------------------------------------------------------
     tps = user_time() - tps; tps_cumul=tps_cumul+tps
-    !WRITE(*,*) ' Tps fft vitesse', tps
+    !WRITE(*,*) ' Time fft for momentum problem', tps
+    !-------------------------------------------------------------------------------------
 
-    !------------BEGINING LOOP ON FOURIER MODES------------------
+    !------------BEGIN LOOP ON FOURIER MODES FOR MOMENTUM---------------
     DO i = 1, m_max_c
        mode = list_mode(i)
-       !===Compute phi
        tps = user_time()
-       !jan 29 2007
+
+       !===Compute phi
        pn_p1(:,:) = pn(:,:,i)
        IF (inputs%if_moment_bdf2) THEN
           phi = pn_p1(:,:) + (4.d0 * incpn(:,:,i) - incpn_m1(:,:,i))/3.d0
        ELSE
           phi = pn_p1(:,:) + incpn(:,:,i)
        END IF
-       !jan 29 2007
 
        !===Inject pressure P1 -> P2
        DO k = 1, 2
           CALL inject(pp_mesh%jj, vv_mesh%jj, phi(:,k), p_p2(:,k))
        ENDDO
 
-       !===Prediction step
+       !===Compute source term
        DO k = 1, 6
           src(:,k) = source_in_NS_momentum(k, vv_mesh%rr, mode, i, time, Re, 'ns', &
                density_p1, tempn, concn) + buoyancy(:,k,i)
        END DO
 
+       !===Assemble vb_3_145, vb_3_236 using rhs_gauss
        IF (inputs%if_moment_bdf2) THEN
           tensor_ext               = 2*tensor(:,:,:,i) - tensor_m1(:,:,:,i)
           visc_grad_vel_ext        = 2*visc_grad_vel(:,:,:,i) - visc_grad_vel_m1(:,:,:,i)
 
           !===Update terms at m1
-          rotb_b_m1(:,:,i) = rotb_b(:,:,i)
           tensor_m1(:,:,:,i) = tensor(:,:,:,i)
           visc_grad_vel_m1(:,:,:,i) = visc_grad_vel(:,:,:,i)
           CALL qs_ns_momentum_stab_3x3(vv_mesh, vv_3_LA, mode, src, &
@@ -444,6 +467,14 @@ CONTAINS
                tensor_surface_gauss(:,:,:,i), nu_bar/Re, momentumext(:,:,i), &
                -visc_grad_vel(:,:,:,i)-visc_entro_grad_mom(:,:,:,i))
        END IF
+       !===End Assemble vb_3_145, vb_3_236 using rhs_gauss
+
+       !===Periodic boundary conditions
+       IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
+          CALL periodic_rhs_petsc(vvz_per%n_bord, vvz_per%list, vvz_per%perlist, vb_3_236, vv_3_LA)
+          CALL periodic_rhs_petsc(vvz_per%n_bord, vvz_per%list, vvz_per%perlist, vb_3_145, vv_3_LA)
+       END IF
+       !===End Periodic boundary conditions
 
        !===Axis boundary conditions
        n1 = SIZE(vv_js_D(1)%DIL)
@@ -460,16 +491,16 @@ CONTAINS
        vel_global_D(i)%DRL(n1+n2+1:n123)= momentum_exact(vv_js_D(3)%DIL,6,i)
        CALL dirichlet_rhs(vv_mode_global_js_D(i)%DIL-1,vel_global_D(i)%DRL,vb_3_236)
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
-       !===End Assemble vb_3_145, vb_3_236 using rhs_gauss
+       !===End Axis boundary conditions
 
-
+       !-------------------------------------------------------------------------------------
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
-       !WRITE(*,*) ' Tps second membre vitesse', tps
+       !WRITE(*,*) ' Time for RHS momentum problem', tps
        !-------------------------------------------------------------------------------------
 
-       !--------------------INVERSION DE L'OPERATEUR 1 --------------
        tps = user_time()
-       !Solve system 1, ur_c, ut_s, uz_c
+       !===Solve linear system for momentum equation
+       !Solve system 1, mr_c, mt_s, mz_c
        nu_mat  =2*i-1
        CALL solver(vel_ksp(nu_mat),vb_3_145,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv_scal%verbose)
        CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
@@ -478,7 +509,7 @@ CONTAINS
        CALL extract(vx_3_ghost,2,2,vv_3_LA,un_p1(:,4))
        CALL extract(vx_3_ghost,3,3,vv_3_LA,un_p1(:,5))
 
-       !Solve system 2, ur_s, ut_c, uz_s
+       !Solve system 2, mr_s, mt_c, mz_s
        nu_mat = nu_mat + 1
        CALL solver(vel_ksp(nu_mat),vb_3_236,vx_3,reinit=.FALSE.,verbose=inputs%my_par_vv_scal%verbose)
        CALL VecGhostUpdateBegin(vx_3,INSERT_VALUES,SCATTER_FORWARD,ierr)
@@ -486,27 +517,29 @@ CONTAINS
        CALL extract(vx_3_ghost,1,1,vv_3_LA,un_p1(:,2))
        CALL extract(vx_3_ghost,2,2,vv_3_LA,un_p1(:,3))
        CALL extract(vx_3_ghost,3,3,vv_3_LA,un_p1(:,6))
+       !===End Solve linear system for momentum equation
 
+       !-------------------------------------------------------------------------------------
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
-       !WRITE(*,*) ' Tps solution des pb de vitesse', tps, 'for mode ', mode
+       !WRITE(*,*) ' Time to solve momentum problem', tps, 'for mode ', mode
        !-------------------------------------------------------------------------------------
 
-       !JLG AR, Dec 18 2008/JLG Bug corrige Jan 23 2010
+       !Set zero-th sine coefficient to zero
        IF (mode==0) THEN
           un_p1 (:,2) = 0.d0
           un_p1 (:,4) = 0.d0
           un_p1 (:,6) = 0.d0
           pn_p1 (:,2) = 0.d0
        END IF
-       !JLG AR, Dec 18 2008/JLG Bug corrige Jan 23 2010
 
+       !Update momentum
        momentum_m2(:,:,i) = momentum_m1 (:,:,i)
        momentum_m1(:,:,i) = momentum (:,:,i)
        momentum (:,:,i) = un_p1
-
     END DO
+    !------------END LOOP ON FOURIER MODES FOR MOMENTUM---------------
 
-    !---------------UPDATE VELOCITY---------------------
+    !===Update velocity
     un_m1 = un
     IF (inputs%if_level_set) THEN
        CALL FFT_SCALAR_VECT_DCL(comm_one_d(2), momentum, density_p1, un, 2, nb_procs, &
@@ -514,22 +547,32 @@ CONTAINS
     ELSE
        un = momentum
     END IF
+    !===End Update velocity
 
-
+    !------------LOOP ON FOURIER MODES FOR PRESSURE---------------
     DO i = 1, m_max_c
        mode = list_mode(i)
-       !===Compute phi
        tps = user_time()
-       !jan 29 2007
+
+       !Compute phi
        pn_p1(:,:) = pn(:,:,i)
-       !jan 29 2007
 
        !---------------SOLUTION OF THE POISSON EQUATION--------------
        ! BDF2 : solve -LAP(PH3) = -3*rho_bar/(2*dt)*DIV(un_p1)
        ! BDF1 : solve -LAP(PH3) = -rho_bar/dt*DIV(un_p1)
+
+       !===Assemble divergence of velocity in arrays pb_1, pb_2
        tps = user_time()
        CALL qs_01_div_hybrid_2006(vv_mesh, pp_mesh, pp_1_LA, mode, un(:,:,i), pb_1, pb_2)
        !pb_1, and pb_2 are petsc vectors for the rhs divergence
+       !===End assembling; pb_1, and pb_2 are petsc vectors for the rhs divergence
+
+       !===Periodic Boundary condition for pressure
+       IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
+          CALL periodic_rhs_petsc(pp_per%n_bord, pp_per%list, pp_per%perlist, pb_1, pp_1_LA)
+          CALL periodic_rhs_petsc(pp_per%n_bord, pp_per%list, pp_per%perlist, pb_2, pp_1_LA)
+       END IF
+       !===End Periodic Boundary condition for pressure
 
        !===ATENTION BCs are no longer implemented for pressure
        !===Boundary condition on axis for pressure
@@ -538,6 +581,7 @@ CONTAINS
        CALL dirichlet_rhs(pp_mode_global_js_D(i)%DIL-1,pp_global_D(i)%DRL,pb_2)
        !===End boundary condition on axis for pressure
 
+       !===Solve linear system for pressure equation
        CALL solver(press_ksp(i),pb_1,px_1,reinit=.FALSE.,verbose=inputs%my_par_pp%verbose)
        CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
@@ -547,21 +591,24 @@ CONTAINS
        CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(px_1_ghost,1,1,pp_1_LA,phi(:,2))
+       !===End Solve linear system for pressure equation
 
-       !Don't forget the -(1.5d0/dt)*min(rh0) coefficient
+       !Update phi: don't forget the -(1.5d0/dt)*min(rh0) coefficient
        IF (inputs%if_moment_bdf2) THEN
           phi = -phi*(1.5d0/dt)*rho_bar
        ELSE
           phi = -phi/dt*rho_bar
        END IF
+
+       !-------------------------------------------------------------------------------------
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
-       !WRITE(*,*) ' Tps solution des pb de pression', tps, 'for mode ', mode
+       !WRITE(*,*) ' Time to solve pressure problem', tps, 'for mode ', mode
        !-------------------------------------------------------------------------------------
 
+       !===Pressure correction
 
-       !---------------CORRECTION DE LA PRESSION-----------------------
+       !===Solve mass matrix for pressure correction
        tps = user_time()
-       !CALL solver(mass_ksp,pb_1,px_1,reinit=.FALSE.,verbose=inputs%my_par_mass%verbose)
        IF (mode==0) THEN
           CALL solver(mass_ksp0,pb_1,px_1,reinit=.FALSE.,verbose=inputs%my_par_mass%verbose)
        ELSE
@@ -571,7 +618,6 @@ CONTAINS
        CALL VecGhostUpdateEnd(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(px_1_ghost,1,1,pp_1_LA,div(:,1,i))
 
-       !CALL solver(mass_ksp,pb_2,px_1,reinit=.FALSE.,verbose=inputs%my_par_mass%verbose)
        IF (mode==0) THEN
           CALL solver(mass_ksp0,pb_2,px_1,reinit=.FALSE.,verbose=inputs%my_par_mass%verbose)
        ELSE
@@ -580,42 +626,48 @@ CONTAINS
        CALL VecGhostUpdateBegin(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL VecGhostUpdateEnd(px_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
        CALL extract(px_1_ghost,1,1,pp_1_LA,div(:,2,i))
+       !===End Solve mass matrix for pressure correction
 
-       !Pressure computation
-       !jan 29 2007
+       !===Pressure computation
        DO k=1, 2
           pn_p1(:,k) = pn_p1(:,k) + phi(:,k) - div(:,k,i)*(mu_bar/Re)
           !pn_p1(:,k) = pn_p1(:,k) + phi(:,k) !- div(:,k,i)*(mu_bar/Re)
        END DO
-       !jan 29 2007
+       !===End Pressure computation
+
+       !-------------------------------------------------------------------------------------
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
-       !WRITE(*,*) ' Tps correction de divergence', tps
+       !WRITE(*,*) ' Time for pressure correction', tps, 'for mode ', mode
        !-------------------------------------------------------------------------------------
 
-       !---------------UPDATE PRESSURE---------------------
        tps = user_time()
+
+       !Set pressure to zero average
        IF (mode == 0)  THEN
           CALL Moy(comm_one_d(1),pp_mesh, pn_p1(:,1),moyenne)
           pn_p1(:,1) = pn_p1(:,1)-moyenne
        ENDIF
 
-       !JLG AR, Dec 18 2008/JLG Bug corrige Jan 23 2010
+       !Set zero-th sine coefficient to zero
        IF (mode==0) THEN
           pn_p1 (:,2) = 0.d0
        END IF
-       !JLG AR, Dec 18 2008/JLG Bug corrige Jan 23 2010
 
+       !Update pressure
        pn_m1(:,:,i)    = pn(:,:,i)
        pn   (:,:,i)    = pn_p1
 
+       !Update pressure increment
        incpn_m1(:,:,i) = incpn(:,:,i)
        incpn   (:,:,i) = phi
 
-       tps = user_time() - tps; tps_cumul=tps_cumul+tps
-       !WRITE(*,*) ' Tps  des updates', tps
        !-------------------------------------------------------------------------------------
-
+       tps = user_time() - tps; tps_cumul=tps_cumul+tps
+       !WRITE(*,*) ' Time to update pressure and its increment', tps, 'for mode ', mode
+       !-------------------------------------------------------------------------------------
     ENDDO
+    !------------END LOOP ON FOURIER MODES FOR PRESSURE---------------
+
     tps_tot = user_time() - tps_tot
 
     !===Verbose divergence of velocity
@@ -673,19 +725,28 @@ CONTAINS
                momentum, momentum_m1, momentum_m2, pn_m1, un_m1, tensor, visc_grad_vel, tensor_surface_gauss, &
                rotb_b, visco_dyn, density_m1, density, density_p1, tempn, concn, visc_entro_real, visc_entro_level)
        ELSE
-          visc_entro_real = 0.d0
-          visc_entro_level= 0.d0
+          visc_entro_real  = 0.d0
+          visc_entro_level = 0.d0
        END IF
     ELSE
        IF (inputs%if_LES_in_momentum) THEN
           CALL compute_entropy_viscosity_mom_no_level_set(comm_one_d, vv_3_LA, vv_mesh, pp_mesh, time, list_mode, &
                momentum, momentum_m1, momentum_m2, pn_m1, un_m1, tensor, rotb_b, density, tempn, concn, visc_entro_real)
        ELSE
-          visc_entro_real=0.d0
+          visc_entro_real = 0.d0
        END IF
        !visc_entro_level not allocated so nothing to do
     END IF
     !===End compute entropy viscosity
+
+    !===Compute entropy viscosity stabilization: (-LES_coeff1+visc_entro)*Grad(momentumext)
+    IF (inputs%LES.AND.inputs%if_LES_in_momentum) THEN
+       CALL smb_explicit_LES(comm_one_d(2), vv_mesh, list_mode, nb_procs, &
+            visc_entro_real, momentumext, visc_entro_grad_mom)
+    ELSE
+       visc_entro_grad_mom = 0.d0
+    END IF
+    !===End compute entropy viscosity stabilization: (-LES_coeff1+visc_entro)*Grad(momentumext)
 
     !===Dummies variables to avoid warning
     i=SIZE(level_set,1)

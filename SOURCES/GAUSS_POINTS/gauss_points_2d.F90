@@ -46,8 +46,6 @@ CONTAINS
     REAL(KIND=8), DIMENSION(k_d) :: rnor, rsd
 
     SELECT CASE(type_fe)
-    CASE(-1)
-       RETURN
     CASE(1)
        n_w=3;  n_ws=2; l_G=3; l_Gs=2
     CASE(2)
@@ -213,34 +211,37 @@ CONTAINS
     SELECT CASE(type_fe)
     CASE(1)
        CALL element_1d_p1_at_nodes (dds_v, n_ws)
-       DO ms = 1, mes
-          DO ns = 1, n_ws
-             DO k = 1, k_d
-                rs = rr(k, js(:,ms))
-                drs(1, k) = SUM(rs * dds_v(:,ns))
-             ENDDO
-             rjacs = SQRT( drs(1,1)**2 + drs(1,2)**2 )
-             mesh%gauss%rnorms_v(1, ns, ms) = -drs(1,2)/rjacs
-             mesh%gauss%rnorms_v(2, ns, ms) = drs(1,1)/rjacs
-             m = mesh%neighs(ms)
-             !===Find correct face and orient normal outwards
-             DO n = 1, n_w
-                IF (MINVAL(ABS(js(:,ms)-jj(n,m)))==0) CYCLE
-                face = n
-             END DO
-             rs = rr(:,jj(face,m)) - (rr(:,js(1,ms))+rr(:,js(2,ms)))/2
-             x = SUM(mesh%gauss%rnorms_v(:,ns,ms)*rs)
-             IF (x>0) THEN
-                mesh%gauss%rnorms_v(:,ns,ms) = - mesh%gauss%rnorms_v(:,ns,ms)
-             END IF
-          END DO
-       ENDDO
+    CASE(2)
+       CALL element_1d_p2_at_nodes (dds_v, n_ws)
+    CASE(3)
+       CALL element_1d_p3_at_nodes (dds_v, n_ws)
     CASE DEFAULT
-       !Not programmed yet
+       !===Not programmed yet
        mesh%gauss%rnorms_v = 0.d0
-       !WRITE(*,*) 'BUG create_gauss_points_2d, rnorms_v not programmed yet'
+       WRITE(*,*) 'BUG gauss_points_2d, rnorms_v not programmed yet'
     END SELECT
-
+    DO ms = 1, mes
+       DO ns = 1, n_ws
+          DO k = 1, k_d
+             rs = rr(k, js(:,ms))
+             drs(1, k) = SUM(rs * dds_v(:,ns))
+          ENDDO
+          rjacs = SQRT( drs(1,1)**2 + drs(1,2)**2 )
+          mesh%gauss%rnorms_v(1, ns, ms) = -drs(1,2)/rjacs
+          mesh%gauss%rnorms_v(2, ns, ms) = drs(1,1)/rjacs
+          m = mesh%neighs(ms)
+          !===Find correct face and orient normal outwards
+          DO n = 1, n_w
+             IF (MINVAL(ABS(js(:,ms)-jj(n,m)))==0) CYCLE
+             face = n 
+          END DO
+          rs = rr(:,jj(face,m)) - (rr(:,js(1,ms))+rr(:,js(2,ms)))/2
+          x = SUM(mesh%gauss%rnorms_v(:,ns,ms)*rs)
+          IF (x>0) THEN
+             mesh%gauss%rnorms_v(:,ns,ms) = - mesh%gauss%rnorms_v(:,ns,ms)
+          END IF
+       END DO
+    ENDDO
 
     !===Cell interface (JLG, April 2009)
     IF (mesh%edge_stab) THEN

@@ -7,6 +7,7 @@ MODULE subroutine_level_set
 #include "petsc/finclude/petsc.h"
   USE petsc
   PUBLIC :: three_level_level_set
+  PUBLIC :: smb_compr_visc_entro_gauss_fft_par, smb_visc_entro_gauss_fft_par, qs_regul_M !for LES
   PRIVATE
   REAL(KIND=8)  :: max_velocity_at_tn
   !===JLG Sept 27, 2016
@@ -17,7 +18,7 @@ CONTAINS
 
   SUBROUTINE three_level_level_set(comm_one_d,time, cc_1_LA, dt, list_mode, cc_mesh, cn_m1, cn, &
        chmp_vit, max_vel, my_par_cc, cc_list_dirichlet_sides, cc_per, nb_inter, &
-       visc_entro_level, cext_reg)
+       visc_entro_level, cext_reg, visc_LES_level)
     !==============================
     USE def_type_mesh
     USE fem_M_axi
@@ -48,9 +49,11 @@ CONTAINS
     REAL(KIND=8),                   INTENT(INOUT)       :: max_vel
     REAL(KIND=8), DIMENSION(:,:),   INTENT(IN)          :: visc_entro_level
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT)         :: cext_reg
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)          :: visc_LES_level
     TYPE(dyn_real_line),DIMENSION(:), ALLOCATABLE, SAVE :: cc_global_D
     TYPE(dyn_int_line), DIMENSION(:), POINTER,     SAVE :: cc_mode_global_js_D
     LOGICAL,                                       SAVE :: once = .TRUE., once_vel=.TRUE.
+    LOGICAL,                                       SAVE :: once_LES = .TRUE.
     LOGICAL,                                       SAVE :: re_init=.FALSE.
     INTEGER,                                       SAVE :: m_max_c
     INTEGER,     DIMENSION(:),   POINTER,          SAVE :: cc_js_D ! Dirichlet nodes
@@ -248,6 +251,15 @@ CONTAINS
             LES_coeff1_in_level, nb_procs, ff_entro, ff_phi_1mphi)
     END IF
 
+    !===Use restart to initialize ff_entro (if restart_LES=.t.)
+    IF (once_LES) THEN
+       once_LES = .FALSE.
+       IF (inputs%irestart_LES) THEN
+          ff_entro = visc_LES_level
+       END IF
+    END IF
+    !===End Use restart to initialize ff_entro (if restart_LES=.t.)
+
     IF (inputs%if_mass_correction) THEN
        CALL compute_int_mass_correct(comm_one_d, cc_mesh, list_mode, ff_conv, ff_phi_1mphi, int_mass_correct)
     ELSE
@@ -333,7 +345,6 @@ CONTAINS
        !WRITE(*,*) ' Tps  des updates', tps
        !-------------------------------------------------------------------------------------
     ENDDO
-
 
     bloc_size = SIZE(cn,1)/nb_procs+1
     m_max_pad = 3*SIZE(list_mode)*nb_procs/2

@@ -30,4 +30,4 @@ echo $?
 #cp current_regression_reference regression_reference_13
 
 #Clean up
-rm -f fort.* Mesh_*_FE_* dd.plt mesh_part* current_regression_reference
+rm -f fort.* Mesh_*_FE_* *.plt mesh_part* current_regression_reference

@@ -70,7 +70,7 @@ CONTAINS
        xx(2) = zero
        yy(1) = half - half/SQRT(three)
        yy(2) = half + half/SQRT(three)
-    ELSE
+    ELSE 
        xx(1) = half - half/SQRT(three)
        xx(2) = half + half/SQRT(three)
        yy(1) = zero
@@ -123,10 +123,16 @@ CONTAINS
     REAL(KIND=8), DIMENSION(n_ws, n_ws), INTENT(OUT) :: d
     INTEGER :: j
     REAL(KIND=8) ::  one = 1.d0,  two = 2.d0
+    REAL(KIND=8) :: df1, df2, x
+    REAL(KIND=8), DIMENSION(n_ws) :: xx
+    df1(x) = -one/two
+    df2(x) = one/two
+    xx(1) = -1.d0
+    xx(2) = 1.d0
     DO j = 1, n_ws
-       d(1, j) = - one/two
-       d(2, j) = + one/two
+       d(1, j) = df1(xx(j))
+       d(2, j) = df2(xx(j))
     ENDDO
   END SUBROUTINE element_1d_p1_at_nodes
-
 END MODULE GP_2d_p1
+

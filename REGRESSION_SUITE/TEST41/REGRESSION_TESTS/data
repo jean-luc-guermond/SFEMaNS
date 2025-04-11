@@ -20,7 +20,6 @@
 40
 xx===Compute L2 and H1 relative errors (true/false)
 xx.t.
-
 ===Do we apply mass correction? (true/false)
 .f.
 ===Do we kill level set overshoot? (true/false)
@@ -37,6 +36,7 @@ xx===Penalty coefficient for artifical compression
 xx1.0d0
 ===Number of refinements
 0
+
 ============================================
               Mesh-NAVIER-STOKES
 ============================================

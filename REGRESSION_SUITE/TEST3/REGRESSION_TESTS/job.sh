@@ -29,4 +29,4 @@ $1 $2$nproc $4  ../EXECUTABLE/$3 regression
 echo $?
 
 #Clean up
-rm -f fort.* Mesh_*_FE_* dd.plt mesh_part* current_regression_reference
+rm -f fort.* Mesh_*_FE_* *.plt mesh_part* current_regression_reference

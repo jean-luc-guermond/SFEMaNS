@@ -79,6 +79,7 @@ CONTAINS
        IF (precond(deb:fin)=='JACOBI') THEN
           CALL PCSetType(prec, PCBJACOBI, ierr)
        ELSE IF  (precond(deb:fin)=='HYPRE') THEN
+          !CALL PCSetType(prec, PCHYPRE, ierr)
           CALL PetscOptionsSetValue(PETSC_NULL_OPTIONS, '-pc_type', 'hypre', ierr)
           CALL PetscOptionsSetValue(PETSC_NULL_OPTIONS, '-pc_hypre_type', 'boomeramg', ierr)
           CALL PetscOptionsSetValue(PETSC_NULL_OPTIONS, '-pc_hypre_boomeramg_strong_threshold', &

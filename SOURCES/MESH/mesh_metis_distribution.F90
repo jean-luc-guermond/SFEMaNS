@@ -879,12 +879,15 @@ CONTAINS
       ALLOCATE(mesh%disp(nb_proc + 1), mesh%domnp(nb_proc))
       ALLOCATE(mesh%discell(nb_proc + 1), mesh%domcell(nb_proc))
       ALLOCATE(mesh%disedge(nb_proc + 1), mesh%domedge(nb_proc))
-      mesh%disp = (/ 1, mesh%np + 1 /)
-      mesh%domnp = (/ mesh%np /)
-      mesh%discell = (/ 1, mesh%me + 1 /)
-      mesh%domcell = (/ mesh%me /)
-      mesh%disedge = (/ 1, mesh%medge + 1 /)
-      mesh%domedge = (/ mesh%medge /)
+      mesh%disp(1) = 1
+      mesh%disp(2) = mesh%np + 1
+      mesh%domnp(1) = mesh%np
+      mesh%discell(1) = 1
+      mesh%discell(2) = mesh%me + 1
+      mesh%domcell(1) = mesh%me
+      mesh%disedge(1) = 1
+      mesh%disedge(2) = mesh%medge + 1
+      mesh%domedge(1) = mesh%medge
       CALL create_local_mesh_with_extra_layer(communicator, mesh, mesh_loc, me_loc, mes_loc, np_loc)
       CALL free_mesh(mesh)
       DEALLOCATE(list_m, tab, tabs)
@@ -978,12 +981,21 @@ CONTAINS
          !ALLOCATE(mesh_loc%jev(SIZE(mesh%jev, 1), mesh%medge))
          !mesh_loc%jev = mesh%jev
 
-         mesh_loc%disp = (/ 1, mesh%np + 1 /)
-         mesh_loc%domnp = (/ mesh%np /)
-         mesh_loc%discell = (/ 1, mesh%me + 1 /)
-         mesh_loc%domcell = (/ mesh%me /)
-         mesh_loc%disedge = (/ 1, mesh%medge + 1 /)
-         mesh_loc%domedge = (/ mesh%medge /)
+         !mesh_loc%disp = (/ 1, mesh%np + 1 /)
+         !mesh_loc%domnp = (/ mesh%np /)
+         !mesh_loc%discell = (/ 1, mesh%me + 1 /)
+         !mesh_loc%domcell = (/ mesh%me /)
+         !mesh_loc%disedge = (/ 1, mesh%medge + 1 /)
+         !mesh_loc%domedge = (/ mesh%medge /)
+         mesh_loc%disp(1) = 1
+         mesh_loc%disp(2) = mesh%np + 1
+         mesh_loc%domnp(1) = mesh%np
+         mesh_loc%discell(1) = 1
+         mesh_loc%discell(2) = mesh%me + 1
+         mesh_loc%domcell(1) = mesh%me
+         mesh_loc%disedge(1) = 1
+         mesh_loc%disedge(2) = mesh%medge + 1
+         mesh_loc%domedge(1) = mesh%medge
          RETURN
       END IF
       !==End test if one proc only
