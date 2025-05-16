@@ -26,7 +26,7 @@ pkg_check_modules(FFTW fftw3)
 
 # Build library sfemans_lib_F
 file(GLOB_RECURSE sfemans_sources_F ../SOURCES/*/*.F90)
-list(REMOVE_ITEM sfemans_sources_F ${SFEMaNS_DIR}/SOURCES/MESH_INTERPOLATION/main_mesh_interpol.F90
+list(REMOVE_ITEM sfemans_sources_F ${SFEMaNS_DIR}/SOURCES/MESH_INTERPOLATION/main_mesh_interpol.F90)
 
 
 add_library(sfemans_lib_F SHARED ${sfemans_sources_F})
