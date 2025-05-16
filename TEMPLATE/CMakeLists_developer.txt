@@ -10,6 +10,14 @@ cmake_minimum_required(VERSION 3.5)
 # Project name and version
 project(sfemans)
 
+# Compile C routines and create library
+enable_language(C)
+
+file(GLOB_RECURSE sfemans_sources_C
+  ${SFEMaNS_DIR}/SOURCES/WRITE_BLOCK_MM/write_block_c.c)
+
+add_library(sfemans_lib_C SHARED ${sfemans_sources_C})
+
 # Enable Fortran
 enable_language(Fortran)
 
@@ -79,12 +87,11 @@ target_include_directories(a.exe PUBLIC
     ${PETSC_INCLUDEDIR} ${PETSC_INCLUDE_DIRS})
 
 # Include and link library
-target_link_libraries(a.exe PUBLIC
+target_link_libraries(a.exe PUBLIC sfemans_lib_C
   ${PETSC_LINK_LIBRARIES}
   ${PETSC_PRIVATE_LIBRARIES}
   ${FFTW_LINK_LIBRARIES}
   ${ZLIB_LIBRARIES}
   ${MPI_Fortran_LIBRARIES}
-  ${ADDITIONAL_LINKS}
-  ${SFEMaNS_DIR}/LIBS/libsfemans_lib_C.so)
+  ${ADDITIONAL_LINKS})
 

@@ -29,20 +29,20 @@ MODULE initialization
   TYPE(petsc_csr_LA)                                   :: vv_1_LA, pp_1_LA
   TYPE(petsc_csr_LA)                                   :: vv_3_LA   ! for stress bc
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:)  :: un, un_m1
+  ! CN-HF 16/01/2020
   TYPE(dyn_real_array_three), TARGET, ALLOCATABLE, DIMENSION(:)   :: der_un
+  ! (noeuds,type,mode) composante du champ de vitesse a deux instants sur vv_mesh
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:)  :: pn, pn_m1
   TYPE(dyn_real_array_three), ALLOCATABLE, DIMENSION(:):: der_pn
   REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:,:)          :: incpn, incpn_m1
+  !---------------------------------------------------------------------------
 
   !Fields for level sets in Navier-Stokes-------------------------------------
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:,:):: level_set, level_set_m1
-
   !Fields for density---------------------------------------------------------
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:)  :: density, density_m1, density_m2
-
   !Entropy viscosity for level-set--------------------------------------------
   REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:)            :: visc_entro_level
-
   !Maximum of velocity--------------------------------------------------------
   REAL(KIND=8)                                         :: max_vel
 
@@ -51,6 +51,7 @@ MODULE initialization
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:,:):: visc_LES_level
 
   !Fields for temperature-----------------------------------------------------
+  ! (noeuds,type,mode) composante du champ de phase a deux instants sur vv_mesh
   TYPE(mesh_type), TARGET                              :: temp_mesh
   TYPE(petsc_csr_LA)                                   :: temp_1_LA
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:)  :: tempn, tempn_m1
@@ -63,6 +64,7 @@ MODULE initialization
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:)  :: concn, concn_m1
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:)      :: concentration_diffusivity_field
 
+
   !Fields for Maxwell---------------------------------------------------------
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:) :: Hn, Hn1, Hext, phin, phin1
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:) :: Bn, Bn1, Bext
@@ -70,6 +72,7 @@ MODULE initialization
   TYPE(mesh_type), TARGET                             :: H_mesh, phi_mesh, pmag_mesh
   TYPE(petsc_csr_LA)                                  :: LA_H, LA_pmag, LA_phi, LA_mhd
   TYPE(interface_type), TARGET                        :: interface_H_mu, interface_H_phi
+  !---------------------------------------------------------------------------
 
   !Periodic structures--------------------------------------------------------
   TYPE(periodic_type)                                 :: H_phi_per
@@ -80,6 +83,7 @@ MODULE initialization
   TYPE(periodic_type)                                 :: temp_per
   TYPE(periodic_type)                                 :: level_set_per
   TYPE(periodic_type)                                 :: conc_per
+  !---------------------------------------------------------------------------
 
   !Coupling variables---------------------------------------------------------
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:) :: v_to_Max
@@ -91,33 +95,42 @@ MODULE initialization
   REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:,:)         :: conc_to_v
   REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:,:)         :: conc_to_H
   REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:,:)         :: v_to_conc
+  !October 7, 2008, JLG
   REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:,:)         :: T_to_NS
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:) :: v_to_energy
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:) :: H_to_energy, pdt_H_to_energy
+  !---------------------------------------------------------------------------
 
   !Connectivity structures----------------------------------------------------
+  !October 7, 2008, JLG
   INTEGER, ALLOCATABLE, DIMENSION(:)                  :: jj_v_to_H
   INTEGER, ALLOCATABLE, DIMENSION(:)                  :: jj_v_to_temp
   INTEGER, ALLOCATABLE, DIMENSION(:)                  :: jj_T_to_H
   INTEGER, ALLOCATABLE, DIMENSION(:)                  :: jj_c_to_v
   INTEGER, ALLOCATABLE, DIMENSION(:)                  :: jj_c_to_H
+  !---------------------------------------------------------------------------
 
   !Modes list-----------------------------------------------------------------
   INTEGER,      TARGET, ALLOCATABLE, DIMENSION(:) :: list_mode
   INTEGER                                         :: m_max_c
+  !---------------------------------------------------------------------------
 
   !Names already used---------------------------------------------------------
   REAL(KIND=8)                                    :: time
   REAL(KIND=8)                                    :: R_fourier
   INTEGER                                         :: index_fourier
+  !---------------------------------------------------------------------------
 
   !Communicators for Petsc, in space and Fourier------------------------------
   MPI_Comm                                        :: comm_cart
   MPI_Comm, DIMENSION(:), POINTER                 :: comm_one_d, comm_one_d_ns
   MPI_Comm, DIMENSION(:), POINTER                 :: comm_one_d_temp, coord_cart
   MPI_Comm, DIMENSION(:), POINTER                 :: comm_one_d_conc
+  !---------------------------------------------------------------------------
+
   !-------------END OF DECLARATIONS------------------------------------------
 CONTAINS
+  !---------------------------------------------------------------------------
 
   !---------------------------------------------------------------------------
   SUBROUTINE initial(vv_mesh_out, pp_mesh_out, H_mesh_out, phi_mesh_out, temp_mesh_out, &
@@ -323,7 +336,6 @@ CONTAINS
              IF (if_momentum) THEN
                 CALL projection_velocity(H_mesh, un, jj_v_to_H, .FALSE., v_to_Max)
              END IF
-
              CALL maxwell_decouple(comm_one_d, H_mesh, pmag_mesh, phi_mesh, &
                   interface_H_phi, interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, v_to_Max, &
                   inputs%stab, inputs%stab_jump_h, sigma_field, R_fourier, index_fourier, mu_H_field, inputs%mu_phi, &
@@ -345,7 +357,6 @@ CONTAINS
           IF (if_concentration) THEN
              CALL projection_concentration(H_mesh, 2*concn-concn_m1, jj_c_to_H, conc_to_H)
           END IF
-
           CALL maxwell_decouple(comm_one_d, H_mesh, pmag_mesh, phi_mesh, &
                interface_H_phi, interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, v_to_Max, &
                inputs%stab, inputs%stab_jump_h, sigma_field, R_fourier, index_fourier, mu_H_field, inputs%mu_phi, &
@@ -1078,7 +1089,8 @@ CONTAINS
           CLOSE(51)
        END IF
     END IF
-    IF (petsc_rank == 0) CALL plot_const_p1_label(p1_mesh_glob%jj, p1_mesh_glob%rr, 1.d0 * part, 'dd_base.plt')
+    ! If you want to show the mesh distribution on processors.
+    ! IF (petsc_rank == 0) CALL plot_const_p1_label(p1_mesh_glob%jj, p1_mesh_glob%rr, 1.d0 * part, 'dd_base.plt')
 
     !===Extract local meshes from global meshes=====================================
     WRITE(tit, '(i1)') petsc_rank
@@ -1089,10 +1101,8 @@ CONTAINS
        DO n = 1, inputs%nb_refinements !===Create refined mesh
           CALL refinement_iso_grid_distributed(dummy_mesh_loc)
        END DO
-       WRITE(*,*)'mesh extracted'
        CALL create_iso_grid_distributed(dummy_mesh_loc, vv_mesh, inputs%type_fe_velocity)
        CALL create_iso_grid_distributed(dummy_mesh_loc, pp_mesh, inputs%type_fe_velocity - 1)
-       WRITE(*,*)'p2/p1 created'
        CALL free_mesh(dummy_mesh_loc)
 
        !===JLG july 20, 2019, p3 mesh
@@ -1161,8 +1171,6 @@ CONTAINS
        CALL create_gauss_points_2d(vv_mesh, inputs%type_fe_velocity)
        CALL create_gauss_points_2d(pp_mesh, inputs%type_fe_velocity - 1)
        !===JLG july 20, 2019, p3 mesh
-       !CALL plot_const_p1_label(vv_mesh%jj, vv_mesh%rr, 1.d0 * vv_mesh%jj(1, :), 'vv' // tit // '.plt')
-       !CALL plot_const_p1_label(pp_mesh%jj, pp_mesh%rr, 1.d0 * pp_mesh%jj(1, :), 'pp' // tit // '.plt')
     END IF !=== (if_momentum .OR. inputs%type_pb=='mxx')
 
     !===Extract local meshes from global meshes for Maxwell=========================
@@ -1404,14 +1412,12 @@ CONTAINS
        END IF
 
        !===Create interface structures==============================================
-       !CALL load_interface(H_mesh_glob, H_mesh_glob, inputs%list_inter_mu, interface_H_mu_glob, .FALSE.)
-       !CALL load_interface(H_mesh_glob, phi_mesh_glob, inputs%list_inter_H_phi, interface_H_phi_glob, .TRUE.)
-
        IF (H_mesh%me /=0) THEN
           CALL load_interface(H_mesh, H_mesh, inputs%list_inter_mu, interface_H_mu, .FALSE.)
        ELSE
           interface_H_mu%mes = 0
        END IF
+
        IF (H_mesh%me * phi_mesh%me /=0) THEN
           CALL load_interface(H_mesh, phi_mesh, inputs%list_inter_H_phi, interface_H_phi, .TRUE.)
        ELSE
@@ -1425,14 +1431,12 @@ CONTAINS
        !===Create periodic structures for Maxwell===================================
        IF (mxw_periodic) THEN
           CALL prep_periodic_H_p_phi_bc(inputs%my_periodic, H_mesh, pmag_mesh, phi_mesh, H_phi_per)
-          WRITE(*, *) 'periodic MHD done'
        END IF
 
        !===Create global csr structure==============================================
        CALL st_scr_maxwell_mu_H_p_phi(comm_one_d(1), H_mesh, pmag_mesh, &
             phi_mesh, interface_H_phi, interface_H_mu, &
             LA_H, LA_pmag, LA_phi, LA_mhd, opt_per = H_phi_per)
-       write(*, *) 'st csr mhd done'
 
        !===Prepare csr structure for post processing grad phi=======================+++
        CALL st_aij_csr_glob_block_with_extra_layer(comm_one_d(1), 1, phi_mesh, vizu_grad_phi_LA)
@@ -1633,7 +1637,6 @@ CONTAINS
     !===Specific to concentration=====================================================
     IF (if_concentration) THEN
        !===Verify if vv_mesh and conc_mesh coincide on the conc domain=======================
-       !CALL plot_const_p1_label(conc_mesh%jj, conc_mesh%rr, 1.d0 * conc_mesh%jj(1, :), 'cc' // tit // '.plt')
        IF (vv_mesh%me/=0) THEN
           error = 0.d0
           DO k = 1, 2
@@ -1782,7 +1785,7 @@ CONTAINS
        ALLOCATE(pn         (pp_mesh%np, 2, m_max_c))
        IF (inputs%LES) THEN
           ALLOCATE(visc_LES(3, vv_mesh%gauss%l_G*vv_mesh%dom_me, 6, m_max_c))
-       END IF 
+       END IF
        !===Allocate arrays for Level sets===========================================
        IF (if_mass) THEN
           IF (inputs%if_level_set_P2) THEN
@@ -1939,7 +1942,7 @@ CONTAINS
                         incpn, incpn_m1, inputs%file_name)
                    IF (inputs%LES) THEN
                       IF (inputs%irestart_LES) THEN
-                         CALL read_restart_LES(comm_one_d_ns, time_u, list_mode, inputs%file_name, opt_LES_NS=visc_LES)  
+                         CALL read_restart_LES(comm_one_d_ns, time_u, list_mode, inputs%file_name, opt_LES_NS=visc_LES)
                       ELSE
                          visc_LES = 0.d0
                       END IF
@@ -2090,7 +2093,7 @@ CONTAINS
        END IF
        IF (inputs%LES) THEN
           IF (ALLOCATED(visc_LES)) DEALLOCATE(visc_LES)
-       END IF   
+       END IF
     ENDIF
 
     !===Initialize Maxwell==========================================================
@@ -2195,8 +2198,6 @@ CONTAINS
           CALL error_Petsc(' BUG in INIT : sigma reconstruct via level set not implemented with vacuum or variable mu')
        END IF
     END IF
-
-    write(*, *) 'init done'
 
   END SUBROUTINE INIT
 

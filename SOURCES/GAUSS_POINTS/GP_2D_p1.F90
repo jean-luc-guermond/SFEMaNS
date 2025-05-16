@@ -2,7 +2,7 @@
 !Authors: Jean-Luc Guermond, Lugi Quartapelle, Copyright 1994
 !Author:  Jean-Luc Guermond, Copyright December 24th 2018
 !===
-MODULE GP_2d_p1
+MODULE GP_2d_p1 
   PRIVATE
   PUBLIC element_2d_p1, element_2d_p1_boundary, element_1d_p1, element_1d_p1_at_nodes
 CONTAINS
@@ -46,7 +46,7 @@ CONTAINS
     !===w(n_w, l_Gs)    : values of shape functions at Gauss points
     !===d(2, n_w, l_Gs) : derivatives values of shape functions at Gauss points
     !===p(l_Gs)         : weight for Gaussian quadrature at Gauss points
-    ! 3
+    ! 3 
     ! 1 2  with orientation 1->2, 1->3, 2->3 (lowest to highest index convention)
     IMPLICIT NONE
     INTEGER,                                INTENT(IN)  :: n_w, l_Gs
@@ -65,7 +65,7 @@ CONTAINS
        xx(2) = half - half/SQRT(three)
        yy(1) = half - half/SQRT(three)
        yy(2) = half + half/SQRT(three)
-    ELSE IF (face==2) THEN
+    ELSE IF (face==2) THEN 
        xx(1) = zero
        xx(2) = zero
        yy(1) = half - half/SQRT(three)

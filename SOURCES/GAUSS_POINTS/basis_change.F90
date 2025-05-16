@@ -10,7 +10,7 @@ CONTAINS
     IMPLICIT NONE
     INTEGER, PARAMETER :: type_fe_p2 = 1, nw_p2=(type_fe_p2+2)*(type_fe_p2+1)/2, &
          type_fe_p3 = 2, nw_p3=(type_fe_p3+2)*(type_fe_p3+1)/2
-    REAL(KIND=8), DIMENSION(:,:), POINTER :: aij
+    REAL(KIND=8), DIMENSION(:,:), POINTER :: aij 
     INTEGER, DIMENSION(nw_p3) :: Cart_FE
     REAL(KIND=8) ::  f1, f2, f3, x, y, delta, one = 1.d0
     REAL(KIND=8), DIMENSION(nw_p3) :: xx, yy, xxp, yyp
@@ -51,7 +51,7 @@ CONTAINS
     IMPLICIT NONE
     INTEGER, PARAMETER :: type_fe_p2 = 2, nw_p2=(type_fe_p2+2)*(type_fe_p2+1)/2, &
          type_fe_p3 = 3, nw_p3=(type_fe_p3+2)*(type_fe_p3+1)/2
-    REAL(KIND=8), DIMENSION(:,:), POINTER :: aij
+    REAL(KIND=8), DIMENSION(:,:), POINTER :: aij 
     INTEGER, DIMENSION(nw_p3) :: Cart_FE
     REAL(KIND=8) ::  f1, f2, f3, f4, f5, f6, x, y, delta, half  = 0.5d0, one = 1.d0, two=2.d0, four=4.d0
     REAL(KIND=8), DIMENSION(nw_p3) :: xx, yy, xxp, yyp

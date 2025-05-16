@@ -233,7 +233,7 @@ CONTAINS
           !===Find correct face and orient normal outwards
           DO n = 1, n_w
              IF (MINVAL(ABS(js(:,ms)-jj(n,m)))==0) CYCLE
-             face = n 
+             face = n
           END DO
           rs = rr(:,jj(face,m)) - (rr(:,js(1,ms))+rr(:,js(2,ms)))/2
           x = SUM(mesh%gauss%rnorms_v(:,ns,ms)*rs)

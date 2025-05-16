@@ -223,10 +223,10 @@ MODULE abstract_interface
      FUNCTION sub_mu_bar_in_fourier_space(H_mesh,nb,ne,pts,pts_ids) RESULT(vv)
        USE def_type_mesh
        TYPE(mesh_type), INTENT(IN)                :: H_mesh
-       REAL(KIND=8), DIMENSION(ne-nb+1)           :: vv
        INTEGER,     INTENT(IN)                    :: nb, ne
        REAL(KIND=8),DIMENSION(2,ne-nb+1),OPTIONAL :: pts
        INTEGER,     DIMENSION(ne-nb+1), OPTIONAL  :: pts_ids
+       REAL(KIND=8), DIMENSION(ne-nb+1)           :: vv
      END FUNCTION sub_mu_bar_in_fourier_space
 
      FUNCTION sub_grad_mu_bar_in_fourier_space(pt,pt_id) RESULT(vv)

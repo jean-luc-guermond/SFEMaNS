@@ -570,10 +570,10 @@ CONTAINS
   MODULE FUNCTION mu_bar_in_fourier_space(H_mesh,nb,ne,pts,pts_ids) RESULT(vv)
     IMPLICIT NONE
     TYPE(mesh_type), INTENT(IN)                :: H_mesh
-    REAL(KIND=8), DIMENSION(ne-nb+1)           :: vv
     INTEGER,     INTENT(IN)                    :: nb, ne
     REAL(KIND=8),DIMENSION(2,ne-nb+1),OPTIONAL :: pts
     INTEGER,     DIMENSION(ne-nb+1), OPTIONAL  :: pts_ids
+    REAL(KIND=8), DIMENSION(ne-nb+1)           :: vv
     INTEGER                                    :: n
     REAL(KIND=8),DIMENSION(ne-nb+1)            :: r,z
 

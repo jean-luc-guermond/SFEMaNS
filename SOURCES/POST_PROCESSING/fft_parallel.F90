@@ -4769,5 +4769,5 @@ CONTAINS
     IF (PRESENT(temps)) temps(3) = temps(3) + MPI_WTIME() -t
 
   END SUBROUTINE FFT_SQUAREROOT_SCALAR
-  
+
 END MODULE fft_parallele

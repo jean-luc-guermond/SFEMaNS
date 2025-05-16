@@ -67,18 +67,14 @@ CONTAINS
              IF (PRESENT(opt_dt)) THEN
                 IF (mono) THEN
                    WRITE(10) time, vv_mesh%np , pp_mesh%np , nb_procs_F, SIZE(list_mode), opt_dt
-                   WRITE(*,*) 'out1', time, vv_mesh%np , pp_mesh%np , nb_procs_F, SIZE(list_mode), opt_dt
                 ELSE
                    WRITE(10) time, nb_procs_S, nb_procs_F, SIZE(list_mode), opt_dt
-                   WRITE(*,*) 'out2', time, nb_procs_S, nb_procs_F, SIZE(list_mode), opt_dt
                 END IF
              ELSE
                 IF (mono) THEN
                    WRITE(10) time, vv_mesh%np , pp_mesh%np , nb_procs_F, SIZE(list_mode)
-                   WRITE(*,*) 'out3',  time, vv_mesh%np , pp_mesh%np , nb_procs_F, SIZE(list_mode)
                 ELSE
                    WRITE(10) time, nb_procs_S, nb_procs_F, SIZE(list_mode)
-                   WRITE(*,*) 'out4',  time, nb_procs_S, nb_procs_F, SIZE(list_mode)
                 END IF
              END IF
           ELSE
@@ -110,7 +106,7 @@ CONTAINS
   SUBROUTINE read_restart_ns(communicator, time, list_mode, &
        un, un_m1, pn, pn_m1, incpn, incpn_m1, filename, val_init, interpol, &
        opt_level_set, opt_level_set_m1, opt_max_vel, opt_mono &
-       , opt_it, opt_dt)
+       , opt_it, opt_dt) !===HF may 2020
 
     USE def_type_mesh
     USE chaine_caractere
@@ -194,20 +190,16 @@ CONTAINS
 
     IF (PRESENT(opt_dt)) THEN
        IF (mono) THEN
-          WRITE(*,*) 'read1'
           READ(10) time, npv, npp, nb_procs_r, m_max_cr, dt_read
           nb_procs_Sr = -1
        ELSE
-          WRITE(*,*) 'read2'
           READ(10) time, nb_procs_Sr, nb_procs_r, m_max_cr, dt_read
        END IF
     ELSE
        IF (mono) THEN
-          WRITE(*,*) 'read3'
           READ(10) time, npv, npp, nb_procs_r, m_max_cr
           nb_procs_Sr = -1
        ELSE
-          WRITE(*,*) 'read4'
           READ(10) time, nb_procs_Sr, nb_procs_r, m_max_cr
        END IF
     END IF
