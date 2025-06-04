@@ -47,8 +47,13 @@ ADD_CUSTOM_TARGET(native
   )
 
 # Create local sources from local dir
+file(GLOB_RECURSE sfemans_sources_F
+  ${SFEMaNS_DIR}/SOURCES/*/*.F90)
+list(REMOVE_ITEM sfemans_sources_F
+        ${SFEMaNS_DIR}/SOURCES/MESH_INTERPOLATION/main_mesh_interpol.F90
+)
+
 file(GLOB_RECURSE local_sources ${CMAKE_CURRENT_SOURCE_DIR}/LOCAL_SOURCES/*.F90)
-#list(REMOVE_ITEM local_sources path_to_file_to_be_removed/file_name.F90)
 
 message(${CMAKE_CURRENT_SOURCE_DIR} " is the current directory")
 
