@@ -258,6 +258,7 @@ CONTAINS
          CALL read_until(22, '===List of subdomains for concentration mesh')
          READ (22, *)  list_dom_conc
       ELSE
+         nb_dom_conc = 0
          ALLOCATE(list_dom_conc(0))
       END IF
 
@@ -299,6 +300,7 @@ CONTAINS
             ALLOCATE(list_inter_c_v(0))
          END IF
       ELSE
+         nb_dom_ns = 0
          ALLOCATE(list_dom_ns(0))
       END IF
 
@@ -320,6 +322,7 @@ CONTAINS
             ALLOCATE(list_inter_v_T(0))
          END IF
       ELSE
+         nb_dom_temp = 0
          ALLOCATE(list_dom_temp(0))
       END IF
 
