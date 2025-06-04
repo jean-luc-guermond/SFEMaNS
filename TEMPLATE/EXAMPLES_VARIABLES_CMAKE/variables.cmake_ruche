@@ -1,0 +1,20 @@
+# Variables to set for Ruche
+set(ENV{CC} "icc")
+set(ENV{CXX} "icpc")
+set(ENV{FC} "ifort")
+set(RUN_PRE_PROC "srun")
+set(PROC_CALL "--ntasks=")
+set(RUN_POST_PROC "--job-name=regression_SFEMaNS --time=00:20:00 --partition=cpu_short")
+set(release_bounds "-O3")
+set(debug_bounds "-O2 -g -traceback -heap-arrays -check bounds -warn all")
+set(SFEMaNS_DIR "/gpfs/users/norec/SFEMaNS_GIT/SFEMaNS")
+#set(ADDITIONAL_LINKS "-lmetis -lz")
+##set(ADDITIONAL_LINKS "-lmetis -lz -L /usr/lib/x86_64-linux-gnu/hdf5/serial")
+
+## MODULES TO LOAD in your .bashrc
+#module load intel-parallel-studio/cluster.2020.4/intel-20.0.4.304
+#module load fftw/3.3.10/intel-20.0.4.304
+#module load petsc/3.18.1/intel-20.0.4.304-intel-mpi
+#module load metis/5.1.0/intel-19.0.3.199-int32-real64
+#module load cmake/3.28.3/gcc-11.2.0
+#module load python/3.9.10/intel-20.0.4.304

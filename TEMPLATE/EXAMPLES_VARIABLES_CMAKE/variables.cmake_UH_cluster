@@ -1,0 +1,12 @@
+# Variables to set for UH cluster
+set(PETSC $ENV{PETSC_DIR}/$ENV{PETSC_ARCH})
+set(ENV{PKG_CONFIG_PATH} ${PETSC}/lib/pkgconfig)
+set(SFEMaNS_DIR "/home/lcappan/CODES/GIT_SFEMaNS/SFEMaNS")
+#set(ADDITIONAL_LINKS "")
+set(ADDITIONAL_LINKS "-L/storage/lcappan/EXTERNAL_SOFTWARES/PETSC/petsc-3.22.2/linux-gnu-c/lib -lmetis -lz")
+set(debug_bounds "-Wall -fimplicit-none -fbounds-check")
+set(release_bounds "-O3")
+set(native_bounds "-march=native -mtune=native -Ofast")
+set(RUN_PRE_PROC "low-priority mpirun --use-hwthread-cpus")
+set(PROC_CALL "-np ")
+set(RUN_POST_PROC "")

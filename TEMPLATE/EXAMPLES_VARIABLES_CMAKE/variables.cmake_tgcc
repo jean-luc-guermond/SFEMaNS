@@ -1,0 +1,36 @@
+# Variables to set for Irene (use MPI wrappers required by PETSC!)
+set(ENV{CC} "mpiicc -mavx2")
+set(ENV{CXX} "mpiicpc -mavx2")
+set(ENV{FC} "mpiifort -mavx2")
+
+# Variables to set to replace pkg_check_modules(FFTW fftw3) in CMakeLists.txt
+# See "module show fftw3/mkl/20.0.0" to know values.
+## FFTW3_ROOT=/ccc/products/mkl-20.0.0/system/default/20.0.0/mkl
+set(FFTW_LINK_LIBRARIES "$ENV{FFTW3_LDFLAGS}")
+set(FFTW_ROOT $ENV{FFTW3_ROOT})
+set(FFTW_INCLUDE_DIRS "${FFTW_INCLUDE_DIRS} $ENV{FFTW3_INCDIR}")
+set(FFTW_LIBRARY_DIRS "${FFTW_LIBRARY_DIRS} $ENV{FFTW3_ROOT}/lib/intel64")
+set(FFTW_LDFLAGS "$ENV{FFTW3_LDFLAGS}")
+
+set(release_bounds "-O3")
+set(debug_bounds "-O2 -g -traceback -heap-arrays")
+set(SFEMaNS_DIR "/ccc/work/cont003/gen0254/gen0254/SFEMaNS")
+
+## /bin/bash "job.sh" "ccc_mprun" "-n/c" "test2.exe" "-r regression_SFEMaNS -T 1200 -p rome -A gen0254"
+#set(RUN_PRE_PROC "ccc_mprun")
+#set(PROC_CALL "-n")
+#set(RUN_POST_PROC "-r regression_SFEMaNS -T 1200 -p rome  -A gen0254")
+set(RUN_PRE_PROC "srun")
+set(PROC_CALL "--ntasks=")
+set(RUN_POST_PROC "--job-name=regression_SFEMaNS --time=00:20:00 --partition=rome -A gen0254@rome")
+set(ADDITIONAL_LINKS "-lmetis -lz -L /ccc/products/metis-5.1.0/intel--20.0.0/default/lib")
+
+
+## MODULES TO LOAD in your .bashrc
+#module load intel/20.0.0 mpi/intelmpi/20.0.4 petsc/3.15.0
+#module load fftw3/mkl/20.0.0
+#module load gnuplot/5.2.8
+#module load tkcvs/9.3.3            ## For tkdiff
+#module load subversion/1.9.7
+#module load cmake/3.26.4
+#module load python3/3.10.6
