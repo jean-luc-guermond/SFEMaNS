@@ -19,10 +19,9 @@ set(ADDITIONAL_LINKS "")
 
 ## MODULES TO LOAD in your .bashrc
 #module load gcc/9.1.0
-#module load intel-compilers/19.0.4 intel-mpi/19.0.4
+#module load petsc/3.21.4-mpi
 #module load arpack-ng/3.7.0-mpi
 #module load fftw/3.3.8-mpi
-#module load petsc/3.12.4-mpi
 ##
 #module load gnuplot/5.2.5
 #module load tkdiff/0.0.0

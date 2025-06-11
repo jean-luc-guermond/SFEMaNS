@@ -225,7 +225,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(vv_mesh%np,2,SIZE(list_mode))     :: heat_diffusivity_ns
     INTEGER                                                   :: it
     REAL(KIND=8), DIMENSION(H_mesh%np,6,SIZE(list_mode))      :: j_Hn
-    REAL(KIND=8), DIMENSION(SIZE(level_set,1),SIZE(level_set,2),2,SIZE(list_mode)) :: level_set_reg
+    REAL(KIND=8), DIMENSION(SIZE(level_set,1),SIZE(level_set,2),2,SIZE(list_mode)) :: level_set_tension
 
     CALL zero_out_modes
 
@@ -241,7 +241,7 @@ CONTAINS
 
        CALL three_level_mass(comm_one_d_ns, time, pp_1_LA, vv_1_LA, list_mode, pp_mesh, vv_mesh, &
             2*un-un_m1, max_vel, level_set_per, density_m2, density_m1, density, level_set_m1, level_set, &
-            visc_entro_level, level_set_reg, visc_LES_level)
+            visc_entro_level, level_set_tension, visc_LES_level)
        CALL reconstruct_variable(comm_one_d_ns, list_mode, pp_mesh, vv_mesh, level_set_m1, &
             inputs%dyna_visc_fluid, visco_dyn)
 
@@ -324,7 +324,7 @@ CONTAINS
                list_mode, pp_mesh, vv_mesh, incpn_m1, incpn, &
                pn_m1, pn, un_m1, un, vvz_per, pp_per, H_to_NS, B_to_NS, &
                density_m2, density_m1, density, visco_dyn, T_to_NS, conc_to_v, &
-               level_set_m1, level_set, visc_entro_level, level_set_reg, visc_LES)
+               level_set_m1, level_set, visc_entro_level, level_set_tension, visc_LES)
        END IF
        !===HF April 2019
        !===JLG July 20, 2019, p3 mesh

@@ -14,7 +14,7 @@ CONTAINS
   SUBROUTINE three_level_ns_tensor_sym_with_m(comm_one_d, time, vv_3_LA, pp_1_LA, vvz_per, pp_per, &
        dt, Re, list_mode, pp_mesh, vv_mesh, incpn_m1, incpn, pn_m1, pn, un_m1, un, &
        Hn_p2, Bn_p2, density_m1, density, density_p1, visco_dyn, tempn, concn, level_set, level_set_p1, &
-       visc_entro_level, level_set_reg, visc_entro_grad_mom)
+       visc_entro_level, level_set_tension, visc_entro_grad_mom)
 
     !==============================
     USE def_type_mesh
@@ -52,7 +52,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)          :: Hn_p2, Bn_p2
     REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode)) :: Hn_p2_aux
     REAL(KIND=8), DIMENSION(:,:),     INTENT(OUT)         :: visc_entro_level
-    REAL(KIND=8), DIMENSION(:,:,:,:), INTENT(IN)          :: level_set_reg
+    REAL(KIND=8), DIMENSION(:,:,:,:), INTENT(IN)          :: level_set_tension
     REAL(KIND=8), DIMENSION(:,:,:,:), INTENT(INOUT)       :: visc_entro_grad_mom
 
     !===Saved variables
@@ -367,12 +367,12 @@ CONTAINS
           !===Compute coeff_surface*Grad(level_set):Grad(level_set)
           IF (inputs%if_level_set_P2) THEN
              CALL smb_surface_tension(comm_one_d(2), vv_mesh, list_mode, nb_procs, &
-                  level_set_reg, tensor_surface_gauss)
+                  level_set_tension, tensor_surface_gauss)
           ELSE
              DO nb_inter = 1, inputs%nb_fluid-1
                 DO i = 1, SIZE(list_mode)
                    DO k = 1, 2
-                      CALL inject_P1_P2(pp_mesh%jj, vv_mesh%jj, level_set_reg(nb_inter,:,k,i), &
+                      CALL inject_P1_P2(pp_mesh%jj, vv_mesh%jj, level_set_tension(nb_inter,:,k,i), &
                            level_set_FEM_P2(nb_inter,:,k,i))
                    END DO
                 END DO

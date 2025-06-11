@@ -141,6 +141,7 @@ MODULE my_data_module
      REAL(KIND = 8), DIMENSION(:), POINTER :: heat_diffu_fluid
      REAL(KIND = 8), DIMENSION(:), POINTER :: heat_grav_fluid
      LOGICAL :: if_surface_tension
+     LOGICAL :: if_tension_with_level_set_reg
      REAL(KIND = 8), DIMENSION(:), POINTER :: coeff_surface
      LOGICAL :: if_mass_correction
      LOGICAL :: if_kill_overshoot
@@ -242,6 +243,7 @@ CONTAINS
     a%if_level_set_fixed = .FALSE.
     a%variation_sigma_fluid = .FALSE.
     a%if_surface_tension = .FALSE.
+    a%if_tension_with_level_set_reg = .FALSE.
     a%if_mass_correction = .FALSE.
     a%if_kill_overshoot = .FALSE.
     a%if_level_set_P2 = .FALSE.
@@ -1469,6 +1471,14 @@ CONTAINS
           inputs%if_surface_tension = .FALSE.
        END IF
        IF (inputs%if_surface_tension) THEN
+          !==========Coefficient for surface tension======!
+          !==========How to compute surface tension=======!
+          CALL find_string(21, '===Is surface tension computed with regularized level set?', test)
+          IF (test) THEN
+             READ(21, *) inputs%if_tension_with_level_set_reg
+          ELSE
+             inputs%if_tension_with_level_set_reg = .FALSE.
+          END IF
           !==========Coefficient for surface tension======!
           CALL read_until(21, '===Coefficients of surface tension for level set 0, level set 1, ...')
           ALLOCATE(inputs%coeff_surface(inputs%nb_fluid - 1))

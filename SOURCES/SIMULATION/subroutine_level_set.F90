@@ -18,7 +18,7 @@ CONTAINS
 
   SUBROUTINE three_level_level_set(comm_one_d,time, cc_1_LA, dt, list_mode, cc_mesh, cn_m1, cn, &
        chmp_vit, max_vel, my_par_cc, cc_list_dirichlet_sides, cc_per, nb_inter, &
-       visc_entro_level, cext_reg, visc_LES_level)
+       visc_entro_level, c_tension, visc_LES_level)
     !==============================
     USE def_type_mesh
     USE fem_M_axi
@@ -48,7 +48,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)          :: chmp_vit
     REAL(KIND=8),                   INTENT(INOUT)       :: max_vel
     REAL(KIND=8), DIMENSION(:,:),   INTENT(IN)          :: visc_entro_level
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT)         :: cext_reg
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT)         :: c_tension
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)          :: visc_LES_level
     TYPE(dyn_real_line),DIMENSION(:), ALLOCATABLE, SAVE :: cc_global_D
     TYPE(dyn_int_line), DIMENSION(:), POINTER,     SAVE :: cc_mode_global_js_D
@@ -69,7 +69,7 @@ CONTAINS
     !allocations des variables locales
     REAL(KIND=8), DIMENSION(cc_mesh%np)                      :: ff
     REAL(KIND=8), DIMENSION(cc_mesh%np, 2)                   :: cn_p1
-    REAL(KIND=8), DIMENSION(cc_mesh%np,2,SIZE(list_mode))    :: cext
+    REAL(KIND=8), DIMENSION(cc_mesh%np,2,SIZE(list_mode))    :: cext, cext_reg
     REAL(KIND=8), DIMENSION(cc_mesh%gauss%l_G*cc_mesh%me, 2, SIZE(list_mode)) :: ff_conv
     REAL(KIND=8), DIMENSION(cc_mesh%gauss%l_G*cc_mesh%me, 2, SIZE(list_mode)) :: ff_comp
     REAL(KIND=8), DIMENSION(cc_mesh%gauss%l_G*cc_mesh%me, 6, SIZE(list_mode)) :: ff_entro
@@ -88,6 +88,9 @@ CONTAINS
     Vec,                        SAVE :: cb_reg_1, cb_reg_2 !vectors for level set regularization
     Mat, DIMENSION(:), POINTER, SAVE :: cc_reg_mat
     KSP, DIMENSION(:), POINTER, SAVE :: cc_reg_ksp
+    Vec,                        SAVE :: cb_tension_1, cb_tension_2 !vectors for level set tension
+    Mat, DIMENSION(:), POINTER, SAVE :: cc_tension_mat
+    KSP, DIMENSION(:), POINTER, SAVE :: cc_tension_ksp
     !------------------------------END OF DECLARATION--------------------------------------
 
     IF (once) THEN
@@ -107,6 +110,8 @@ CONTAINS
        CALL VecDuplicate(cx_1, cb_2, ierr)
        CALL VecDuplicate(cx_1, cb_reg_1, ierr)
        CALL VecDuplicate(cx_1, cb_reg_2, ierr)
+       CALL VecDuplicate(cx_1, cb_tension_1, ierr)
+       CALL VecDuplicate(cx_1, cb_tension_2, ierr)
        !------------------------------------------------------------------------------
 
        !-------------DIMENSIONS-------------------------------------------------------
@@ -140,6 +145,23 @@ CONTAINS
              END IF
              CALL Dirichlet_M_parallel(cc_reg_mat(i),cc_mode_global_js_D(i)%DIL)
              CALL init_solver(my_par_cc,cc_reg_ksp(i),cc_reg_mat(i),comm_one_d(1),&
+                  solver=my_par_cc%solver,precond=my_par_cc%precond)
+          ENDDO
+       END IF
+
+       IF (inputs%if_tension_with_level_set_reg) THEN
+          ALLOCATE(cc_tension_mat(m_max_c),cc_tension_ksp(m_max_c))
+          DO i = 1, m_max_c
+             mode = list_mode(i)
+
+             !---PHASE MATRIX for level set tension
+             CALL create_local_petsc_matrix(comm_one_d(1), cc_1_LA, cc_tension_mat(i), clean=.FALSE.)
+             CALL qs_regul_M (cc_mesh, cc_1_LA, 1.d0, i, mode, cc_tension_mat(i))
+             IF (cc_per%n_bord/=0) THEN
+                CALL periodic_matrix_petsc(cc_per%n_bord, cc_per%list, cc_per%perlist, cc_tension_mat(i), cc_1_LA)
+             END IF
+             CALL Dirichlet_M_parallel(cc_tension_mat(i),cc_mode_global_js_D(i)%DIL)
+             CALL init_solver(my_par_cc,cc_tension_ksp(i),cc_tension_mat(i),comm_one_d(1),&
                   solver=my_par_cc%solver,precond=my_par_cc%precond)
           ENDDO
        END IF
@@ -345,6 +367,50 @@ CONTAINS
        !WRITE(*,*) ' Tps  des updates', tps
        !-------------------------------------------------------------------------------------
     ENDDO
+
+    !---------------COMPUTE LEVEL SET FOR SURFACE TENSION FORCE---------------------------
+    IF (inputs%if_tension_with_level_set_reg) THEN
+       DO i = 1, m_max_c
+          !===Compute rhs for level set regularization
+          CALL qs_00 (cc_mesh,cc_1_LA, cn(:,1,i), cb_tension_1)
+          CALL qs_00 (cc_mesh,cc_1_LA, cn(:,2,i), cb_tension_2)
+
+          !===RHS periodicity
+          IF (cc_per%n_bord/=0) THEN
+             CALL periodic_rhs_petsc(cc_per%n_bord, cc_per%list, cc_per%perlist, cb_tension_1, cc_1_LA)
+             CALL periodic_rhs_petsc(cc_per%n_bord, cc_per%list, cc_per%perlist, cb_tension_2, cc_1_LA)
+          END IF
+
+          !===RHS Dirichlet
+          n = SIZE(cc_js_D)
+          cc_global_D(i)%DRL(1:n) = level_set_exact(nb_inter,1,cc_mesh%rr(:,cc_js_D), mode, time)
+          cc_global_D(i)%DRL(n+1:) = 0.d0
+          CALL dirichlet_rhs(cc_mode_global_js_D(i)%DIL-1,cc_global_D(i)%DRL,cb_tension_1)
+          cc_global_D(i)%DRL(1:n) = level_set_exact(nb_inter,2,cc_mesh%rr(:,cc_js_D), mode, time)
+          cc_global_D(i)%DRL(n+1:) = 0.d0
+          CALL dirichlet_rhs(cc_mode_global_js_D(i)%DIL-1,cc_global_D(i)%DRL,cb_tension_2)
+
+          !===Solve level set regularization equation
+          tps = user_time()
+          !Solve system cc_c
+          CALL solver(cc_tension_ksp(i),cb_tension_1,cx_1,reinit=.FALSE.,verbose=my_par_cc%verbose)
+          CALL VecGhostUpdateBegin(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
+          CALL VecGhostUpdateEnd(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
+          CALL extract(cx_1_ghost,1,1,cc_1_LA,c_tension(:,1,i))
+
+          !Solve system cc_s
+          CALL solver(cc_tension_ksp(i),cb_tension_2,cx_1,reinit=.FALSE.,verbose=my_par_cc%verbose)
+          CALL VecGhostUpdateBegin(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
+          CALL VecGhostUpdateEnd(cx_1,INSERT_VALUES,SCATTER_FORWARD,ierr)
+          CALL extract(cx_1_ghost,1,1,cc_1_LA,c_tension(:,2,i))
+          tps = user_time() - tps; tps_cumul=tps_cumul+tps
+          !WRITE(*,*) ' Tps solution des pb de vitesse', tps, 'for mode ', mode
+
+       END DO
+    ELSE
+       c_tension = cn
+    END IF
+    !---------------END COMPUTE LEVEL SET FOR SURFACE TENSION FORCE-----------------------
 
     bloc_size = SIZE(cn,1)/nb_procs+1
     m_max_pad = 3*SIZE(list_mode)*nb_procs/2
