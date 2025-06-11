@@ -1471,7 +1471,6 @@ CONTAINS
           inputs%if_surface_tension = .FALSE.
        END IF
        IF (inputs%if_surface_tension) THEN
-          !==========Coefficient for surface tension======!
           !==========How to compute surface tension=======!
           CALL find_string(21, '===Is surface tension computed with regularized level set?', test)
           IF (test) THEN
