@@ -171,40 +171,50 @@ CONTAINS
 
        !-------------RESCALING DE STAB------------------------------------------------
 
-       stab = stab_in / Rem ! MODIFICATION: stab_in = data coefficients, normalization by Rm
+   !    stab = stab_in / Rem ! MODIFICATION: stab_in = data coefficients, normalization by Rm
 
-!!$       !MARCH, 2010
-!!$       IF (inputs%type_pb=='mhd') THEN
-!!$          ! FL, 31/03/11
-!!$          !stab = stab_in*(1/MINVAL(sigma)+1.d0)
-!!$          stab = stab_in*(1/sigma_min+1.d0)
-!!$          ! FL, 31/03/11
-!!$	  ! Velocity assume to be used as reference scale
-!!$!LC 2016/02/29
-!!$          IF (inputs%if_level_set.AND.inputs%variation_sigma_fluid) THEN
-!!$             stab = stab_in*(1/(MINVAL(inputs%sigma_fluid)*Rem)+1.d0)
-!!$          END IF
-!!$!LC 2016/02/29
-!!$       ELSE
-!!$          nr_vel = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, vel)
-!!$
-!!$          IF (nr_vel .LE. 1.d-10) THEN
-!!$             ! FL, 31/03/11
-!!$             !stab = stab_in*(1/MINVAL(sigma))
-!!$             stab = stab_in*(1/sigma_min)
-!!$             ! FL, 31/03/11
-!!$             !WRITE(*,*) 'case 1, stab = ',stab
-!!$          ELSE
-!!$             ! FL, 31/03/11
-!!$             !stab = stab_in*(1/MINVAL(sigma)+1.d0)
-!!$             stab = stab_in*(1/sigma_min+1.d0)
-!!$             ! FL, 31/03/11
-!!$             !WRITE(*,*) 'case 2, stab = ',stab
-!!$          ENDIF
-!!$          ! Velocity could be zero in case of Ohmic decay
-!!$       END IF
-!!$       WRITE(*,*) 'stab = ',stab
-!!$       !MARCH, 2010
+       !MARCH, 2010
+       IF (inputs%type_pb=='mhd') THEN
+          ! FL, 31/03/11
+          !stab = stab_in*(1/MINVAL(sigma)+1.d0)
+          
+          ! VB 11/06/2025
+          !stab = stab_in*(1/sigma_min+1.d0)
+           stab = stab_in*(1/Rem+1.d0)
+          ! VB 11/06/2025
+          ! FL, 31/03/11
+	  ! Velocity assume to be used as reference scale
+!LC 2016/02/29
+          IF (inputs%if_level_set.AND.inputs%variation_sigma_fluid) THEN
+             stab = stab_in*(1/(MINVAL(inputs%sigma_fluid)*Rem)+1.d0)
+          END IF
+!LC 2016/02/29
+       ELSE
+          nr_vel = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, vel)
+
+          IF (nr_vel .LE. 1.d-10) THEN
+             ! FL, 31/03/11
+             !stab = stab_in*(1/MINVAL(sigma))
+             ! VB 11/06/2025
+             stab = stab_in*(1/Rem)
+             !stab = stab_in*(1/sigma_min)
+             ! VB 11/06/2025
+             ! FL, 31/03/11
+             !WRITE(*,*) 'case 1, stab = ',stab
+          ELSE
+             ! FL, 31/03/11
+             !stab = stab_in*(1/MINVAL(sigma)+1.d0)
+             ! VB 11/06/2025
+             !stab = stab_in*(1/sigma_min+1.d0)
+             stab = stab_in*(1/Rem+1.d0)
+             ! VB 11/06/2025
+             ! FL, 31/03/11
+             !WRITE(*,*) 'case 2, stab = ',stab
+          ENDIF
+          ! Velocity could be zero in case of Ohmic decay
+       END IF
+   !    WRITE(*,*) 'stab = ',stab
+   !    !MARCH, 2010
 
        !------------------------------------------------------------------------------
 

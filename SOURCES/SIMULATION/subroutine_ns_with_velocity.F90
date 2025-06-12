@@ -446,9 +446,7 @@ CONTAINS
        !===Pressure computation
        DO k=1, 2
           !pn_p1(:,k) = pn_p1(:,k) + phi(:,k) - div(:,k,i)/Re
-          !pn_p1(:,k) = pn_p1(:,k) + phi(:,k)  !- 0.25*div(:,k,i)/Re - inputs%div_stab_in_ns*div(:,k,i)
-          !LC 2017/01/27
-          pn_p1(:,k) = pn_p1(:,k) + phi(:,k) - 2*div(:,k,i)/Re - inputs%div_stab_in_ns/Re*div(:,k,i)
+          pn_p1(:,k) = pn_p1(:,k) + phi(:,k) - 2*div(:,k,i)/Re - inputs%div_stab_in_ns*div(:,k,i)
        END DO
        !===End Pressure computation
 

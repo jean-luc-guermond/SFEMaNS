@@ -665,6 +665,8 @@ CONTAINS
           CALL find_string(21, '===Coefficient for penalty of divergence in NS?', test)
           IF (test) THEN
              READ(21, *) inputs%div_stab_in_ns
+             !Renormalization of div_stab parameter
+             inputs%div_stab_in_ns = inputs%div_stab_in_ns*(1.d0 + 1.d0/inputs%Re)
           ELSE
              inputs%div_stab_in_ns = 0.d0
           END IF

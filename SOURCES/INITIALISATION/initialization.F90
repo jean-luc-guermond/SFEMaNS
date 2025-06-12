@@ -894,7 +894,7 @@ CONTAINS
     END IF
 
     !===Check mesh that conc_mesh is a subset of vv_mesh===============================
-    IF (if_momentum) THEN
+    IF (if_momentum .OR. inputs%type_pb=='mxx') THEN
        ALLOCATE(list_dom_ns(inputs%nb_dom_ns), vv_in_to_new(inputs%nb_dom_ns))
        IF (if_concentration) THEN
           IF (SIZE(list_dom_ns) < SIZE(inputs%list_dom_conc)) THEN

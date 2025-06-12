@@ -926,9 +926,7 @@ CONTAINS
           END DO
 
           viscolm  = visco*mesh%gauss%rj(l,m)*ray
-          !LC 2017/01/27
-          !div_penal = inputs%div_stab_in_ns*mesh%gauss%rj(l,m)*ray
-          div_penal = inputs%div_stab_in_ns/inputs%Re*mesh%gauss%rj(l,m)*ray
+          div_penal = inputs%div_stab_in_ns*mesh%gauss%rj(l,m)*ray
 
           DO nj = 1, mesh%gauss%n_w; j = mesh%jj(nj, m)
              DO ni = 1, mesh%gauss%n_w;  i = mesh%jj(ni, m)

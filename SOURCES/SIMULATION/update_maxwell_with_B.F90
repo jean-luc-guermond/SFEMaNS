@@ -183,36 +183,47 @@ CONTAINS
        !JLG+CN+LC Dec 14 2016, we redo the normalization
        !stab = stab_in
        !LC 2017/01/27
-       stab=stab_in/Rem
+       !stab=stab_in/Rem
        !End LC 2017/01/27
-       !IF (inputs%type_pb=='mhd') THEN
+       IF (inputs%type_pb=='mhd') THEN
        !   ! FL, 31/03/11
        !   stab = stab_in*(1/sigma_min+1.d0)
        !   ! FL, 31/03/11
+           ! VB 11/06/2025
+           stab = stab_in*(1/Rem+1.d0)
+           ! VB 11/06/2025
        !   ! Velocity assume to be used as reference scale
-       !   !LC 2016/02/29
-       !   IF (inputs%if_level_set.AND.inputs%variation_sigma_fluid) THEN
-       !      stab = stab_in*(1/(MINVAL(inputs%sigma_fluid)*Rem)+1.d0)
-       !   END IF
-       !   !LC 2016/02/29
-       !ELSE
-       !   nr_vel = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, vel)
-       !
-       !          IF (nr_vel .LE. 1.d-10) THEN
-       !             ! FL, 31/03/11
-       !             !stab = stab_in*(1/MINVAL(sigma))
-       !             stab = stab_in*(1/sigma_min)
-       !             ! FL, 31/03/11
-       !             !WRITE(*,*) 'case 1, stab = ',stab
-       !          ELSE
-       !             ! FL, 31/03/11
-       !             !stab = stab_in*(1/MINVAL(sigma)+1.d0)
-       !             stab = stab_in*(1/sigma_min+1.d0)
-       !             ! FL, 31/03/11
-       !             !WRITE(*,*) 'case 2, stab = ',stab
-       !          ENDIF
-       !          ! Velocity could be zero in case of Ohmic decay
-       !       END IF
+          !LC 2016/02/29
+          IF (inputs%if_level_set.AND.inputs%variation_sigma_fluid) THEN
+             stab = stab_in*(1/(MINVAL(inputs%sigma_fluid)*Rem)+1.d0)
+          END IF
+          !LC 2016/02/29
+       ELSE
+          nr_vel = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, vel)
+       
+                 IF (nr_vel .LE. 1.d-10) THEN
+                    ! FL, 31/03/11
+                    !stab = stab_in*(1/MINVAL(sigma))
+                    
+                    ! VB 11/06/2025
+                    !stab = stab_in*(1/sigma_min)
+                    stab = stab_in*(1/Rem)
+                    ! VB 11/06/2025
+
+                    ! FL, 31/03/11
+                    !WRITE(*,*) 'case 1, stab = ',stab
+                 ELSE
+                    ! FL, 31/03/11
+                    !stab = stab_in*(1/MINVAL(sigma)+1.d0)
+                    ! VB 11/06/2025
+                    !stab = stab_in*(1/sigma_min+1.d0)
+                    stab = stab_in*(1/Rem+1.d0)
+                    ! VB 11/06/2025
+                    ! FL, 31/03/11
+                    !WRITE(*,*) 'case 2, stab = ',stab
+                 ENDIF
+                 ! Velocity could be zero in case of Ohmic decay
+       END IF
        !End JLG+CN+LC Dec 14 2016, we redo the normalization
        !MARCH, 2010
        !------------------------------------------------------------------------------
