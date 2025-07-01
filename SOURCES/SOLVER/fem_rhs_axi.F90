@@ -1851,7 +1851,7 @@ CONTAINS
 
     DO ms = 1, mesh%mes
        IF (MINVAL(ABS(temp_list_robin_sides - mesh%sides(ms))) > 0) CYCLE
-       c_loc = 0d0
+       c_loc = 0.d0
        coeff_index = MINLOC(ABS(temp_list_robin_sides - mesh%sides(ms)))
        DO ls = 1, mesh%gauss%l_Gs
           !===Compute radius of Gauss point
@@ -1875,8 +1875,104 @@ CONTAINS
 
   END SUBROUTINE qs_00_gauss_surface
 
+  SUBROUTINE qs_00_gauss_surface_Neumann(mesh, vv_1_LA, temp_list_robin_sides, temp_list_dirichlet_sides, &
+       grad_bdy, cb_1, cb_2)
+    USE def_type_mesh
+    USE associate_gauss
+    USE my_util
+    USE input_data
+    IMPLICIT NONE
+    TYPE(mesh_type)                            :: mesh
+    TYPE(petsc_csr_LA)                         :: vv_1_LA
+    INTEGER     , DIMENSION(:),   INTENT(IN)   :: temp_list_robin_sides
+    INTEGER     , DIMENSION(:),   INTENT(IN)   :: temp_list_dirichlet_sides
+    REAL(KIND=8), DIMENSION(:,:), INTENT(IN)   :: grad_bdy
+    INTEGER,      DIMENSION(mesh%gauss%n_ws)   :: idxm
+    INTEGER                                    :: nws, ms, ls, ni, i, iglob, m, k
+    REAL(KIND=8)                               :: ray, y, hm1
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,2) :: v_loc
+    REAL(KIND=8), DIMENSION(2)                 :: normi
+    INTEGER,      DIMENSION(mesh%gauss%n_w)    :: j_loc
+    INTEGER,      DIMENSION(mesh%gauss%n_ws)   :: js_loc
+    INTEGER                                    :: index
+
+    !#include "petsc/finclude/petsc.h"
+    Vec                                      :: cb_1, cb_2
+    PetscErrorCode                           :: ierr
+
+    nws = mesh%gauss%n_ws
+    CALL gauss(mesh)
+
+    index = 0
+    DO ms = 1, mesh%mes
+       v_loc = 0.d0
+
+       m = mesh%neighs(ms)
+       j_loc = mesh%jj(:,m) !for derivative in r/z
+       js_loc = mesh%jjs(:,ms)
+       hm1 = 1.d0 / SUM(mesh%gauss%rjs(:,ms)) !inverse local mesh size
+
+       outer: DO ls = 1, mesh%gauss%l_Gs
+          index = index + 1
+
+          !Skip Dirichlet faces
+          IF (SIZE(temp_list_dirichlet_sides) > 0) THEN
+             !IF (MINVAL(ABS(temp_list_dirichlet_sides - mesh%sides(ms))) == 0) CYCLE
+             IF (MINVAL(ABS(temp_list_dirichlet_sides - mesh%sides(ms))) < 1) CYCLE
+          END IF
+
+          !Skip Robin faces
+          IF (SIZE(temp_list_robin_sides) > 0) THEN
+             !IF (MINVAL(ABS(temp_list_robin_sides - mesh%sides(ms))) == 0) CYCLE
+             IF (MINVAL(ABS(temp_list_robin_sides - mesh%sides(ms))) < 1) CYCLE
+          END IF
+
+          !Skip periodic faces
+          DO k = 1, inputs%my_periodic%nb_periodic_pairs
+             IF (SIZE(inputs%my_periodic%list_periodic(:, k)) > 0) THEN
+                !IF (MINVAL(ABS(inputs%my_periodic%list_periodic(:, k) - mesh%sides(ms))) == 0) CYCLE outer
+                IF (MINVAL(ABS(inputs%my_periodic%list_periodic(:, k) - mesh%sides(ms))) < 1) CYCLE outer
+             END IF
+          END DO
+
+          !Neumann faces
+          !===Compute radius of Gauss point
+          ray = SUM(mesh%rr(1,js_loc)*mesh%gauss%wws(:,ls))
+
+          !===Don't integrate on r=0
+          IF (ray.LT.1.d-10) CYCLE
+
+          !===Get normal vector on Gauss point
+          normi = mesh%gauss%rnorms(:,ls,ms)
+
+          !===Compute grad_bdy dot n
+          DO ni = 1, nws
+             y = ray * mesh%gauss%rjs(ls,ms) * mesh%gauss%wws(ni,ls)
+             v_loc(ni,1) = v_loc(ni,1) &
+                  + (grad_bdy(index,1)*normi(1) + grad_bdy(index,5)*normi(2)) * y
+             v_loc(ni,2) = v_loc(ni,2) &
+                  + (grad_bdy(index,2)*normi(1) + grad_bdy(index,6)*normi(2)) * y
+          END DO
+       END DO outer ! end loop on ls
+
+       DO ni = 1, nws
+          i = mesh%jjs(ni,ms)
+          iglob = vv_1_LA%loc_to_glob(1,i)
+          idxm(ni) = iglob-1
+       END DO
+       CALL VecSetValues(cb_1, nws, idxm, v_loc(:,1), ADD_VALUES, ierr)
+       CALL VecSetValues(cb_2, nws, idxm, v_loc(:,2), ADD_VALUES, ierr)
+    ENDDO
+
+    CALL VecAssemblyBegin(cb_1,ierr)
+    CALL VecAssemblyEnd(cb_1,ierr)
+    CALL VecAssemblyBegin(cb_2,ierr)
+    CALL VecAssemblyEnd(cb_2,ierr)
+
+  END SUBROUTINE qs_00_gauss_surface_Neumann
+
   SUBROUTINE qs_00_gauss_surface_conc(mesh, vv_1_LA, conc_list_robin_sides, convection_coeff_conc_rhs, &
-       exterior_concentration, cb) 
+       exterior_concentration, cb)
     !MODIFICATION: implementation of the term int_(partial Omega) h*Text*v, with h the convection coefficient
     USE def_type_mesh
     USE my_util
@@ -1917,8 +2013,10 @@ CONTAINS
        END DO
        CALL VecSetValues(cb, nws, idxm, c_loc, ADD_VALUES, ierr)
     ENDDO
+
     CALL VecAssemblyBegin(cb,ierr)
     CALL VecAssemblyEnd(cb,ierr)
+
   END SUBROUTINE qs_00_gauss_surface_conc
 
   SUBROUTINE qs_00_gauss_H_conc(mesh, j_H_to_conc, conc_1_LA, cb_1, cb_2)
@@ -1936,7 +2034,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(2)                          :: normi
     REAL(KIND=8) ::  ray, stab, y
     INTEGER      :: i, ni, ms, ls, nws, iglob
-    INTEGER, DIMENSION(mesh%gauss%n_ws)    :: idxn
+    INTEGER, DIMENSION(mesh%gauss%n_ws)    :: idxm
     TYPE(petsc_csr_LA)                     :: conc_1_LA
     PetscErrorCode          :: ierr
     Vec                     :: cb_1, cb_2
@@ -1968,10 +2066,10 @@ CONTAINS
        DO ni = 1, nws
           i = mesh%jjs(ni,ms)
           iglob = conc_1_LA%loc_to_glob(1,i)
-          idxn(ni) = iglob-1
+          idxm(ni) = iglob-1
        END DO
-       CALL VecSetValues(cb_1, nws, idxn, v_loc(:,1), ADD_VALUES, ierr)
-       CALL VecSetValues(cb_2, nws, idxn, v_loc(:,2), ADD_VALUES, ierr)
+       CALL VecSetValues(cb_1, nws, idxm, v_loc(:,1), ADD_VALUES, ierr)
+       CALL VecSetValues(cb_2, nws, idxm, v_loc(:,2), ADD_VALUES, ierr)
     END DO ! end loop on ms
 
     CALL VecAssemblyBegin(cb_1,ierr)

@@ -197,7 +197,6 @@ CONTAINS
 
   END SUBROUTINE qs_diff_mass_scal_M
 
-
   SUBROUTINE qs_diff_mass_scal_M_variant(mesh, LA, heat_capa, visco, mass, temp_list_robin_sides, &
        convection_coeff, stab, mode, matrix)
     USE my_util
@@ -272,13 +271,11 @@ CONTAINS
     ENDDO
 
     !===Robin conditions ! MODIFICATION: Robin: addition of the term int_(partial Omega) h*u*v, with h the convection coefficient
-
     IF (SIZE(temp_list_robin_sides) > 0) THEN
-
        n_ws = mesh%gauss%n_ws
        DO ms = 1, mesh%mes
           IF (MINVAL(ABS(temp_list_robin_sides - mesh%sides(ms))) > 0) CYCLE
-          h_phii_phij = 0d0
+          h_phii_phij = 0.d0
           coeff_index = MINLOC(ABS(temp_list_robin_sides - mesh%sides(ms)))
           DO ls = 1, mesh%gauss%l_Gs
              !===Compute radius of Gauss point
@@ -301,7 +298,6 @@ CONTAINS
        END DO
 
     END IF
-
     !===End Robin conditions
 
     CALL MatAssemblyBegin(matrix,MAT_FINAL_ASSEMBLY,ierr)
@@ -1777,11 +1773,10 @@ CONTAINS
 
     !===Robin conditions ! MODIFICATION: Robin: addition of the term int_(partial Omega) h*u*v
     IF (SIZE(conc_list_robin_sides) > 0) THEN
-
        n_ws = mesh%gauss%n_ws
        DO ms = 1, mesh%mes
           IF (MINVAL(ABS(conc_list_robin_sides - mesh%sides(ms))) > 0) CYCLE
-          h_phii_phij = 0d0
+          h_phii_phij = 0.d0
           coeff_index = MINLOC(ABS(conc_list_robin_sides - mesh%sides(ms)))
           DO ls = 1, mesh%gauss%l_Gs
              !===Compute radius of Gauss point

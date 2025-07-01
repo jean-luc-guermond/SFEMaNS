@@ -65,7 +65,7 @@ PROGRAM mhd_prog
        concentration_diffusivity_field,mu_H_field, sigma_field, time, m_max_c, &
        comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc,temperature, &
        concentration, level_set, density, &
-       der_un, visc_LES, visc_LES_level)
+       der_un, visc_LES,visc_LES_level)
 
 
   !===============================================================================
@@ -179,6 +179,15 @@ CONTAINS
     !REAL(KIND=8)                               :: interface_z_min, interface_z_min_tot
     !===Energies====================================================================
     REAL(KIND=8), DIMENSION(m_max_c)                :: e_c_u, e_cm_h, temp, conc
+!!$    REAL(KIND=8), DIMENSION(m_max_c)                :: e_c_u_level, temp_level
+!!$    REAL(KIND=8), DIMENSION(SIZE(un,1),SIZE(un,2),SIZE(un,3)) :: phi_un
+!!$    REAL(KIND=8), DIMENSION(SIZE(temperature,1),SIZE(temperature,2),SIZE(temperature,3)) :: phi_temp
+    REAL(KIND=8), DIMENSION(m_max_c)                :: e_c_u_level1, e_c_u_level2
+    REAL(KIND=8), DIMENSION(m_max_c)                :: temp_level1, temp_level2
+    REAL(KIND=8), DIMENSION(SIZE(un,1),SIZE(un,2),SIZE(un,3)) :: sqrt_level_u
+    REAL(KIND=8), DIMENSION(SIZE(un,1),SIZE(un,2),SIZE(un,3)) :: sqrt_one_minus_level_u
+    REAL(KIND=8), DIMENSION(SIZE(temperature,1),SIZE(temperature,2),SIZE(temperature,3)) :: sqrt_level_temp
+    REAL(KIND=8), DIMENSION(SIZE(temperature,1),SIZE(temperature,2),SIZE(temperature,3)) :: sqrt_one_minus_level_temp
     CHARACTER(LEN=3)                                :: truc
     CHARACTER(LEN=100)                              :: en_file
     CHARACTER(LEN=100) , SAVE                       :: e_c_u_file, e_cm_h_file, temp_file, conc_file
@@ -222,6 +231,7 @@ CONTAINS
     !conc_i (concentration)
     !=======Navier-Stokes and mass conservation equations
     !fort.31 = Time, L2-norm divergence u, (L2-norm divergence u)/(H1-norm u)
+    !fort.32 = Average Vz mode 0 (needs to be redone for multiphase)
     !fort.98 = Time, kinetic energy, poloidal/toroidal energy, ... (see below)
     !fort.96 = Time, kinetic energy for problem with variable density
     !fort.97 = Time, mass conservation for problem with variable density
@@ -230,9 +240,10 @@ CONTAINS
     !fort.51 = Time, L2-norm B, H1-norm B
     !fort.78 = Time, magnetic energy
     !======Temperature equation
-    !fort.60 = Time, L2-norm temperature
+    !fort.33 = Average Temp mode 0 (needs to be redone for multiphase)
+    !fort.99 = Time, L2-norm temperature
     !======Concentration equation
-    !fort.61 = Time, L2-norm concentration
+    !fort.199 = Time, L2-norm concentration
     !======Anenometers (disabled by default)
     !Allow to compute value of variables of interest at given positions in the domain
     !To enable, see read_my_data.F90 and look for anenometer
@@ -242,6 +253,21 @@ CONTAINS
     !To enable add the following line to data and set to true
     !===Compute L2/H1 relative errors (true/false)
     !===END Summary outputs==========================================================
+
+    !===Postproc for multiphase + temperature
+    !1/2 refers to Volume 1/2 <---> level_set=0/level_set=1 (top/bottom for our problem)
+    !fort.901/902 = kinetic energy
+    !fort.911/912 = potential energy
+    !fort.921/922 = dissipation (computed in sub_ns_with_momentum*)
+    !fort.931/932 = internal energy
+    !fort.941/942 = local Nusselt on top/bottom lid's (for MONOFLUID[fort.942] and bifluid)
+    !fort.950 = approximation fluids interface's surface
+    !fort.951/952 = friction force on all walls for light top(1) fluid/ heavy bot(2) fluid
+    !e_c_u_i -->> added two ways of computing the modal kinetic energy in phase with level_set=1
+    !temp_i -->> same as for e_c_u_i
+    !fort.35 curl.ei integrals and theta
+    !fort.36 same as fort.35 with normalized integrals (theta unchanged)
+    !===End Postproc for multiphase + temperature
 
     !===Check ranks
     IF (vv_mesh%me /=0) THEN
@@ -267,7 +293,8 @@ CONTAINS
        ELSE IF (inputs%type_pb=='mxw') THEN
           norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn)
        END IF
-       IF (norm>1.d8.OR.isnan(norm)) THEN
+       IF (norm>1.d8) THEN
+          !IF (norm>1.d8.OR.isnan(norm)) THEN
           WRITE(*,*) ' Norm L2 of magnetic field (mxw) or velocity (nst/mhd/fhd/mhs) ', norm
           CALL error_petsc('From my_post_processing: numerical unstability')
        END IF
@@ -290,13 +317,31 @@ CONTAINS
              e_c_u(i) = 0.5*(norme_L2_champ_par(comm_one_d_ns(1), vv_mesh, list_mode(i:i), un(:,:,i:i)))**2
           ENDDO
 
+          IF (inputs%if_level_set) THEN
+!!$          CALL compute_level_set_times_variable(comm_one_d_ns(2), pp_mesh, vv_mesh, list_mode, &
+!!$               un, level_set, phi_un)
+!!$          DO i=1, m_max_c
+!!$             e_c_u_level(i) = 0.5*(norme_L2_champ_par(comm_one_d_ns(1), vv_mesh, list_mode(i:i), phi_un(:,:,i:i)))**2
+!!$          ENDDO
+             CALL compute_squareroot_level_times_var(comm_one_d_ns(2), pp_mesh, vv_mesh, list_mode, &
+                  level_set, temperature, un, sqrt_level_u, sqrt_one_minus_level_u, sqrt_level_temp, &
+                  sqrt_one_minus_level_temp)
+             DO i=1, m_max_c
+                e_c_u_level1(i) = 0.5*(norme_L2_champ_par(comm_one_d_ns(1), vv_mesh, list_mode(i:i), &
+                     sqrt_one_minus_level_u(:,:,i:i)))**2
+                e_c_u_level2(i) = 0.5*(norme_L2_champ_par(comm_one_d_ns(1), vv_mesh, list_mode(i:i), &
+                     sqrt_level_u(:,:,i:i)))**2
+             ENDDO
+          ENDIF
+
           IF (rank_ns_S == 0) THEN
              OPEN(UNIT=20,FILE=e_c_u_file, FORM='formatted', STATUS='unknown')
              WRITE(20,"(A)")'#energie par mode'
              WRITE(20,"(A)")'# t  ec mode'
-             WRITE(20,103) time, e_c_u
+             WRITE(20,103) time, e_c_u, e_c_u_level1, e_c_u_level2
              CLOSE(20)
           END IF
+
           IF (inputs%if_anemo_v) THEN
              ALLOCATE(anemo_v(SIZE(inputs%r_anemo_v)*SIZE(inputs%z_anemo_v)))
              nb_anemo_v = 0
@@ -385,13 +430,29 @@ CONTAINS
           DO i=1, m_max_c
              temp(i) = norm_S(comm_one_d, 'L2', temp_mesh, list_mode(i:i), temperature(:,:,i:i))
           ENDDO
+
+          IF (inputs%if_level_set) THEN
+!!$          CALL compute_level_set_times_variable(comm_one_d_ns(2), pp_mesh, vv_mesh, list_mode, &
+!!$               temperature, level_set, phi_temp)
+!!$          DO i=1, m_max_c
+!!$             temp_level(i) = norm_S(comm_one_d, 'L2', temp_mesh, list_mode(i:i), phi_temp(:,:,i:i))
+!!$          ENDDO
+             DO i=1, m_max_c
+                temp_level1(i) = norm_S(comm_one_d, 'L2', temp_mesh, list_mode(i:i), &
+                     sqrt_one_minus_level_temp(:,:,i:i))
+                temp_level2(i) = norm_S(comm_one_d, 'L2', temp_mesh, list_mode(i:i), &
+                     sqrt_level_temp(:,:,i:i))
+             ENDDO
+          ENDIF
+
           IF (rank_S == 0) THEN
              OPEN(UNIT=60,FILE=temp_file, FORM='formatted', STATUS='unknown')
              WRITE(60,"(A)")'#temperature par mode'
              WRITE(60,"(A)")'# t  temp mode'
-             WRITE(60,103) time, temp
+             WRITE(60,103) time, temp, temp_level1, temp_level2
              CLOSE(60)
-          END IF
+          ENDIF
+
           IF (inputs%if_anemo_T) THEN
              ALLOCATE(anemo_T(SIZE(inputs%r_anemo_T)*SIZE(inputs%z_anemo_T)))
              nb_anemo_T = 0
@@ -473,6 +534,18 @@ CONTAINS
        !===Verbose
        CALL write_verbose(rank)
 
+       !TESTJLG to get the interface height on the frontier
+       !IF (inputs%if_level_set) THEN
+       !   CALL interface_mpr(rank)
+       !ENDIF
+       IF (inputs%if_level_set) THEN
+          CALL vmax_height_m0(time,vv_mesh,comm_one_d_ns,list_mode,un,opt_level_set=level_set)
+          !CALL interface_mpr(rank)
+       ELSE
+          CALL vmax_height_m0(time,vv_mesh,comm_one_d_ns,list_mode,un)
+       ENDIF
+       ! TESTJLG to get the interface height on the frontier
+
        IF (inputs%if_temperature) THEN
           CALL tempmax_tempmin(time, comm_one_d_temp, list_mode, temperature)
        ENDIF
@@ -489,6 +562,13 @@ CONTAINS
              !===chi is the penalty function, u_solid the velocity of the solid, dt the time step
              !==Output written in the file fort.12
              CALL FORCES_AND_MOMENTS(time,vv_mesh,comm_one_d_ns,list_mode,un)
+          END IF
+
+          ! Average Vz mode 0
+          normr = mean_S_zero_mode(comm_one_d_ns, vv_mesh, list_mode, un(:,5:6,:))
+          IF (rank == 0) THEN
+             !===Average mode 0 Vz
+             WRITE(32,*) time, normr
           END IF
 
           err = norm_SF(comm_one_d_ns, 'div', vv_mesh, list_mode, un)
@@ -511,13 +591,32 @@ CONTAINS
           DO i=1, m_max_c
              e_c_u(i) = 0.5*(norme_L2_champ_par(comm_one_d_ns(1), vv_mesh, list_mode(i:i), un(:,:,i:i)))**2
           ENDDO
+
+          IF (inputs%if_level_set) THEN
+!!$          CALL compute_level_set_times_variable(comm_one_d_ns(2), pp_mesh, vv_mesh, list_mode, &
+!!$               un, level_set, phi_un)
+!!$          DO i=1, m_max_c
+!!$             e_c_u_level(i) = 0.5*(norme_L2_champ_par(comm_one_d_ns(1), vv_mesh, list_mode(i:i), phi_un(:,:,i:i)))**2
+!!$          ENDDO
+             CALL compute_squareroot_level_times_var(comm_one_d_ns(2), pp_mesh, vv_mesh, list_mode, &
+                  level_set, temperature, un, sqrt_level_u, sqrt_one_minus_level_u, sqrt_level_temp, &
+                  sqrt_one_minus_level_temp)
+             DO i=1, m_max_c
+                e_c_u_level1(i) = 0.5*(norme_L2_champ_par(comm_one_d_ns(1), vv_mesh, list_mode(i:i), &
+                     sqrt_one_minus_level_u(:,:,i:i)))**2
+                e_c_u_level2(i) = 0.5*(norme_L2_champ_par(comm_one_d_ns(1), vv_mesh, list_mode(i:i), &
+                     sqrt_level_u(:,:,i:i)))**2
+             ENDDO
+          ENDIF
+
           IF (rank_ns_S == 0) THEN
              OPEN(UNIT=20,FILE=e_c_u_file, FORM='formatted', POSITION = 'append', &
                   STATUS='unknown')
-             WRITE(20,103) time, e_c_u
+             WRITE(20,103) time, e_c_u, e_c_u_level1, e_c_u_level2
 
              CLOSE(20)
           ENDIF
+
           IF (inputs%if_anemo_v) THEN
              IF (nb_anemo_v /=0) THEN
                 OPEN(UNIT=56,FILE=anemometre_v_file, FORM='formatted', POSITION = 'append', &
@@ -539,6 +638,9 @@ CONTAINS
              !===Output written in file fort.97
              IF (inputs%if_level_set_P2) THEN
                 CALL compute_level_set_conservation(time,vv_mesh,comm_one_d_ns,list_mode,level_set)
+                ! CN 26/09/2023
+                CALL compute_mean_curl_level_set_cart(time,comm_one_d_ns,vv_mesh,list_mode,un,level_set)
+                ! CN 26/09/2023
              ELSE
                 CALL compute_level_set_conservation(time,pp_mesh,comm_one_d_ns,list_mode,level_set)
              END IF
@@ -550,40 +652,93 @@ CONTAINS
              CALL FFT_SCALAR_VECT_DCL(comm_one_d_ns(2), un, density, momentum, 1, nb_procs, &
                   bloc_size, m_max_pad)
 
-             norm=dot_product_SF(comm_one_d_ns, vv_mesh, list_mode, un, momentum)
+             ! CN 26/09/2023 bug here
+             !norm=dot_product_SF(comm_one_d_ns, vv_mesh, list_mode, un, momentum)
+             err=dot_product_SF(comm_one_d_ns, vv_mesh, list_mode, un, momentum)
              IF (rank == 0) THEN
                 WRITE(*,*) 'Kinetic energy (integral of momentum times velocity)', time, err
                 WRITE(96,*) time, 0.5*err
              END IF
              !===End compute kinetic energy
-          END IF ! end if level_set
 
-          !TESTJLG to get the interface height on the frontier
-          !IF (inputs%if_level_set) THEN
-          !   CALL interface_mpr(rank)
-          !ENDIF
-          IF (inputs%if_level_set) THEN
-             CALL vmax_height_m0(time,vv_mesh,comm_one_d_ns,list_mode,un,level_set)
+             !===Compute kinetic energy by phase-volume
+             CALL compute_kinetic_energy_by_level_set_area(comm_one_d_ns, pp_mesh, vv_mesh, &
+                  list_mode, un, level_set, time)
+
+             !===Compute dissipation by phase-volume
+             CALL compute_diffusion_by_level_set_area(comm_one_d_ns, pp_mesh, vv_mesh, list_mode, nb_procs, &
+                  un, level_set, time)
+
+             !===Compute friction on all walls
+             CALL compute_friction_bdy_by_level_set_area(comm_one_d_ns, pp_mesh, vv_mesh, &
+                  list_mode, un, level_set, time)
+
+             IF (inputs%if_surface_tension) THEN
+                !===Compute interface's surface
+                CALL compute_surface_level_set_interface(comm_one_d_ns, pp_mesh, vv_mesh, &
+                     list_mode, level_set, time)
+             END IF
+
+             IF (inputs%if_temperature) THEN
+                !===Compute potential energy by phase-volume
+                CALL compute_potential_energy_by_level_set_area(comm_one_d_ns, pp_mesh, vv_mesh, &
+                     list_mode, un, level_set, temperature, time)
+
+                !===Compute internal energy
+                CALL compute_internal_energy_by_level_set_area(comm_one_d_ns, pp_mesh, vv_mesh, &
+                     list_mode, level_set, temperature, time)
+
+                !===Compute Nussel top/bot lids
+                CALL compute_Nussel_bdy_by_level_set_area(comm_one_d_temp, pp_mesh, temp_mesh, list_mode, &
+                     temperature, level_set, time)
+             END IF ! if_temperature
           ELSE
-             CALL vmax_height_m0(time,vv_mesh,comm_one_d_ns,list_mode,un)
-          ENDIF
-          ! TESTJLG to get the interface height on the frontier
+             IF (inputs%if_temperature) THEN
+                !===Compute friction in MONOFLUID
+                CALL compute_friction_bdy(comm_one_d_ns, vv_mesh, &
+                     list_mode, un, time)
+                !===Compute Nussel in MONOFLUID top/bot lids, Lat2/Lat4
+                CALL compute_Nussel_bdy(comm_one_d_temp, temp_mesh, &
+                     list_mode, temperature, time)
+             END IF
+          END IF ! end if level_set
        END IF ! end nst or mhd or fhd or mhs
 
        IF (inputs%if_temperature) THEN
+          ! Average Temp mode 0
+          normr = mean_S_zero_mode(comm_one_d_temp, temp_mesh, list_mode, temperature)
+          IF (rank == 0) THEN
+             WRITE(33,*) time, normr
+          END IF
+
           err = norm_SF(comm_one_d_temp, 'L2', temp_mesh, list_mode, temperature)
           IF (rank == 0) THEN
-             WRITE(99,*) time, err
              WRITE(*,*) 'norm L2 of temperature', time, err
+             WRITE(99,*) time, err
           END IF
 
           DO i=1, m_max_c
              temp(i) = norm_S(comm_one_d, 'L2', temp_mesh, list_mode(i:i), temperature(:,:,i:i))
           ENDDO
+
+          IF (inputs%if_level_set) THEN
+!!$          CALL compute_level_set_times_variable(comm_one_d_ns(2), pp_mesh, vv_mesh, list_mode, &
+!!$               temperature, level_set, phi_temp)
+!!$          DO i=1, m_max_c
+!!$             temp_level(i) = norm_S(comm_one_d, 'L2', temp_mesh, list_mode(i:i), phi_temp(:,:,i:i))
+!!$          ENDDO
+             DO i=1, m_max_c
+                temp_level1(i) = norm_S(comm_one_d, 'L2', temp_mesh, list_mode(i:i), &
+                     sqrt_one_minus_level_temp(:,:,i:i))
+                temp_level2(i) = norm_S(comm_one_d, 'L2', temp_mesh, list_mode(i:i), &
+                     sqrt_level_temp(:,:,i:i))
+             ENDDO
+          ENDIF
+
           IF (rank_S == 0) THEN
              OPEN(UNIT=60,FILE=temp_file, FORM='formatted', POSITION = 'append', &
                   STATUS='unknown')
-             WRITE(60,103) time, temp
+             WRITE(60,103) time, temp, temp_level1, temp_level2
              CLOSE(60)
           ENDIF
 
@@ -600,8 +755,8 @@ CONTAINS
        IF (inputs%if_concentration) THEN
           err = norm_SF(comm_one_d_conc, 'L2', conc_mesh, list_mode, concentration)
           IF (rank == 0) THEN
-             WRITE(199,*) time, err
              WRITE(*,*) 'norm L2 of concentration', time, err
+             WRITE(199,*) time, err
           END IF
 
           DO i=1, m_max_c
@@ -684,10 +839,10 @@ CONTAINS
                    p_err(:,1,i) = p_err(:,1,i) - avg
                 END IF
              END DO
-             norm_err(1) = SQRT(dot_product_SF(comm_one_d_ns,vv_mesh, list_mode, u_err, u_err))
-             norm_err(2) = norm_SF(comm_one_d_ns, 'sH1', vv_mesh, list_mode, u_err)
-             norm_err(3) = norm_SF(comm_one_d_ns, 'div', vv_mesh, list_mode, un)
-             norm_err(4) = norm_SF(comm_one_d_ns, 'L2', pp_mesh, list_mode, p_err)
+             norm_err(1) = SQRT(dot_product_SF(comm_one_d_NS,vv_mesh, list_mode, u_err, u_err))
+             norm_err(2) = norm_SF(comm_one_d_NS, 'sH1', vv_mesh, list_mode, u_err)
+             norm_err(3) = norm_SF(comm_one_d_NS, 'div', vv_mesh, list_mode, un)
+             norm_err(4) = norm_SF(comm_one_d_NS, 'L2', pp_mesh, list_mode, p_err)
              IF (rank==0) THEN
                 WRITE(10,*) 'Velocity field   #####################'
                 WRITE(10,*) 'L2 error on velocity  = ', norm_err(1)
@@ -726,7 +881,7 @@ CONTAINS
                 WRITE(10,*) 'L2 error on level set', norm_err(1)
              END IF
           END IF
-          
+
           !Error temperature
           IF (temp_mesh%np>0) THEN
              DO i = 1, m_max_c
@@ -740,7 +895,7 @@ CONTAINS
                 WRITE(10,*) 'L2 error on temperature = ', norm_err(1)
              END IF
           END IF
-          
+
           !Error concentration
           IF (conc_mesh%np>0) THEN
              DO i = 1, m_max_c
@@ -752,9 +907,9 @@ CONTAINS
              IF (rank==0) THEN
                 WRITE(10,*) 'Concentration field#####################'
                 WRITE(10,*) 'L2 error on concentration = ', norm_err(1)
-             END IF  
+             END IF
           END IF
-          
+
           !Error Magnetic Field
           IF (H_mesh%np>0) THEN
              DO k = 1, 6
@@ -1073,7 +1228,7 @@ CONTAINS
           CALL MPI_ALLREDUCE(volum_init_F, volum_init(nb_inter), 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
                communicator(1), code)
        END DO
-       IF (my_petscworld_rank==0) THEN
+       IF (rank==0) THEN
           WRITE(*,*) 'mass initial = ', time, volum_init
        END IF
     END IF !end once_compute
@@ -1108,66 +1263,66 @@ CONTAINS
     END IF
   END SUBROUTINE compute_level_set_conservation
 
-!!$  SUBROUTINE interface_mpr(rank_in)
-!!$    USE sfemans_tools
-!!$    USE fft_parallele
-!!$    !USE user_data !===We could read r_mpr and z_mpr from user_data ...
-!!$    INTEGER      :: rank_in
-!!$    REAL(KIND=8) :: dist, dist_glob, r_mpr=0.030435d0, z_mpr=0.d0
-!!$    REAL(KIND=8), DIMENSION(:,:,:), ALLOCATABLE, SAVE :: field_in
-!!$    REAL(KIND=8), DIMENSION(:,:,:), ALLOCATABLE       :: field_out_FFT
-!!$    REAL(KIND=8), SAVE :: norm, d_avg
-!!$    INTEGER, SAVE :: n_mpr
-!!$    LOGICAL, SAVE :: i_am_in
-!!$    LOGICAL, SAVE :: once=.TRUE.
-!!$    INTEGER, SAVE :: nb_procs_F, rank_0
-!!$    INTEGER       :: rank, code
-!!$
-!!$#include "petsc/finclude/petsc.h"
-!!$
-!!$101 FORMAT(2(e22.9,2x))
-!!$    IF (once) THEN
-!!$       once=.FALSE.
-!!$       CALL MPI_COMM_SIZE(comm_one_d_ns(2), nb_procs_F, code)
-!!$       ALLOCATE(field_in(nb_procs_F,2,m_max_c))
-!!$       n_mpr = find_point(vv_mesh,r_mpr,z_mpr)
-!!$       IF (n_mpr==0) THEN
-!!$          dist=1.d30
-!!$       ELSE
-!!$          dist = SQRT((vv_mesh%rr(1,n_mpr)-r_mpr)**2 + (vv_mesh%rr(2,n_mpr)-z_mpr)**2)
-!!$       END IF
-!!$       CALL MPI_ALLREDUCE(dist,dist_glob,1,MPI_DOUBLE_PRECISION, MPI_MIN,comm_one_d_ns(1),ierr)
-!!$       IF (dist==dist_glob) THEN
-!!$          i_am_in = .TRUE.
-!!$          rank = rank_in
-!!$       ELSE
-!!$          i_am_in =.FALSE.
-!!$          rank = 100000000
-!!$       END IF
-!!$       CALL MPI_ALLREDUCE(rank,rank_0,1,MPI_INTEGER,MPI_MIN,PETSC_COMM_WORLD,ierr)
-!!$       IF (rank==rank_0) THEN
-!!$          OPEN(UNIT=50,FILE='interface', FORM='formatted', STATUS='unknown')
-!!$          WRITE(50,"(A)")'#Density at r_mpr=0.03d0, z_mpr=0.d0 '
-!!$          WRITE(50,"(A,i8,2e15.8)")'# t  density', rank_0, vv_mesh%rr(:,n_mpr)
-!!$          CLOSE(50)
-!!$       END IF
-!!$       d_avg = (MAXVAL(inputs%density_fluid)+MINVAL(inputs%density_fluid))/2.d0
-!!$       norm = MAXVAL(inputs%density_fluid)-MINVAL(inputs%density_fluid)
-!!$    END IF
-!!$    field_in = 1.d0
-!!$    IF (i_am_in) THEN
-!!$       field_in(1,:,:) = density(n_mpr,:,:)
-!!$    END IF
-!!$
-!!$    CALL FFT_PAR_REAL(comm_one_d_ns(2), field_in, field_out_FFT)
-!!$    IF (rank_in==rank_0) THEN
-!!$       OPEN(UNIT=50,FILE='interface', FORM='formatted', POSITION = 'append', STATUS='unknown')
-!!$       WRITE(50,101) time, (field_out_FFT(1,1,:)-d_avg)/norm
-!!$       !      WRITE(50,"(2e15.8)") time, (field_out_FFT(1,1,:)-d_avg)/norm
-!!$       CLOSE(50)
-!!$    END IF
-!!$
-!!$  END SUBROUTINE interface_mpr
+  SUBROUTINE interface_mpr(rank_in)
+    USE sfemans_tools
+    USE fft_parallele
+    !USE user_data !===We could read r_mpr and z_mpr from user_data ...
+    INTEGER      :: rank_in
+    REAL(KIND=8) :: dist, dist_glob, r_mpr=1.d4, z_mpr=0.d0
+    REAL(KIND=8), DIMENSION(:,:,:), ALLOCATABLE, SAVE :: field_in
+    REAL(KIND=8), DIMENSION(:,:,:), ALLOCATABLE       :: field_out_FFT
+    REAL(KIND=8), SAVE :: norm, d_avg
+    INTEGER, SAVE :: n_mpr
+    LOGICAL, SAVE :: i_am_in
+    LOGICAL, SAVE :: once=.TRUE.
+    INTEGER, SAVE :: nb_procs_F, rank_0
+    INTEGER       :: rank, code
+
+#include "petsc/finclude/petsc.h"
+
+101 FORMAT(2(e22.9,2x))
+    IF (once) THEN
+       once=.FALSE.
+       CALL MPI_COMM_SIZE(comm_one_d_ns(2), nb_procs_F, code)
+       ALLOCATE(field_in(nb_procs_F,2,m_max_c))
+       n_mpr = find_point(vv_mesh,r_mpr,z_mpr)
+       IF (n_mpr==0) THEN
+          dist=1.d30
+       ELSE
+          dist = SQRT((vv_mesh%rr(1,n_mpr)-r_mpr)**2 + (vv_mesh%rr(2,n_mpr)-z_mpr)**2)
+       END IF
+       CALL MPI_ALLREDUCE(dist,dist_glob,1,MPI_DOUBLE_PRECISION, MPI_MIN,comm_one_d_ns(1),ierr)
+       IF (dist==dist_glob) THEN
+          i_am_in = .TRUE.
+          rank = rank_in
+       ELSE
+          i_am_in =.FALSE.
+          rank = 100000000
+       END IF
+       CALL MPI_ALLREDUCE(rank,rank_0,1,MPI_INTEGER,MPI_MIN,PETSC_COMM_WORLD,ierr)
+       IF (rank==rank_0) THEN
+          OPEN(UNIT=88,FILE='interface', FORM='formatted', STATUS='unknown')
+          WRITE(88,"(A)")'#Density at r_mpr=1.d4, z_mpr=0.d0 '
+          WRITE(88,"(A,i8,2e15.8)")'# t  density', rank_0, vv_mesh%rr(:,n_mpr)
+          CLOSE(88)
+       END IF
+       d_avg = (MAXVAL(inputs%density_fluid)+MINVAL(inputs%density_fluid))/2.d0
+       norm = MAXVAL(inputs%density_fluid)-MINVAL(inputs%density_fluid)
+    END IF
+    field_in = 1.d0
+    IF (i_am_in) THEN
+       field_in(1,:,:) = density(n_mpr,:,:)
+    END IF
+
+    CALL FFT_PAR_REAL(comm_one_d_ns(2), field_in, field_out_FFT)
+    IF (rank_in==rank_0) THEN
+       OPEN(UNIT=88,FILE='interface', FORM='formatted', POSITION = 'append', STATUS='unknown')
+       WRITE(88,101) time, (field_out_FFT(1,1,:)-d_avg)/norm
+       !      WRITE(88,"(2e15.8)") time, (field_out_FFT(1,1,:)-d_avg)/norm
+       CLOSE(88)
+    END IF
+
+  END SUBROUTINE interface_mpr
 
 
   SUBROUTINE vmax_height_m0(time, mesh, communicator, list_mode, un, opt_level_set)
@@ -1207,31 +1362,39 @@ CONTAINS
        END IF
        bloc_size = SIZE(un,1)/inputs%ndim(2) + 1
        m_max_pad = 3*SIZE(list_mode)*inputs%ndim(2)/2
-       IF (inputs%if_level_set) THEN
+       IF (PRESENT(opt_level_set).AND.inputs%if_level_set_P2) THEN
           ALLOCATE(height_inter_r0(SIZE(opt_level_set,1)), height_inter_r0_max(SIZE(opt_level_set,1)))
        END IF
     END IF ! End once
 
-    IF (inputs%if_level_set) THEN
-
+    IF (PRESENT(opt_level_set).AND.inputs%if_level_set_P2) THEN
        DO i = 1, SIZE(list_mode)
           IF (list_mode(i)==0) THEN
              DO nb_inter=1, SIZE(opt_level_set,1)
-                height_inter_r0(nb_inter)=0.d0 !Set minimum z of domain if not 0
-                height_inter_r0_max(nb_inter)=0.d0 !Set minimum z of domain if not 0
+                !height_inter_r0(nb_inter)=-2.d0 !0.d0 !Set minimum z of domain if not 0 only if level set increases in z
+                !height_inter_r0(nb_inter)=2.d0 !0.d0 !Set maximum z of domain if not 0 only if level set decreases in z
+                ! CN 19/05/2025
+                !height_inter_r0(nb_inter)=10000.5d0 !0.d0 !Set maximum r of domain if not 0 only if level set decreases in r
+                height_inter_r0(nb_inter)=100.5d0 !0.d0 !Set maximum r of domain if not 0 only if level set decreases in r
+                height_inter_r0_max(nb_inter)=0.d0
 
                 DO n = 1, SIZE(mesh%rr,2)
-                   IF (mesh%rr(1,n).LE.1.d-10) THEN
+                   IF (mesh%rr(2,n).LE.1.d-10) THEN
+                      !IF (mesh%rr(1,n).LE.1.d-10) THEN
                       level_n=opt_level_set(nb_inter,n,1,i) !value at node n of the cos part of mode 0 since only 1 mode
                       IF (level_n.LE.0.5) THEN !interface is level_n=0.5
-                         height_inter_r0(nb_inter) = MAX(mesh%rr(2,n), height_inter_r0(nb_inter)) !USE max if level set increases in z
+                         !height_inter_r0(nb_inter) = MAX(mesh%rr(2,n), height_inter_r0(nb_inter)) !USE max if level set increases in z
                          !height_inter_r0(nb_inter) = MIN(mesh%rr(2,n), height_inter_r0(nb_inter))  !USE min if level set decreases in z
+                         ! CN 19/05/2025
+                         height_inter_r0(nb_inter) = MIN(mesh%rr(1,n), height_inter_r0(nb_inter))  !USE min if level set decreases in z
                       END IF
                    END IF
                 END DO
              END DO ! on level_set number
+             !CALL MPI_ALLREDUCE(height_inter_r0, height_inter_r0_max,nb_inter, &
+             !    MPI_DOUBLE_PRECISION, MPI_MAX, communicator(1), ierr)  !USE max if level set increases in z
              CALL MPI_ALLREDUCE(height_inter_r0, height_inter_r0_max,nb_inter, &
-                  MPI_DOUBLE_PRECISION, MPI_MAX, communicator(1), ierr)
+                  MPI_DOUBLE_PRECISION, MPI_MIN, communicator(1), ierr)  !USE min if level set decreases in z
           END IF
        END DO
 
@@ -1334,7 +1497,7 @@ CONTAINS
        m_max_pad = 2*SIZE(list_mode)*inputs%ndim(2)/2
     END IF ! End once
 
-    ! Computation of maximum temperature everywhere
+    ! Computation of maximum concentration everywhere
     CALL FFT_MAX_MIN_VEL_DCL(communicator(2), conc, max_min_conc_S, &
          inputs%ndim(2), bloc_size, m_max_pad)
     CALL MPI_ALLREDUCE(max_min_conc_S(1), max_min_conc(1), 1, MPI_DOUBLE_PRECISION, &
@@ -1398,7 +1561,7 @@ CONTAINS
          molar_fraction_from_concentration,inputs%ndim(2), bloc_size, m_max_pad)
 
 
-    ! Computation of maximum temperature everywhere
+    ! Computation of maximum mol_fraction everywhere
     CALL FFT_MAX_MIN_VEL_DCL(communicator(2), mol_frac, max_min_mol_frac_S, &
          inputs%ndim(2), bloc_size, m_max_pad)
     CALL MPI_ALLREDUCE(max_min_mol_frac_S(1), max_min_mol_frac(1), 1, MPI_DOUBLE_PRECISION, &
@@ -1539,5 +1702,1932 @@ CONTAINS
 !!$    END IF
 !!$
 !!$  END SUBROUTINE potential_on_axis_vol
+
+  FUNCTION mean_S_zero_mode(communicator,mesh, list_mode, v) RESULT(norm)
+    ! function to compute the m=0 integral <f> WITHOUT abs
+    USE def_type_mesh
+    USE chaine_caractere
+    USE fem_tn_NS_MHD
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage
+    INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN) :: v
+    REAL(KIND=8) :: norm_loc, norm_F, norm
+    INTEGER  :: code
+    INTEGER, DIMENSION(1) :: zero_mode
+    REAL(KIND=8) :: pi
+    MPI_Comm, DIMENSION(2)      :: communicator
+
+    norm = 0.d0
+    norm_F = 0.d0
+    IF (mesh%me==0) THEN
+       norm_loc = 0.d0
+    ELSE
+       IF (MINVAL(list_mode)==0) THEN !Just mode zero
+          zero_mode = MINLOC(list_mode)
+          norm_loc = mean_one_mode(mesh, zero_mode(1), v)
+       ELSE
+          norm_loc=0;
+       END IF
+    END IF
+    CALL MPI_ALLREDUCE(norm_loc,norm_F,1,MPI_DOUBLE_PRECISION, MPI_SUM, communicator(2), code)
+    CALL MPI_ALLREDUCE(norm_F,norm,1,MPI_DOUBLE_PRECISION, MPI_SUM, communicator(1), code)
+    pi = ACOS(-1.d0)
+    norm =(norm*2*pi)
+  END FUNCTION mean_S_zero_mode
+
+  FUNCTION mean_one_mode(mesh, mode_idx, v) RESULT(norm)
+    ! function to compute the m=0 integral <f> WITHOUT abs
+    USE def_type_mesh
+    USE fem_tn_axi
+    IMPLICIT NONE
+    TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage
+    REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN) ::  v
+    INTEGER                                     :: mode_idx
+    REAL(KIND=8)                        :: err1, s1, s2,norm
+    INTEGER                             :: nn
+
+    err1 = 0.d0
+    s2 = 0.d0
+    IF (SIZE(v,2)==mesh%np) THEN
+       DO nn = 1,SIZE(v,1)
+          CALL ns_l1(mesh , v(nn,:,mode_idx), s1)
+          s2 = s2 + s1
+       END DO
+       err1 = err1 + s2
+       ! CN-AR Tue Jan 13 2009
+    ELSE
+       DO nn = 1,SIZE(v,2)
+          CALL ns_l1(mesh , v(:,nn,mode_idx), s1)
+          s2 = s2 + s1
+       END DO
+       ! CN-AR Tue Jan 13 2009
+       ! JLG/CN correction du bug CN-AR April 7, 2010
+       err1 = err1 + s2
+       ! CN-AR Tue Jan 13 2009
+    END IF
+    norm = err1
+  END FUNCTION mean_one_mode
+
+  SUBROUTINE compute_mean_curl_level_set_cart(time,communicator,mesh,list_mode,V_in,LSet_in)
+    ! subroutine for computing (1/V) \int curlV * level_set dtau
+    ! and (1/V) \int curlV * (1-level_set) dtau
+    ! V_in = un_nodes, LSet_in = level_set_nodes
+    ! locally computed V_out
+    ! V_out(1:3) = (curlV_x,curlV_y,curlV_z)*level_set
+    ! V_out(4:6) = (curlV_x,curlV_y,curlV_z)*(1-level_set)
+    ! theta_lag = angle between the 2 (horizontal) vectors obtained
+    !=================================
+    USE fft_parallele
+    USE input_data
+    USE def_type_mesh
+    USE my_util
+    USE subroutine_mass
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+
+    ! be careful !
+    ! ALLOCATE(level_set      (inputs%nb_fluid-1, vv_mesh%np, 2, SIZE(list_mode)))
+    ! ALLOCATE(level_set      (inputs%nb_fluid-1, pp_mesh%np, 2, SIZE(list_mode)))
+
+    REAL(KIND=8),                   INTENT(IN)  :: time
+    TYPE(mesh_type),                INTENT(IN)  :: mesh
+    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: V_in
+    REAL(KIND=8), DIMENSION(:,:,:,:),INTENT(IN) :: LSet_in
+    REAL(KIND=8), DIMENSION(6)                  :: V_out, V_out_bis
+
+    REAL(KIND=8), DIMENSION(inputs%nb_fluid-1,vv_mesh%np,2,SIZE(list_mode))     :: level_set_P2
+    REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%me,6,SIZE(list_mode)) :: u_gauss, RotV, ex_gauss, ey_gauss, ez_gauss
+    REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%me,2,SIZE(list_mode)) :: c_gauss
+    REAL(KIND=8), DIMENSION(inputs%nb_fluid-1,mesh%gauss%l_G*mesh%me,2,SIZE(list_mode)) :: LS_gauss
+    REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%me,6,SIZE(list_mode)) :: LSet_exg, LSet_eyg, LSet_ezg
+    REAL(KIND=8), DIMENSION(mesh%np, 6, SIZE(list_mode))        :: ex_nodes, ey_nodes, ez_nodes
+
+    INTEGER,      DIMENSION(mesh%gauss%n_w)                     :: j_loc
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)      :: dw_loc
+    INTEGER                                                     :: m, l , i, mode, index, k, nb_inter
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)                   :: Vs, exs, eys, ezs
+    REAL(KIND=8), DIMENSION(inputs%nb_fluid-1,mesh%gauss%n_w,2) :: Ls
+    REAL(KIND=8)                                                :: ray, theta_lag
+    INTEGER                                                     :: nb_procs, bloc_size, m_max_pad, code
+    REAL(KIND=8), DIMENSION(vv_mesh%np,2,SIZE(list_mode)) :: level, one_minus_level
+    REAL(KIND=8) :: vol_loc_1, vol_F_1, vol_1, vol_loc_2, vol_F_2, vol_2
+
+    MPI_Comm, DIMENSION(2)                                      :: communicator
+
+103 FORMAT(1500(e22.9,2x))
+
+    !Only do computation with level_set on P2_mesh=vv_mesh
+    IF (inputs%if_level_set_P2) THEN
+       level_set_P2 = LSet_in
+    ELSE
+       DO nb_inter = 1, inputs%nb_fluid-1
+          DO i = 1, SIZE(list_mode)
+             DO k = 1, 2
+                CALL inject_P1_P2(pp_mesh%jj, vv_mesh%jj, LSet_in(nb_inter,:,k,i), level_set_P2(nb_inter,:,k,i))
+             END DO
+          END DO
+       END DO
+    END IF
+
+    ! create ex,ey,ez on nodes
+    ex_nodes = 0.d0
+    ey_nodes = 0.d0
+    ez_nodes = 0.d0
+    DO i = 1, SIZE(list_mode)
+       mode = list_mode(i)
+       IF (mode==1) THEN
+          ex_nodes(:,1,i) = 1.d0
+          ex_nodes(:,4,i) =-1.d0
+          ey_nodes(:,2,i) = 1.d0
+          ey_nodes(:,3,i) = 1.d0
+       ELSE IF (mode==0) THEN
+          ez_nodes(:,5,i) = 1.d0
+       END IF
+    END DO
+
+    !-----computation on gauss points on mesh for Level_set
+    DO nb_inter=1, SIZE(level_set_P2,1)
+       DO i = 1, SIZE(list_mode)
+          mode = list_mode(i)
+          index = 0
+          DO m = 1, mesh%dom_me
+             j_loc = mesh%jj(:, m)
+
+             DO k = 1, 2
+                Ls(nb_inter,:,k) = level_set_P2(nb_inter,j_loc,k,i)
+             END DO
+
+             DO l = 1, mesh%gauss%l_G
+                index = index + 1
+                !-----------------LSet on gauss points------------------------------
+                LS_gauss(nb_inter,index,1,i) = SUM(Ls(nb_inter,:,1) * mesh%gauss%ww(:,l))
+                LS_gauss(nb_inter,index,2,i) = SUM(Ls(nb_inter,:,2) * mesh%gauss%ww(:,l))
+             END DO ! on l
+          END DO ! on m
+       END DO ! on i
+    END DO ! nb_inter
+
+    !-----computation on gauss points on mesh
+    DO i = 1, SIZE(list_mode)
+       mode = list_mode(i)
+       index = 0
+       DO m = 1, mesh%dom_me
+          j_loc = mesh%jj(:, m)
+
+          DO k = 1, 6
+             Vs(:,k) = V_in(j_loc,k,i)
+             exs(:,k)= ex_nodes(j_loc,k,i)
+             eys(:,k)= ey_nodes(j_loc,k,i)
+             ezs(:,k)= ez_nodes(j_loc,k,i)
+          END DO
+
+          DO l = 1, mesh%gauss%l_G
+             index = index + 1
+             dw_loc = mesh%gauss%dw(:, :, l, m)
+             ray = SUM(mesh%rr(1,j_loc)*mesh%gauss%ww(:,l))
+
+             !-----------------ex on gauss points------------------------------
+             ex_gauss(index,1,i) = SUM(exs(:,1) * mesh%gauss%ww(:,l))
+             ex_gauss(index,3,i) = SUM(exs(:,3) * mesh%gauss%ww(:,l))
+             ex_gauss(index,5,i) = SUM(exs(:,5) * mesh%gauss%ww(:,l))
+
+             ex_gauss(index,2,i) = SUM(exs(:,2) * mesh%gauss%ww(:,l))
+             ex_gauss(index,4,i) = SUM(exs(:,4) * mesh%gauss%ww(:,l))
+             ex_gauss(index,6,i) = SUM(exs(:,6) * mesh%gauss%ww(:,l))
+
+             !-----------------ey on gauss points------------------------------
+             ey_gauss(index,1,i) = SUM(eys(:,1) * mesh%gauss%ww(:,l))
+             ey_gauss(index,3,i) = SUM(eys(:,3) * mesh%gauss%ww(:,l))
+             ey_gauss(index,5,i) = SUM(eys(:,5) * mesh%gauss%ww(:,l))
+
+             ey_gauss(index,2,i) = SUM(eys(:,2) * mesh%gauss%ww(:,l))
+             ey_gauss(index,4,i) = SUM(eys(:,4) * mesh%gauss%ww(:,l))
+             ey_gauss(index,6,i) = SUM(eys(:,6) * mesh%gauss%ww(:,l))
+
+             !-----------------ez on gauss points------------------------------
+             ez_gauss(index,1,i) = SUM(ezs(:,1) * mesh%gauss%ww(:,l))
+             ez_gauss(index,3,i) = SUM(ezs(:,3) * mesh%gauss%ww(:,l))
+             ez_gauss(index,5,i) = SUM(ezs(:,5) * mesh%gauss%ww(:,l))
+
+             ez_gauss(index,2,i) = SUM(ezs(:,2) * mesh%gauss%ww(:,l))
+             ez_gauss(index,4,i) = SUM(ezs(:,4) * mesh%gauss%ww(:,l))
+             ez_gauss(index,6,i) = SUM(ezs(:,6) * mesh%gauss%ww(:,l))
+
+             !-----------------un on gauss points------------------------------
+             u_gauss(index,1,i) = SUM(Vs(:,1) * mesh%gauss%ww(:,l))
+             u_gauss(index,3,i) = SUM(Vs(:,3) * mesh%gauss%ww(:,l))
+             u_gauss(index,5,i) = SUM(Vs(:,5) * mesh%gauss%ww(:,l))
+
+             u_gauss(index,2,i) = SUM(Vs(:,2) * mesh%gauss%ww(:,l))
+             u_gauss(index,4,i) = SUM(Vs(:,4) * mesh%gauss%ww(:,l))
+             u_gauss(index,6,i) = SUM(Vs(:,6) * mesh%gauss%ww(:,l))
+
+             !----------------- (rot_u) on gauss points as RotV-------------------------
+             ! cosinus coefficients
+             RotV(index,1,i) = mode/ray*u_gauss(index,6,i) &
+                  -SUM(Vs(:,3)*dw_loc(2,:))
+             RotV(index,4,i) = SUM(Vs(:,2)*dw_loc(2,:)) &
+                  -SUM(Vs(:,6)*dw_loc(1,:))
+             RotV(index,5,i) = 1/ray*u_gauss(index,3,i) &
+                  +SUM(Vs(:,3)*dw_loc(1,:)) &
+                  -mode/ray*u_gauss(index,2,i)
+             ! sinus coefficients
+             RotV(index,2,i) =-mode/ray*u_gauss(index,5,i) &
+                  -SUM(Vs(:,4)*dw_loc(2,:))
+             RotV(index,3,i) = SUM(Vs(:,1)*dw_loc(2,:)) &
+                  -SUM(Vs(:,5)*dw_loc(1,:))
+             RotV(index,6,i) = 1/ray*u_gauss(index,4,i) &
+                  +SUM(Vs(:,4)*dw_loc(1,:)) &
+                  +mode/ray*u_gauss(index,1,i)
+          END DO
+       END DO
+    END DO
+
+    ! check communicator
+    CALL MPI_COMM_SIZE(communicator(2), nb_procs, code)
+    bloc_size = SIZE(RotV,1)/nb_procs+1
+    m_max_pad = 3*SIZE(list_mode)*nb_procs/2
+
+    !===Computation of phases volume for first level set
+    level = level_set_P2(1,:,:,:)
+    one_minus_level = -level
+    vol_loc_1 = 0.d0
+    vol_loc_2 = 0.d0
+    DO i = 1, SIZE(list_mode)
+       IF (list_mode(i)==0) THEN
+          one_minus_level(:,1,i) = 1.d0 + one_minus_level(:,1,i)
+          DO m = 1, mesh%me
+             j_loc = mesh%jj(:,m)
+             DO l = 1, mesh%gauss%l_G
+                !===Compute radius of Gauss point
+                ray = SUM(mesh%rr(1,j_loc)*mesh%gauss%ww(:,l))
+                vol_loc_1 = vol_loc_1 + SUM(one_minus_level(j_loc,1,i)*mesh%gauss%ww(:,l))* &
+                     ray*mesh%gauss%rj(l,m)
+                vol_loc_2 = vol_loc_2 + SUM(level(j_loc,1,i)*mesh%gauss%ww(:,l))* &
+                     ray*mesh%gauss%rj(l,m)
+             END DO
+          END DO
+       END IF
+    END DO
+    vol_loc_1 = vol_loc_1*2*ACOS(-1.d0)
+    CALL  MPI_ALLREDUCE(vol_loc_1, vol_F_1, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(vol_F_1, vol_1, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+    vol_loc_2 = vol_loc_2*2*ACOS(-1.d0)
+    CALL  MPI_ALLREDUCE(vol_loc_2, vol_F_2, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(vol_F_2, vol_2, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    ! Be careful, we focus on 1st interface here!
+    V_out = 0.d0
+    V_out_bis = 0.d0
+
+    ! compute phi*ex
+    CALL FFT_SCALAR_VECT_DCL(communicator(2), ex_gauss, LS_gauss(1,:,:,:), LSet_exg, 1, nb_procs, &
+         bloc_size, m_max_pad)
+    ! compute phi*ex . RotV
+    CALL FFT_PAR_DOT_PROD_DCL(communicator(2), RotV, LSet_exg, c_gauss, nb_procs, bloc_size, m_max_pad)
+    V_out(1) = mean_S_zero_mode(communicator, mesh, list_mode, c_gauss(:,:,:))
+    V_out_bis(1) = mean_S_zero_mode(communicator, mesh, list_mode, c_gauss(:,:,:))/vol_2
+
+    ! compute phi*ey
+    CALL FFT_SCALAR_VECT_DCL(communicator(2), ey_gauss, LS_gauss(1,:,:,:), LSet_eyg, 1, nb_procs, &
+         bloc_size, m_max_pad)
+    ! compute phi*ey . RotV
+    CALL FFT_PAR_DOT_PROD_DCL(communicator(2), RotV, LSet_eyg, c_gauss, nb_procs, bloc_size, m_max_pad)
+    V_out(2) = mean_S_zero_mode(communicator, mesh, list_mode, c_gauss(:,:,:))
+    V_out_bis(2) = mean_S_zero_mode(communicator, mesh, list_mode, c_gauss(:,:,:))/vol_2
+
+    ! compute phi*ez
+    CALL FFT_SCALAR_VECT_DCL(communicator(2), ez_gauss, LS_gauss(1,:,:,:), LSet_ezg, 1, nb_procs, &
+         bloc_size, m_max_pad)
+    ! compute phi*ez . RotV
+    CALL FFT_PAR_DOT_PROD_DCL(communicator(2), RotV, LSet_ezg, c_gauss, nb_procs, bloc_size, m_max_pad)
+    V_out(3) = mean_S_zero_mode(communicator, mesh, list_mode, c_gauss(:,:,:))
+    V_out_bis(3) = mean_S_zero_mode(communicator, mesh, list_mode, c_gauss(:,:,:))/vol_2
+
+    ! compute ex . RotV
+    CALL FFT_PAR_DOT_PROD_DCL(communicator(2), RotV, ex_gauss, c_gauss, nb_procs, bloc_size, m_max_pad)
+    ! do \int RotV.ex - \int RotV. phi*ex
+    V_out(4) = mean_S_zero_mode(communicator, mesh, list_mode, c_gauss(:,:,:)) - V_out(1)
+    V_out_bis(4) = (mean_S_zero_mode(communicator, mesh, list_mode, c_gauss(:,:,:)) - V_out(1))/vol_1
+
+    ! compute ey . RotV
+    CALL FFT_PAR_DOT_PROD_DCL(communicator(2), RotV, ey_gauss, c_gauss, nb_procs, bloc_size, m_max_pad)
+    ! do \int RotV.ey - \int RotV. phi*ey
+    V_out(5) = mean_S_zero_mode(communicator, mesh, list_mode, c_gauss(:,:,:)) - V_out(2)
+    V_out_bis(5) = (mean_S_zero_mode(communicator, mesh, list_mode, c_gauss(:,:,:)) - V_out(2))/vol_1
+
+    ! compute ez . RotV
+    CALL FFT_PAR_DOT_PROD_DCL(communicator(2), RotV, ez_gauss, c_gauss, nb_procs, bloc_size, m_max_pad)
+    ! do \int RotV.ez - \int RotV. phi*ez
+    V_out(6) = mean_S_zero_mode(communicator, mesh, list_mode, c_gauss(:,:,:)) - V_out(3)
+    V_out_bis(6) = (mean_S_zero_mode(communicator, mesh, list_mode, c_gauss(:,:,:)) - V_out(3))/vol_1
+
+    ! angle between the 2 (horizontal) vectors
+    theta_lag = ACOS((V_out(1)*V_out(4) + V_out(2)*V_out(5)) &
+         /(SQRT(V_out(1)**2+V_out(2)**2) * SQRT(V_out(4)**2+V_out(5)**2) + 1.d-30))
+
+    ! WRITE
+    IF (abs(theta_lag).LE.1.d8) THEN
+       WRITE(35,103) time, theta_lag, V_out
+    END IF
+
+    !Print outputs with normalized integrals (theta unchanged)
+    theta_lag = ACOS((V_out_bis(1)*V_out_bis(4) + V_out_bis(2)*V_out_bis(5)) &
+         /(SQRT(V_out_bis(1)**2+V_out_bis(2)**2) * SQRT(V_out_bis(4)**2+V_out_bis(5)**2)+1.d-30))
+
+    ! WRITE
+    IF (abs(theta_lag).LE.1.d8) THEN
+       WRITE(36,103) time, theta_lag, V_out_bis
+    END IF
+
+
+    !\int (phi_omega_r_cos_m1 - phi_omega_theta_sin_m1)r dr dz --> along ex
+    !\int (phi_omega_theat_cos_m1 + phi_omega_r_sin_m1)r dr dz --> along ey
+    !\int phi_omega_z_cos_m0 r dr dz--> e_z
+
+    RETURN
+  END SUBROUTINE compute_mean_curl_level_set_cart
+
+  SUBROUTINE compute_kinetic_energy_by_level_set_area(communicator, pp_mesh, vv_mesh, list_mode, &
+       un, level_set, time)
+    USE def_type_mesh
+    USE input_data
+    USE boundary
+    USE fft_parallele
+    USE subroutine_mass
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    TYPE(mesh_type),                                        INTENT(IN)          :: pp_mesh, vv_mesh
+    INTEGER,      DIMENSION(:),                             INTENT(IN)          :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:),                         INTENT(IN)          :: un
+    REAL(KIND=8), DIMENSION(:,:,:,:),                       INTENT(IN)          :: level_set
+    REAL(KIND=8),                                           INTENT(IN)          :: time
+    REAL(KIND=8), DIMENSION(inputs%nb_fluid-1,vv_mesh%np,2,SIZE(list_mode))     :: level_set_P2
+    REAL(KIND=8), DIMENSION(SIZE(un,1),2,SIZE(un,3)) :: un_square, level_un_square
+    INTEGER, DIMENSION(vv_mesh%gauss%n_w)            :: j_loc
+    REAL(KIND=8) :: ray
+    REAL(KIND=8) :: int_1_loc, int_2_loc, int_1_tot_F, int_2_tot_F, int_1_tot, int_2_tot
+    INTEGER :: nb_inter, i, k, m, l
+    INTEGER :: nb_procs, m_max_pad, bloc_size, code
+    MPI_Comm,DIMENSION(2)            :: communicator
+
+103 FORMAT(1500(e22.9,2x))
+
+    !Only do computation with level_set on P2_mesh=vv_mesh
+    IF (inputs%if_level_set_P2) THEN
+       level_set_P2 = level_set
+    ELSE
+       DO nb_inter = 1, inputs%nb_fluid-1
+          DO i = 1, SIZE(list_mode)
+             DO k = 1, 2
+                CALL inject_P1_P2(pp_mesh%jj, vv_mesh%jj, level_set(nb_inter,:,k,i), level_set_P2(nb_inter,:,k,i))
+             END DO
+          END DO
+       END DO
+    END IF
+
+    !Define parameters for FFT
+    CALL MPI_COMM_SIZE(communicator(2), nb_procs, code)
+    bloc_size = SIZE(un,1)/nb_procs+1
+    m_max_pad = 3*SIZE(list_mode)*nb_procs/2
+
+    !Compute u.u
+    CALL FFT_PAR_DOT_PROD_DCL(communicator(2), un, un, un_square, nb_procs, bloc_size, m_max_pad)
+
+    !Compute level_set*(u.u) (only consider first interface of level set)
+    CALL FFT_PAR_PROD_DCL(communicator(2), level_set_P2(1,:,:,:), un_square, level_un_square, &
+         nb_procs, bloc_size, m_max_pad)
+
+    !Compute int_1 = volume integral of u.u AND int_2 = volume integral of level_set*(u.u)
+    int_1_loc = 0.d0
+    int_2_loc = 0.d0
+    DO i = 1, SIZE(list_mode)
+       IF (list_mode(i)==0) THEN
+          DO m = 1, vv_mesh%me
+             j_loc = vv_mesh%jj(:,m)
+             DO l = 1, vv_mesh%gauss%l_G
+                !===Compute radius of Gauss point
+                ray = SUM(vv_mesh%rr(1,j_loc)*vv_mesh%gauss%ww(:,l))
+                int_1_loc = int_1_loc + SUM(un_square(j_loc,1,i)*vv_mesh%gauss%ww(:,l))* &
+                     ray*vv_mesh%gauss%rj(l,m)
+                int_2_loc = int_2_loc + SUM(level_un_square(j_loc,1,i)*vv_mesh%gauss%ww(:,l))* &
+                     ray*vv_mesh%gauss%rj(l,m)
+             END DO
+          END DO
+       END IF
+    END DO
+    int_1_loc = int_1_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_1_loc, int_1_tot_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_1_tot_F, int_1_tot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+    int_2_loc = int_2_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_2_loc, int_2_tot_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_2_tot_F, int_2_tot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    IF (rank==0) THEN
+       !Write output rho1/2 integral( (1-level_set) * u.u )
+       WRITE(901,103) time, inputs%density_fluid(1)/2.d0 * (int_1_tot - int_2_tot)
+       !Write output rho2/2 integral( level_set * u.u )
+       WRITE(902,103) time, inputs%density_fluid(2)/2.d0 * int_2_tot
+    END IF
+
+  END SUBROUTINE compute_kinetic_energy_by_level_set_area
+
+  SUBROUTINE compute_potential_energy_by_level_set_area(communicator, pp_mesh, vv_mesh, list_mode, &
+       un, level_set, temperature, time)
+    USE def_type_mesh
+    USE input_data
+    USE user_data
+    USE boundary
+    USE fft_parallele
+    USE subroutine_mass
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    TYPE(mesh_type),                                        INTENT(IN)          :: pp_mesh, vv_mesh
+    INTEGER,      DIMENSION(:),                             INTENT(IN)          :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:),                         INTENT(IN)          :: un
+    REAL(KIND=8), DIMENSION(:,:,:,:),                       INTENT(IN)          :: level_set
+    REAL(KIND=8), DIMENSION(:,:,:),                         INTENT(IN)          :: temperature
+    REAL(KIND=8),                                           INTENT(IN)          :: time
+    REAL(KIND=8), DIMENSION(inputs%nb_fluid-1,vv_mesh%np,2,SIZE(list_mode))     :: level_set_P2
+    REAL(KIND=8), DIMENSION(SIZE(un,1),2,SIZE(un,3)) :: level_temp
+    INTEGER, DIMENSION(vv_mesh%gauss%n_w)            :: j_loc
+    REAL(KIND=8) :: ray, z
+    REAL(KIND=8) :: int_1_loc, int_2_loc, int_1_tot_F, int_2_tot_F, int_1_tot, int_2_tot
+    REAL(KIND=8) :: int_3_loc, int_4_loc, int_3_tot_F, int_4_tot_F, int_3_tot, int_4_tot
+    INTEGER :: nb_inter, i, k, m, l
+    INTEGER :: nb_procs, m_max_pad, bloc_size, code
+    MPI_Comm,DIMENSION(2)            :: communicator
+
+103 FORMAT(1500(e22.9,2x))
+
+    !Only do computation with level_set on P2_mesh=vv_mesh
+    IF (inputs%if_level_set_P2) THEN
+       level_set_P2 = level_set
+    ELSE
+       DO nb_inter = 1, inputs%nb_fluid-1
+          DO i = 1, SIZE(list_mode)
+             DO k = 1, 2
+                CALL inject_P1_P2(pp_mesh%jj, vv_mesh%jj, level_set(nb_inter,:,k,i), level_set_P2(nb_inter,:,k,i))
+             END DO
+          END DO
+       END DO
+    END IF
+
+    !Define parameters for FFT
+    CALL MPI_COMM_SIZE(communicator(2), nb_procs, code)
+    bloc_size = SIZE(level_set_P2,2)/nb_procs+1
+    m_max_pad = 3*SIZE(list_mode)*nb_procs/2
+
+    !Compute level_set*temperature (only consider first interface of level set)
+    CALL FFT_PAR_PROD_DCL(communicator(2), level_set_P2(1,:,:,:), temperature, level_temp, &
+         nb_procs, bloc_size, m_max_pad)
+
+    !    !Compute int_1 = volume integral of T*z
+    !    !Compute int_2 = volume integral of level_set_*T*z
+    !    !Compute int_3 = volume integral of z
+    !    !Compute int_4 = volume integral of level_set*z
+    !    int_1_loc = 0.d0
+    !    int_2_loc = 0.d0
+    !    int_3_loc = 0.d0
+    !    int_4_loc = 0.d0
+    !    DO i = 1, SIZE(list_mode)
+    !       IF (list_mode(i)==0) THEN
+    !          DO m = 1, vv_mesh%me
+    !             j_loc = vv_mesh%jj(:,m)
+    !             DO l = 1, vv_mesh%gauss%l_G
+    !                !===Compute radius of Gauss point
+    !                ray = SUM(vv_mesh%rr(1,j_loc)*vv_mesh%gauss%ww(:,l))
+    !                !===Compute vertical coordinate of Gauss point
+    !                z = SUM(vv_mesh%rr(2,j_loc)*vv_mesh%gauss%ww(:,l))
+    !                !===Compute integrals
+    !                int_1_loc = int_1_loc + SUM(temperature(j_loc,1,i)*vv_mesh%gauss%ww(:,l))* &
+    !                     z*ray*vv_mesh%gauss%rj(l,m)
+    !                int_2_loc = int_2_loc + SUM(level_temp(j_loc,1,i)*vv_mesh%gauss%ww(:,l))* &
+    !                     z*ray*vv_mesh%gauss%rj(l,m)
+    !                int_3_loc = int_3_loc + z*ray*vv_mesh%gauss%rj(l,m)
+    !                int_4_loc = int_4_loc + SUM(level_set_P2(1,j_loc,1,i)*vv_mesh%gauss%ww(:,l))* &
+    !                     z*ray*vv_mesh%gauss%rj(l,m)
+    !             END DO
+    !          END DO
+    !       END IF
+    !    END DO
+    ! CN 17/06/2024
+    !Compute int_1 = volume integral of T*r
+    !Compute int_2 = volume integral of level_set_*T*r
+    !Compute int_3 = volume integral of r
+    !Compute int_4 = volume integral of level_set*r
+    int_1_loc = 0.d0
+    int_2_loc = 0.d0
+    int_3_loc = 0.d0
+    int_4_loc = 0.d0
+    DO i = 1, SIZE(list_mode)
+       IF (list_mode(i)==0) THEN
+          DO m = 1, vv_mesh%me
+             j_loc = vv_mesh%jj(:,m)
+             DO l = 1, vv_mesh%gauss%l_G
+                !===Compute radius of Gauss point
+                ray = SUM(vv_mesh%rr(1,j_loc)*vv_mesh%gauss%ww(:,l))
+                !===Compute integrals
+                int_1_loc = int_1_loc + SUM(temperature(j_loc,1,i)*vv_mesh%gauss%ww(:,l))* &
+                     ray*ray*vv_mesh%gauss%rj(l,m)
+                int_2_loc = int_2_loc + SUM(level_temp(j_loc,1,i)*vv_mesh%gauss%ww(:,l))* &
+                     ray*ray*vv_mesh%gauss%rj(l,m)
+                int_3_loc = int_3_loc + ray*ray*vv_mesh%gauss%rj(l,m)
+                int_4_loc = int_4_loc + SUM(level_set_P2(1,j_loc,1,i)*vv_mesh%gauss%ww(:,l))* &
+                     ray*ray*vv_mesh%gauss%rj(l,m)
+             END DO
+          END DO
+       END IF
+    END DO
+    ! CN 17/06/2024
+    int_1_loc = int_1_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_1_loc, int_1_tot_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_1_tot_F, int_1_tot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_2_loc = int_2_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_2_loc, int_2_tot_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_2_tot_F, int_2_tot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_3_loc = int_3_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_3_loc, int_3_tot_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_3_tot_F, int_3_tot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_4_loc = int_4_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_4_loc, int_4_tot_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_4_tot_F, int_4_tot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    IF (rank==0) THEN
+       !Write output rho1 * integral( (1-level_set)*(z/Fr-beta_1*T*z) )
+       WRITE(911,103) time, inputs%density_fluid(1) * ((int_3_tot - int_4_tot)/user%Fr &
+            - inputs%heat_grav_fluid(1)*(int_1_tot-int_2_tot))
+       !Write output rho2 * integral( level_set*(z/Fr-beta_2*T*z) )
+       WRITE(912,103) time, inputs%density_fluid(2) * (int_4_tot/user%Fr  &
+            - inputs%heat_grav_fluid(2)*int_2_tot)
+    END IF
+
+  END SUBROUTINE compute_potential_energy_by_level_set_area
+
+  SUBROUTINE compute_internal_energy_by_level_set_area(communicator, pp_mesh, vv_mesh, list_mode, &
+       level_set, temperature, time)
+    USE def_type_mesh
+    USE input_data
+    USE user_data
+    USE boundary
+    USE fft_parallele
+    USE subroutine_mass
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    TYPE(mesh_type),                                        INTENT(IN)          :: pp_mesh, vv_mesh
+    INTEGER,      DIMENSION(:),                             INTENT(IN)          :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:,:),                       INTENT(IN)          :: level_set
+    REAL(KIND=8), DIMENSION(:,:,:),                         INTENT(IN)          :: temperature
+    REAL(KIND=8),                                           INTENT(IN)          :: time
+    REAL(KIND=8), DIMENSION(inputs%nb_fluid-1,vv_mesh%np,2,SIZE(list_mode))     :: level_set_P2
+    REAL(KIND=8), DIMENSION(SIZE(un,1),2,SIZE(un,3)) :: level_temp
+    INTEGER, DIMENSION(vv_mesh%gauss%n_w)            :: j_loc
+    REAL(KIND=8) :: ray
+    REAL(KIND=8) :: int_1_loc, int_2_loc, int_1_tot_F, int_2_tot_F, int_1_tot, int_2_tot
+    INTEGER :: nb_inter, i, k, m, l
+    INTEGER :: nb_procs, m_max_pad, bloc_size, code
+    MPI_Comm,DIMENSION(2)            :: communicator
+
+103 FORMAT(1500(e22.9,2x))
+
+    !Only do computation with level_set on P2_mesh=vv_mesh
+    IF (inputs%if_level_set_P2) THEN
+       level_set_P2 = level_set
+    ELSE
+       DO nb_inter = 1, inputs%nb_fluid-1
+          DO i = 1, SIZE(list_mode)
+             DO k = 1, 2
+                CALL inject_P1_P2(pp_mesh%jj, vv_mesh%jj, level_set(nb_inter,:,k,i), level_set_P2(nb_inter,:,k,i))
+             END DO
+          END DO
+       END DO
+    END IF
+
+    !Define parameters for FFT
+    CALL MPI_COMM_SIZE(communicator(2), nb_procs, code)
+    bloc_size = SIZE(level_set_P2,2)/nb_procs+1
+    m_max_pad = 3*SIZE(list_mode)*nb_procs/2
+
+    !Compute level_set*temperature (only consider first interface of level set)
+    CALL FFT_PAR_PROD_DCL(communicator(2), level_set_P2(1,:,:,:), temperature, level_temp, &
+         nb_procs, bloc_size, m_max_pad)
+
+    !Compute int_1 = volume integral of T
+    !Compute int_2 = volume integral of level_set_*T
+    int_1_loc = 0.d0
+    int_2_loc = 0.d0
+    DO i = 1, SIZE(list_mode)
+       IF (list_mode(i)==0) THEN
+          DO m = 1, vv_mesh%me
+             j_loc = vv_mesh%jj(:,m)
+             DO l = 1, vv_mesh%gauss%l_G
+                !===Compute radius of Gauss point
+                ray = SUM(vv_mesh%rr(1,j_loc)*vv_mesh%gauss%ww(:,l))
+                !===Compute integrals
+                int_1_loc = int_1_loc + SUM(temperature(j_loc,1,i)*vv_mesh%gauss%ww(:,l))* &
+                     ray*vv_mesh%gauss%rj(l,m)
+                int_2_loc = int_2_loc + SUM(level_temp(j_loc,1,i)*vv_mesh%gauss%ww(:,l))* &
+                     ray*vv_mesh%gauss%rj(l,m)
+             END DO
+          END DO
+       END IF
+    END DO
+    int_1_loc = int_1_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_1_loc, int_1_tot_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_1_tot_F, int_1_tot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_2_loc = int_2_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_2_loc, int_2_tot_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_2_tot_F, int_2_tot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    IF (rank==0) THEN
+       !Write output rho1*heat_capacity_1 * integral( (1-level_set)*T )
+       WRITE(931,103) time, inputs%density_fluid(1)*inputs%heat_capacity_fluid(1)*(int_1_tot - int_2_tot)
+       !Write output rho2*heat_capacity_2 * integral( level_set*T )
+       WRITE(932,103) time, inputs%density_fluid(2)*inputs%heat_capacity_fluid(2)*int_2_tot
+    END IF
+
+  END SUBROUTINE compute_internal_energy_by_level_set_area
+
+  SUBROUTINE compute_surface_level_set_interface(communicator, pp_mesh, vv_mesh, list_mode, &
+       level_set, time)
+    USE def_type_mesh
+    USE input_data
+    USE user_data
+    USE boundary
+    USE fft_parallele
+    USE subroutine_mass
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    TYPE(mesh_type),                                        INTENT(IN)          :: pp_mesh, vv_mesh
+    INTEGER,      DIMENSION(:),                             INTENT(IN)          :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:,:),                       INTENT(IN)          :: level_set
+    REAL(KIND=8),                                           INTENT(IN)          :: time
+    REAL(KIND=8), DIMENSION(inputs%nb_fluid-1,vv_mesh%np,2,SIZE(list_mode))     :: level_set_P2
+    REAL(KIND=8), DIMENSION(inputs%nb_fluid-1,vv_mesh%np,2,SIZE(list_mode))     :: one_minus_level_set_P2
+    REAL(KIND=8), DIMENSION(SIZE(level_set,2),2,SIZE(level_set,4)) :: level_surface
+    INTEGER, DIMENSION(vv_mesh%gauss%n_w)            :: j_loc
+    REAL(KIND=8) :: ray
+    REAL(KIND=8) :: int_1_loc, int_1_tot_F, int_1_tot
+    INTEGER :: nb_inter, i, k, m, l, n
+    INTEGER :: nb_procs, m_max_pad, bloc_size, code
+    MPI_Comm,DIMENSION(2)            :: communicator
+
+103 FORMAT(1500(e22.9,2x))
+
+    !Only do computation with level_set on P2_mesh=vv_mesh
+    IF (inputs%if_level_set_P2) THEN
+       level_set_P2 = level_set
+    ELSE
+       DO nb_inter = 1, inputs%nb_fluid-1
+          DO i = 1, SIZE(list_mode)
+             DO k = 1, 2
+                CALL inject_P1_P2(pp_mesh%jj, vv_mesh%jj, level_set(nb_inter,:,k,i), level_set_P2(nb_inter,:,k,i))
+             END DO
+          END DO
+       END DO
+    END IF
+
+    one_minus_level_set_P2=-level_set_P2
+    DO i = 1, SIZE(list_mode)
+       IF (list_mode(i)==0) THEN
+          DO nb_inter = 1, inputs%nb_fluid-1
+             DO n = 1, SIZE(level_set_P2,2)
+                one_minus_level_set_P2(nb_inter,n,1,i) = 1.d0 + one_minus_level_set_P2(nb_inter,n,1,i)
+             END DO
+          END DO
+       END IF
+    END DO
+
+    !Define parameters for FFT
+    CALL MPI_COMM_SIZE(communicator(2), nb_procs, code)
+    bloc_size = SIZE(level_set_P2,2)/nb_procs+1
+    m_max_pad = 3*SIZE(list_mode)*nb_procs/2
+
+    !Compute level_set*(1-level_set) (only consider first interface of level set)
+    CALL FFT_PAR_PROD_DCL(communicator(2), level_set_P2(1,:,:,:), one_minus_level_set_P2(1,:,:,:), level_surface, &
+         nb_procs, bloc_size, m_max_pad)
+
+    !Compute int_1 = volume integral of level_set*(1-level_set)
+    int_1_loc = 0.d0
+    DO i = 1, SIZE(list_mode)
+       IF (list_mode(i)==0) THEN
+          DO m = 1, vv_mesh%me
+             j_loc = vv_mesh%jj(:,m)
+             DO l = 1, vv_mesh%gauss%l_G
+                !===Compute radius of Gauss point
+                ray = SUM(vv_mesh%rr(1,j_loc)*vv_mesh%gauss%ww(:,l))
+                !===Compute integrals
+                int_1_loc = int_1_loc + SUM(level_surface(j_loc,1,i)*vv_mesh%gauss%ww(:,l))* &
+                     ray*vv_mesh%gauss%rj(l,m)
+             END DO
+          END DO
+       END IF
+    END DO
+    int_1_loc = int_1_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_1_loc, int_1_tot_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_1_tot_F, int_1_tot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    IF (rank==0) THEN
+       !Write output surface_tension*2/(cmult*h) * integral( (1-level_set)*level_set )
+       WRITE(950,103) time, inputs%coeff_surface(1)*2.d0/inputs%h_min_distance*int_1_tot
+!!$       WRITE(951,103) time, inputs%coeff_surface(1)*2.d0/inputs%h_min_distance*int_1_tot &
+!!$            *(2.d0*TANH(2.d0/inputs%h_min_distance)) !still miss a factor 10 like this ...
+!!$       WRITE(952,103) time, inputs%coeff_surface(1)*2.d0/inputs%h_min_distance*int_1_tot &
+!!$            *(ACOS(-1.d0)*1.d0**2*4.d0)
+    END IF
+
+  END SUBROUTINE compute_surface_level_set_interface
+
+  SUBROUTINE compute_Nussel_bdy_by_level_set_area(communicator, pp_mesh, mesh, list_mode, &
+       temperature, level_set, time)
+    USE def_type_mesh
+    USE input_data
+    USE user_data
+    USE boundary
+    USE associate_gauss
+    USE fft_parallele
+    USE subroutine_mass
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    TYPE(mesh_type),                                        INTENT(IN)          :: pp_mesh, mesh
+    INTEGER,      DIMENSION(:),                             INTENT(IN)          :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:),                         INTENT(IN)          :: temperature
+    REAL(KIND=8), DIMENSION(:,:,:,:),                       INTENT(IN)          :: level_set
+    REAL(KIND=8),                                           INTENT(IN)          :: time
+    INTEGER, DIMENSION(mesh%gauss%n_w)            :: j_loc
+    INTEGER, DIMENSION(mesh%gauss%n_ws)           :: js_loc
+    REAL(KIND=8), DIMENSION(mesh%gauss%l_Gs*mesh%dom_mes,6,SIZE(list_mode))   :: grad_temp, grad_temp_level_surf
+    REAL(KIND=8), DIMENSION(mesh%gauss%l_Gs*mesh%dom_mes,2,SIZE(list_mode))   :: level_surf
+    REAL(KIND=8), DIMENSION(inputs%nb_fluid-1,mesh%np,2,SIZE(list_mode))      :: level_set_P2
+    REAL(KIND=8), DIMENSION(inputs%nb_fluid-1,mesh%gauss%l_G*mesh%dom_me,2,SIZE(list_mode)) :: level_set_P2_gauss
+    INTEGER      :: m_max_pad, bloc_size, code, nb_procs
+    REAL(KIND=8) :: ray, k1, k2
+    REAL(KIND=8), DIMENSION(2) :: int_right_loc, int_left_loc, int_top_loc, int_bot_loc
+    REAL(KIND=8), DIMENSION(2) :: int_right_tot_F, int_left_tot_F, int_top_tot_F, int_bot_tot_F
+    REAL(KIND=8), DIMENSION(2) :: int_right_tot, int_left_tot, int_top_tot, int_bot_tot
+    INTEGER      :: i, m, ms, ls, k, mode, nb_inter, index
+    MPI_Comm,DIMENSION(2)            :: communicator
+
+    CALL gauss(mesh)
+103 FORMAT(1500(e22.9,2x))
+
+    ! CN 26/03/2025
+    ! Compute Nusselt on all walls. In 2D (only mode_F=0), a lot of simplications since
+    ! for mode_F=0, all sinus terms are null
+
+    ! initialisation to 0
+    grad_temp = 0.d0
+    grad_temp_level_surf = 0.d0
+
+    ! Step 1
+    ! Compute level_surf on surface gauss points; there is only 1 interface
+    !Level Set P2 on nodes
+    IF (inputs%if_level_set_P2) THEN
+       level_set_P2 = level_set
+    ELSE
+       DO nb_inter = 1, inputs%nb_fluid-1
+          DO i = 1, SIZE(list_mode)
+             DO k = 1, 2
+                CALL inject_P1_P2(pp_mesh%jj, mesh%jj, level_set(nb_inter,:,k,i), level_set_P2(nb_inter,:,k,i))
+             END DO
+          END DO
+       END DO
+    END IF
+    !DO nb_inter = 1, inputs%nb_fluid-1
+    nb_inter = 1
+    DO i = 1, SIZE(list_mode)
+       mode = list_mode(i)
+       index = 0
+       DO ms = 1, mesh%mes
+          m = mesh%neighs(ms)
+          !            j_loc = mesh%jj(:,m) !no derivative in r/z so not needed
+          js_loc = mesh%jjs(:,ms)
+          DO ls = 1, mesh%gauss%l_Gs
+             index = index+1
+             level_surf(index,1,i) = SUM(level_set_P2(nb_inter,js_loc,1,i)*mesh%gauss%wws(:,ls))
+             level_surf(index,2,i) = SUM(level_set_P2(nb_inter,js_loc,2,i)*mesh%gauss%wws(:,ls))
+          END DO
+       END DO
+    END DO
+    !!WRITE(*,*) 'maxval levelsurf' ,MAXVAL(level_surf)
+    !END DO ! nb_inter
+
+    ! Compute grad of temperature as 1 vector on surface gauss points
+    DO i = 1, SIZE(list_mode)
+       mode = list_mode(i)
+       index = 0
+       DO ms = 1, mesh%mes
+          m = mesh%neighs(ms)
+          j_loc = mesh%jj(:,m)
+          js_loc = mesh%jjs(:,ms)
+          DO ls = 1, mesh%gauss%l_Gs
+             index = index + 1
+             ray = SUM(mesh%rr(1,js_loc)*mesh%gauss%wws(:,ls))
+             grad_temp(index,1,i) = SUM(temperature(j_loc,1,i)*dw_s(1,:,ls,ms))
+             grad_temp(index,2,i) = SUM(temperature(j_loc,2,i)*dw_s(1,:,ls,ms))
+             grad_temp(index,3,i) = mode*SUM(temperature(js_loc,2,i)*wws(:,ls))/ray
+             grad_temp(index,4,i) = (-mode*SUM(temperature(js_loc,1,i)*wws(:,ls)))/ray
+             grad_temp(index,5,i) = SUM(temperature(j_loc,1,i)*dw_s(2,:,ls,ms))
+             grad_temp(index,6,i) = SUM(temperature(j_loc,2,i)*dw_s(2,:,ls,ms))
+          END DO ! ls
+       END DO ! ms
+    END DO  ! i
+
+    !
+    ! Step 2
+    ! Compute grad_temp_level_surf = level*grad_temp vector on surface gauss points
+    !Define parameters for FFT
+    CALL MPI_COMM_SIZE(communicator(2), nb_procs, code)
+    bloc_size = SIZE(level_surf,1)/nb_procs+1
+    m_max_pad = 3*SIZE(list_mode)*nb_procs/2
+    CALL FFT_SCALAR_VECT_DCL(communicator(2), grad_temp, level_surf, grad_temp_level_surf, 1, nb_procs, &
+         bloc_size, m_max_pad)
+
+    !
+    ! Step 3
+    ! Compute surface integral such that (1)= surface integral of grad_temp
+    ! and (2)=grad_temp_level_surf=surface integral of level_set*grad_temp
+
+    int_right_loc = 0.d0
+    int_left_loc = 0.d0
+    int_top_loc = 0.d0
+    int_bot_loc = 0.d0
+
+    DO i = 1, SIZE(list_mode)
+       index = 0
+       IF (list_mode(i)==0) THEN
+          DO ms = 1, mesh%mes
+             !            m = mesh%neighs(ms)
+             !            j_loc = mesh%jj(:,m)
+             js_loc = mesh%jjs(:,ms)
+
+             DO ls = 1, mesh%gauss%l_Gs
+                index = index+1
+                ray = SUM(mesh%rr(1,js_loc)*mesh%gauss%wws(:,ls))
+
+                IF (mesh%sides(ms)==1) THEN !left lid (hot)
+                   int_left_loc(1) = int_left_loc(1) + &
+                        grad_temp(index,1,i) * ray*mesh%gauss%rjs(ls,ms)
+                   int_left_loc(2) = int_left_loc(2) + &
+                        grad_temp_level_surf(index,1,i) * ray*mesh%gauss%rjs(ls,ms)
+                ELSE IF (mesh%sides(ms)==2) THEN !top lid
+                   int_top_loc(1) = int_top_loc(1) + &
+                        grad_temp(index,5,i) * ray*mesh%gauss%rjs(ls,ms)
+                   int_top_loc(2) = int_top_loc(2) + &
+                        grad_temp_level_surf(index,5,i) * ray*mesh%gauss%rjs(ls,ms)
+                ELSE IF (mesh%sides(ms)==3) THEN !right lid (cold)
+                   int_right_loc(1) = int_right_loc(1) + &
+                        grad_temp(index,1,i) * ray*mesh%gauss%rjs(ls,ms)
+                   int_right_loc(2) = int_right_loc(2) + &
+                        grad_temp_level_surf(index,1,i) * ray*mesh%gauss%rjs(ls,ms)
+                ELSE IF (mesh%sides(ms)==4) THEN !bot lid
+                   int_bot_loc(1) = int_bot_loc(1) + &
+                        grad_temp(index,5,i) * ray*mesh%gauss%rjs(ls,ms)
+                   int_bot_loc(2) = int_bot_loc(2) + &
+                        grad_temp_level_surf(index,5,i) * ray*mesh%gauss%rjs(ls,ms)
+                ELSE
+                   CYCLE
+                END IF
+             END DO ! lG_s
+          END DO ! mes
+       END IF ! mode==0
+    END DO ! i
+
+    int_right_loc = int_right_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_right_loc, int_right_tot_F, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_right_tot_F, int_right_tot, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_left_loc = int_left_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_left_loc, int_left_tot_F, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_left_tot_F, int_left_tot, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_top_loc = int_top_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_top_loc, int_top_tot_F, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_top_tot_F, int_top_tot, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_bot_loc = int_bot_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_bot_loc, int_bot_tot_F, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_bot_tot_F, int_bot_tot, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    IF (rank==0) THEN
+       k1 = inputs%heat_diffu_fluid(1)/inputs%heat_diffu_fluid(2)
+       k2 = inputs%heat_diffu_fluid(2)/inputs%heat_diffu_fluid(2)
+       !Write output -k1 * integral_{top lid} Grad(T).n dS !careful since data with k_tilde/sqrt(Ra Pr)=1/sqrt(Ra Pr)
+       WRITE(941,103) time, -k1*(int_left_tot(1)-int_left_tot(2)), &
+            -k1*(int_top_tot(1)-int_top_tot(2)), &
+            -k1*(int_right_tot(1)-int_right_tot(2)),&
+            -k1*(int_bot_tot(1)-int_bot_tot(2))
+       !Write output -k2 * integral_{bot lid} Grad(T).n dS! careful since data with k_tilde/sqrt(Ra Pr)=1/sqrt(Ra Pr)
+       WRITE(942,103) time, -k2*int_left_tot(2), -k2*int_top_tot(2), &
+            -k2*int_right_tot(2), -k2*int_bot_tot(2)
+    END IF
+
+  END SUBROUTINE compute_Nussel_bdy_by_level_set_area
+
+  SUBROUTINE compute_Nussel_bdy(communicator, mesh, list_mode, &
+       temperature, time)
+    ! Compute top and bottom or left and right Nusselt numbers for MONOFLUID
+    USE def_type_mesh
+    USE input_data
+    USE user_data
+    USE boundary
+    USE fft_parallele
+    USE subroutine_mass
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    TYPE(mesh_type),                                        INTENT(IN)          :: mesh
+    INTEGER,      DIMENSION(:),                             INTENT(IN)          :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:),                         INTENT(IN)          :: temperature
+    REAL(KIND=8),                                           INTENT(IN)          :: time
+    INTEGER, DIMENSION(mesh%gauss%n_w)            :: j_loc
+    INTEGER, DIMENSION(mesh%gauss%n_ws)           :: js_loc
+    REAL(KIND=8) :: ray, z
+    REAL(KIND=8) :: int_right_loc, int_left_loc, int_top_loc, int_bot_loc
+    REAL(KIND=8) :: int_right_tot_F, int_left_tot_F, int_top_tot_F, int_bot_tot_F
+    REAL(KIND=8) :: int_right_tot, int_left_tot, int_top_tot, int_bot_tot
+    INTEGER :: i, m, ms, ls, code
+    MPI_Comm,DIMENSION(2)            :: communicator
+
+103 FORMAT(1500(e22.9,2x))
+
+    ! RB 3D or differentially heated cavity PLQ bench with g=-g e_r
+    !Compute int_left = top lid surface integral of grad(T) . n with n=e_z
+    !Compute int_bot = bot lid surface integral of grad(T) . n
+    int_right_loc = 0.d0
+    int_left_loc = 0.d0
+    int_top_loc = 0.d0
+    int_bot_loc = 0.d0
+
+    DO i = 1, SIZE(list_mode)
+       IF (list_mode(i)==0) THEN
+          DO ms = 1, mesh%mes
+             m = mesh%neighs(ms)
+             j_loc = mesh%jj(:,m)
+             js_loc = mesh%jjs(:,ms)
+             ! for non-symmetric mesh: 1 is along z-axis mesher/ then 2 / then 3 / then 4
+             IF (mesh%sides(ms)==1) THEN !left lid (hot)
+                DO ls = 1, mesh%gauss%l_Gs
+                   ray = SUM(mesh%rr(1,js_loc)*mesh%gauss%wws(:,ls))
+                   int_left_loc = int_left_loc + SUM(temperature(j_loc,1,i)*mesh%gauss%dw_s(1,:,ls,ms))* &
+                        ray*mesh%gauss%rjs(ls,ms)
+                END DO
+             ELSE IF (mesh%sides(ms)==2) THEN !top lid or right side in PLQ bench (cold)
+                DO ls = 1, mesh%gauss%l_Gs
+                   ray = SUM(mesh%rr(1,js_loc)*mesh%gauss%wws(:,ls))
+                   int_top_loc = int_top_loc + SUM(temperature(j_loc,1,i)*mesh%gauss%dw_s(2,:,ls,ms))* &
+                        ray*mesh%gauss%rjs(ls,ms)
+                END DO
+             ELSE IF (mesh%sides(ms)==3) THEN !right lid (cold)
+                DO ls = 1, mesh%gauss%l_Gs
+                   ray = SUM(mesh%rr(1,js_loc)*mesh%gauss%wws(:,ls))
+                   int_right_loc = int_right_loc + SUM(temperature(j_loc,1,i)*mesh%gauss%dw_s(1,:,ls,ms))* &
+                        ray*mesh%gauss%rjs(ls,ms)
+                END DO
+             ELSE IF (mesh%sides(ms)==4) THEN !bot lid or left side in PLQ bench (hot)
+                DO ls = 1, mesh%gauss%l_Gs
+                   ray = SUM(mesh%rr(1,js_loc)*mesh%gauss%wws(:,ls))
+                   int_bot_loc = int_bot_loc + SUM(temperature(j_loc,1,i)*mesh%gauss%dw_s(2,:,ls,ms))* &
+                        ray*mesh%gauss%rjs(ls,ms)
+                END DO
+             ELSE
+                CYCLE
+             END IF
+          END DO
+       END IF
+    END DO
+
+!!! CN 17/06/2024
+    !!    !Compute int_1 = top lid surface integral of grad(T) . n WITH n=e_r in RB 2D setting
+    !!    !Compute int_2 = bot lid surface integral of grad(T) . n
+    !!    int_1_loc = 0.d0
+    !!    int_2_loc = 0.d0
+    !!    DO i = 1, SIZE(list_mode)
+    !!       IF (list_mode(i)==0) THEN
+    !!          DO ms = 1, mesh%mes
+    !!             m = mesh%neighs(ms)
+    !!             j_loc = mesh%jj(:,m)
+    !!             js_loc = mesh%jjs(:,ms)
+    !!             IF (mesh%sides(ms)==3) THEN !right lid (cold)
+    !!                DO ls = 1, mesh%gauss%l_Gs
+    !!                   ray = SUM(mesh%rr(1,js_loc)*mesh%gauss%wws(:,ls))
+    !!                   int_1_loc = int_1_loc + SUM(temperature(j_loc,1,i)*mesh%gauss%dw_s(1,:,ls,ms))* &
+    !!                        ray*mesh%gauss%rjs(ls,ms)
+    !!                END DO
+    !!             ELSE IF (mesh%sides(ms)==1) THEN !left lid (hot)
+    !!                DO ls = 1, mesh%gauss%l_Gs
+    !!                   ray = SUM(mesh%rr(1,js_loc)*mesh%gauss%wws(:,ls))
+    !!                   int_2_loc = int_2_loc + SUM(temperature(j_loc,1,i)*mesh%gauss%dw_s(1,:,ls,ms))* &
+    !!                        ray*mesh%gauss%rjs(ls,ms)
+    !!                END DO
+!!!             IF (mesh%sides(ms)==4) THEN
+!!!                DO ls = 1, mesh%gauss%l_Gs
+!!!                   ray = SUM(mesh%rr(1,js_loc)*mesh%gauss%wws(:,ls))
+!!!                   !z = SUM(mesh%rr(2,j_loc)*mesh%gauss%ww(:,ls))
+!!!                   z = SUM(mesh%rr(2,js_loc)*mesh%gauss%wws(:,ls))
+!!!                   IF (z>0.d0) THEN !top lid
+!!!                      int_1_loc = int_1_loc + SUM(temperature(j_loc,1,i)*mesh%gauss%dw_s(2,:,ls,ms))* &
+!!!                           ray*mesh%gauss%rjs(ls,ms)
+!!!                   ELSE !bot lid
+!!!                      int_2_loc = int_2_loc + SUM(temperature(j_loc,1,i)*mesh%gauss%dw_s(2,:,ls,ms))* &
+!!!                           ray*mesh%gauss%rjs(ls,ms)
+!!!                   END IF
+!!!                END DO
+    !!             ELSE
+    !!                CYCLE
+    !!             END IF
+    !!          END DO
+    !!       END IF
+    !!    END DO
+!!! CN 17/06/2024
+    int_left_loc = int_left_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_left_loc, int_left_tot_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_left_tot_F, int_left_tot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_top_loc = int_top_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_top_loc, int_top_tot_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_top_tot_F, int_top_tot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_right_loc = int_right_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_right_loc, int_right_tot_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_right_tot_F, int_right_tot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_bot_loc = int_bot_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_bot_loc, int_bot_tot_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_bot_tot_F, int_bot_tot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    IF (rank==0) THEN
+       !!Write output -k_adim * integral_{top lid} Grad(T).n dS for monofluid -->k_adim=1
+       !!WRITE(941,103) time, inputs%temperature_diffusivity*int_left_tot
+       !WRITE(941,103) time, int_left_tot
+       !!Write output -k_adim * integral_{bot lid} Grad(T).n dS
+       !!WRITE(942,103) time, -inputs%temperature_diffusivity*int_bot_tot
+       !WRITE(942,103) time, - int_bot_tot
+       !
+       !Write output -k2 * integral_{bot lid} Grad(T).n dS! careful since data with k_tilde/sqrt(Ra Pr)=1/sqrt(Ra Pr)
+       WRITE(942,103) time, -int_left_tot, -int_top_tot, -int_right_tot, -int_bot_tot
+    END IF
+
+  END SUBROUTINE compute_Nussel_bdy
+
+  SUBROUTINE compute_level_set_times_variable(communicator, pp_mesh, vv_mesh, list_mode, &
+       var, level_set, level_var)
+    USE def_type_mesh
+    USE input_data
+    USE user_data
+    USE boundary
+    USE fft_parallele
+    USE subroutine_mass
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    TYPE(mesh_type),                                        INTENT(IN)          :: pp_mesh, vv_mesh
+    INTEGER,      DIMENSION(:),                             INTENT(IN)          :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:),                         INTENT(IN)          :: var
+    REAL(KIND=8), DIMENSION(:,:,:,:),                       INTENT(IN)          :: level_set
+    REAL(KIND=8), DIMENSION(:,:,:),                         INTENT(OUT)         :: level_var
+    REAL(KIND=8), DIMENSION(inputs%nb_fluid-1,vv_mesh%np,2,SIZE(list_mode))     :: level_set_P2
+    INTEGER :: nb_inter, i, k
+    INTEGER :: nb_procs, m_max_pad, bloc_size, code
+    MPI_Comm            :: communicator
+
+    !Only do computation with level_set on P2_mesh=vv_mesh
+    IF (inputs%if_level_set_P2) THEN
+       level_set_P2 = level_set
+    ELSE
+       DO nb_inter = 1, inputs%nb_fluid-1
+          DO i = 1, SIZE(list_mode)
+             DO k = 1, 2
+                CALL inject_P1_P2(pp_mesh%jj, vv_mesh%jj, level_set(nb_inter,:,k,i), level_set_P2(nb_inter,:,k,i))
+             END DO
+          END DO
+       END DO
+    END IF
+
+    !Define parameters for FFT
+    CALL MPI_COMM_SIZE(communicator, nb_procs, code)
+    bloc_size = SIZE(level_set_P2,2)/nb_procs+1
+    m_max_pad = 3*SIZE(list_mode)*nb_procs/2
+
+    IF (SIZE(var,2)==6) THEN !var=vector
+       CALL FFT_SCALAR_VECT_DCL(communicator, var, level_set_P2(1,:,:,:), level_var, 1, nb_procs, &
+            bloc_size, m_max_pad)
+    ELSE !var=scalar
+       CALL FFT_PAR_PROD_DCL(communicator, level_set_P2(1,:,:,:), var, level_var, nb_procs, &
+            bloc_size, m_max_pad)
+    END IF
+  END SUBROUTINE compute_level_set_times_variable
+
+  SUBROUTINE compute_squareroot_level_times_var(communicator, pp_mesh, vv_mesh, list_mode, &
+       level_set, temperature, un, V1_out, V2_out, c1_out, c2_out)
+    USE def_type_mesh
+    USE input_data
+    USE user_data
+    USE boundary
+    USE fft_parallele
+    USE subroutine_mass
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    TYPE(mesh_type),                                        INTENT(IN)          :: pp_mesh, vv_mesh
+    INTEGER,      DIMENSION(:),                             INTENT(IN)          :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:,:),                       INTENT(IN)          :: level_set
+    REAL(KIND=8), DIMENSION(:,:,:),                         INTENT(IN)          :: temperature
+    REAL(KIND=8), DIMENSION(:,:,:),                         INTENT(IN)          :: un
+    REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode)),  INTENT(OUT)         :: V1_out, V2_out
+    REAL(KIND=8), DIMENSION(vv_mesh%np,2,SIZE(list_mode)),  INTENT(OUT)         :: c1_out, c2_out
+    REAL(KIND=8), DIMENSION(inputs%nb_fluid-1,vv_mesh%np,2,SIZE(list_mode))     :: level_set_P2
+    REAL(KIND=8), DIMENSION(inputs%nb_fluid-1,vv_mesh%np,2,SIZE(list_mode))     :: one_minus_level_set_P2
+    INTEGER :: nb_inter, i, k, n
+    INTEGER :: nb_procs, m_max_pad, bloc_size, code
+    MPI_Comm           :: communicator
+
+    !Only do computation with level_set on P2_mesh=vv_mesh
+    IF (inputs%if_level_set_P2) THEN
+       level_set_P2 = level_set
+    ELSE
+       DO nb_inter = 1, inputs%nb_fluid-1
+          DO i = 1, SIZE(list_mode)
+             DO k = 1, 2
+                CALL inject_P1_P2(pp_mesh%jj, vv_mesh%jj, level_set(nb_inter,:,k,i), level_set_P2(nb_inter,:,k,i))
+             END DO
+          END DO
+       END DO
+    END IF
+
+    !compute 1.d0 - level_set
+    one_minus_level_set_P2=-level_set_P2
+    DO i = 1, SIZE(list_mode)
+       IF (list_mode(i)==0) THEN
+          DO nb_inter = 1, inputs%nb_fluid-1
+             DO n = 1, SIZE(level_set_P2,2)
+                one_minus_level_set_P2(nb_inter,n,1,i) = 1.d0 + one_minus_level_set_P2(nb_inter,n,1,i)
+             END DO
+          END DO
+       END IF
+    END DO
+
+    !Define parameters for FFT
+    CALL MPI_COMM_SIZE(communicator, nb_procs, code)
+    bloc_size = vv_mesh%np/nb_procs+1
+    m_max_pad = 3*SIZE(list_mode)*nb_procs/2
+
+    !Compute squareroot of level and 1-level
+    CALL FFT_SQUAREROOT_SCALAR(communicator, level_set_P2(1,:,:,:), nb_procs, bloc_size, m_max_pad)
+    CALL FFT_SQUAREROOT_SCALAR(communicator, one_minus_level_set_P2(1,:,:,:), nb_procs, bloc_size, m_max_pad)
+
+    !Multiply above scalar by temperature
+    ! CN 19/05/2025
+    IF (inputs%if_temperature) THEN
+       CALL FFT_PAR_PROD_DCL(communicator, level_set_P2(1,:,:,:), temperature, c1_out, &
+            nb_procs, bloc_size, m_max_pad)
+       CALL FFT_PAR_PROD_DCL(communicator, one_minus_level_set_P2(1,:,:,:), temperature, c2_out, &
+            nb_procs, bloc_size, m_max_pad)
+    END IF
+
+    !Multiply above scalar by  velocity
+    CALL FFT_SCALAR_VECT_DCL(communicator, un, level_set_P2(1,:,:,:), V1_out, 1, nb_procs, &
+         bloc_size, m_max_pad)
+    CALL FFT_SCALAR_VECT_DCL(communicator, un, one_minus_level_set_P2(1,:,:,:), V2_out, 1, nb_procs, &
+         bloc_size, m_max_pad)
+
+  END SUBROUTINE compute_squareroot_level_times_var
+
+  SUBROUTINE compute_friction_bdy_by_level_set_area(communicator, pp_mesh, mesh, list_mode, &
+       un, level_set, time)
+    USE def_type_mesh
+    USE input_data
+    USE user_data
+    USE boundary
+    USE associate_gauss
+    USE fft_parallele
+    USE subroutine_mass
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    TYPE(mesh_type),                                        INTENT(IN)          :: pp_mesh, mesh
+    INTEGER,      DIMENSION(:),                             INTENT(IN)          :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:),                         INTENT(IN)          :: un
+    REAL(KIND=8), DIMENSION(:,:,:,:),                       INTENT(IN)          :: level_set
+    REAL(KIND=8),                                           INTENT(IN)          :: time
+    INTEGER, DIMENSION(mesh%gauss%n_w)            :: j_loc
+    INTEGER, DIMENSION(mesh%gauss%n_ws)           :: js_loc
+    REAL(KIND=8), DIMENSION(mesh%gauss%l_Gs*mesh%dom_mes,6,SIZE(list_mode))   :: eps_1, eps_3
+    REAL(KIND=8), DIMENSION(mesh%gauss%l_Gs*mesh%dom_mes,6,SIZE(list_mode))   :: eps_level_surf_1, eps_level_surf_3
+    !   REAL(KIND=8), DIMENSION(mesh%gauss%l_Gs*mesh%dom_mes,6,SIZE(list_mode))   :: eps_2, eps_level_surf_2
+    REAL(KIND=8), DIMENSION(mesh%gauss%l_Gs*mesh%dom_mes,2,SIZE(list_mode))   :: level_surf
+    REAL(KIND=8), DIMENSION(inputs%nb_fluid-1,mesh%np,2,SIZE(list_mode))      :: level_set_P2
+    REAL(KIND=8), DIMENSION(inputs%nb_fluid-1,mesh%gauss%l_G*mesh%dom_me,2,SIZE(list_mode)) :: level_set_P2_gauss
+    INTEGER      :: m_max_pad, bloc_size, code, nb_procs
+    REAL(KIND=8) :: ray, visc_dyn_1, visc_dyn_2
+    REAL(KIND=8), DIMENSION(2) :: int_right_rtheta_loc, int_right_rz_loc, int_left_rtheta_loc, int_left_rz_loc
+    REAL(KIND=8), DIMENSION(2) :: int_top_rz_loc, int_top_thetaz_loc, int_bot_rz_loc, int_bot_thetaz_loc
+    REAL(KIND=8), DIMENSION(2) :: int_right_rtheta_tot_F, int_right_rz_tot_F, int_left_rtheta_tot_F, int_left_rz_tot_F
+    REAL(KIND=8), DIMENSION(2) :: int_top_rz_tot_F, int_top_thetaz_tot_F, int_bot_rz_tot_F, int_bot_thetaz_tot_F
+    REAL(KIND=8), DIMENSION(2) :: int_right_rtheta_tot, int_right_rz_tot, int_left_rtheta_tot, int_left_rz_tot
+    REAL(KIND=8), DIMENSION(2) :: int_top_rz_tot, int_top_thetaz_tot, int_bot_rz_tot, int_bot_thetaz_tot
+    INTEGER      :: i, m, ms, ls, k, mode, nb_inter, index
+    MPI_Comm,DIMENSION(2)      :: communicator
+
+    CALL gauss(mesh)
+103 FORMAT(1500(e22.9,2x))
+
+    ! LC-CN 11/03/2025
+    ! Compute friction forces on all walls. In 2D (only mode_F=0), a lot of simplications since
+    ! for mode_F=0, all sinus terms are null --> 0.d0 = eps_*(2)  = eps_*(4) = eps_*(6)
+    ! AND u_theta = 0.d0 then 0.d0 = eps_1(3:4) (==eps_2(1:2) due to sym) = eps_2(5:6) (==eps_3(3:4) due to sym)
+    !
+    ! initialisation to 0
+    eps_1 = 0.d0
+    !   eps_2 = 0.d0
+    eps_3 = 0.d0
+    eps_level_surf_1 = 0.d0
+    !   eps_level_surf_2 = 0.d0
+    eps_level_surf_3 = 0.d0
+
+    ! Step 1
+    ! Compute level_surf on surface gauss points; there is only 1 interface
+    !Level Set P2 on nodes
+    IF (inputs%if_level_set_P2) THEN
+       level_set_P2 = level_set
+    ELSE
+       DO nb_inter = 1, inputs%nb_fluid-1
+          DO i = 1, SIZE(list_mode)
+             DO k = 1, 2
+                CALL inject_P1_P2(pp_mesh%jj, mesh%jj, level_set(nb_inter,:,k,i), level_set_P2(nb_inter,:,k,i))
+             END DO
+          END DO
+       END DO
+    END IF
+    !DO nb_inter = 1, inputs%nb_fluid-1
+    nb_inter = 1
+    DO i = 1, SIZE(list_mode)
+       mode = list_mode(i)
+       index = 0
+       DO ms = 1, mesh%mes
+          m = mesh%neighs(ms)
+          !            j_loc = mesh%jj(:,m) !no derivative in r/z so not needed
+          js_loc = mesh%jjs(:,ms)
+          DO ls = 1, mesh%gauss%l_Gs
+             index = index+1
+             level_surf(index,1,i) = SUM(level_set_P2(nb_inter,js_loc,1,i)*mesh%gauss%wws(:,ls))
+             level_surf(index,2,i) = SUM(level_set_P2(nb_inter,js_loc,2,i)*mesh%gauss%wws(:,ls))
+          END DO
+       END DO
+    END DO
+    !!WRITE(*,*) 'maxval levelsurf' ,MAXVAL(level_surf)
+    !END DO ! nb_inter
+
+    ! Compute tensor eps_u = Grad^s(vel) as 3 vectors on surface gauss points
+    DO i = 1, SIZE(list_mode)
+       mode = list_mode(i)
+       index = 0
+       DO ms = 1, mesh%mes
+          m = mesh%neighs(ms)
+          j_loc = mesh%jj(:,m)
+          js_loc = mesh%jjs(:,ms)
+          DO ls = 1, mesh%gauss%l_Gs
+             index = index + 1
+             ray = SUM(mesh%rr(1,js_loc)*mesh%gauss%wws(:,ls))
+             ! first column of eps_u == first row
+             eps_1(index,1,i) = 2.d0*SUM(un(j_loc,1,i)*dw_s(1,:,ls,ms))
+             eps_1(index,2,i) = 2.d0*SUM(un(j_loc,2,i)*dw_s(1,:,ls,ms))
+             eps_1(index,3,i) = (mode*SUM(un(js_loc,2,i)*wws(:,ls)) - SUM(un(js_loc,3,i)*wws(:,ls)))/ray + &
+                  SUM(un(j_loc,3,i)*dw_s(1,:,ls,ms))
+             eps_1(index,4,i) = (-mode*SUM(un(js_loc,1,i)*wws(:,ls)) - SUM(un(js_loc,4,i)*wws(:,ls)))/ray + &
+                  SUM(un(j_loc,4,i)*dw_s(1,:,ls,ms))
+             eps_1(index,5,i) = SUM(un(j_loc,1,i)*dw_s(2,:,ls,ms)) + SUM(un(j_loc,5,i)*dw_s(1,:,ls,ms))
+             eps_1(index,6,i) = SUM(un(j_loc,2,i)*dw_s(2,:,ls,ms)) + SUM(un(j_loc,6,i)*dw_s(1,:,ls,ms))
+
+             ! second column of eps_u
+             !               eps_2(index,1,i) = eps_1(index,3,i)
+             !               eps_2(index,2,i) = eps_1(index,4,i)
+             !               eps_2(index,3,i) = 2.d0*(mode*SUM(un(js_loc,4,i)*wws(:,ls))+SUM(un(js_loc,1,i)*wws(:,ls)))/ray
+             !               eps_2(index,4,i) = 2.d0*(-mode*SUM(un(js_loc,3,i)*wws(:,ls))+SUM(un(js_loc,2,i)*wws(:,ls)))/ray
+             !               eps_2(index,5,i) = SUM(un(j_loc,3,i)*dw_s(2,:,ls,ms)) + mode*SUM(un(js_loc,6,i)*wws(:,ls))/ray
+             !               eps_2(index,6,i) = SUM(un(j_loc,4,i)*dw_s(2,:,ls,ms)) - mode*SUM(un(js_loc,5,i)*wws(:,ls))/ray
+
+             ! third column of eps_u
+             eps_3(index,1,i) = eps_1(index,5,i)
+             eps_3(index,2,i) = eps_1(index,6,i)
+             !               eps_3(index,3,i) = eps_2(index,5,i)
+             !               eps_3(index,4,i) = eps_2(index,6,i)
+             eps_3(index,3,i) = SUM(un(j_loc,3,i)*dw_s(2,:,ls,ms)) + mode*SUM(un(js_loc,6,i)*wws(:,ls))/ray
+             eps_3(index,4,i) = SUM(un(j_loc,4,i)*dw_s(2,:,ls,ms)) - mode*SUM(un(js_loc,5,i)*wws(:,ls))/ray
+             eps_3(index,5,i) = 2.d0*SUM(un(j_loc,5,i)*dw_s(2,:,ls,ms))
+             eps_3(index,6,i) = 2.d0*SUM(un(j_loc,6,i)*dw_s(2,:,ls,ms))
+          END DO ! ls
+       END DO ! ms
+    END DO  ! i
+
+    !
+    ! Step 2
+    ! Compute eps_level_surf = level*eps tensor on surface gauss points as 3 vectors
+    !Define parameters for FFT
+    CALL MPI_COMM_SIZE(communicator(2), nb_procs, code)
+    bloc_size = SIZE(level_surf,1)/nb_procs+1
+    m_max_pad = 3*SIZE(list_mode)*nb_procs/2
+    CALL FFT_SCALAR_VECT_DCL(communicator(2), eps_1, level_surf, eps_level_surf_1, 1, nb_procs, &
+         bloc_size, m_max_pad)
+
+    !   CALL FFT_SCALAR_VECT_DCL(communicator(2), eps_2, level_surf, eps_level_surf_2, 1, nb_procs, &
+    !           bloc_size, m_max_pad)
+
+    CALL FFT_SCALAR_VECT_DCL(communicator(2), eps_3, level_surf, eps_level_surf_3, 1, nb_procs, &
+         bloc_size, m_max_pad)
+
+    !
+    ! Step 3
+    ! Compute surface integral such that (1)= surface integral of eps_u
+    ! and (2)=eps_level_surf=surface integral of level_set*eps
+    int_right_rtheta_loc = 0.d0
+    int_right_rz_loc = 0.d0
+    int_left_rtheta_loc = 0.d0
+    int_left_rz_loc = 0.d0
+    int_top_rz_loc = 0.d0
+    int_top_thetaz_loc = 0.d0
+    int_bot_rz_loc = 0.d0
+    int_bot_thetaz_loc = 0.d0
+
+    DO i = 1, SIZE(list_mode)
+       index = 0
+       IF (list_mode(i)==0) THEN
+          DO ms = 1, mesh%mes
+             !            m = mesh%neighs(ms)
+             !            j_loc = mesh%jj(:,m)
+             js_loc = mesh%jjs(:,ms)
+
+             DO ls = 1, mesh%gauss%l_Gs
+                index = index+1
+                ray = SUM(mesh%rr(1,js_loc)*mesh%gauss%wws(:,ls))
+
+                IF (mesh%sides(ms)==1) THEN !left lid (hot)
+                   int_left_rtheta_loc(1) = int_left_rtheta_loc(1) + &
+                        eps_1(index,3,i) * ray*mesh%gauss%rjs(ls,ms)
+                   int_left_rtheta_loc(2) = int_left_rtheta_loc(2) + &
+                        eps_level_surf_1(index,3,i) * ray*mesh%gauss%rjs(ls,ms)
+                   int_left_rz_loc(1) = int_left_rz_loc(1) + &
+                        eps_1(index,5,i) * ray*mesh%gauss%rjs(ls,ms)
+                   int_left_rz_loc(2) = int_left_rz_loc(2) + &
+                        eps_level_surf_1(index,5,i) * ray*mesh%gauss%rjs(ls,ms)
+                ELSE IF (mesh%sides(ms)==2) THEN !top lid
+                   int_top_rz_loc(1) = int_top_rz_loc(1) + &
+                        eps_1(index,5,i) * ray*mesh%gauss%rjs(ls,ms)
+                   int_top_rz_loc(2) = int_top_rz_loc(2) + &
+                        eps_level_surf_1(index,5,i) * ray*mesh%gauss%rjs(ls,ms)
+                   int_top_thetaz_loc(1) = int_top_thetaz_loc(1) + &
+                        eps_3(index,3,i) * ray*mesh%gauss%rjs(ls,ms)
+                   int_top_thetaz_loc(2) = int_top_thetaz_loc(2) + &
+                        eps_level_surf_3(index,3,i) * ray*mesh%gauss%rjs(ls,ms)
+                ELSE IF (mesh%sides(ms)==3) THEN !right lid (cold)
+                   int_right_rtheta_loc(1) = int_right_rtheta_loc(1) + &
+                        eps_1(index,3,i) * ray*mesh%gauss%rjs(ls,ms)
+                   int_right_rtheta_loc(2) = int_right_rtheta_loc(2) + &
+                        eps_level_surf_1(index,3,i) * ray*mesh%gauss%rjs(ls,ms)
+                   int_right_rz_loc(1) = int_right_rz_loc(1) + &
+                        eps_1(index,5,i) * ray*mesh%gauss%rjs(ls,ms)
+                   int_right_rz_loc(2) = int_right_rz_loc(2) + &
+                        eps_level_surf_1(index,5,i) * ray*mesh%gauss%rjs(ls,ms)
+                ELSE IF (mesh%sides(ms)==4) THEN !bot lid
+                   int_bot_rz_loc(1) = int_bot_rz_loc(1) + &
+                        eps_1(index,5,i) * ray*mesh%gauss%rjs(ls,ms)
+                   int_bot_rz_loc(2) = int_bot_rz_loc(2) + &
+                        eps_level_surf_1(index,5,i) * ray*mesh%gauss%rjs(ls,ms)
+                   int_bot_thetaz_loc(1) = int_bot_thetaz_loc(1) + &
+                        eps_3(index,3,i) * ray*mesh%gauss%rjs(ls,ms)
+                   int_bot_thetaz_loc(2) = int_bot_thetaz_loc(2) + &
+                        eps_level_surf_3(index,3,i) * ray*mesh%gauss%rjs(ls,ms)
+                ELSE
+                   CYCLE
+                END IF
+             END DO ! lG_s
+          END DO ! mes
+       END IF ! mode==0
+    END DO ! i
+
+    int_right_rtheta_loc = int_right_rtheta_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_right_rtheta_loc, int_right_rtheta_tot_F, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_right_rtheta_tot_F, int_right_rtheta_tot, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_right_rz_loc = int_right_rz_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_right_rz_loc, int_right_rz_tot_F, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_right_rz_tot_F, int_right_rz_tot, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_left_rtheta_loc = int_left_rtheta_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_left_rtheta_loc, int_left_rtheta_tot_F, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_left_rtheta_tot_F, int_left_rtheta_tot, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_left_rz_loc = int_left_rz_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_left_rz_loc, int_left_rz_tot_F, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_left_rz_tot_F, int_left_rz_tot, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_top_rz_loc = int_top_rz_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_top_rz_loc, int_top_rz_tot_F, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_top_rz_tot_F, int_top_rz_tot, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_top_thetaz_loc = int_top_thetaz_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_top_thetaz_loc, int_top_thetaz_tot_F, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_top_thetaz_tot_F, int_top_thetaz_tot, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_bot_rz_loc = int_bot_rz_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_bot_rz_loc, int_bot_rz_tot_F, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_bot_rz_tot_F, int_bot_rz_tot, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_bot_thetaz_loc = int_bot_thetaz_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_bot_thetaz_loc, int_bot_thetaz_tot_F, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_bot_thetaz_tot_F, int_bot_thetaz_tot, 2, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    IF (rank==0) THEN
+       visc_dyn_1 =  inputs%dyna_visc_fluid(1)/inputs%Re
+       visc_dyn_2 =  inputs%dyna_visc_fluid(2)/inputs%Re
+       ! light top fluid = (1): (eta_1/Re)*(eps - eps_level)
+       WRITE(951,103) time, visc_dyn_1*(int_left_rtheta_tot(1)-int_left_rtheta_tot(2)), &
+            visc_dyn_1*(int_left_rz_tot(1)-int_left_rz_tot(2)),  &
+            visc_dyn_1*(int_top_rz_tot(1)-int_top_rz_tot(2)), &
+            visc_dyn_1*(int_top_thetaz_tot(1)-int_top_thetaz_tot(2)), &
+            visc_dyn_1*(int_right_rtheta_tot(1)-int_right_rtheta_tot(2)), &
+            visc_dyn_1*(int_right_rz_tot(1)-int_right_rz_tot(2)), &
+            visc_dyn_1*(int_bot_rz_tot(1)-int_bot_rz_tot(2)), &
+            visc_dyn_1*(int_bot_thetaz_tot(1)-int_bot_thetaz_tot(2))
+
+       ! heavy bot fluid = (2): (eta_2/Re)*eps_level
+       WRITE(952,103) time, visc_dyn_2*int_left_rtheta_tot(2), visc_dyn_2*int_left_rz_tot(2),  &
+            visc_dyn_2*int_top_rz_tot(2), visc_dyn_2*int_top_thetaz_tot(2), &
+            visc_dyn_2*int_right_rtheta_tot(2), visc_dyn_2*int_right_rz_tot(2), &
+            visc_dyn_2*int_bot_rz_tot(2), visc_dyn_2*int_bot_thetaz_tot(2)
+    END IF
+
+  END SUBROUTINE compute_friction_bdy_by_level_set_area
+
+  SUBROUTINE compute_friction_bdy(communicator, mesh, list_mode, &
+       un, time)
+    USE def_type_mesh
+    USE input_data
+    USE user_data
+    USE boundary
+    USE associate_gauss
+    USE fft_parallele
+    USE subroutine_mass
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    TYPE(mesh_type),                                        INTENT(IN)          :: mesh
+    INTEGER,      DIMENSION(:),                             INTENT(IN)          :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:),                         INTENT(IN)          :: un
+    REAL(KIND=8),                                           INTENT(IN)          :: time
+    INTEGER, DIMENSION(mesh%gauss%n_w)            :: j_loc
+    INTEGER, DIMENSION(mesh%gauss%n_ws)           :: js_loc
+    REAL(KIND=8), DIMENSION(mesh%gauss%l_Gs*mesh%dom_mes,6,SIZE(list_mode))   :: eps_1, eps_3
+    !   REAL(KIND=8), DIMENSION(mesh%gauss%l_Gs*mesh%dom_mes,6,SIZE(list_mode))   :: eps_2
+    INTEGER      :: m_max_pad, bloc_size, code, nb_procs
+    REAL(KIND=8) :: ray, visc_dyn
+    REAL(KIND=8) :: int_right_rtheta_loc, int_right_rz_loc, int_left_rtheta_loc, int_left_rz_loc
+    REAL(KIND=8) :: int_top_rz_loc, int_top_thetaz_loc, int_bot_rz_loc, int_bot_thetaz_loc
+    REAL(KIND=8) :: int_right_rtheta_tot_F, int_right_rz_tot_F, int_left_rtheta_tot_F, int_left_rz_tot_F
+    REAL(KIND=8) :: int_top_rz_tot_F, int_top_thetaz_tot_F, int_bot_rz_tot_F, int_bot_thetaz_tot_F
+    REAL(KIND=8) :: int_right_rtheta_tot, int_right_rz_tot, int_left_rtheta_tot, int_left_rz_tot
+    REAL(KIND=8) :: int_top_rz_tot, int_top_thetaz_tot, int_bot_rz_tot, int_bot_thetaz_tot
+    INTEGER      :: i, m, ms, ls, k, mode, nb_inter, index
+    MPI_Comm,DIMENSION(2)      :: communicator
+
+    CALL gauss(mesh)
+103 FORMAT(1500(e22.9,2x))
+
+    ! CN 03/04/2025
+    ! Compute friction forces on all walls. In 2D (only mode_F=0), a lot of simplications since
+    ! for mode_F=0, all sinus terms are null --> 0.d0 = eps_*(2)  = eps_*(4) = eps_*(6)
+    ! AND u_theta = 0.d0 then 0.d0 = eps_1(3:4) (==eps_2(1:2) due to sym) = eps_2(5:6) (==eps_3(3:4) due to sym)
+    !
+    ! initialisation to 0
+    eps_1 = 0.d0
+    !   eps_2 = 0.d0
+    eps_3 = 0.d0
+
+    ! Step 1
+    ! Compute tensor eps_u = Grad^s(vel) as 3 vectors on surface gauss points
+    DO i = 1, SIZE(list_mode)
+       mode = list_mode(i)
+       index = 0
+       DO ms = 1, mesh%mes
+          m = mesh%neighs(ms)
+          j_loc = mesh%jj(:,m)
+          js_loc = mesh%jjs(:,ms)
+          DO ls = 1, mesh%gauss%l_Gs
+             index = index + 1
+             ray = SUM(mesh%rr(1,js_loc)*mesh%gauss%wws(:,ls))
+             ! first column of eps_u == first row
+             eps_1(index,1,i) = 2.d0*SUM(un(j_loc,1,i)*dw_s(1,:,ls,ms))
+             eps_1(index,2,i) = 2.d0*SUM(un(j_loc,2,i)*dw_s(1,:,ls,ms))
+             eps_1(index,3,i) = (mode*SUM(un(js_loc,2,i)*wws(:,ls)) - SUM(un(js_loc,3,i)*wws(:,ls)))/ray + &
+                  SUM(un(j_loc,3,i)*dw_s(1,:,ls,ms))
+             eps_1(index,4,i) = (-mode*SUM(un(js_loc,1,i)*wws(:,ls)) - SUM(un(js_loc,4,i)*wws(:,ls)))/ray + &
+                  SUM(un(j_loc,4,i)*dw_s(1,:,ls,ms))
+             eps_1(index,5,i) = SUM(un(j_loc,1,i)*dw_s(2,:,ls,ms)) + SUM(un(j_loc,5,i)*dw_s(1,:,ls,ms))
+             eps_1(index,6,i) = SUM(un(j_loc,2,i)*dw_s(2,:,ls,ms)) + SUM(un(j_loc,6,i)*dw_s(1,:,ls,ms))
+
+             ! second column of eps_u
+             !               eps_2(index,1,i) = eps_1(index,3,i)
+             !               eps_2(index,2,i) = eps_1(index,4,i)
+             !               eps_2(index,3,i) = 2.d0*(mode*SUM(un(js_loc,4,i)*wws(:,ls))+SUM(un(js_loc,1,i)*wws(:,ls)))/ray
+             !               eps_2(index,4,i) = 2.d0*(-mode*SUM(un(js_loc,3,i)*wws(:,ls))+SUM(un(js_loc,2,i)*wws(:,ls)))/ray
+             !               eps_2(index,5,i) = SUM(un(j_loc,3,i)*dw_s(2,:,ls,ms)) + mode*SUM(un(js_loc,6,i)*wws(:,ls))/ray
+             !               eps_2(index,6,i) = SUM(un(j_loc,4,i)*dw_s(2,:,ls,ms)) - mode*SUM(un(js_loc,5,i)*wws(:,ls))/ray
+
+             ! third column of eps_u
+             eps_3(index,1,i) = eps_1(index,5,i)
+             eps_3(index,2,i) = eps_1(index,6,i)
+             !               eps_3(index,3,i) = eps_2(index,5,i)
+             !               eps_3(index,4,i) = eps_2(index,6,i)
+             eps_3(index,3,i) = SUM(un(j_loc,3,i)*dw_s(2,:,ls,ms)) + mode*SUM(un(js_loc,6,i)*wws(:,ls))/ray
+             eps_3(index,4,i) = SUM(un(j_loc,4,i)*dw_s(2,:,ls,ms)) - mode*SUM(un(js_loc,5,i)*wws(:,ls))/ray
+             eps_3(index,5,i) = 2.d0*SUM(un(j_loc,5,i)*dw_s(2,:,ls,ms))
+             eps_3(index,6,i) = 2.d0*SUM(un(j_loc,6,i)*dw_s(2,:,ls,ms))
+          END DO ! ls
+       END DO ! ms
+    END DO  ! i
+
+    !
+    ! Step 2
+    ! Compute surface integral of eps_u
+    int_right_rtheta_loc = 0.d0
+    int_right_rz_loc = 0.d0
+    int_left_rtheta_loc = 0.d0
+    int_left_rz_loc = 0.d0
+    int_top_rz_loc = 0.d0
+    int_top_thetaz_loc = 0.d0
+    int_bot_rz_loc = 0.d0
+    int_bot_thetaz_loc = 0.d0
+
+    DO i = 1, SIZE(list_mode)
+       index = 0
+       IF (list_mode(i)==0) THEN
+          DO ms = 1, mesh%mes
+             js_loc = mesh%jjs(:,ms)
+
+             DO ls = 1, mesh%gauss%l_Gs
+                index = index+1
+                ray = SUM(mesh%rr(1,js_loc)*mesh%gauss%wws(:,ls))
+
+                IF (mesh%sides(ms)==1) THEN !left lid (hot)
+                   int_left_rtheta_loc = int_left_rtheta_loc + &
+                        eps_1(index,3,i) * ray*mesh%gauss%rjs(ls,ms)
+                   int_left_rz_loc = int_left_rz_loc + &
+                        eps_1(index,5,i) * ray*mesh%gauss%rjs(ls,ms)
+                ELSE IF (mesh%sides(ms)==2) THEN !top lid
+                   int_top_rz_loc = int_top_rz_loc + &
+                        eps_1(index,5,i) * ray*mesh%gauss%rjs(ls,ms)
+                   int_top_thetaz_loc = int_top_thetaz_loc + &
+                        eps_3(index,3,i) * ray*mesh%gauss%rjs(ls,ms)
+                ELSE IF (mesh%sides(ms)==3) THEN !right lid (cold)
+                   int_right_rtheta_loc = int_right_rtheta_loc + &
+                        eps_1(index,3,i) * ray*mesh%gauss%rjs(ls,ms)
+                   int_right_rz_loc = int_right_rz_loc + &
+                        eps_1(index,5,i) * ray*mesh%gauss%rjs(ls,ms)
+                ELSE IF (mesh%sides(ms)==4) THEN !bot lid
+                   int_bot_rz_loc = int_bot_rz_loc + &
+                        eps_1(index,5,i) * ray*mesh%gauss%rjs(ls,ms)
+                   int_bot_thetaz_loc = int_bot_thetaz_loc + &
+                        eps_3(index,3,i) * ray*mesh%gauss%rjs(ls,ms)
+                ELSE
+                   CYCLE
+                END IF
+             END DO ! lG_s
+          END DO ! mes
+       END IF ! mode==0
+    END DO ! i
+
+    int_right_rtheta_loc = int_right_rtheta_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_right_rtheta_loc, int_right_rtheta_tot_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_right_rtheta_tot_F, int_right_rtheta_tot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_right_rz_loc = int_right_rz_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_right_rz_loc, int_right_rz_tot_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_right_rz_tot_F, int_right_rz_tot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_left_rtheta_loc = int_left_rtheta_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_left_rtheta_loc, int_left_rtheta_tot_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_left_rtheta_tot_F, int_left_rtheta_tot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_left_rz_loc = int_left_rz_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_left_rz_loc, int_left_rz_tot_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_left_rz_tot_F, int_left_rz_tot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_top_rz_loc = int_top_rz_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_top_rz_loc, int_top_rz_tot_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_top_rz_tot_F, int_top_rz_tot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_top_thetaz_loc = int_top_thetaz_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_top_thetaz_loc, int_top_thetaz_tot_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_top_thetaz_tot_F, int_top_thetaz_tot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_bot_rz_loc = int_bot_rz_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_bot_rz_loc, int_bot_rz_tot_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_bot_rz_tot_F, int_bot_rz_tot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    int_bot_thetaz_loc = int_bot_thetaz_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(int_bot_thetaz_loc, int_bot_thetaz_tot_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(int_bot_thetaz_tot_F, int_bot_thetaz_tot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    IF (rank==0) THEN
+       visc_dyn =  1.d0/inputs%Re
+       !!WRITE(*,*) 'visc_dyn, =', visc_dyn
+       ! monofluid: (1/Re)*eps
+       WRITE(952,103) time, visc_dyn*int_left_rtheta_tot, visc_dyn*int_left_rz_tot,  &
+            visc_dyn*int_top_rz_tot, visc_dyn*int_top_thetaz_tot, &
+            visc_dyn*int_right_rtheta_tot, visc_dyn*int_right_rz_tot, &
+            visc_dyn*int_bot_rz_tot, visc_dyn*int_bot_thetaz_tot
+    END IF
+
+  END SUBROUTINE compute_friction_bdy
+
+  SUBROUTINE compute_diffusion_by_level_set_area(communicator, pp_mesh, mesh, list_mode, nb_procs, &
+       vel, level_set, time)
+    ! CN 04/03/2025 Be careful, CALL with visc_dyn = visco_dyn/Re and
+    ! stab_mom=nu_bar/Re so Re is included
+    ! CN 04/03/2025 Be careful also because visco_dyn includes level_set from
+    ! initialisation, navier_stokes_decouple
+    USE associate_gauss
+    USE fft_parallele
+    USE chaine_caractere
+    USE boundary
+    USE input_data
+    USE subroutine_mass
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    TYPE(mesh_type), TARGET                     :: pp_mesh
+    TYPE(mesh_type), TARGET                     :: mesh
+    INTEGER,                        INTENT(IN)  :: nb_procs
+    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: vel
+    REAL(KIND=8), DIMENSION(:,:,:,:), INTENT(IN):: level_set
+    REAL(KIND=8),                   INTENT(IN)  :: time
+    REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,6,SIZE(list_mode))   :: grad1_vel, grad2_vel, grad3_vel
+    REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,6,SIZE(list_mode))   :: gradT1_vel, gradT2_vel, gradT3_vel
+    INTEGER,      DIMENSION(mesh%gauss%n_w)                  :: j_loc
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)                :: vel_loc
+    REAL(KIND=8)                                :: ray
+    INTEGER                                     :: m, l , i, mode, index, k
+    REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,2,SIZE(list_mode))   :: dissip_1
+    REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,2,SIZE(list_mode))   :: dissip_2
+    REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,2,SIZE(list_mode))   :: dissip_3
+    REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,2,SIZE(list_mode))   :: level_dissip_1
+    REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,2,SIZE(list_mode))   :: level_dissip_2
+    REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%dom_me,2,SIZE(list_mode))   :: level_dissip_3
+    REAL(KIND=8), DIMENSION(inputs%nb_fluid-1,mesh%np,2,SIZE(list_mode))    :: level_set_P2
+    REAL(KIND=8), DIMENSION(inputs%nb_fluid-1,mesh%gauss%l_G*mesh%dom_me,2,SIZE(list_mode)) :: level_set_P2_gauss
+    INTEGER                                     :: m_max_pad, bloc_size, code, nb_inter
+    REAL(KIND=8) :: dissipation_1_loc, dissipation_1_F, dissipation_1
+    REAL(KIND=8) :: dissipation_2_loc, dissipation_2_F, dissipation_2
+    MPI_Comm, DIMENSION(:), POINTER  :: communicator
+
+    CALL gauss(mesh)
+103 FORMAT(1500(e22.9,2x))
+
+    DO i = 1, SIZE(list_mode)
+       mode = list_mode(i)
+       index = 0
+       DO m = 1, mesh%dom_me
+          j_loc = mesh%jj(:,m)
+          DO k = 1, 6
+             vel_loc(:,k) = vel(j_loc,k,i)
+          END DO
+          DO l = 1, l_G
+             index = index + 1
+             dw_loc = dw(:,:,l,m)
+
+             !===Compute radius of Gauss point
+             ray = SUM(mesh%rr(1,j_loc)*ww(:,l))
+
+             !-----------------Grad u_r on Gauss points------------------------------------
+             grad1_vel(index,1,i) = SUM(vel_loc(:,1)*dw_loc(1,:))
+             grad1_vel(index,2,i) = SUM(vel_loc(:,2)*dw_loc(1,:))
+             grad1_vel(index,3,i) = (mode*SUM(vel_loc(:,2)*ww(:,l)) - SUM(vel_loc(:,3)*ww(:,l)))/ray
+             grad1_vel(index,4,i) = (-mode*SUM(vel_loc(:,1)*ww(:,l)) - SUM(vel_loc(:,4)*ww(:,l)))/ray
+             grad1_vel(index,5,i) =  SUM(vel_loc(:,1)*dw_loc(2,:))
+             grad1_vel(index,6,i) =  SUM(vel_loc(:,2)*dw_loc(2,:))
+
+             !-----------------Grad u_th on Gauss points-----------------------------------
+             grad2_vel(index,1,i) = SUM(vel_loc(:,3)*dw_loc(1,:))
+             grad2_vel(index,2,i) = SUM(vel_loc(:,4)*dw_loc(1,:))
+             grad2_vel(index,3,i) = (mode*SUM(vel_loc(:,4)*ww(:,l)) + SUM(vel_loc(:,1)*ww(:,l)))/ray
+             grad2_vel(index,4,i) = (-mode*SUM(vel_loc(:,3)*ww(:,l)) + SUM(vel_loc(:,2)*ww(:,l)))/ray
+             grad2_vel(index,5,i) = SUM(vel_loc(:,3)*dw_loc(2,:))
+             grad2_vel(index,6,i) = SUM(vel_loc(:,4)*dw_loc(2,:))
+
+             !-----------------Grad u_z on Gauss points------------------------------------
+             grad3_vel(index,1,i) = SUM(vel_loc(:,5)*dw_loc(1,:))
+             grad3_vel(index,2,i) = SUM(vel_loc(:,6)*dw_loc(1,:))
+             grad3_vel(index,3,i) = mode*SUM(vel_loc(:,6)*ww(:,l))/ray
+             grad3_vel(index,4,i) = -mode*SUM(vel_loc(:,5)*ww(:,l))/ray
+             grad3_vel(index,5,i) = SUM(vel_loc(:,5)*dw_loc(2,:))
+             grad3_vel(index,6,i) = SUM(vel_loc(:,6)*dw_loc(2,:))
+          ENDDO
+       ENDDO
+    END DO
+
+    IF (inputs%if_tensor_sym) THEN
+       !-----------------GradT u_r on Gauss points------------------------------------
+       gradT1_vel(:,1,:) = grad1_vel(:,1,:)
+       gradT1_vel(:,2,:) = grad1_vel(:,2,:)
+       gradT1_vel(:,3,:) = grad2_vel(:,1,:)
+       gradT1_vel(:,4,:) = grad2_vel(:,2,:)
+       gradT1_vel(:,5,:) = grad3_vel(:,1,:)
+       gradT1_vel(:,6,:) = grad3_vel(:,2,:)
+       !-----------------GradT u_th on Gauss points-----------------------------------
+       gradT2_vel(:,1,:) = grad1_vel(:,3,:)
+       gradT2_vel(:,2,:) = grad1_vel(:,4,:)
+       gradT2_vel(:,3,:) = grad2_vel(:,3,:)
+       gradT2_vel(:,4,:) = grad2_vel(:,4,:)
+       gradT2_vel(:,5,:) = grad3_vel(:,3,:)
+       gradT2_vel(:,6,:) = grad3_vel(:,4,:)
+       !-----------------GradT u_z on Gauss points------------------------------------
+       gradT3_vel(:,1,:) = grad1_vel(:,5,:)
+       gradT3_vel(:,2,:) = grad1_vel(:,6,:)
+       gradT3_vel(:,3,:) = grad2_vel(:,5,:)
+       gradT3_vel(:,4,:) = grad2_vel(:,6,:)
+       gradT3_vel(:,5,:) = grad3_vel(:,5,:)
+       gradT3_vel(:,6,:) = grad3_vel(:,6,:)
+
+       !===Grad = Grad + Grad^T
+       grad1_vel = grad1_vel + gradT1_vel
+       grad2_vel = grad2_vel + gradT2_vel
+       grad3_vel = grad3_vel + gradT3_vel
+    END IF
+
+    !Define parameters for FFT
+    bloc_size = SIZE(grad1_vel,1)/nb_procs+1
+    m_max_pad = 3*SIZE(list_mode)*nb_procs/2
+
+    CALL FFT_PAR_DOT_PROD_DCL(communicator(2), grad1_vel, grad1_vel, &
+         dissip_1, nb_procs, bloc_size, m_max_pad)
+    CALL FFT_PAR_DOT_PROD_DCL(communicator(2), grad2_vel, grad2_vel, &
+         dissip_2, nb_procs, bloc_size, m_max_pad)
+    CALL FFT_PAR_DOT_PROD_DCL(communicator(2), grad3_vel, grad3_vel, &
+         dissip_3, nb_procs, bloc_size, m_max_pad)
+
+    !Level Set P2 on nodes
+    IF (inputs%if_level_set_P2) THEN
+       level_set_P2 = level_set
+    ELSE
+       DO nb_inter = 1, inputs%nb_fluid-1
+          DO i = 1, SIZE(list_mode)
+             DO k = 1, 2
+                CALL inject_P1_P2(pp_mesh%jj, mesh%jj, level_set(nb_inter,:,k,i), level_set_P2(nb_inter,:,k,i))
+             END DO
+          END DO
+       END DO
+    END IF
+    !Level Set P2 on gauss points
+    DO nb_inter = 1, inputs%nb_fluid-1
+       DO i = 1, SIZE(list_mode)
+          mode = list_mode(i)
+          index = 0
+          DO m = 1, mesh%dom_me
+             j_loc = mesh%jj(:,m)
+             DO l = 1, l_G
+                index = index + 1
+                level_set_P2_gauss(nb_inter,index,1,i) = SUM(level_set_P2(nb_inter,j_loc,1,i)*ww(:,l))
+                level_set_P2_gauss(nb_inter,index,2,i) = SUM(level_set_P2(nb_inter,j_loc,2,i)*ww(:,l))
+             END DO
+          END DO
+       END DO
+    END DO
+    !Level Set times Grad^s(vel) * Grad^s(vel)
+    CALL FFT_PAR_PROD_DCL(communicator(2), level_set_P2_gauss(1,:,:,:), dissip_1, &
+         level_dissip_1, nb_procs, bloc_size, m_max_pad)
+    CALL FFT_PAR_PROD_DCL(communicator(2), level_set_P2_gauss(1,:,:,:), dissip_2, &
+         level_dissip_2, nb_procs, bloc_size, m_max_pad)
+    CALL FFT_PAR_PROD_DCL(communicator(2), level_set_P2_gauss(1,:,:,:), dissip_3, &
+         level_dissip_3, nb_procs, bloc_size, m_max_pad)
+
+    !Compute dissipation
+    dissipation_1_loc = 0.d0
+    dissipation_2_loc = 0.d0
+    DO i = 1, SIZE(list_mode)
+       IF (list_mode(i)==0) THEN
+          index = 0
+          DO m = 1, mesh%me
+             j_loc = mesh%jj(:,m)
+             DO l = 1, mesh%gauss%l_G
+                index = index + 1
+                !===Compute radius of Gauss point
+                ray = SUM(mesh%rr(1,j_loc)*mesh%gauss%ww(:,l))
+                !Compute dissipation_1_loc = volume integral of Grad^s(vel) *Grad^s(vel)
+                dissipation_1_loc = dissipation_1_loc + &
+                     (dissip_1(index,1,i) + dissip_2(index,1,i) + dissip_3(index,1,i))* &
+                     ray*mesh%gauss%rj(l,m)
+                !Compute dissipation_2_loc = volume integral of level_set*Grad^s(vel) * Grad^s(vel)
+                dissipation_2_loc = dissipation_2_loc + &
+                     (level_dissip_1(index,1,i) + level_dissip_2(index,1,i) + level_dissip_3(index,1,i))* &
+                     ray*mesh%gauss%rj(l,m)
+             END DO
+          END DO
+       END IF
+    END DO
+
+    dissipation_1_loc = dissipation_1_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(dissipation_1_loc, dissipation_1_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(dissipation_1_F, dissipation_1, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    dissipation_2_loc = dissipation_2_loc*2*ACOS(-1.d0)
+    CALL MPI_ALLREDUCE(dissipation_2_loc, dissipation_2_F, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(2), code)
+    CALL MPI_ALLREDUCE(dissipation_2_F, dissipation_2, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+         communicator(1), code)
+
+    IF (rank==0) THEN
+       WRITE(921,103) time, 2.d0*inputs%dyna_visc_fluid(1)/inputs%Re*0.25d0*(dissipation_1-dissipation_2)
+       WRITE(922,103) time, 2.d0*inputs%dyna_visc_fluid(2)/inputs%Re*0.25d0*dissipation_2
+    END IF
+
+  END SUBROUTINE compute_diffusion_by_level_set_area
 
 END PROGRAM mhd_prog
