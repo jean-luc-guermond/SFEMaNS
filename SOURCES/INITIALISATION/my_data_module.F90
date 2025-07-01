@@ -174,7 +174,14 @@ MODULE my_data_module
      LOGICAL :: if_zero_out_modes
      INTEGER :: nb_select_mode_ns, nb_select_mode_mxw
      INTEGER, DIMENSION(:), POINTER :: list_select_mode_ns, list_select_mode_mxw
-     INTEGER :: freq_restart, freq_en, freq_plot
+     INTEGER :: freq_restart, freq_en, freq_plot, freq_snapshot
+     CHARACTER(len = 250) :: folder_for_snapshot
+     LOGICAL :: if_snapshot_gauss
+     LOGICAL :: if_snapshot_phys, if_snapshot_fourier, if_snapshot_fourier_per_mode
+     LOGICAL :: if_snapshot_u, if_snapshot_p, if_snapshot_level_set
+     LOGICAL :: if_snapshot_B, if_snapshot_H, if_snapshot_phi
+     LOGICAL :: if_snapshot_temp
+     LOGICAL :: if_snapshot_conc
      LOGICAL :: verbose_timing, verbose_divergence, verbose_CFL
      LOGICAL :: if_just_processing
      LOGICAL :: if_post_proc_init
@@ -278,6 +285,18 @@ CONTAINS
     a%my_par_temperature%verbose = .FALSE.
     a%my_par_concentration%verbose = .FALSE.
     a%my_par_level_set%verbose = .FALSE.
+    a%if_snapshot_gauss = .FALSE.
+    a%if_snapshot_phys = .FALSE.
+    a%if_snapshot_fourier = .FALSE.
+    a%if_snapshot_fourier_per_mode = .FALSE.
+    a%if_snapshot_u = .FALSE.
+    a%if_snapshot_p = .FALSE.
+    a%if_snapshot_level_set = .FALSE.
+    a%if_snapshot_B = .FALSE.
+    a%if_snapshot_H = .FALSE.
+    a%if_snapshot_phi = .FALSE.
+    a%if_snapshot_temp = .FALSE.
+    a%if_snapshot_conc = .FALSE.
     !===Reals
     a%LES_coeff1 = 0.d0
     a%LES_coeff2 = 0.d0
@@ -312,6 +331,7 @@ CONTAINS
     a%freq_restart = 10000000
     a%freq_en = 10000000
     a%freq_plot = 10000000
+    a%freq_snapshot = 10000000
     a%type_fe_velocity = 2
     a%taylor_order = -1
     a%nb_dom_conc = 0
@@ -1149,8 +1169,8 @@ CONTAINS
        ALLOCATE(inputs%list_dom_temp(inputs%nb_dom_temp))
        CALL read_until(21, '===List of subdomains for temperature mesh')
        READ(21, *) inputs%list_dom_temp
-       ! Two choices for the user 
-       ! Choice 1: define the heat capacity and the conductivity (necessary if non uniform heat capacity) 
+       ! Two choices for the user
+       ! Choice 1: define the heat capacity and the conductivity (necessary if non uniform heat capacity)
        ! Choice 2: define only the diffusivity only
        ! In both cases, temperature_diffusivity is used, it contains the conductivities in 1)
        ! and the diffusivities in 2)
@@ -1662,6 +1682,101 @@ CONTAINS
        READ (21, *) inputs%if_compute_error
     ELSE
        inputs%if_compute_error = .FALSE.
+    END IF
+
+    !==========Frequency snapshot====================!
+    CALL find_string(21, '===Frequency to write snapshot file', test)
+    IF (test) THEN
+       READ (21, *) inputs%freq_snapshot
+    ELSE
+       inputs%freq_snapshot = 100000000
+    END IF
+    CALL find_string(21, '===Name of folder to write snapshot', test)
+    IF (test) THEN
+       READ (21, *) inputs%folder_for_snapshot
+    ELSE
+       inputs%folder_for_snapshot = 'SNAPSHOT'
+    END IF
+    CALL find_string(21, '===Should we write snapshot on gauss point ? (true/false)', test)
+    IF (test) THEN
+       READ (21, *) inputs%if_snapshot_gauss
+    ELSE
+       inputs%if_snapshot_gauss = .FALSE.
+    END IF
+    CALL find_string(21, '===Should we write snapshot in physical space (true/false)', test)
+    IF (test) THEN
+       READ (21, *) inputs%if_snapshot_phys
+    ELSE
+       inputs%if_snapshot_phys = .FALSE.
+    END IF
+    CALL find_string(21, '===Should we write snapshot in fourier space (true/false)', test)
+    IF (test) THEN
+       READ (21, *) inputs%if_snapshot_fourier
+    ELSE
+       inputs%if_snapshot_fourier = .FALSE.
+    END IF
+    CALL find_string(21, '===Should we write snapshot in fourier space per mode (true/false)', test)
+    IF (test) THEN
+       READ (21, *) inputs%if_snapshot_fourier_per_mode
+    ELSE
+       inputs%if_snapshot_fourier_per_mode = .FALSE.
+    END IF
+
+    !==========Field snapshot====================!
+    CALL find_string(21, '===Should we write snapshot for u (true/false)', test)
+    IF (test) THEN
+       READ (21, *) inputs%if_snapshot_u
+    ELSE
+       inputs%if_snapshot_u = .FALSE.
+    END IF
+
+    CALL find_string(21, '===Should we write snapshot for p (true/false)', test)
+    IF (test) THEN
+       READ (21, *) inputs%if_snapshot_p
+    ELSE
+       inputs%if_snapshot_p = .FALSE.
+    END IF
+
+    CALL find_string(21, '===Should we write snapshot for level_set (true/false)', test)
+    IF (test) THEN
+       READ (21, *) inputs%if_snapshot_level_set
+    ELSE
+       inputs%if_snapshot_level_set = .FALSE.
+    END IF
+
+    CALL find_string(21, '===Should we write snapshot for B (true/false)', test)
+    IF (test) THEN
+       READ (21, *) inputs%if_snapshot_B
+    ELSE
+       inputs%if_snapshot_B = .FALSE.
+    END IF
+
+    CALL find_string(21, '===Should we write snapshot for H (true/false)', test)
+    IF (test) THEN
+       READ (21, *) inputs%if_snapshot_H
+    ELSE
+       inputs%if_snapshot_H = .FALSE.
+    END IF
+
+    CALL find_string(21, '===Should we write snapshot for phi (true/false)', test)
+    IF (test) THEN
+       READ (21, *) inputs%if_snapshot_phi
+    ELSE
+       inputs%if_snapshot_phi = .FALSE.
+    END IF
+
+    CALL find_string(21, '===Should we write snapshot for temp (true/false)', test)
+    IF (test) THEN
+       READ (21, *) inputs%if_snapshot_temp
+    ELSE
+       inputs%if_snapshot_temp = .FALSE.
+    END IF
+
+    CALL find_string(21, '===Should we write snapshot for conc (true/false)', test)
+    IF (test) THEN
+       READ (21, *) inputs%if_snapshot_conc
+    ELSE
+       inputs%if_snapshot_conc = .FALSE.
     END IF
 
     !==========Anemometer parameters===================!

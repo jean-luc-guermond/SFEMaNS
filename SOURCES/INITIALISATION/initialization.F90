@@ -15,7 +15,7 @@ MODULE initialization
   USE petsc
   USE fourier_to_real_for_vtu
   IMPLICIT NONE
-  PUBLIC :: initial, save_run, run_SFEMaNS
+  PUBLIC :: initial, save_run, run_SFEMaNS, save_snapshot
   PUBLIC :: prodmat_maxwell_int_by_parts
   PRIVATE
 
@@ -1954,10 +1954,10 @@ CONTAINS
                    IF (inputs%irestart_LES) THEN !inputs%LES=.t. true when inputs%if_mass=.t.
                       IF (inputs%if_LES_in_momentum) THEN
                          CALL read_restart_LES(comm_one_d_ns, time_u, list_mode, inputs%file_name, &
-                             opt_LES_NS=visc_LES, opt_LES_level=visc_LES_level)
+                              opt_LES_NS=visc_LES, opt_LES_level=visc_LES_level)
                       ELSE
                          CALL read_restart_LES(comm_one_d_ns, time_u, list_mode, inputs%file_name, &
-                             opt_LES_level=visc_LES_level)
+                              opt_LES_level=visc_LES_level)
                          visc_LES = 0.d0
                       END IF
                    ELSE
@@ -2389,5 +2389,114 @@ CONTAINS
     inputs%h_min_distance = inputs%multiplier_for_h_min_distance * h_min
     !===End compute h_min
   END SUBROUTINE compute_local_mesh_size_level_set
+
+  !----------------SAVE SNAPSHOT----------------------------------------------
+  SUBROUTINE save_snapshot(it, freq_snapshot)
+    USE restart
+    USE subroutine_compute_visc_LES_level
+    USE chaine_caractere
+    USE snapshot
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: it, freq_snapshot
+    INTEGER :: n, lblank, l
+    INTEGER :: rang_S , rang_F, code
+    CHARACTER(len = 2)  :: tit_I
+    CHARACTER(len = 250) :: name_I, opt_dir
+    LOGICAL, SAVE :: once=.TRUE.
+
+    CALL MPI_COMM_RANK(comm_one_d(1), rang_S, code)
+    CALL MPI_COMM_RANK(comm_one_d(2), rang_F, code)
+
+    opt_dir = inputs%folder_for_snapshot
+    IF ( rang_S==0 .AND. rang_F == 0) THEN
+       IF (once) THEN
+          once = .FALSE.
+          CALL system('mkdir -p ' // TRIM(ADJUSTL(opt_dir)))
+          CALL system('touch ' // TRIM(ADJUSTL(opt_dir)) //'/times' )
+       END IF
+       OPEN(UNIT = 666, FILE = TRIM(ADJUSTL(opt_dir)) //'/times', position = 'append', action = 'write')
+       WRITE(666,*)  it, inputs%dt
+       CLOSE(666)
+    END IF
+
+    IF (if_momentum) THEN
+
+       ! Write mesh anyway
+       opt_dir = TRIM(ADJUSTL(inputs%folder_for_snapshot )) //'/vvmesh'
+       CALL WRITE_MESH(comm_one_d_ns, vv_mesh, opt_dir, "vv")
+       opt_dir = TRIM(ADJUSTL(inputs%folder_for_snapshot )) //'/ppmesh'
+       CALL WRITE_MESH(comm_one_d_ns, pp_mesh, opt_dir, "pp")
+
+       IF (pp_mesh%me /= 0) THEN !because of mxx pb_type
+
+          IF (inputs%if_snapshot_u) CALL write_snapshot(comm_one_d_ns, vv_mesh, list_mode, &
+               un, 'u', it, freq_snapshot)
+
+          IF (inputs%if_snapshot_p) CALL write_snapshot(comm_one_d_ns, pp_mesh, list_mode, &
+               pn, 'p', it, freq_snapshot)
+
+          !IF (inputs%if_ns_penalty) THEN
+          ! disabled / TO DO
+          !END IF
+          IF (inputs%if_snapshot_level_set) THEN
+             IF (if_mass) THEN
+                IF (inputs%if_level_set_P2) THEN
+                   DO n = 1, inputs%nb_fluid-1
+                      WRITE(tit_I, '(i2)') n
+                      lblank = eval_blank(2, tit_I)
+                      DO l = 1, lblank - 1
+                         tit_I(l:l) = '0'
+                      END DO
+                      name_I = 'Level_set_' // tit_I
+                      CALL write_snapshot(comm_one_d_ns, vv_mesh, list_mode, &
+                           level_set(n,:,:,:), name_I, it, freq_snapshot)
+                   END DO
+                ELSE
+                   DO n = 1, inputs%nb_fluid-1
+                      WRITE(tit_I, '(i2)') n
+                      lblank = eval_blank(2, tit_I)
+                      DO l = 1, lblank - 1
+                         tit_I(l:l) = '0'
+                      END DO
+                      name_I = 'Level_set_' // tit_I
+                      CALL write_snapshot(comm_one_d_ns, pp_mesh, list_mode, &
+                           level_set(n,:,:,:), name_I, it, freq_snapshot)
+                   END DO
+                END IF
+             END IF
+          END IF
+       END IF
+    END IF
+
+    IF (if_induction) THEN
+       ! Write mesh anyway
+       opt_dir = TRIM(ADJUSTL(inputs%folder_for_snapshot )) //'/Hmesh'
+       CALL WRITE_MESH(comm_one_d, H_mesh, opt_dir, "H")
+
+       IF (inputs%if_snapshot_B) CALL write_snapshot(comm_one_d, H_mesh, list_mode, &
+            Bn, 'B', it, freq_snapshot)
+       IF (inputs%if_snapshot_H) CALL write_snapshot(comm_one_d, H_mesh, list_mode, &
+            Hn, 'H', it, freq_snapshot)
+
+       IF (phi_mesh%me /= 0) THEN
+          opt_dir = TRIM(ADJUSTL(inputs%folder_for_snapshot )) //'/phimesh'
+          CALL WRITE_MESH(comm_one_d, phi_mesh, opt_dir, "phi")
+          IF (inputs%if_snapshot_phi) CALL write_snapshot(comm_one_d, phi_mesh, list_mode, &
+               phin, 'Phi', it, freq_snapshot)
+       END IF
+    END IF
+
+    IF (if_energy) THEN
+       IF (inputs%if_snapshot_temp) CALL write_snapshot(comm_one_d_temp, temp_mesh, list_mode, &
+            tempn, 'Temperature', it, freq_snapshot)
+    END IF
+
+    IF (if_concentration) THEN
+       IF (inputs%if_snapshot_conc) CALL write_snapshot(comm_one_d_conc, conc_mesh, list_mode, &
+            concn, 'Concentration', it, freq_snapshot)
+    END IF
+
+  END SUBROUTINE save_snapshot
+  !---------------------------------------------------------------------------
 
 END MODULE initialization

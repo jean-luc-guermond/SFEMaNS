@@ -127,6 +127,11 @@ PROGRAM mhd_prog
         CALL  save_run(it,inputs%freq_restart)
      ENDIF
 
+     !===Write snapshot file
+     IF (MOD(it, inputs%freq_snapshot) == 0) THEN
+        CALL save_snapshot(it,inputs%freq_snapshot)
+     ENDIF
+
      !===Timing
      tploc = user_time() - tploc
      IF (it>1) tploc_max = tploc_max + tploc
