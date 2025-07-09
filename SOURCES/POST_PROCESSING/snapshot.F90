@@ -393,7 +393,8 @@ CONTAINS
     END DO
 
     filename = inputs%file_name
-    out_name = trim(inputs%folder_for_snapshot) // '/phys_' // trim(type_field) // '_S' // tit_S // trim(opt_I) // '.' // filename
+    out_name = trim(inputs%folder_for_snapshot) // '/phys_' // trim(type_field) // '_S' // tit_S // &
+            trim(opt_I) // '.' // filename
 
     ! added n_tot_last<ntot_gauss for last procF : RB MC 11/06/24
     ntot_gauss_last = mesh%gauss%l_G * mesh%me - (nb_procs_F-1)*bloc_size_gauss
@@ -457,8 +458,10 @@ CONTAINS
 
     CALL system('mkdir -p ' // TRIM(ADJUSTL(opt_dir)))
     filename = inputs%file_name
-    out_name = TRIM(ADJUSTL(opt_dir)) // '/' // trim(type_field) // '_S' // tit_S // trim(opt_I) // '.' // filename
-    OPEN(UNIT = 10, FILE = out_name, POSITION = 'append', FORM = 'unformatted', ACCESS = 'stream', STATUS = 'replace')
+    out_name = TRIM(ADJUSTL(opt_dir)) // '/' // trim(type_field) // '_S' // tit_S // trim(opt_I) // &
+            '.' // filename
+    OPEN(UNIT = 10, FILE = out_name, POSITION = 'append', FORM = 'unformatted', ACCESS = 'stream', &
+            STATUS = 'replace')
 
     WRITE(10) field(:)
 
@@ -524,12 +527,14 @@ CONTAINS
 
     CLOSE(667)
 
-    out_name = TRIM(ADJUSTL(opt_dir)) // '/' // mesh_name // 'mesh_gauss_ww' // '_S' // tit_S // '.' // filename
+    out_name = TRIM(ADJUSTL(opt_dir)) // '/' // mesh_name // 'mesh_gauss_ww' // '_S' // tit_S // '.' &
+            // filename
     OPEN(UNIT = 10, FILE = out_name, FORM = 'unformatted', ACCESS = 'stream',STATUS = 'unknown')
     WRITE(10) mesh%gauss%ww(:,:)
     CLOSE(10)
 
-    out_name = TRIM(ADJUSTL(opt_dir)) // '/' // mesh_name // 'mesh_gauss_wws' // '_S' // tit_S // '.' // filename
+    out_name = TRIM(ADJUSTL(opt_dir)) // '/' // mesh_name // 'mesh_gauss_wws' // '_S' // tit_S // '.' &
+            // filename
     OPEN(UNIT = 10, FILE = out_name, FORM = 'unformatted', ACCESS = 'stream',STATUS = 'unknown')
     WRITE(10) mesh%gauss%wws(:,:)
     CLOSE(10)
@@ -549,32 +554,38 @@ CONTAINS
     WRITE(10) mesh%j_s(:)
     CLOSE(10)
 
-    out_name = TRIM(ADJUSTL(opt_dir)) // '/'// mesh_name // 'mesh_gauss_dw' // '_S' // tit_S // '.' // filename
+    out_name = TRIM(ADJUSTL(opt_dir)) // '/'// mesh_name // 'mesh_gauss_dw' // '_S' // tit_S // &
+            '.' // filename
     OPEN(UNIT = 10, FILE = out_name, FORM = 'unformatted', ACCESS = 'stream', STATUS = 'unknown')
     WRITE(10) mesh%gauss%dw(:,:,:,:) !=== shape (2,
     CLOSE(10)
 
-    out_name = TRIM(ADJUSTL(opt_dir)) // '/'// mesh_name // 'mesh_gauss_dw_s' // '_S' // tit_S // '.' // filename
+    out_name = TRIM(ADJUSTL(opt_dir)) // '/'// mesh_name // 'mesh_gauss_dw_s' // '_S' // tit_S // &
+            '.' // filename
     OPEN(UNIT = 10, FILE = out_name, FORM = 'unformatted', ACCESS = 'stream', STATUS = 'unknown')
     WRITE(10) mesh%gauss%dw_s(:,:,:,:) !=== shape (2,
     CLOSE(10)
 
-    out_name = TRIM(ADJUSTL(opt_dir)) // '/'// mesh_name // 'mesh_gauss_rj' // '_S' // tit_S // '.' // filename
+    out_name = TRIM(ADJUSTL(opt_dir)) // '/'// mesh_name // 'mesh_gauss_rj' // '_S' // tit_S // &
+            '.' // filename
     OPEN(UNIT = 10, FILE = out_name, FORM = 'unformatted', ACCESS = 'stream', STATUS = 'unknown')
     WRITE(10) mesh%gauss%rj(:,:) !=== shape (n_w,dom_me)
     CLOSE(10)
 
-    out_name = TRIM(ADJUSTL(opt_dir)) // '/'// mesh_name // 'mesh_gauss_rjs' // '_S' // tit_S // '.' // filename
+    out_name = TRIM(ADJUSTL(opt_dir)) // '/'// mesh_name // 'mesh_gauss_rjs' // '_S' // tit_S // &
+            '.' // filename
     OPEN(UNIT = 10, FILE = out_name, FORM = 'unformatted', ACCESS = 'stream', STATUS = 'unknown')
     WRITE(10) mesh%gauss%rjs(:,:) !=== shape (n_ws,dom_mes)
     CLOSE(10)
 
-    out_name = TRIM(ADJUSTL(opt_dir)) // '/'// mesh_name // 'mesh_rr_node' // '_S' // tit_S // '.' // filename
+    out_name = TRIM(ADJUSTL(opt_dir)) // '/'// mesh_name // 'mesh_rr_node' // '_S' // tit_S // &
+            '.' // filename
     OPEN(UNIT = 10, FILE = out_name, FORM = 'unformatted', ACCESS = 'stream', STATUS = 'unknown')
     WRITE(10) mesh%rr(1,:)
     CLOSE(10)
 
-    out_name = TRIM(ADJUSTL(opt_dir)) // '/'// mesh_name // 'mesh_zz_node' // '_S' // tit_S // '.' // filename
+    out_name = TRIM(ADJUSTL(opt_dir)) // '/'// mesh_name // 'mesh_zz_node' // '_S' // tit_S // &
+            '.' // filename
     OPEN(UNIT = 10, FILE = out_name, FORM = 'unformatted', ACCESS = 'stream', STATUS = 'unknown')
     WRITE(10) mesh%rr(2,:)
     CLOSE(10)
@@ -618,18 +629,22 @@ CONTAINS
     filename = inputs%file_name
 
     CALL system('mkdir -p ' // TRIM(ADJUSTL(opt_dir)))
-    out_name = TRIM(ADJUSTL(opt_dir)) // '/fourier_' // trim(adjustl(name_field)) // '_S' // tit_S // trim(opt_I) // '.' // filename
+    out_name = TRIM(ADJUSTL(opt_dir)) // '/fourier_' // trim(adjustl(name_field)) // '_S' // &
+            tit_S // trim(opt_I) // '.' // filename
 
     local_size = SIZE(field,1) * SIZE(field,2) * SIZE(list_mode)
     ! off set = taille d'un mode * nb_mode * rang_F
     cursor_offset = local_size * rang_F
     WRITE(*,*) local_size, cursor_offset
 
-    CALL MPI_File_open(communicator(2), out_name, MPI_MODE_CREATE + MPI_MODE_WRONLY, MPI_INFO_NULL, filehandle, ierr)
+    CALL MPI_File_open(communicator(2), out_name, MPI_MODE_CREATE + MPI_MODE_WRONLY, MPI_INFO_NULL, &
+           filehandle, ierr)
     CALL MPI_Type_contiguous(local_size,MPI_DOUBLE_PRECISION,arraytype,ierr)
     CALL MPI_Type_commit(arraytype,ierr)
-    CALL MPI_File_set_view(filehandle, cursor_offset*8_MPI_OFFSET_KIND, MPI_DOUBLE_PRECISION, arraytype, 'native', MPI_INFO_NULL, ierr)
-    CALL MPI_File_write_all(filehandle, field(:,:,:), local_size, MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE, ierr)
+    CALL MPI_File_set_view(filehandle, cursor_offset*8_MPI_OFFSET_KIND, MPI_DOUBLE_PRECISION, &
+            arraytype, 'native', MPI_INFO_NULL, ierr)
+    CALL MPI_File_write_all(filehandle, field(:,:,:), local_size, MPI_DOUBLE_PRECISION, &
+            MPI_STATUS_IGNORE, ierr)
     CALL MPI_File_close(filehandle, ierr)
 
   END SUBROUTINE WRITE_FOURIER_FIELD
@@ -695,8 +710,8 @@ CONTAINS
        out_name = trim(adjustl(opt_dir)) // '/fourier_' // trim(adjustl(name_field)) // '_S' &
             // tit_S // '_F' // tit_F // '.' // filename
 
-       OPEN(NEWUNIT = unit_to_write, FILE = out_name, action = 'write', position = 'append', FORM = 'unformatted', &
-            ACCESS = 'stream')
+       OPEN(NEWUNIT = unit_to_write, FILE = out_name, action = 'write', position = 'append', &
+               FORM = 'unformatted', ACCESS = 'stream')
        WRITE(unit_to_write) field(:, :, i)
        CLOSE(unit_to_write)
     END DO
