@@ -128,7 +128,7 @@ CONTAINS
        !===ATTENTION pressure BCs are no longer implemented
        !===JLG JUne 9 2017
        !CALL scalar_glob_js_D(pp_mesh, list_mode, pp_1_LA, pp_mode_global_js_D)
-       CALL scalar_without_glob_js_D(pp_mesh, list_mode, pp_1_LA, pp_mode_global_js_D)
+       CALL scalar_without_bc_glob_js_D(pp_mesh, list_mode, pp_1_LA, pp_mode_global_js_D)
        ALLOCATE(pp_global_D(m_max_c))
        DO i = 1, m_max_c
           ALLOCATE(pp_global_D(i)%DRL(SIZE(pp_mode_global_js_D(i)%DIL)))

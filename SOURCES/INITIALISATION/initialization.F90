@@ -1805,7 +1805,7 @@ CONTAINS
              bloc_size = pp_mesh%gauss%l_G * (bloc_size / pp_mesh%gauss%l_G) + pp_mesh%gauss%l_G
              m_max_pad = 3 * SIZE(list_mode) * nb_procs / 2
              ALLOCATE(visc_entro_level(2 * m_max_pad - 1, bloc_size))
-             ALLOCATE(visc_LES_level(inputs%nb_fluid-1, vv_mesh%gauss%l_G*vv_mesh%dom_me, 6, m_max_c))
+             ALLOCATE(visc_LES_level(inputs%nb_fluid-1, pp_mesh%gauss%l_G*pp_mesh%dom_me, 6, m_max_c))
           END IF
        END IF
     END IF

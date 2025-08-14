@@ -325,8 +325,7 @@ CONTAINS
       END DO
    END SUBROUTINE scalar_with_bc_glob_js_D
 
-
-   SUBROUTINE scalar_without_glob_js_D(pp_mesh, list_mode, pp_1_LA, pp_mode_global_js_D)
+   SUBROUTINE scalar_without_bc_glob_js_D(pp_mesh, list_mode, pp_1_LA, pp_mode_global_js_D)
       USE def_type_mesh
       IMPLICIT NONE
       TYPE(mesh_type), INTENT(IN) :: pp_mesh
@@ -351,5 +350,6 @@ CONTAINS
             pp_mode_global_js_D(i)%DIL = pp_1_LA%loc_to_glob(1, pp_js_axis_D)
          END IF
       END DO
-   END SUBROUTINE scalar_without_glob_js_D
+   END SUBROUTINE scalar_without_bc_glob_js_D
+
 END MODULE dir_nodes_petsc

@@ -128,6 +128,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(SIZE(rr,2))                  :: vv
     REAL(KIND=8), DIMENSION(SIZE(rr,2))                  :: r, z
     REAL(KIND=8), DIMENSION(SIZE(rr,2))                  :: ur, ut, uz
+    REAL(KIND=8), DIMENSION(SIZE(rr,2))                  :: curl_ur, curl_ut, curl_uz
     INTEGER                                              :: m
     REAL(KIND=8)                                         :: t
 
@@ -142,21 +143,26 @@ CONTAINS
        ur = r**3*COS(2*PI*z)*SIN(t)
        ut = r**2*z*SIN(t)
        uz = -(2*r**2/PI)*SIN(2*PI*z)*SIN(t)
+       curl_ur = -r**2*SIN(t)
+       curl_ut = (-2*PI*r**3 + 4*r/PI)*SIN(2*PI*z)*SIN(t)
+       curl_uz = 3*r*z*SIN(T)
+
        IF (m==0 .AND. TYPE==1) THEN
           vv = r**3*COS(2*PI*z)*COS(t) &
-               + (ur*2*r**2*COS(2*PI*z) - ut*r*z &
-               - uz*r**3*2*PI*SIN(2*PI*z))*SIN(t) &
-               - (1/Re)*(8*r-(2*pi)**2*r**3)*COS(2*PI*z)*SIN(t)
+               + curl_ut*uz - curl_uz*ut &
+               - (1/Re)*(8*r-(2*pi)**2*r**3)*COS(2*PI*z)*SIN(t) &
+               + 0.5d0*(6*r**5*COS(2*PI*z)**2+4*r**3*z**2 &
+                  + 16*r**3/(PI**2)*SIN(2*PI*z)**2)*SIN(t)**2
        ELSE IF (m==0 .AND. TYPE==3) THEN
           vv = r**2*z*COS(t) &
-               + (ur*2*r*z + ut*r**2*COS(2*PI*z)&
-               + uz*r**2)*SIN(t) &
+               + curl_uz*ur - curl_ur*uz &
                - (1/Re)*(3*z)*SIN(t)
        ELSE IF (m==0 .AND. TYPE==5) THEN
           vv = -(2*r**2/PI)*SIN(2*PI*z)*COS(t) &
-               + (ur*(-(4*r/PI)*SIN(2*PI*z)) &
-               + uz*(-4*r**2*COS(2*PI*z)))*SIN(t) &
-               - (1/Re)*(-(8/PI)+2*PI*4*r**2)*SIN(2*PI*z)*SIN(t)
+               + curl_ur*ut - curl_ut*ur &
+               - (1/Re)*(-(8/PI)+2*PI*4*r**2)*SIN(2*PI*z)*SIN(t) &
+               + 0.5d0*(-r**6*4*PI*SIN(2*PI*z)*COS(2*PI*z) &
+                   + 2*r**4*z + 16*r**4/PI*COS(2*PI*z)*SIN(2*PI*z))*SIN(t)**2
        ELSE
           vv = 0.d0
        END IF
