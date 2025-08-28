@@ -184,7 +184,7 @@ CONTAINS
 
          ALLOCATE(mesh%jj(nw * (f_dof + 1) + 1, me))   !----> done
          ALLOCATE(mesh%jjs(nws + f_dof, mes))   !---->
-         ALLOCATE(mesh%jjs_extra(nws + f_dof, mesh%mextra))   !---->
+         ALLOCATE(mesh%jjs_extra(nws + f_dof, mesh%mes_extra))   !---->
          ALLOCATE(mesh%jj_extra(nw * (f_dof + 1) + 1, mesh%mextra)) !---->
          ALLOCATE(mesh%rr(kd, mesh%np))    !----> done
          ALLOCATE(mesh%rrs_extra(kd, nw * (f_dof + 1) + 1, mesh%mes_extra))
