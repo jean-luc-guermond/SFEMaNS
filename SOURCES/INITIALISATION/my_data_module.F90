@@ -1,6 +1,22 @@
 MODULE my_data_module
   USE def_type_mesh
   USE solver_petsc
+
+  TYPE LK_data
+     !=== nb_exptA is only used for ctests
+     INTEGER     :: nb_exptA = 1
+     LOGICAL     :: ctest_exptA = .FALSE.
+     !=== nb_exptA is only used for ctests
+     LOGICAL     :: eigs     = .FALSE.
+     INTEGER     :: nev      = 1
+     INTEGER     :: kdim     = 4
+     REAL(KIND=8)::abs_tol   = 1.d-7
+     LOGICAL     :: if_vtu_3d = .FALSE.
+   CONTAINS
+     PROCEDURE, PUBLIC :: init => init_LK_data   
+     PROCEDURE, PUBLIC :: read => read_LK_data   
+  END TYPE LK_data
+  
   TYPE my_data
      LOGICAL :: iformatted
      CHARACTER(LEN = 200) :: directory, file_name
@@ -165,13 +181,15 @@ MODULE my_data_module
      INTEGER :: nb_eigenvalues, arpack_iter_max
      REAL(KIND = 8) :: arpack_tolerance
      LOGICAL :: if_arpack_vtu_2d
+     !===Data for LightKrylov problem================================================
+     TYPE(LK_data) :: LK
      !===Data for stress bc==========================================================
      REAL(KIND = 8) :: stab_bdy_ns
      !===Data for postprocessing=====================================================
      INTEGER :: number_of_planes_in_real_space
      LOGICAL :: check_numerical_stability
      LOGICAL :: is_mesh_symmetric
-     LOGICAL :: if_zero_out_modes
+     LOGICAL :: if_zero_out_modes, if_write_mesh
      INTEGER :: nb_select_mode_ns, nb_select_mode_mxw
      INTEGER, DIMENSION(:), POINTER :: list_select_mode_ns, list_select_mode_mxw
      INTEGER :: freq_restart, freq_en, freq_plot, freq_snapshot
@@ -179,9 +197,11 @@ MODULE my_data_module
      LOGICAL :: if_snapshot_gauss
      LOGICAL :: if_snapshot_phys, if_snapshot_fourier, if_snapshot_fourier_per_mode
      LOGICAL :: if_snapshot_u, if_snapshot_p, if_snapshot_level_set
+     LOGICAL :: if_snapshot_un_m1, if_snapshot_pn_m1, if_snapshot_level_set_m1
      LOGICAL :: if_snapshot_B, if_snapshot_H, if_snapshot_phi
-     LOGICAL :: if_snapshot_temp
-     LOGICAL :: if_snapshot_conc
+     LOGICAL :: if_snapshot_Bn_m1, if_snapshot_Hn_m1, if_snapshot_phin_m1
+     LOGICAL :: if_snapshot_temp, if_snapshot_tempn_m1
+     LOGICAL :: if_snapshot_conc, if_snapshot_concn_m1
      LOGICAL :: verbose_timing, verbose_divergence, verbose_CFL
      LOGICAL :: if_just_processing
      LOGICAL :: if_post_proc_init
@@ -212,6 +232,8 @@ MODULE my_data_module
    CONTAINS
      PROCEDURE, PUBLIC :: init
   END TYPE my_data
+
+
 CONTAINS
   SUBROUTINE init(a)
     CLASS(my_data), INTENT(INOUT) :: a
@@ -290,13 +312,21 @@ CONTAINS
     a%if_snapshot_fourier = .FALSE.
     a%if_snapshot_fourier_per_mode = .FALSE.
     a%if_snapshot_u = .FALSE.
+    a%if_snapshot_un_m1 = .FALSE.
     a%if_snapshot_p = .FALSE.
+    a%if_snapshot_pn_m1 = .FALSE.
     a%if_snapshot_level_set = .FALSE.
+    a%if_snapshot_level_set_m1 = .FALSE.
     a%if_snapshot_B = .FALSE.
+    a%if_snapshot_Bn_m1 = .FALSE.
     a%if_snapshot_H = .FALSE.
+    a%if_snapshot_Hn_m1 = .FALSE.
     a%if_snapshot_phi = .FALSE.
+    a%if_snapshot_phin_m1 = .FALSE.
     a%if_snapshot_temp = .FALSE.
+    a%if_snapshot_tempn_m1 = .FALSE.
     a%if_snapshot_conc = .FALSE.
+    a%if_snapshot_concn_m1 = .FALSE.
     !===Reals
     a%LES_coeff1 = 0.d0
     a%LES_coeff2 = 0.d0
@@ -331,6 +361,7 @@ CONTAINS
     a%freq_restart = 10000000
     a%freq_en = 10000000
     a%freq_plot = 10000000
+    a%if_write_mesh = .FALSE.
     a%freq_snapshot = 10000000
     a%type_fe_velocity = 2
     a%taylor_order = -1
@@ -344,6 +375,64 @@ CONTAINS
     a%nb_refinements = 0
 
   END SUBROUTINE init
+
+  SUBROUTINE init_LK_data(self, data_fichier, in_unit)
+    IMPLICIT NONE
+    CLASS(LK_data),       INTENT(INOUT) :: self
+    CHARACTER(len = 200), INTENT(IN)    :: data_fichier
+    INTEGER,              INTENT(IN)    :: in_unit 
+    CALL self%read(data_fichier, in_unit)
+  END SUBROUTINE init_LK_data 
+  
+  SUBROUTINE read_LK_data(self, data_fichier, in_unit)
+    USE chaine_caractere
+    USE my_util
+    IMPLICIT NONE
+    CLASS(LK_data),       INTENT(INOUT) :: self
+    CHARACTER(len = 200), INTENT(IN)    :: data_fichier
+    INTEGER,              INTENT(IN)    :: in_unit 
+    LOGICAL                             :: test
+    
+    !===Initialization of all parameters is directly in class definition
+    !===Data for LightKrylov (eigenvalue problems)==========!
+    CALL find_string(in_unit, "===Compute spectrum with LightKrylov? (true/false)", test)
+    IF (test) THEN
+       READ (in_unit, *) self%eigs
+    END IF
+
+   !  CALL find_string(in_unit, "===How many exponential propagation applications?", test)
+   !  IF (test) THEN
+   !     READ (in_unit, *) self%nb_exptA
+   !  END IF
+
+    CALL find_string(in_unit, "===How many LK eigenvalues?", test)
+    IF (test) THEN
+       READ (in_unit, *) self%nev
+    END IF
+    
+    CALL find_string(in_unit, "===How many simultaneous vectors for Krylov-Schur?", test)
+    IF (test) THEN
+       READ (in_unit, *) self%kdim
+    ELSE
+       self%kdim = 4 * self%nev
+    END IF
+
+    CALL find_string(in_unit, "===Absolute tolerance for LK eigenvalues?", test)
+    IF (test) THEN
+       READ (in_unit, *) self%abs_tol
+    ELSE
+       self%abs_tol = 1.d-7
+    END IF
+    
+    CALL find_string(in_unit, "===Compute vtu 3D of LK eigenvectors?", test)
+    IF (test) THEN
+       READ (in_unit, *) self%if_vtu_3d
+    ELSE
+       self%if_vtu_3d = .FALSE.
+    END IF
+
+  END SUBROUTINE read_LK_data 
+
 END MODULE my_data_module
 
 MODULE input_data
@@ -351,9 +440,11 @@ MODULE input_data
   IMPLICIT NONE
   PUBLIC :: read_my_data
   TYPE(my_data), PUBLIC :: inputs
+  INTEGER, PARAMETER, PRIVATE :: in_unit=21
   PRIVATE
 
 CONTAINS
+
 
   SUBROUTINE read_my_data(data_fichier)
     USE chaine_caractere
@@ -368,7 +459,7 @@ CONTAINS
     CALL inputs%init
 
     !===Open data file=============================================================
-    OPEN(UNIT = 21, FILE = data_fichier, FORM = 'formatted', STATUS = 'unknown')
+    OPEN(UNIT = in_unit, FILE = data_fichier, FORM = 'formatted', STATUS = 'unknown')
 
     !===Location of mesh============================================================
     CALL read_until(21, '===Is mesh file formatted (true/false)?')
@@ -455,6 +546,7 @@ CONTAINS
     !===Time integration============================================================
     CALL read_until(21, '===Time step and number of time iterations')
     READ(21, *) inputs%dt, inputs%nb_iteration
+
 
     !===Check numerical stability===================================================
     CALL find_string(21, '===Check numerical stability (true/false)', test)
@@ -659,9 +751,16 @@ CONTAINS
        IF (test) THEN
           READ(21, *) inputs%Re
        ELSE
-          CALL read_until(21, '===Kinematic viscosity')
-          READ(21, *) inputs%Re
-          inputs%Re = 1.d0 / inputs%Re
+          CALL find_string(21, '===Kinematic viscosity', test)
+          IF (test) THEN
+             READ(21, *) inputs%Re
+             inputs%Re = 1.d0 / inputs%Re
+          ELSE
+             CALL error_petsc("BUG in data: define either '===Reynolds number' or '===Kinematic viscosity'")
+          END IF
+         !  CALL read_until(21, '===Kinematic viscosity')
+         !  READ(21, *) inputs%Re
+         !  inputs%Re = 1.d0 / inputs%Re
        END IF
 
        !==========Lorentz Force Coefficient===============!
@@ -990,6 +1089,13 @@ CONTAINS
              READ(21, *) inputs%if_permeability_variable_in_theta
           END IF
        END IF
+
+! VB 11/02/2026
+       IF (inputs%if_permeability_variable_in_theta .AND. inputs%if_maxwell_with_H) THEN
+           WRITE(*,*) "permeability variable in theta and solve maxwell with H incompatible for now"
+           STOP
+       END IF
+! VB 11/02/2026
 
        !==========FEM or Gaussian integration for mu_bar==!
        inputs%if_use_fem_integration_for_mu_bar = .TRUE.
@@ -1593,28 +1699,32 @@ CONTAINS
        END IF
     END IF
 
+    
+    !===Data for LightKrylov (eigenvalue problems)==========!
+    CALL inputs%LK%init(data_fichier, in_unit)
+
     !===Data for arpack (eigenvalue problems)==========!
     !==========Frequency parameters====================!
     IF (inputs%type_pb=='mxw') THEN
-       CALL find_string(21, '===Do we use Arpack?', test)
+       CALL find_string(in_unit, '===Do we use Arpack?', test)
        IF (test) THEN
-          READ (21, *) inputs%if_arpack
+          READ (in_unit, *) inputs%if_arpack
        ELSE
           inputs%if_arpack = .FALSE.
        END IF
        IF (inputs%if_arpack)THEN
-          CALL read_until(21, '===Number of eigenvalues to compute')
-          READ (21, *) inputs%nb_eigenvalues
-          CALL read_until(21, '===Maximum number of Arpack iterations')
-          READ (21, *) inputs%arpack_iter_max
-          CALL read_until(21, '===Tolerance for Arpack')
-          READ (21, *) inputs%arpack_tolerance
-          CALL read_until(21, &
+          CALL read_until(in_unit, '===Number of eigenvalues to compute')
+          READ (in_unit, *) inputs%nb_eigenvalues
+          CALL read_until(in_unit, '===Maximum number of Arpack iterations')
+          READ (in_unit, *) inputs%arpack_iter_max
+          CALL read_until(in_unit, '===Tolerance for Arpack')
+          READ (in_unit, *) inputs%arpack_tolerance
+          CALL read_until(in_unit, &
                '===Which eigenvalues (''LM'', ''SM'', ''SR'', ''LR'' ''LI'', ''SI'')')
-          READ (21, *) inputs%arpack_which
-          CALL find_string(21, '===Create 2D vtu files for Arpack? (true/false)', test)
+          READ (in_unit, *) inputs%arpack_which
+          CALL find_string(in_unit, '===Create 2D vtu files for Arpack? (true/false)', test)
           IF (test) THEN
-             READ (21, *) inputs%if_arpack_vtu_2d
+             READ (in_unit, *) inputs%if_arpack_vtu_2d
           ELSE
              inputs%if_arpack_vtu_2d = .FALSE.
           END IF
@@ -1625,174 +1735,236 @@ CONTAINS
     END IF
 
     !===Format for paraview============================!
-    CALL find_string(21, '===Vtu files in xml format? (true=xml/false=ascii)', test)
+    CALL find_string(in_unit, '===Vtu files in xml format? (true=xml/false=ascii)', test)
     IF (test) THEN
-       READ (21, *) inputs%if_xml
+       READ (in_unit, *) inputs%if_xml
     ELSE
        inputs%if_xml = .TRUE.
     END IF
 
     !===Data for post processing=======================!
-    CALL find_string(21, '===Number of planes in real space for Visualization', test)
+    CALL find_string(in_unit, '===Number of planes in real space for Visualization', test)
     IF (test) THEN
-       READ (21, *) inputs%number_of_planes_in_real_space
+       READ (in_unit, *) inputs%number_of_planes_in_real_space
     ELSE
        inputs%number_of_planes_in_real_space = 10
     END IF
 
     !==========Frequency parameters====================!
-    CALL find_string(21, '===Frequency to write restart file', test)
+    CALL find_string(in_unit, '===Frequency to write restart file', test)
     IF (test) THEN
-       READ (21, *) inputs%freq_restart
+       READ (in_unit, *) inputs%freq_restart
     ELSE
        inputs%freq_restart = 100000000
     END IF
-    CALL find_string(21, '===Frequency to write energies', test)
+    CALL find_string(in_unit, '===Frequency to write energies', test)
     IF (test) THEN
-       READ (21, *) inputs%freq_en
+       READ (in_unit, *) inputs%freq_en
     ELSE
        inputs%freq_en = 100000000
     END IF
-    CALL find_string(21, '===Frequency to create plots', test)
+    CALL find_string(in_unit, '===Frequency to create plots', test)
     IF (test) THEN
-       READ (21, *) inputs%freq_plot
+       READ (in_unit, *) inputs%freq_plot
     ELSE
        inputs%freq_plot = 100000000
     END IF
-    CALL find_string(21, '===Just postprocessing without computing? (true/false)', test)
+    CALL find_string(in_unit, '===Just postprocessing without computing? (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%if_just_processing
+       READ (in_unit, *) inputs%if_just_processing
     ELSE
        inputs%if_just_processing = .FALSE.
     END IF
-    CALL find_string(21, '===Should I do post proc init? (true/false)', test)
+    CALL find_string(in_unit, '===Should I do post proc init? (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%if_post_proc_init
+       READ (in_unit, *) inputs%if_post_proc_init
     ELSE
        inputs%if_post_proc_init = .FALSE.
     END IF
-    CALL find_string(21, '===Create 2D plots (true/false)', test)
+    CALL find_string(in_unit, '===Create 2D plots (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%if_plot_2D
+       READ (in_unit, *) inputs%if_plot_2D
     ELSE
        inputs%if_plot_2D = .FALSE.
     END IF
-    CALL find_string(21, '===Compute L2 and H1 relative errors (true/false)', test)
+    CALL find_string(in_unit, '===Compute L2 and H1 relative errors (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%if_compute_error
+       READ (in_unit, *) inputs%if_compute_error
     ELSE
        inputs%if_compute_error = .FALSE.
     END IF
 
     !==========Frequency snapshot====================!
-    CALL find_string(21, '===Frequency to write snapshot file', test)
+    CALL find_string(in_unit, '===Should we write mesh', test)
     IF (test) THEN
-       READ (21, *) inputs%freq_snapshot
+            READ (in_unit, *) inputs%if_write_mesh
+    ELSE
+            inputs%if_write_mesh = .FALSE.
+    END IF
+    CALL find_string(in_unit, '===Frequency to write snapshot file', test)
+    IF (test) THEN
+       READ (in_unit, *) inputs%freq_snapshot
     ELSE
        inputs%freq_snapshot = 100000000
     END IF
-    CALL find_string(21, '===Name of folder to write snapshot', test)
+    CALL find_string(in_unit, '===Name of folder to write snapshot', test)
     IF (test) THEN
-       READ (21, *) inputs%folder_for_snapshot
+       READ (in_unit, *) inputs%folder_for_snapshot
     ELSE
        inputs%folder_for_snapshot = 'SNAPSHOT'
     END IF
-    CALL find_string(21, '===Should we write snapshot on gauss point ? (true/false)', test)
+    CALL find_string(in_unit, '===Should we write snapshot on gauss point ? (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%if_snapshot_gauss
+       READ (in_unit, *) inputs%if_snapshot_gauss
     ELSE
        inputs%if_snapshot_gauss = .FALSE.
     END IF
-    CALL find_string(21, '===Should we write snapshot in physical space (true/false)', test)
+    CALL find_string(in_unit, '===Should we write snapshot in physical space (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%if_snapshot_phys
+       READ (in_unit, *) inputs%if_snapshot_phys
     ELSE
        inputs%if_snapshot_phys = .FALSE.
     END IF
-    CALL find_string(21, '===Should we write snapshot in fourier space (true/false)', test)
+    CALL find_string(in_unit, '===Should we write snapshot in fourier space (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%if_snapshot_fourier
+       READ (in_unit, *) inputs%if_snapshot_fourier
     ELSE
        inputs%if_snapshot_fourier = .FALSE.
     END IF
-    CALL find_string(21, '===Should we write snapshot in fourier space per mode (true/false)', test)
+    CALL find_string(in_unit, '===Should we write snapshot in fourier space per mode (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%if_snapshot_fourier_per_mode
+       READ (in_unit, *) inputs%if_snapshot_fourier_per_mode
     ELSE
        inputs%if_snapshot_fourier_per_mode = .FALSE.
     END IF
 
     !==========Field snapshot====================!
-    CALL find_string(21, '===Should we write snapshot for u (true/false)', test)
+    CALL find_string(in_unit, '===Should we write snapshot for u (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%if_snapshot_u
+       READ (in_unit, *) inputs%if_snapshot_u
     ELSE
        inputs%if_snapshot_u = .FALSE.
     END IF
 
-    CALL find_string(21, '===Should we write snapshot for p (true/false)', test)
+    CALL find_string(in_unit, '===Should we write snapshot for un_m1 (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%if_snapshot_p
+       READ (in_unit, *) inputs%if_snapshot_un_m1
+    ELSE
+       inputs%if_snapshot_un_m1 = .FALSE.
+    END IF
+    
+    CALL find_string(in_unit, '===Should we write snapshot for p (true/false)', test)
+    IF (test) THEN
+       READ (in_unit, *) inputs%if_snapshot_p
     ELSE
        inputs%if_snapshot_p = .FALSE.
     END IF
 
-    CALL find_string(21, '===Should we write snapshot for level_set (true/false)', test)
+    CALL find_string(in_unit, '===Should we write snapshot for pn_m1 (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%if_snapshot_level_set
+       READ (in_unit, *) inputs%if_snapshot_pn_m1
+    ELSE
+       inputs%if_snapshot_pn_m1 = .FALSE.
+    END IF
+
+    CALL find_string(in_unit, '===Should we write snapshot for level_set (true/false)', test)
+    IF (test) THEN
+       READ (in_unit, *) inputs%if_snapshot_level_set
     ELSE
        inputs%if_snapshot_level_set = .FALSE.
     END IF
 
-    CALL find_string(21, '===Should we write snapshot for B (true/false)', test)
+    CALL find_string(in_unit, '===Should we write snapshot for level_set_m1 (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%if_snapshot_B
+       READ (in_unit, *) inputs%if_snapshot_level_set_m1
+    ELSE
+       inputs%if_snapshot_level_set_m1 = .FALSE.
+    END IF
+
+    CALL find_string(in_unit, '===Should we write snapshot for B (true/false)', test)
+    IF (test) THEN
+       READ (in_unit, *) inputs%if_snapshot_B
     ELSE
        inputs%if_snapshot_B = .FALSE.
     END IF
 
-    CALL find_string(21, '===Should we write snapshot for H (true/false)', test)
+    CALL find_string(in_unit, '===Should we write snapshot for Bn_m1 (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%if_snapshot_H
+       READ (in_unit, *) inputs%if_snapshot_Bn_m1
+    ELSE
+       inputs%if_snapshot_Bn_m1 = .FALSE.
+    END IF
+
+    CALL find_string(in_unit, '===Should we write snapshot for H (true/false)', test)
+    IF (test) THEN
+       READ (in_unit, *) inputs%if_snapshot_H
     ELSE
        inputs%if_snapshot_H = .FALSE.
     END IF
 
-    CALL find_string(21, '===Should we write snapshot for phi (true/false)', test)
+    CALL find_string(in_unit, '===Should we write snapshot for Hn_m1 (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%if_snapshot_phi
+       READ (in_unit, *) inputs%if_snapshot_Hn_m1
+    ELSE
+       inputs%if_snapshot_Hn_m1 = .FALSE.
+    END IF
+
+    CALL find_string(in_unit, '===Should we write snapshot for phi (true/false)', test)
+    IF (test) THEN
+       READ (in_unit, *) inputs%if_snapshot_phi
     ELSE
        inputs%if_snapshot_phi = .FALSE.
     END IF
 
-    CALL find_string(21, '===Should we write snapshot for temp (true/false)', test)
+    CALL find_string(in_unit, '===Should we write snapshot for phin_m1 (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%if_snapshot_temp
+       READ (in_unit, *) inputs%if_snapshot_phin_m1
+    ELSE
+       inputs%if_snapshot_phin_m1 = .FALSE.
+    END IF
+
+    CALL find_string(in_unit, '===Should we write snapshot for temp (true/false)', test)
+    IF (test) THEN
+       READ (in_unit, *) inputs%if_snapshot_temp
     ELSE
        inputs%if_snapshot_temp = .FALSE.
     END IF
 
-    CALL find_string(21, '===Should we write snapshot for conc (true/false)', test)
+    CALL find_string(in_unit, '===Should we write snapshot for tempn_m1 (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%if_snapshot_conc
+       READ (in_unit, *) inputs%if_snapshot_tempn_m1
+    ELSE
+       inputs%if_snapshot_tempn_m1 = .FALSE.
+    END IF
+
+    CALL find_string(in_unit, '===Should we write snapshot for conc (true/false)', test)
+    IF (test) THEN
+       READ (in_unit, *) inputs%if_snapshot_conc
     ELSE
        inputs%if_snapshot_conc = .FALSE.
     END IF
 
+    CALL find_string(in_unit, '===Should we write snapshot for concn_m1 (true/false)', test)
+    IF (test) THEN
+       READ (in_unit, *) inputs%if_snapshot_concn_m1
+    ELSE
+       inputs%if_snapshot_concn_m1 = .FALSE.
+    END IF
+    
     !==========Anemometer parameters===================!
     !===Anemometers for concentration
-    CALL find_string(21, '===Anemometers (conc) ? (true/false)', test)
+    CALL find_string(in_unit, '===Anemometers (conc) ? (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%if_anemo_conc
+       READ (in_unit, *) inputs%if_anemo_conc
        IF (inputs%if_anemo_conc) THEN
-          CALL read_until(21, '===Number of anemo_conc (r,z)')
-          READ (21, *) inputs%nb_anemo_r_conc, inputs%nb_anemo_z_conc
+          CALL read_until(in_unit, '===Number of anemo_conc (r,z)')
+          READ (in_unit, *) inputs%nb_anemo_r_conc, inputs%nb_anemo_z_conc
           ALLOCATE(inputs%r_anemo_conc(inputs%nb_anemo_r_conc))
           ALLOCATE(inputs%z_anemo_conc(inputs%nb_anemo_z_conc))
-          CALL read_until(21, '===List of r anemo_conc')
-          READ (21, *) inputs%r_anemo_conc
-          CALL read_until(21, '===List of z anemo_conc')
-          READ (21, *) inputs%z_anemo_conc
+          CALL read_until(in_unit, '===List of r anemo_conc')
+          READ (in_unit, *) inputs%r_anemo_conc
+          CALL read_until(in_unit, '===List of z anemo_conc')
+          READ (in_unit, *) inputs%z_anemo_conc
        ELSE
           inputs%if_anemo_conc = .FALSE.
           inputs%nb_anemo_r_conc = 0
@@ -1804,18 +1976,18 @@ CONTAINS
        inputs%nb_anemo_z_conc = 0
     END IF
     !===Anemometers for velocity
-    CALL find_string(21, '===Anemometers (v) ? (true/false)', test)
+    CALL find_string(in_unit, '===Anemometers (v) ? (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%if_anemo_v
+       READ (in_unit, *) inputs%if_anemo_v
        IF (inputs%if_anemo_v) THEN
-          CALL read_until(21, '===Number of anemo_v (r,z)')
-          READ (21, *) inputs%nb_anemo_r_v, inputs%nb_anemo_z_v
+          CALL read_until(in_unit, '===Number of anemo_v (r,z)')
+          READ (in_unit, *) inputs%nb_anemo_r_v, inputs%nb_anemo_z_v
           ALLOCATE(inputs%r_anemo_v(inputs%nb_anemo_r_v))
           ALLOCATE(inputs%z_anemo_v(inputs%nb_anemo_z_v))
-          CALL read_until(21, '===List of r anemo_v')
-          READ (21, *) inputs%r_anemo_v
-          CALL read_until(21, '===List of z anemo_v')
-          READ (21, *) inputs%z_anemo_v
+          CALL read_until(in_unit, '===List of r anemo_v')
+          READ (in_unit, *) inputs%r_anemo_v
+          CALL read_until(in_unit, '===List of z anemo_v')
+          READ (in_unit, *) inputs%z_anemo_v
        ELSE
           inputs%if_anemo_v = .FALSE.
           inputs%nb_anemo_r_v = 0
@@ -1827,18 +1999,18 @@ CONTAINS
        inputs%nb_anemo_z_v = 0
     END IF
     !===Anemometers for temperature
-    CALL find_string(21, '===Anemometers (T) ? (true/false)', test)
+    CALL find_string(in_unit, '===Anemometers (T) ? (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%if_anemo_T
+       READ (in_unit, *) inputs%if_anemo_T
        IF (inputs%if_anemo_T) THEN
-          CALL read_until(21, '===Number of anemo_T (r,z)')
-          READ (21, *) inputs%nb_anemo_r_T, inputs%nb_anemo_z_T
+          CALL read_until(in_unit, '===Number of anemo_T (r,z)')
+          READ (in_unit, *) inputs%nb_anemo_r_T, inputs%nb_anemo_z_T
           ALLOCATE(inputs%r_anemo_T(inputs%nb_anemo_r_T))
           ALLOCATE(inputs%z_anemo_T(inputs%nb_anemo_z_T))
-          CALL read_until(21, '===List of r anemo_T')
-          READ (21, *) inputs%r_anemo_T
-          CALL read_until(21, '===List of z anemo_T')
-          READ (21, *) inputs%z_anemo_T
+          CALL read_until(in_unit, '===List of r anemo_T')
+          READ (in_unit, *) inputs%r_anemo_T
+          CALL read_until(in_unit, '===List of z anemo_T')
+          READ (in_unit, *) inputs%z_anemo_T
        ELSE
           inputs%if_anemo_T = .FALSE.
           inputs%nb_anemo_r_T = 0
@@ -1850,18 +2022,18 @@ CONTAINS
        inputs%nb_anemo_z_T = 0
     END IF
     !===Anemometers for magnetic field
-    CALL find_string(21, '===Anemometers (H) ? (true/false)', test)
+    CALL find_string(in_unit, '===Anemometers (H) ? (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%if_anemo_h
+       READ (in_unit, *) inputs%if_anemo_h
        IF (inputs%if_anemo_h) THEN
-          CALL read_until(21, '===Number of anemo_h (r,z)')
-          READ (21, *) inputs%nb_anemo_r_h, inputs%nb_anemo_z_h
+          CALL read_until(in_unit, '===Number of anemo_h (r,z)')
+          READ (in_unit, *) inputs%nb_anemo_r_h, inputs%nb_anemo_z_h
           ALLOCATE(inputs%r_anemo_h(inputs%nb_anemo_r_h))
           ALLOCATE(inputs%z_anemo_h(inputs%nb_anemo_z_h))
-          CALL read_until(21, '===List of r anemo_h')
-          READ (21, *) inputs%r_anemo_h
-          CALL read_until(21, '===List of z anemo_h')
-          READ (21, *) inputs%z_anemo_h
+          CALL read_until(in_unit, '===List of r anemo_h')
+          READ (in_unit, *) inputs%r_anemo_h
+          CALL read_until(in_unit, '===List of z anemo_h')
+          READ (in_unit, *) inputs%z_anemo_h
        ELSE
           inputs%if_anemo_h = .FALSE.
           inputs%nb_anemo_r_h = 0
@@ -1876,51 +2048,51 @@ CONTAINS
 
     !==========Modes to be zeroed out==================!
     IF (inputs%type_pb=='mhd' .OR. inputs%type_pb=='mhs') THEN
-       CALL find_string(21, '===Should some modes be zeroed out?', test)
+       CALL find_string(in_unit, '===Should some modes be zeroed out?', test)
        IF (test) THEN
-          READ (21, *) inputs%if_zero_out_modes
+          READ (in_unit, *) inputs%if_zero_out_modes
        ELSE
           inputs%if_zero_out_modes = .FALSE.
        END IF
        IF (inputs%if_zero_out_modes) THEN
-          CALL read_until(21, '===How many Navier-Stokes modes to zero out?')
-          READ(21, *) inputs%nb_select_mode_ns
+          CALL read_until(in_unit, '===How many Navier-Stokes modes to zero out?')
+          READ(in_unit, *) inputs%nb_select_mode_ns
           ALLOCATE(inputs%list_select_mode_ns(inputs%nb_select_mode_ns))
-          CALL read_until(21, '===List of Navier-Stokes modes to zero out?')
-          READ(21, *) inputs%list_select_mode_ns
-          CALL read_until(21, '===How Maxwell modes to zero out?')
-          READ(21, *) inputs%nb_select_mode_mxw
+          CALL read_until(in_unit, '===List of Navier-Stokes modes to zero out?')
+          READ(in_unit, *) inputs%list_select_mode_ns
+          CALL read_until(in_unit, '===How Maxwell modes to zero out?')
+          READ(in_unit, *) inputs%nb_select_mode_mxw
           ALLOCATE(inputs%list_select_mode_mxw(inputs%nb_select_mode_mxw))
-          CALL read_until(21, '===List of Maxwell modes to zero out?')
-          READ(21, *) inputs%list_select_mode_mxw
+          CALL read_until(in_unit, '===List of Maxwell modes to zero out?')
+          READ(in_unit, *) inputs%list_select_mode_mxw
        END IF
     END IF
 
     !==========Verbose=================================!
-    CALL find_string(21, '===Verbose timing? (true/false)', test)
+    CALL find_string(in_unit, '===Verbose timing? (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%verbose_timing
+       READ (in_unit, *) inputs%verbose_timing
     ELSE
        inputs%verbose_timing = .FALSE.
     END IF
-    CALL find_string(21, '===Verbose divergence? (true/false)', test)
+    CALL find_string(in_unit, '===Verbose divergence? (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%verbose_divergence
+       READ (in_unit, *) inputs%verbose_divergence
     ELSE
        inputs%verbose_divergence = .FALSE.
     END IF
-    CALL find_string(21, '===Verbose CFL? (true/false)', test)
+    CALL find_string(in_unit, '===Verbose CFL? (true/false)', test)
     IF (test) THEN
-       READ (21, *) inputs%verbose_CFL
+       READ (in_unit, *) inputs%verbose_CFL
     ELSE
        inputs%verbose_CFL = .FALSE.
     END IF
 
     !===Norms for reference tests===================================================
     IF (inputs%test_de_convergence) THEN
-       CALL read_until(21, '===Reference results')
+       CALL read_until(in_unit, '===Reference results')
        DO k = 1, 4
-          READ(21, *) inputs%norm_ref(k)
+          READ(in_unit, *) inputs%norm_ref(k)
        END DO
     ELSE
        inputs%norm_ref = 1.d0
@@ -1932,55 +2104,55 @@ CONTAINS
     END IF
 
     !==========Spherical interfaces=================================!
-    CALL find_string(21, '===How many spherical boundary pieces ?', test)
+    CALL find_string(in_unit, '===How many spherical boundary pieces ?', test)
     IF (test) THEN
-       READ(21, *) inputs%nb_spherical
+       READ(in_unit, *) inputs%nb_spherical
     ELSE
        inputs%nb_spherical = 0
     END IF
     IF (inputs%nb_spherical > 0) THEN
        ALLOCATE(inputs%list_spherical(inputs%nb_spherical), inputs%radius_spherical(inputs%nb_spherical), &
             inputs%origin_spherical(2, inputs%nb_spherical))
-       CALL read_until(21, '===List of spherical boundary pieces')
-       READ(21, *) inputs%list_spherical
-       CALL read_until(21, '===Radius of spherical boundary pieces')
-       READ(21, *) inputs%radius_spherical
-       CALL read_until(21, '===R coordinate of origin of spherical boundary pieces')
-       READ(21, *) inputs%origin_spherical(1, :)
-       CALL read_until(21, '===Z coordinate of origin of spherical boundary pieces')
-       READ(21, *) inputs%origin_spherical(2, :)
+       CALL read_until(in_unit, '===List of spherical boundary pieces')
+       READ(in_unit, *) inputs%list_spherical
+       CALL read_until(in_unit, '===Radius of spherical boundary pieces')
+       READ(in_unit, *) inputs%radius_spherical
+       CALL read_until(in_unit, '===R coordinate of origin of spherical boundary pieces')
+       READ(in_unit, *) inputs%origin_spherical(1, :)
+       CALL read_until(in_unit, '===Z coordinate of origin of spherical boundary pieces')
+       READ(in_unit, *) inputs%origin_spherical(2, :)
     ELSE
        ALLOCATE(inputs%list_spherical(0), inputs%radius_spherical(0), inputs%origin_spherical(2, 0))
     END IF
 
     !==========Curved interfaces=================================!
-    CALL find_string(21, '===How many curved boundary pieces ?', test)
+    CALL find_string(in_unit, '===How many curved boundary pieces ?', test)
     IF (test) THEN
-       READ(21, *) inputs%nb_curved
+       READ(in_unit, *) inputs%nb_curved
     ELSE
        inputs%nb_curved = 0
     END IF
     IF (inputs%nb_curved > 0) THEN
        ALLOCATE(inputs%list_curved(inputs%nb_curved), inputs%origin_curved(2, inputs%nb_curved))
-       CALL read_until(21, '===List of curved  boundary pieces')
-       READ(21, *) inputs%list_curved
-       CALL read_until(21, '===R coordinate of origin of curved boundary pieces')
-       READ(21, *) inputs%origin_curved(1, :)
-       CALL read_until(21, '===Z coordinate of origin of curved boundary pieces')
-       READ(21, *) inputs%origin_curved(2, :)
+       CALL read_until(in_unit, '===List of curved  boundary pieces')
+       READ(in_unit, *) inputs%list_curved
+       CALL read_until(in_unit, '===R coordinate of origin of curved boundary pieces')
+       READ(in_unit, *) inputs%origin_curved(1, :)
+       CALL read_until(in_unit, '===Z coordinate of origin of curved boundary pieces')
+       READ(in_unit, *) inputs%origin_curved(2, :)
     ELSE
        ALLOCATE(inputs%list_curved(0))
     END IF
 
     !==========Refinements=================================!
-    CALL find_string(21, '===Number of refinements', test)
+    CALL find_string(in_unit, '===Number of refinements', test)
     IF (test) THEN
-       READ(21, *) inputs%nb_refinements
+       READ(in_unit, *) inputs%nb_refinements
     ELSE
        inputs%nb_refinements = 0
     END IF
 
-    CLOSE(21)
+    CLOSE(in_unit)
 
     !===Check coherence of data=====================================================
     CALL check_coherence_of_data
@@ -2058,86 +2230,6 @@ CONTAINS
     END IF
 
     !===Robin and Dirichlet BCs=======================================================
-    IF (inputs%temperature_nb_robin_sides>0) THEN
-       DO k = 1, inputs%temperature_nb_robin_sides
-          IF (MINVAL(ABS(inputs%temperature_list_dirichlet_sides - inputs%temperature_list_robin_sides(k))) == 0) THEN
-             CALL error_petsc(' BUG in read_my_data: Incompatible Dirichlet' // &
-                  ' and Robin BCs for temperature')
-          END IF
-       END DO
-    END IF
-
-    !===Dirichlet BCs for concentration for Navier-Stokes=============================
-    IF (inputs%if_concentration.AND. inputs%my_periodic%nb_periodic_pairs>0) THEN
-       IF (inputs%concentration_nb_dirichlet_sides>0) THEN
-          test = check_coherence_with_periodic_bcs(inputs%concentration_list_dirichlet_sides)
-          IF (test) THEN
-             CALL error_petsc(' BUG in read_my_data: Incompatible Dirichlet' // &
-                  ' and periodic BCs on concentration')
-          END IF
-       END IF
-    END IF
-
-    !===Robin and Dirichlet BCs=======================================================
-    IF (inputs%concentration_nb_robin_sides>0) THEN
-       DO k = 1, inputs%concentration_nb_robin_sides
-          IF (MINVAL(ABS(inputs%concentration_list_dirichlet_sides - inputs%concentration_list_robin_sides(k))) == 0) THEN
-             CALL error_petsc(' BUG in read_my_data: Incompatible Dirichlet' // &
-                  ' and Robin BCs for concentration')
-          END IF
-       END DO
-    END IF
-
-    !===Dirichlet BCs magnetic field for Maxwell======================================
-    IF (inputs%my_periodic%nb_periodic_pairs>0) THEN
-       IF (inputs%type_pb=='mxw' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd' &
-            .OR. inputs%type_pb=='mhs') THEN
-          !==========Magnetic field==========================!
-          IF (inputs%nb_dirichlet_sides_H>0) THEN
-             test = check_coherence_with_periodic_bcs(inputs%list_dirichlet_sides_H)
-             IF (test) THEN
-                CALL error_petsc(' BUG in read_my_data: Incompatible Dirichlet' // &
-                     ' and periodic BCs on magnetic field')
-             END IF
-          END IF
-
-          !==========Scalar potential========================!
-          IF (inputs%nb_dom_phi>0 .AND. inputs%phi_nb_dirichlet_sides>0) THEN
-             test = check_coherence_with_periodic_bcs(inputs%phi_list_dirichlet_sides)
-             IF (test) THEN
-                CALL error_petsc(' BUG in read_my_data: Incompatible Dirichlet' // &
-                     ' and periodic BCs on scalar potential')
-             END IF
-          END IF
-       END IF
-    END IF
-
-    !===Check temperature with Maxwell================================================
-    IF (inputs%my_periodic%nb_periodic_pairs>0) THEN
-       IF (inputs%if_temperature .AND. inputs%type_pb=='mxw') THEN
-          CALL error_petsc('Bug in read_my_data: incompatible temperature with maxwell')
-       END IF
-    END IF
-
-    !===Check concentration with Maxwell==============================================
-    IF (inputs%my_periodic%nb_periodic_pairs>0) THEN
-       IF (inputs%if_concentration .AND. inputs%type_pb=='mxw') THEN
-          CALL error_petsc('Bug in read_my_data: incompatible concentration with maxwell')
-       END IF
-    END IF
-
-    !===Check temperature with Ferrohydrodynamics=====================================
-    IF ((.NOT. inputs%if_temperature) .AND. inputs%type_pb=='fhd') THEN
-       CALL error_petsc('Bug in read_my_data: ferrohydrodynamics but no temperature')
-    END IF
-
-    !===Check Arpack==================================================================
-    IF (inputs%if_arpack) THEN
-       IF (inputs%ndim(2) /= inputs%m_max) THEN
-          CALL error_petsc('Bug in read_my_data: #Fourier modes' // &
-               ' not equal to #processors in Fourier direction')
-       END IF
-    END IF
 
     !===Check Fourier modes===========================================================
     IF (inputs%select_mode .AND. .NOT.inputs%if_arpack) THEN

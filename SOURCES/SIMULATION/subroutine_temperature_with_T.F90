@@ -62,8 +62,8 @@ CONTAINS
     REAL(KIND=8), DIMENSION(temp_mesh%np, 2)                   :: tempn_p1
     REAL(KIND=8), DIMENSION(temp_mesh%gauss%l_G*temp_mesh%me,2, SIZE(list_mode)) :: ff_conv, pyromag_term
     REAL(KIND=8)   ::tps, tps_tot, tps_cumul
-    REAL(KIND=8) :: one, zero, three
-    DATA zero, one, three/0.d0,1.d0,3.d0/
+    REAL(KIND=8) :: one, my_zero, three
+    DATA my_zero, one, three/0.d0,1.d0,3.d0/
     REAL(KIND=8), DIMENSION(2,temp_mesh%gauss%l_G*temp_mesh%me)                  :: rr_gauss
     INTEGER,      DIMENSION(temp_mesh%gauss%n_w)                               :: j_loc
     !Communicators for Petsc, in space and Fourier----------------------------------------
@@ -126,8 +126,9 @@ CONTAINS
 
           !---TEMPERATURE MATRIX
           CALL create_local_petsc_matrix(comm_one_d(1), temp_1_LA, temp_mat(i), clean=.FALSE.)
+
           CALL qs_diff_mass_scal_M_variant(temp_mesh, temp_1_LA, vol_heat_capacity, temp_diffusivity, &
-               1.5d0/dt, temp_list_robin_sides, convection_coeff, zero, mode, temp_mat(i))
+               1.5d0/dt, temp_list_robin_sides, convection_coeff, my_zero, mode, temp_mat(i))
 
           IF (temp_per%n_bord/=0) THEN
              CALL periodic_matrix_petsc(temp_per%n_bord, temp_per%list, temp_per%perlist, temp_mat(i), temp_1_LA)

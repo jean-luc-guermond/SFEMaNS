@@ -1,13 +1,12 @@
 MODULE post_processing_debug
 
-  PUBLIC :: compute_error, post_proc_test, regression
+  PUBLIC :: compute_error, post_proc_test, regression, regression_LK
 
   PRIVATE
 CONTAINS
   !---------------------------------------------------------------------------
-
   SUBROUTINE regression(conc_mesh, vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
-       un, pn, Hn, Bn, phin, tempn, level_setn, concn, mu_H_field, &
+       un, pn, mag_field, tempn, level_setn, concn, mu_H_field, &
        time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc)
     USE boundary
     USE def_type_mesh
@@ -19,19 +18,21 @@ CONTAINS
     USE sub_plot
 #include "petsc/finclude/petsc.h"
     USE petsc
+    USE def_type_field
     IMPLICIT NONE
     TYPE(mesh_type), POINTER                    :: conc_mesh
     TYPE(mesh_type), POINTER                    :: pp_mesh, vv_mesh
     TYPE(mesh_type), POINTER                    :: temp_mesh
     TYPE(mesh_type), POINTER                    :: H_mesh, phi_mesh
     INTEGER,      POINTER,  DIMENSION(:)        :: list_mode
-    REAL(KIND=8), POINTER,  DIMENSION(:,:,:)    :: concn, un, pn, Hn, Bn, phin, tempn
+    REAL(KIND=8), POINTER,  DIMENSION(:,:,:)    :: concn, un, pn, tempn
+    TYPE(mag_field_type), POINTER               :: mag_field
     REAL(KIND=8), POINTER,  DIMENSION(:,:,:,:)  :: level_setn
     REAL(KIND=8), POINTER,  DIMENSION(:)        :: mu_H_field
     REAL(KIND=8)                                :: time
     INTEGER                                     :: m_max_c, ierr, nd
     REAL(KIND=8) :: error, error_ref, error_cumul, norm
-    INTEGER :: error_out
+    INTEGER      :: error_out
     MPI_Comm, DIMENSION(:), POINTER         :: comm_one_d, comm_one_d_ns
     MPI_Comm, DIMENSION(:), POINTER         :: comm_one_d_temp, comm_one_d_conc
 
@@ -90,7 +91,8 @@ CONTAINS
     END IF
 
     IF (H_mesh%np/=0) THEN
-       error=norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn)
+       !error=norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn)
+       error=norm_SF(comm_one_d, 'L2', H_mesh, list_mode, mag_field%Hn)
        WRITE(22,*) error
        READ(21,*) error_ref
        error_cumul = error_cumul + ABS(error-error_ref)
@@ -98,7 +100,7 @@ CONTAINS
     END IF
 
     IF (phi_mesh%np/=0) THEN
-       error=norm_SF(comm_one_d, 'L2', phi_mesh, list_mode, phin)
+       error=norm_SF(comm_one_d, 'L2', phi_mesh, list_mode, mag_field%phin)
        WRITE(22,*) error
        READ(21,*) error_ref
        error_cumul = error_cumul + ABS(error-error_ref)
@@ -112,6 +114,7 @@ CONTAINS
        error_out = 2 !===Test Failed
        write(*,*) 'error',  error_cumul/norm
     ELSE
+       write(*,*) 'error',  error_cumul/norm
        WRITE(*,*) 1234567891
        error_out= 123 !===Test Passed
     END IF
@@ -122,9 +125,46 @@ CONTAINS
     CALL EXIT(error_out)
 
     !===Dummy variables to avoid warning when post_proc_test call commented
-    nd=SIZE(Bn,1); nd=m_max_c; nd=SIZE(mu_H_field); nd=FLOOR(time)
+    nd=SIZE(mag_field%Bn,1); nd=m_max_c; nd=SIZE(mu_H_field); nd=FLOOR(time)
     !===Dummy variables to avoid warning when post_proc_test call commented
   END SUBROUTINE regression
+
+  SUBROUTINE regression_LK(lambda)
+      USE input_data
+      USE petsc
+#include "petsc/finclude/petsc.h"
+      IMPLICIT NONE
+      COMPLEX(KIND=8) , INTENT(IN)     :: lambda(:)
+      COMPLEX(KIND=8)                  :: ref_eigval
+      REAL(KIND=8)                     :: error, norm, error_cum
+      INTEGER                          :: it, error_out, ierr
+         
+      OPEN(UNIT = 21, FILE =  'regression_reference', FORM = 'formatted', STATUS = 'unknown')
+      OPEN(UNIT = 22, FILE =  'current_regression_reference', FORM = 'formatted', STATUS = 'unknown')
+
+      DO it=1, inputs%LK%nev
+         READ(21,*) ref_eigval
+         error = ABS(ref_eigval - lambda(it))
+         norm = norm + ABS(ref_eigval)
+         error_cum = error_cum + error
+         WRITE(22,*) error
+      END DO
+      IF (isnan(error_cum)) THEN
+         error_out = 1 !===Test Failed
+      ELSE IF (error_cum/norm .GT. 1.d-7) THEN
+         error_out = 2 !===Test Failed
+         WRITE(*,*) 'error',  error_cum/norm
+      ELSE
+         WRITE(*,*) 'error',  error_cum/norm
+         WRITE(*,*) "1234567891"
+         error_out= 123 !===Test Passed
+      END IF
+      CLOSE(21)
+      CLOSE(22)
+      CALL PetscFinalize(ierr)
+      CALL EXIT(error_out)
+
+   END SUBROUTINE regression_LK
 
   SUBROUTINE post_proc_test(conc_mesh, vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
        un, pn, Hn, Bn, phin, tempn, level_setn, concn, mu_H_field, &
@@ -157,7 +197,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(SIZE(concn,1),  SIZE(concn,2),  SIZE(concn,3))   :: concn_ex, concn_error
     REAL(KIND=8), DIMENSION(SIZE(level_setn,1),SIZE(level_setn,2),SIZE(level_setn,3),SIZE(level_setn,4)):: level_setn_m1
 
-    INTEGER :: i, k, code, rank, int_nb, n, TYPE
+    INTEGER :: i, k, code, rank, int_nb, n, TYPE_VEC
     REAL(KIND=8), DIMENSION(4) :: norm_err_loc, norm_err
     REAL(KIND=8) :: err, norm
     REAL(KIND=8) :: moyenne
@@ -531,23 +571,23 @@ CONTAINS
 
     CASE(30)
 
-       DO TYPE=1,6
+       DO TYPE_VEC=1,6
           DO i=1,size(list_mode)
-             un_ex(:,TYPE,i) = vv_exact(TYPE,vv_mesh%rr,list_mode(i),time)
+             un_ex(:,TYPE_VEC,i) = vv_exact(TYPE_VEC,vv_mesh%rr,list_mode(i),time)
           END DO
        END DO
        un_error = un - un_ex
        norm_err(1) = norm_SF(comm_one_d, 'L2', vv_mesh, list_mode, un_error) / norm_SF(comm_one_d, 'L2', vv_mesh, list_mode, un_ex)
-       DO TYPE=1,2
+       DO TYPE_VEC=1,2
           DO i=1,size(list_mode)
-             pn_ex(:,TYPE,i) = pp_exact(TYPE,pp_mesh%rr,list_mode(i),time)
+             pn_ex(:,TYPE_VEC,i) = pp_exact(TYPE_VEC,pp_mesh%rr,list_mode(i),time)
           END DO
        END DO
        pn_error = pn - pn_ex
        norm_err(2) = norm_SF(comm_one_d, 'L2', pp_mesh, list_mode, pn_error)
-       DO TYPE=1,2
+       DO TYPE_VEC=1,2
           DO i=1,size(list_mode)
-             tempn_ex(:,TYPE,i) = temperature_exact(TYPE,temp_mesh%rr,list_mode(i),time)
+             tempn_ex(:,TYPE_VEC,i) = temperature_exact(TYPE_VEC,temp_mesh%rr,list_mode(i),time)
           END DO
        END DO
        tempn_error = tempn - tempn_ex
@@ -566,23 +606,23 @@ CONTAINS
 
     CASE(31,32)
 
-       DO TYPE=1,6
+       DO TYPE_VEC=1,6
           DO i=1,size(list_mode)
-             un_ex(:,TYPE,i) = vv_exact(TYPE,vv_mesh%rr,list_mode(i),time)
+             un_ex(:,TYPE_VEC,i) = vv_exact(TYPE_VEC,vv_mesh%rr,list_mode(i),time)
           END DO
        END DO
        un_error = un - un_ex
        norm_err(1) = norm_SF(comm_one_d, 'L2', vv_mesh, list_mode, un_error) / norm_SF(comm_one_d, 'L2', vv_mesh, list_mode, un_ex)
-       DO TYPE=1,2
+       DO TYPE_VEC=1,2
           DO i=1,size(list_mode)
-             pn_ex(:,TYPE,i) = pp_exact(TYPE,pp_mesh%rr,list_mode(i),time)
+             pn_ex(:,TYPE_VEC,i) = pp_exact(TYPE_VEC,pp_mesh%rr,list_mode(i),time)
           END DO
        END DO
        pn_error = pn - pn_ex
        norm_err(2) = norm_SF(comm_one_d, 'L2', pp_mesh, list_mode, pn_error) / norm_SF(comm_one_d, 'L2', pp_mesh, list_mode, pn_ex)
-       DO TYPE=1,2
+       DO TYPE_VEC=1,2
           DO i=1,size(list_mode)
-             tempn_ex(:,TYPE,i) = temperature_exact(TYPE,temp_mesh%rr,list_mode(i),time)
+             tempn_ex(:,TYPE_VEC,i) = temperature_exact(TYPE_VEC,temp_mesh%rr,list_mode(i),time)
           END DO
        END DO
        tempn_error = tempn - tempn_ex
@@ -601,31 +641,31 @@ CONTAINS
 
     CASE(33)
 
-       DO TYPE=1,6
+       DO TYPE_VEC=1,6
           DO i=1,size(list_mode)
-             un_ex(:,TYPE,i) = vv_exact(TYPE,vv_mesh%rr,list_mode(i),time)
+             un_ex(:,TYPE_VEC,i) = vv_exact(TYPE_VEC,vv_mesh%rr,list_mode(i),time)
           END DO
        END DO
        un_error = un - un_ex
        norm_err(1) = norm_SF(comm_one_d, 'L2', vv_mesh, list_mode, un_error) / norm_SF(comm_one_d, 'L2', vv_mesh, list_mode, un_ex)
-       DO TYPE=1,2
+       DO TYPE_VEC=1,2
           DO i=1,size(list_mode)
-             pn_ex(:,TYPE,i) = pp_exact(TYPE,pp_mesh%rr,list_mode(i),time)
+             pn_ex(:,TYPE_VEC,i) = pp_exact(TYPE_VEC,pp_mesh%rr,list_mode(i),time)
           END DO
        END DO
        pn_error = pn - pn_ex
        norm_err(2) = norm_SF(comm_one_d, 'L2', pp_mesh, list_mode, pn_error)
-       DO TYPE=1,2
+       DO TYPE_VEC=1,2
           DO i=1,size(list_mode)
-             tempn_ex(:,TYPE,i) = temperature_exact(TYPE,temp_mesh%rr,list_mode(i),time)
+             tempn_ex(:,TYPE_VEC,i) = temperature_exact(TYPE_VEC,temp_mesh%rr,list_mode(i),time)
           END DO
        END DO
        tempn_error = tempn - tempn_ex
        norm_err(3) = norm_SF(comm_one_d_temp, 'L2', temp_mesh, list_mode, tempn_error) / &
             norm_SF(comm_one_d_temp, 'L2', temp_mesh, list_mode, tempn_ex) ! MODIFICATION: comm_one_d_temp instead of ns
-       DO TYPE=1,6
+       DO TYPE_VEC=1,6
           DO i=1,size(list_mode)
-             Hn_ex(:,TYPE,i) = Hexact(H_mesh,TYPE,H_mesh%rr,list_mode(i),mu_H_field,time)
+             Hn_ex(:,TYPE_VEC,i) = Hexact(H_mesh,TYPE_VEC,H_mesh%rr,list_mode(i),mu_H_field,time)
           END DO
        END DO
        Hn_error = Hn - Hn_ex
@@ -641,31 +681,31 @@ CONTAINS
 
     CASE(34,37,38)
 
-       DO TYPE=1,6
+       DO TYPE_VEC=1,6
           DO i=1,size(list_mode)
-             un_ex(:,TYPE,i) = vv_exact(TYPE,vv_mesh%rr,list_mode(i),time)
+             un_ex(:,TYPE_VEC,i) = vv_exact(TYPE_VEC,vv_mesh%rr,list_mode(i),time)
           END DO
        END DO
        un_error = un - un_ex
        norm_err(1) = norm_SF(comm_one_d, 'L2', vv_mesh, list_mode, un_error) / norm_SF(comm_one_d, 'L2', vv_mesh, list_mode, un_ex)
-       DO TYPE=1,2
+       DO TYPE_VEC=1,2
           DO i=1,size(list_mode)
-             pn_ex(:,TYPE,i) = pp_exact(TYPE,pp_mesh%rr,list_mode(i),time)
+             pn_ex(:,TYPE_VEC,i) = pp_exact(TYPE_VEC,pp_mesh%rr,list_mode(i),time)
           END DO
        END DO
        pn_error = pn - pn_ex
        norm_err(2) = norm_SF(comm_one_d, 'L2', pp_mesh, list_mode, pn_error) / norm_SF(comm_one_d, 'L2', pp_mesh, list_mode, pn_ex)
-       DO TYPE=1,2
+       DO TYPE_VEC=1,2
           DO i=1,size(list_mode)
-             tempn_ex(:,TYPE,i) = temperature_exact(TYPE,temp_mesh%rr,list_mode(i),time)
+             tempn_ex(:,TYPE_VEC,i) = temperature_exact(TYPE_VEC,temp_mesh%rr,list_mode(i),time)
           END DO
        END DO
        tempn_error = tempn - tempn_ex
        norm_err(3) = norm_SF(comm_one_d_temp, 'L2', temp_mesh, list_mode, tempn_error) / &
             norm_SF(comm_one_d_temp, 'L2', temp_mesh, list_mode, tempn_ex) ! MODIFICATION: comm_one_d_temp instead of ns
-       DO TYPE=1,6
+       DO TYPE_VEC=1,6
           DO i=1,size(list_mode)
-             Hn_ex(:,TYPE,i) = Hexact(H_mesh,TYPE,H_mesh%rr,list_mode(i),mu_H_field,time)
+             Hn_ex(:,TYPE_VEC,i) = Hexact(H_mesh,TYPE_VEC,H_mesh%rr,list_mode(i),mu_H_field,time)
           END DO
        END DO
        Hn_error = Hn - Hn_ex
@@ -681,23 +721,23 @@ CONTAINS
 
     CASE(35)
 
-       DO TYPE=1,6
+       DO TYPE_VEC=1,6
           DO i=1,size(list_mode)
-             un_ex(:,TYPE,i) = vv_exact(TYPE,vv_mesh%rr,list_mode(i),time)
+             un_ex(:,TYPE_VEC,i) = vv_exact(TYPE_VEC,vv_mesh%rr,list_mode(i),time)
           END DO
        END DO
        un_error = un - un_ex
        norm_err(1) = norm_SF(comm_one_d, 'L2', vv_mesh, list_mode, un_error)
-       DO TYPE=1,2
+       DO TYPE_VEC=1,2
           DO i=1,size(list_mode)
-             pn_ex(:,TYPE,i) = pp_exact(TYPE,pp_mesh%rr,list_mode(i),time)
+             pn_ex(:,TYPE_VEC,i) = pp_exact(TYPE_VEC,pp_mesh%rr,list_mode(i),time)
           END DO
        END DO
        pn_error = pn - pn_ex
        norm_err(2) = norm_SF(comm_one_d, 'L2', pp_mesh, list_mode, pn_error)
-       DO TYPE=1,2
+       DO TYPE_VEC=1,2
           DO i=1,size(list_mode)
-             tempn_ex(:,TYPE,i) = temperature_exact(TYPE,temp_mesh%rr,list_mode(i),time)
+             tempn_ex(:,TYPE_VEC,i) = temperature_exact(TYPE_VEC,temp_mesh%rr,list_mode(i),time)
           END DO
        END DO
        tempn_error = tempn - tempn_ex
@@ -716,30 +756,30 @@ CONTAINS
 
     CASE(36)
 
-       DO TYPE=1,6
+       DO TYPE_VEC=1,6
           DO i=1,size(list_mode)
-             un_ex(:,TYPE,i) = vv_exact(TYPE,vv_mesh%rr,list_mode(i),time)
+             un_ex(:,TYPE_VEC,i) = vv_exact(TYPE_VEC,vv_mesh%rr,list_mode(i),time)
           END DO
        END DO
        un_error = un - un_ex
        norm_err(1) = norm_SF(comm_one_d, 'L2', vv_mesh, list_mode, un_error) / norm_SF(comm_one_d, 'L2', vv_mesh, list_mode, un_ex)
-       DO TYPE=1,6
+       DO TYPE_VEC=1,6
           DO i=1,size(list_mode)
-             un_ex(:,TYPE,i) = vv_exact(TYPE,vv_mesh%rr,list_mode(i),time)
+             un_ex(:,TYPE_VEC,i) = vv_exact(TYPE_VEC,vv_mesh%rr,list_mode(i),time)
           END DO
        END DO
        un_error = un - un_ex
        norm_err(2) = norm_SF(comm_one_d, 'H1', vv_mesh, list_mode, un_error) / norm_SF(comm_one_d, 'H1', vv_mesh, list_mode, un_ex)
-       DO TYPE=1,2
+       DO TYPE_VEC=1,2
           DO i=1,size(list_mode)
-             pn_ex(:,TYPE,i) = pp_exact(TYPE,pp_mesh%rr,list_mode(i),time)
+             pn_ex(:,TYPE_VEC,i) = pp_exact(TYPE_VEC,pp_mesh%rr,list_mode(i),time)
           END DO
        END DO
        pn_error = pn - pn_ex
        norm_err(3) = norm_SF(comm_one_d, 'L2', pp_mesh, list_mode, pn_error)
-       DO TYPE=1,2
+       DO TYPE_VEC=1,2
           DO i=1,size(list_mode)
-             tempn_ex(:,TYPE,i) = temperature_exact(TYPE,temp_mesh%rr,list_mode(i),time)
+             tempn_ex(:,TYPE_VEC,i) = temperature_exact(TYPE_VEC,temp_mesh%rr,list_mode(i),time)
           END DO
        END DO
        tempn_error = tempn - tempn_ex
@@ -779,9 +819,9 @@ CONTAINS
        err = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn1)
        norm_err(3) = err/norm
 
-       DO TYPE=1,2
+       DO TYPE_VEC=1,2
           DO i=1,size(list_mode)
-             concn_ex(:,TYPE,i) = concentration_exact(TYPE,conc_mesh%rr,list_mode(i),time)
+             concn_ex(:,TYPE_VEC,i) = concentration_exact(TYPE_VEC,conc_mesh%rr,list_mode(i),time)
           END DO
        END DO
        concn_error = concn - concn_ex
@@ -849,7 +889,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(SIZE(concn,1),  SIZE(concn,2),  SIZE(concn,3))   :: concn_ex, concn_error
     REAL(KIND=8), DIMENSION(SIZE(level_setn,2),SIZE(level_setn,3),SIZE(level_setn,4)):: level_setn_ex
     REAL(KIND=8), DIMENSION(SIZE(level_setn,2),SIZE(level_setn,3),SIZE(level_setn,4)):: level_setn_error
-    INTEGER :: i, k, code, rank, int_nb, TYPE
+    INTEGER :: i, k, code, rank, int_nb, TYPE_VEC
     REAL(KIND=8) :: err, norm, err_H1, norm_H1
     REAL(KIND=8) :: moyenne
     MPI_Comm, DIMENSION(:), POINTER         :: comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc
@@ -861,9 +901,9 @@ CONTAINS
     END IF
 
     IF (inputs%if_concentration) THEN
-       DO TYPE = 1, 2
+       DO TYPE_VEC = 1, 2
           DO i = 1, SIZE(list_mode)
-             concn_ex(:,TYPE,i) = concentration_exact(TYPE,conc_mesh%rr,list_mode(i),time)
+             concn_ex(:,TYPE_VEC,i) = concentration_exact(TYPE_VEC,conc_mesh%rr,list_mode(i),time)
           END DO
        END DO
        concn_error = concn - concn_ex
@@ -876,9 +916,9 @@ CONTAINS
 
     IF (vv_mesh%np>0) THEN
        !Velocity
-       DO TYPE = 1, 6
+       DO TYPE_VEC = 1, 6
           DO i = 1, SIZE(list_mode)
-             un_ex(:,TYPE,i) = vv_exact(TYPE,vv_mesh%rr,list_mode(i),time)
+             un_ex(:,TYPE_VEC,i) = vv_exact(TYPE_VEC,vv_mesh%rr,list_mode(i),time)
           END DO
        END DO
        un_error = un - un_ex
@@ -891,9 +931,9 @@ CONTAINS
           WRITE(11,*) 'H1 error/relative error on velocity  = ', err_H1, err_H1/norm_H1
        END IF
        !Pressure
-       DO TYPE = 1, 2
+       DO TYPE_VEC = 1, 2
           DO i = 1, SIZE(list_mode)
-             pn_ex(:,TYPE,i) = pp_exact(TYPE,pp_mesh%rr,list_mode(i),time)
+             pn_ex(:,TYPE_VEC,i) = pp_exact(TYPE_VEC,pp_mesh%rr,list_mode(i),time)
              IF (list_mode(i) == 0)  THEN
                 CALL Moy(comm_one_d(1),pp_mesh, pn_ex(:,1,i),moyenne)
                 pn_ex(:,1,i) = pn_ex(:,1,i) - moyenne
@@ -910,7 +950,7 @@ CONTAINS
        IF (inputs%if_level_set) THEN
           IF (inputs%if_level_set_P2) THEN
              DO int_nb = 1, inputs%nb_fluid - 1
-                DO TYPE = 1, 2
+                DO TYPE_VEC = 1, 2
                    DO i = 1, SIZE(list_mode)
                       level_setn_ex(:,k,i) = &
                            level_set_exact(int_nb,k,vv_mesh%rr,list_mode(i),time)
@@ -926,7 +966,7 @@ CONTAINS
              END DO
           ELSE
              DO int_nb = 1, inputs%nb_fluid - 1
-                DO TYPE = 1, 2
+                DO TYPE_VEC = 1, 2
                    DO i = 1, SIZE(list_mode)
                       level_setn_ex(:,k,i) = &
                            level_set_exact(int_nb,k,pp_mesh%rr,list_mode(i),time)
@@ -945,9 +985,9 @@ CONTAINS
     END IF
 
     IF (inputs%if_temperature) THEN
-        DO TYPE = 1, 2
+        DO TYPE_VEC = 1, 2
           DO i = 1, SIZE(list_mode)
-             tempn_ex(:,TYPE,i) = temperature_exact(TYPE,temp_mesh%rr,list_mode(i),time)
+             tempn_ex(:,TYPE_VEC,i) = temperature_exact(TYPE_VEC,temp_mesh%rr,list_mode(i),time)
           END DO
        END DO
        tempn_error = tempn - tempn_ex
@@ -959,9 +999,9 @@ CONTAINS
     END IF
 
     IF (H_mesh%np>0) THEN
-        DO TYPE = 1, 6
+        DO TYPE_VEC = 1, 6
           DO i = 1, SIZE(list_mode)
-             Hn_ex(:,TYPE,i) = Hexact(H_mesh,TYPE,H_mesh%rr,list_mode(i),mu_H_field,time)
+             Hn_ex(:,TYPE_VEC,i) = Hexact(H_mesh,TYPE_VEC,H_mesh%rr,list_mode(i),mu_H_field,time)
           END DO
        END DO
        Hn_error = Hn - Hn_ex
@@ -976,9 +1016,9 @@ CONTAINS
     END IF
 
     IF (phi_mesh%np>0) THEN
-       DO TYPE = 1, 2
+       DO TYPE_VEC = 1, 2
           DO i = 1, SIZE(list_mode)
-             phin_ex(:,k,i) = Phiexact(TYPE,phi_mesh%rr,list_mode(i),inputs%mu_phi,time)
+             phin_ex(:,k,i) = Phiexact(TYPE_VEC,phi_mesh%rr,list_mode(i),inputs%mu_phi,time)
           END DO
        END DO
        phin_error = phin - phin_ex

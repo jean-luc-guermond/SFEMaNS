@@ -1,0 +1,103 @@
+===Is mesh file formatted (true/false)?
+.t.
+===Directory and name of mesh file
+'../../MESHES' 'RIGA_Ri1_Ro2_H8_0p2_vac8_1.FEM'
+===Number of processors in meridian section
+3
+===Number of processors in Fourier space
+2
+===Number of Fourier modes
+2
+===Problem type: (nst, mxw, mhd, fhd)
+'nst'
+===Restart on velocity (true/false)
+.f.
+===Time step and number of time iterations
+.02d0, 0
+============================================
+              Periodicity
+============================================
+===How many pieces of periodic boundary?
+1
+===Indices of periodic boundaries and corresponding vectors
+4 2 .0d0 8.d0
+
+============================================
+              Mesh-NAVIER-STOKES
+============================================
+===Number of subdomains in Navier-Stokes mesh
+2
+===List of subdomains for Navier-Stokes mesh
+1 2
+
+============================================
+              BCs-NAVIER-STOKES
+============================================
+===How many boundary pieces for full Dirichlet BCs on velocity?
+1
+===List of boundary pieces for full Dirichlet BCs on velocity
+3
+
+============================================
+              Dynamics-NAVIER-STOKES
+============================================
+===Reynolds number
+1.d0
+===Coefficient for penalty of divergence in NS?
+1.d0
+
+============================================
+              Solver-velocity-NAVIER-STOKES
+============================================
+===Maximum number of iterations for velocity solver
+100
+===Relative tolerance for velocity solver
+1.d-6
+===Absolute tolerance for velocity solver
+1.d-10
+===Solver type for velocity (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for velocity solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Solver-pressure-NAVIER-STOKES
+============================================
+===Maximum number of iterations for pressure solver
+100
+===Relative tolerance for pressure solver
+1.d-6
+===Absolute tolerance for pressure solver
+1.d-10
+===Solver type for pressure (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for pressure solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Solver-mass-NAVIER-STOKES
+============================================
+===Maximum number of iterations for mass matrix solver
+100
+===Relative tolerance for mass matrix solver
+1.d-6
+===Absolute tolerance for mass matrix solver
+1.d-10
+===Solver type for mass matrix (FGMRES, CG, ...)
+CG
+===Preconditionner type for mass matrix solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Verbose (diagnostics)
+============================================
+===Verbose timing? (true/false)
+.f.
+
+============================================
+              Eigenvalues with LightKrylov (plus residual)
+============================================
+(4.67917694944608529E-003,5.19064023003176156E-006)    1.9503048650592104E-011
+(4.67917694944608529E-003,-5.19064023003176156E-006)   1.3418656086443394E-009
+(-4.99454573533623658E-002,0.0000000000000000)         1.3418656086443394E-009
+

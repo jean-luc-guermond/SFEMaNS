@@ -22,7 +22,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)              :: dw_loc
     REAL(KIND=8), DIMENSION(3,6)                                        :: tensor_loc
     REAL(KIND=8), DIMENSION(6)                                          :: smb, f_tensor
-    INTEGER      :: m, l, i, ni, index, nw, ix, ki, iglob, type, k, ms, ls, indexs, nws
+    INTEGER      :: m, l, i, ni, index, nw, ix, ki, iglob, TYPE_VEC, k, ms, ls, indexs, nws
     REAL(KIND=8) :: ray
     Vec            :: vb_145, vb_236
     PetscErrorCode :: ierr
@@ -54,9 +54,9 @@ CONTAINS
           ray = SUM(mesh%rr(1,j_loc)*mesh%gauss%ww(:,l))
 
           IF (PRESENT(opt_tensor)) THEN
-             DO TYPE = 1, 6
+             DO TYPE_VEC = 1, 6
                 DO k = 1, 3
-                   tensor_loc(k,TYPE) = opt_tensor(k,index,TYPE)
+                   tensor_loc(k,TYPE_VEC) = opt_tensor(k,index,TYPE_VEC)
                 END DO
              END DO
 
@@ -208,7 +208,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(3,6)                                        :: tensor_loc
     REAL(KIND=8), DIMENSION(2)                                          :: div_loc
     REAL(KIND=8), DIMENSION(6)                                          :: smb, f_tensor, f_div
-    INTEGER      :: m, l, i, ni, index, nw, ix, ki, iglob, type, k
+    INTEGER      :: m, l, i, ni, index, nw, ix, ki, iglob, TYPE_VEC, k
     REAL(KIND=8) :: ray
     Vec            :: vb_145, vb_236
     PetscErrorCode :: ierr
@@ -240,9 +240,9 @@ CONTAINS
           ray = SUM(mesh%rr(1,j_loc)*mesh%gauss%ww(:,l))
 
           IF (PRESENT(opt_tensor)) THEN
-             DO TYPE = 1, 6
+             DO TYPE_VEC = 1, 6
                 DO k = 1, 3
-                   tensor_loc(k,TYPE) = opt_tensor(k,index,TYPE)
+                   tensor_loc(k,TYPE_VEC) = opt_tensor(k,index,TYPE_VEC)
                 END DO
              END DO
 
@@ -257,8 +257,8 @@ CONTAINS
           END IF
 
           IF (PRESENT(opt_grad_div)) THEN
-             DO TYPE = 1, 2
-                div_loc(TYPE) = opt_grad_div(index,TYPE)
+             DO TYPE_VEC = 1, 2
+                div_loc(TYPE_VEC) = opt_grad_div(index,TYPE_VEC)
              END DO
 
              f_div(1) = div_loc(1)/ray

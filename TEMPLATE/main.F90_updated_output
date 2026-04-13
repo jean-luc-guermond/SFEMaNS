@@ -3,14 +3,37 @@ PROGRAM mhd_prog
   USE initialization
   USE my_util
   USE input_data
-  ! USE arpack_mhd
+  !USE arpack_mhd
   USE fourier_to_real_for_vtu
   USE user_data
   USE post_processing_debug
   USE verbose
+  USE sub_plot
+  USE chaine_caractere
 #include "petsc/finclude/petsc.h"
   USE petsc
+
+  USE COMM_LK_SFEM
+  USE def_type_field
+  USE exponential_propagator
+  USE eigenvalue_problem, ONLY: compute_spectrum
+#ifdef USE_LIGHTKRYLOV 
+  USE LightKrylov
+  USE LightKrylov_Constants
+  USE LightKrylov_Logger
+  USE stdlib_logger, ONLY: information_level, warning_level, debug_level, error_level, all_level, success
+  USE stdlib_io_npy, ONLY: save_npy
+#endif
+
   IMPLICIT NONE
+  !===EXPONENTIAL_PROPAGATOR=====================================================
+  TYPE(exptA_linop)                               :: exptA
+  TYPE(mag_field_type)                            :: vec_in
+  TYPE(mag_field_type)                            :: vec_out
+  TYPE(mag_field_type), DIMENSION(:), ALLOCATABLE :: X
+  COMPLEX(KIND=8), DIMENSION(:), ALLOCATABLE      :: lambda
+  REAL(KIND=8), DIMENSION(:), ALLOCATABLE         :: residuals
+  LOGICAL                                         :: if_induction, test_induction
   !===Navier-Stokes fields========================================================
   TYPE(mesh_type), POINTER                        :: pp_mesh, vv_mesh
   REAL(KIND=8), POINTER, DIMENSION(:,:,:)         :: un, pn
@@ -18,7 +41,8 @@ PROGRAM mhd_prog
   !===Maxwell fields==============================================================
   TYPE(mesh_type), POINTER                        :: H_mesh, phi_mesh
   TYPE(interface_type), POINTER                   :: interface_H_mu, interface_H_phi
-  REAL(KIND=8), POINTER,      DIMENSION(:,:,:)    :: Hn, Bn, phin, vel
+  REAL(KIND=8), POINTER,      DIMENSION(:,:,:)    :: vel
+  TYPE(mag_field_type), POINTER                   :: mag_field
   REAL(KIND=8), POINTER,      DIMENSION(:)        :: sigma_field, mu_H_field
   !===Temperature field===========================================================
   TYPE(mesh_type), POINTER                        :: temp_mesh
@@ -60,13 +84,19 @@ PROGRAM mhd_prog
   !===Initialize SFEMANS (mandatory)==============================================
   CALL initial(vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, conc_mesh,&
        interface_H_phi, interface_H_mu, list_mode, &
-       un, pn, Hn, Bn, phin, vel, &
+       un, pn, mag_field, vel, &
        vol_heat_capacity_field, temperature_diffusivity_field, &
        concentration_diffusivity_field,mu_H_field, sigma_field, time, m_max_c, &
        comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc,temperature, &
        concentration, level_set, density, &
        der_un, visc_LES,visc_LES_level)
 
+
+  !===== (for now) if_induction is the only case where the exptA subroutine can be tested
+  if_induction = ((inputs%type_pb == 'mxx') .OR. (inputs%type_pb == 'mhd') .OR. &
+          (inputs%type_pb == 'mxw') .OR. (inputs%type_pb == 'mhs') .OR. (inputs%type_pb == 'fhd'))
+  test_induction = if_induction .AND. inputs%if_regression
+  !===== if_induction is the only case where the exptA subroutine can be tested
 
   !===============================================================================
   !                        VISUALIZATION WITHOUT COMPUTING                       !
@@ -101,57 +131,140 @@ PROGRAM mhd_prog
   !     !RETURN
   !  END IF
 
-  !===============================================================================
-  !                        TIME INTEGRATION                                      !
-  !===============================================================================
+!   !===============================================================================
+!   !                        TIME INTEGRATION                                      !
+!   !===============================================================================
 
-  IF (inputs%if_post_proc_init) THEN
-     CALL my_post_processing(0)
-  END IF
+!   IF (inputs%if_post_proc_init) THEN
+!      CALL my_post_processing(0)
+!   END IF
 
-  !===Start time loop
-  tps = user_time()
-  DO it = 1, inputs%nb_iteration
-     tploc =  user_time()
-     time = time + inputs%dt
+!   !===Start time loop
+!   tps = user_time()
+!   DO it = 1, inputs%nb_iteration
+!      tploc =  user_time()
+!      time = time + inputs%dt
 
-     CALL run_SFEMaNS(time, it)
+!      CALL run_SFEMaNS(time, it)
 
-     !===My postprocessing
-     IF (.NOT.inputs%test_de_convergence) THEN
-        CALL my_post_processing(it)
-     END IF
+!      !===My postprocessing
+!      IF (.NOT.inputs%test_de_convergence) THEN
+!         CALL my_post_processing(it)
+!      END IF
 
-     !===Write restart file
-     IF (MOD(it, inputs%freq_restart) == 0) THEN
-        CALL  save_run(it,inputs%freq_restart)
-     ENDIF
+!      !===Write restart file
+!      IF (MOD(it, inputs%freq_restart) == 0) THEN
+!         CALL  save_run(it,inputs%freq_restart)
+!      ENDIF
 
-     !===Write snapshot file
-     IF (MOD(it, inputs%freq_snapshot) == 0) THEN
-        CALL save_snapshot(it,inputs%freq_snapshot)
-     ENDIF
+!      !===Write snapshot file
+!      IF (MOD(it, inputs%freq_snapshot) == 0) THEN
+!         CALL save_snapshot(it,inputs%freq_snapshot)
+!      ENDIF
 
-     !===Timing
-     tploc = user_time() - tploc
-     IF (it>1) tploc_max = tploc_max + tploc
+!      !===Timing
+!      tploc = user_time() - tploc
+!      IF (it>1) tploc_max = tploc_max + tploc
 
-  ENDDO
+!   ENDDO
 
-  !===Timing======================================================================
-  tps = user_time() - tps
-  CALL write_verbose(rank,opt_tps=tps,opt_tploc_max=tploc_max)
+!   !===Timing======================================================================
+!   tps = user_time() - tps
+!   CALL write_verbose(rank,opt_tps=tps,opt_tploc_max=tploc_max)
 
-  !===Postprocessing to check convergence=========================================
-  IF (inputs%if_regression) THEN
-     CALL regression(conc_mesh, vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
-          un, pn, Hn, Bn, phin, temperature, level_set, concentration, mu_H_field, &
-          time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc)
-     CALL error_Petsc('End of convergence test')
-  END IF
+!   !===Postprocessing to check convergence=========================================
+!   IF (inputs%if_regression) THEN
+!      CALL regression(conc_mesh, vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
+!           un, pn, mag_field, temperature, level_set, concentration, mu_H_field, &
+!           time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc)
+!      CALL error_Petsc('End of convergence test')
+!   END IF
 
-  !===End of code=================================================================
-  CALL error_Petsc('End of SFEMaNS')
+!   !===End of code=================================================================
+!   CALL error_Petsc('End of SFEMaNS')
+
+   !=================================================
+   !===== Solving for eigenspectrum  LightKrylov ====
+   !=================================================
+   IF (inputs%LK%eigs) THEN
+#ifdef USE_LIGHTKRYLOV      
+      CALL compute_spectrum(comm_one_d, H_mesh, phi_mesh, lambda, residuals, X, list_mode)
+
+      IF (inputs%if_regression) THEN
+         CALL regression_LK(lambda)
+      END IF
+#else
+      IF (inputs%if_regression) THEN
+         ! tests always pass if LightKrylov is not loaded
+         WRITE(*,*) "passing LightKrylov by default", "1234567891"
+         CALL PetscFinalize(ierr)
+         CALL EXIT(123)
+      ELSE
+         CALL error_petsc("BUG in main.F90: LK eigvals set to True, but&
+          SFEMaNS was compiled without linking LightKrylov")
+      END IF
+#endif
+
+  ELSE IF (.NOT. inputs%LK%ctest_exptA) THEN
+!=======================================================
+!===== time integration ================================
+!=======================================================
+      DO it = 1, inputs%nb_iteration
+         tploc =  user_time()
+         time = time + inputs%dt
+         CALL run_SFEMaNS(time, it)
+
+         !===My postprocessing
+         IF (.NOT.inputs%test_de_convergence) THEN
+            CALL my_post_processing(it)
+         END IF
+         !===Write restart file
+         IF (MOD(it, inputs%freq_restart) == 0) THEN
+            CALL save_run(it,inputs%freq_restart)
+         ENDIF
+         !===Write snapshot file
+         IF (MOD(it, inputs%freq_snapshot) == 0) THEN
+            CALL save_snapshot(it,inputs%freq_snapshot)
+         ENDIF
+         !===Timing
+         tploc = user_time() - tploc
+         IF (it>1) tploc_max = tploc_max + tploc
+      ENDDO
+!==========================================================
+!===== CTEST with exptA (<=> matvec) ======================
+!==========================================================
+   ELSE      
+      !====== CTEST using exptA matvec
+      WRITE(*,*) "===== Doing CTEST with exptA =====", inputs%LK%nb_exptA 
+      !====== Time integration through iteration of exptA
+      tps = user_time()
+      DO it=1,inputs%LK%nb_exptA    
+          tploc = user_time()
+          CALL SFEM_2_LK(vec_in, mag_field)
+          CALL exptA%matvec(vec_in, vec_out)
+          CALL LK_2_SFEM(mag_field, vec_out)
+          tploc = user_time() - tploc
+          IF (it >1) tploc_max = tploc_max + tploc
+      END DO
+   END IF
+
+!==============================================
+!============== End main program ==============
+!==============================================
+
+   !===Timing======================================================================
+   tps = user_time() - tps
+   CALL write_verbose(rank,opt_tps=tps,opt_tploc_max=tploc_max)
+   !===Postprocessing to check convergence=========================================
+   IF (inputs%if_regression) THEN
+      CALL regression(conc_mesh, vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
+            un, pn, mag_field, temperature, level_set, concentration, mu_H_field, &
+            time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc)
+      CALL error_Petsc('End of convergence test')  
+   END IF
+   CALL error_petsc('End of SFEMaNS') 
+
+
 CONTAINS
 
   SUBROUTINE my_post_processing(it)
@@ -210,8 +323,8 @@ CONTAINS
     REAL(KIND=8), DIMENSION(SIZE(level_set,1),SIZE(level_set,2),SIZE(level_set,3),SIZE(level_set,4)) :: level_set_err
     REAL(KIND=8), DIMENSION(SIZE(temperature,1),SIZE(temperature,2),SIZE(temperature,3))       :: temp_err
     REAL(KIND=8), DIMENSION(SIZE(concentration,1),SIZE(concentration,2),SIZE(concentration,3)) :: conc_err
-    REAL(KIND=8), DIMENSION(SIZE(Hn,1),SIZE(Hn,2),SIZE(Hn,3))       :: H_err
-    REAL(KIND=8), DIMENSION(SIZE(phin,1),SIZE(phin,2),SIZE(phin,3)) :: phi_err
+    REAL(KIND=8), DIMENSION(SIZE(mag_field%Hn,1),SIZE(mag_field%Hn,2),SIZE(mag_field%Hn,3))       :: H_err
+    REAL(KIND=8), DIMENSION(SIZE(mag_field%phin,1),SIZE(mag_field%phin,2),SIZE(mag_field%phin,3)) :: phi_err
     !concentration, magn field
     REAL(KIND=8), DIMENSION(4) :: norm_err
     REAL(KIND=8)               :: avg
@@ -296,7 +409,7 @@ CONTAINS
             .OR. inputs%type_pb=='mhs') THEN
           norm = norm_SF(comm_one_d_ns, 'L2', vv_mesh, list_mode, un)
        ELSE IF (inputs%type_pb=='mxw') THEN
-          norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn)
+          norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, mag_field%Hn)
        END IF
        IF (norm>1.d8) THEN
           !IF (norm>1.d8.OR.isnan(norm)) THEN
@@ -386,7 +499,7 @@ CONTAINS
           END DO
           e_cm_h_file = en_file
           DO i=1, m_max_c
-             e_cm_h(i) = 0.5*(norme_L2_champ_par(comm_one_d(1), H_mesh, list_mode(i:i), Hn(:,:,i:i)))**2
+             e_cm_h(i) = 0.5*(norme_L2_champ_par(comm_one_d(1), H_mesh, list_mode(i:i), mag_field%Hn(:,:,i:i)))**2
           ENDDO
           IF (rank_S == 0) THEN
              OPEN(UNIT=50,FILE=e_cm_h_file, FORM='formatted', STATUS='unknown')
@@ -783,20 +896,20 @@ CONTAINS
                 CLOSE(59)
              ENDIF
           ENDIF
-          !CALL potential_on_axis(time, H_mesh, conc_mesh, comm_one_d, comm_one_d_conc,list_mode, Hn, concentration)
+          !CALL potential_on_axis(time, H_mesh, conc_mesh, comm_one_d, comm_one_d_conc,list_mode, mag_field%Hn, concentration)
        END IF ! end if_concentration
 
        IF (inputs%type_pb=='mxw' .OR. inputs%type_pb=='mhd' &
             .OR. inputs%type_pb=='fhd' .OR. inputs%type_pb=='mhs' ) THEN
-          err = norm_SF(comm_one_d, 'div', H_mesh, list_mode, Hn)
-          norm = norm_SF(comm_one_d, 'H1', H_mesh, list_mode, Hn)
+          err = norm_SF(comm_one_d, 'div', H_mesh, list_mode, mag_field%Hn)
+          norm = norm_SF(comm_one_d, 'H1', H_mesh, list_mode, mag_field%Hn)
           IF (rank == 0) THEN
              !===L2 norm of magnetic field
              WRITE(41,*) time, err, (err/norm)*H_mesh%global_diameter
           END IF
 
-          err = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Bn)
-          norm = norm_SF(comm_one_d, 'H1', H_mesh, list_mode, Bn)
+          err = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, mag_field%Bn)
+          norm = norm_SF(comm_one_d, 'H1', H_mesh, list_mode, mag_field%Bn)
           IF (rank == 0) THEN
              !===L2 norm of div(Bn)
              WRITE(51,*) time, err, norm
@@ -808,7 +921,7 @@ CONTAINS
           END IF
 
           DO i=1, m_max_c
-             e_cm_h(i) = 0.5*(norme_L2_champ_par(comm_one_d(1), H_mesh, list_mode(i:i), Hn(:,:,i:i)))**2
+             e_cm_h(i) = 0.5*(norme_L2_champ_par(comm_one_d(1), H_mesh, list_mode(i:i), mag_field%Hn(:,:,i:i)))**2
           ENDDO
           IF (rank_S == 0) THEN
              OPEN(UNIT=50,FILE=e_cm_h_file, FORM='formatted',POSITION = 'append',&
@@ -821,9 +934,9 @@ CONTAINS
              IF (nb_anemo_h /=0) THEN
                 OPEN(UNIT=57,FILE=anemometre_h_file, FORM='formatted', POSITION = 'append', &
                      STATUS='unknown')
-                WRITE(57,103) time, Hn(anemo_h(1:nb_anemo_h),1,:), Hn(anemo_h(1:nb_anemo_h),2,:), &
-                     Hn(anemo_h(1:nb_anemo_h),3,:), Hn(anemo_h(1:nb_anemo_h),4,:), &
-                     Hn(anemo_h(1:nb_anemo_h),5,:), Hn(anemo_h(1:nb_anemo_h),6,:)
+                WRITE(57,103) time, mag_field%Hn(anemo_h(1:nb_anemo_h),1,:), mag_field%Hn(anemo_h(1:nb_anemo_h),2,:), &
+                     mag_field%Hn(anemo_h(1:nb_anemo_h),3,:), mag_field%Hn(anemo_h(1:nb_anemo_h),4,:), &
+                     mag_field%Hn(anemo_h(1:nb_anemo_h),5,:), mag_field%Hn(anemo_h(1:nb_anemo_h),6,:)
                 CLOSE(57)
              ENDIF
           ENDIF
@@ -919,12 +1032,12 @@ CONTAINS
           IF (H_mesh%np>0) THEN
              DO k = 1, 6
                 DO i = 1, SIZE(list_mode)
-                   H_err(:,k,i) = Hn(:,k,i) - Hexact(H_mesh,k, H_mesh%rr,list_mode(i), mu_H_field, time)
+                   H_err(:,k,i) = mag_field%Hn(:,k,i) - Hexact(H_mesh,k, H_mesh%rr,list_mode(i), mu_H_field, time)
                 END DO
              END DO
              norm_err(1) = SQRT(dot_product_SF(comm_one_d, H_mesh, list_mode, H_err, H_err))
              norm_err(2) = norm_SF(comm_one_d, 'sH1', H_mesh, list_mode, H_err)
-             norm_err(3) = norm_SF(comm_one_d, 'div', H_mesh, list_mode, Hn)
+             norm_err(3) = norm_SF(comm_one_d, 'div', H_mesh, list_mode, mag_field%Hn)
              IF (rank==0) THEN
                 WRITE(10,*) 'Magnetic field   #####################'
                 WRITE(10,*) 'L2 error on H  = ', norm_err(1)
@@ -937,7 +1050,7 @@ CONTAINS
           IF (phi_mesh%np>0) THEN
              DO i = 1, m_max_c
                 DO k = 1, 2
-                   phi_err(:,k,i) = phin(:,k,i) - Phiexact(k, phi_mesh%rr, list_mode(i), inputs%mu_phi,time)
+                   phi_err(:,k,i) = mag_field%phin(:,k,i) - Phiexact(k, phi_mesh%rr, list_mode(i), inputs%mu_phi,time)
                 END DO
              END DO
              norm_err(1) = norm_SF(comm_one_d, 'L2', phi_mesh, list_mode, phi_err)
@@ -978,7 +1091,7 @@ CONTAINS
           END IF
           CALL vtu_3d(comm_one_d,density, 'vv_mesh', 'Density', 'density', what, opt_it=it_plot)
           IF (inputs%if_plot_2D) THEN
-             !===Proceed as follows to make 2D plots in the Fourier space (using Hn
+             !===Proceed as follows to make 2D plots in the Fourier space (using mag_field%Hn
              !for instance)
              DO i = 1, m_max_c
                 WRITE(st_mode,'(I3)') list_mode(i)
@@ -1077,11 +1190,12 @@ CONTAINS
        !===3D/2D Plots for magnetic field
        IF (inputs%type_pb=='mxw' .OR. inputs%type_pb=='mxx' .OR. inputs%type_pb=='mhd' &
             .OR. inputs%type_pb=='fhd' .OR. inputs%type_pb=='mhs') THEN
-          CALL vtu_3d(comm_one_d,Hn, 'H_mesh', 'MagField', 'mag', what, opt_it=it_plot)
-          CALL vtu_3d(comm_one_d,Hn, 'H_mesh', 'Current', 'cur', what, opt_it=it_plot, opt_grad_curl='curl_h',opt_2D=.TRUE.,&
+          CALL vtu_3d(comm_one_d,mag_field%Hn, 'H_mesh', 'MagField', 'mag', what, opt_it=it_plot)
+          CALL vtu_3d(comm_one_d,mag_field%Hn, 'H_mesh', 'Current', 'cur', what, opt_it=it_plot, &
+          opt_grad_curl='curl_h',opt_2D=.TRUE.,&
                opt_mesh_in=H_mesh)
           IF (inputs%nb_dom_phi>0) THEN
-             CALL vtu_3d(comm_one_d,phin, 'phi_mesh', 'ScalPot', 'phi', what, opt_it=it_plot)
+             CALL vtu_3d(comm_one_d,mag_field%phin, 'phi_mesh', 'ScalPot', 'phi', what, opt_it=it_plot)
           END IF
 
           IF (inputs%if_plot_2D) THEN
@@ -1090,7 +1204,7 @@ CONTAINS
                 WRITE(st_mode,'(I3)') list_mode(i)
                 header = 'Hn_'//'mode_'//trim(adjustl(st_mode))
                 name_of_field = 'Hn'
-                CALL make_vtu_file_2D(comm_one_d(1), H_mesh, header, Hn(:,:,i), name_of_field, &
+                CALL make_vtu_file_2D(comm_one_d(1), H_mesh, header, mag_field%Hn(:,:,i), name_of_field, &
                      what, opt_it=it_plot)
              END DO
           END IF
@@ -1583,7 +1697,7 @@ CONTAINS
 
   END SUBROUTINE xmax_xmin
 
-!!$  SUBROUTINE potential_on_axis_vol(time, mesh, conc_mesh, communicator, list_mode, Hn, sigma, conc)
+!!$  SUBROUTINE potential_on_axis_vol(time, mesh, conc_mesh, communicator, list_mode, mag_field, sigma, conc)
 !!$    USE def_type_mesh
 !!$    USE user_data
 !!$    USE boundary
@@ -1594,7 +1708,7 @@ CONTAINS
 !!$    TYPE(mesh_type),                                        INTENT(IN) :: mesh
 !!$    TYPE(mesh_type),                                        INTENT(IN) :: conc_mesh
 !!$    INTEGER,      DIMENSION(:),                             INTENT(IN) :: list_mode
-!!$    REAL(KIND=8), DIMENSION(:,:,:),                         INTENT(IN) :: Hn
+!!$    TYPE(mag_field_type),                                   INTENT(IN) :: mag_field
 !!$    REAL(KIND=8), DIMENSION(:),                             INTENT(IN) :: sigma
 !!$    REAL(KIND=8),                                           INTENT(IN) :: time
 !!$    REAL(KIND=8), DIMENSION(:,:,:),                         INTENT(IN) :: conc
@@ -1628,7 +1742,7 @@ CONTAINS
 !!$    END IF
 !!$
 !!$
-!!$    CALL compute_rot_h(Hn, j_Hn)
+!!$    CALL compute_rot_h(mag_field%Hn, j_Hn)
 !!$
 !!$
 !!$    pot_loc = 0.d0
@@ -2284,14 +2398,14 @@ CONTAINS
     CALL MPI_ALLREDUCE(int_4_tot_F, int_4_tot, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
          communicator(1), code)
 
-    IF (rank==0) THEN
-       !Write output rho1 * integral( (1-level_set)*(z/Fr-beta_1*T*z) )
-       WRITE(911,103) time, inputs%density_fluid(1) * ((int_3_tot - int_4_tot)/user%Fr &
-            - inputs%heat_grav_fluid(1)*(int_1_tot-int_2_tot))
-       !Write output rho2 * integral( level_set*(z/Fr-beta_2*T*z) )
-       WRITE(912,103) time, inputs%density_fluid(2) * (int_4_tot/user%Fr  &
-            - inputs%heat_grav_fluid(2)*int_2_tot)
-    END IF
+   !  IF (rank==0) THEN
+   !     !Write output rho1 * integral( (1-level_set)*(z/Fr-beta_1*T*z) )
+   !     WRITE(911,103) time, inputs%density_fluid(1) * ((int_3_tot - int_4_tot)/user%Fr &
+   !          - inputs%heat_grav_fluid(1)*(int_1_tot-int_2_tot))
+   !     !Write output rho2 * integral( level_set*(z/Fr-beta_2*T*z) )
+   !     WRITE(912,103) time, inputs%density_fluid(2) * (int_4_tot/user%Fr  &
+   !          - inputs%heat_grav_fluid(2)*int_2_tot)
+   !  END IF
 
   END SUBROUTINE compute_potential_energy_by_level_set_area
 

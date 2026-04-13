@@ -27,7 +27,7 @@ nproc=$(( ns*nf ))
 
 $1 $2$nproc $4  ../EXECUTABLE/$3 regression
 echo $?
-#cp current_regression_reference regression_reference_14
+#cp current_regression_reference regression_reference_45
 
 #Clean up
-rm -f fort.* Mesh_*_FE_* *.plt mesh_part* current_regression_reference
+rm -f *pvd *vtu *log fort.* Mesh_*_FE_* *.plt mesh_part* current_regression_reference suite_maxwell* *npy eigs_output.txt

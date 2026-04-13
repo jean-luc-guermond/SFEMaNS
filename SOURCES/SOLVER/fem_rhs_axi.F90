@@ -19,7 +19,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: ff, rotv_v, dudt, nlhalf
     REAL(KIND=8), DIMENSION(:),                 INTENT(IN) :: vel_tot      !(noeud)
     TYPE(mesh_type), TARGET                                :: mesh
-    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: V1m, vit     !V(noeud, type)
+    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: V1m, vit     !V(noeud, TYPE_VEC)
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: P, phalf
     REAL(KIND=8),                               INTENT(IN) :: dt
     INTEGER,                                    INTENT(IN) :: mode
@@ -45,7 +45,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(6,mesh%dom_me) :: viscosity
     REAL(KIND=8), DIMENSION(6) :: norm_vit
     REAL(KIND=8) ::  type_fe
-    INTEGER :: m, l , i , ni , index, index2, TYPE, k
+    INTEGER :: m, l , i , ni , index, index2, TYPE_VEC, k
     INTEGER :: ms, nw, ix, ki, iglob
 !!$ WARNING FL Variables removed (used for edge_stab)
 !!$    INTEGER :: cotei, ls
@@ -103,8 +103,8 @@ CONTAINS
     !TEST LES LC October 28, 2014
     normal_vit = vel_tot_max
     !TEST LES LC October 28, 2014
-    DO TYPE = 1, 6
-       norm_vit(TYPE) = SUM(ABS(vit(:,TYPE)))/mesh%np + 1.d-14
+    DO TYPE_VEC = 1, 6
+       norm_vit(TYPE_VEC) = SUM(ABS(vit(:,TYPE_VEC)))/mesh%np + 1.d-14
     END DO
     !ATTENTION: JLG Jan 25 2010
     R_eff = 0.d0
@@ -150,11 +150,11 @@ CONTAINS
              visc1 = MAX(visc1,ABS(ft+fp+nlhalf(index2,:)))
 
              !--------Calcul du gradient de la vitesse
-             DO TYPE = 1, 6
+             DO TYPE_VEC = 1, 6
                 DO k = 1 ,2
-                   grad(k,TYPE,l) = SUM(vit(j_loc,TYPE)*dw_loc(k,:))
+                   grad(k,TYPE_VEC,l) = SUM(vit(j_loc,TYPE_VEC)*dw_loc(k,:))
                 END DO
-                vitloc(TYPE,l) = SUM(vit(j_loc,TYPE)*mesh%gauss%ww(:,l))
+                vitloc(TYPE_VEC,l) = SUM(vit(j_loc,TYPE_VEC)*mesh%gauss%ww(:,l))
              END DO
 
              !--------Calcul de la divergence
@@ -167,14 +167,14 @@ CONTAINS
           visc2(3) = visc2(2); visc2(6) = visc2(2)
 
           nu_loc = 0.d0
-          DO TYPE = 1, 6
-             !visc1(type) = MAX(visc1(type)/normal_vit,visc2(type))
-             !visc1(type) = MAX(visc1(type),visc2(type)*normal_vit)/MAXVAL(ABS(vitloc(type,:)))
-             visc1(TYPE) = MAX(visc1(TYPE),2*visc2(TYPE)*normal_vit)/norm_vit(TYPE)
-             visc_eff = mesh%hloc(m)*MIN(coeff_visc_ordre_un*normal_vit,inputs%LES_coeff2*mesh%hloc(m)*visc1(TYPE))
+          DO TYPE_VEC = 1, 6
+             !visc1(TYPE_VEC) = MAX(visc1(TYPE_VEC)/normal_vit,visc2(TYPE_VEC))
+             !visc1(TYPE_VEC) = MAX(visc1(TYPE_VEC),visc2(TYPE_VEC)*normal_vit)/MAXVAL(ABS(vitloc(TYPE_VEC,:)))
+             visc1(TYPE_VEC) = MAX(visc1(TYPE_VEC),2*visc2(TYPE_VEC)*normal_vit)/norm_vit(TYPE_VEC)
+             visc_eff = mesh%hloc(m)*MIN(coeff_visc_ordre_un*normal_vit,inputs%LES_coeff2*mesh%hloc(m)*visc1(TYPE_VEC))
              nu_loc = nu_loc + visc_eff
              !======Semi-implicit version==========
-             viscosity(TYPE,m) = inputs%LES_coeff1*mesh%hloc(m) - visc_eff
+             viscosity(TYPE_VEC,m) = inputs%LES_coeff1*mesh%hloc(m) - visc_eff
              !======Semi-implicit version==========
           END DO
           R_eff = R_eff + (nu_loc + dt**2*mesh%hloc(m))*mesh%hloc(m)**2*ray
@@ -191,8 +191,8 @@ CONTAINS
     END IF
 
 
-    !DO type = 1, 6
-    !   CALL average(mesh,viscosity(type,:))
+    !DO TYPE_VEC = 1, 6
+    !   CALL average(mesh,viscosity(TYPE_VEC,:))
     !END DO
 
     nw = mesh%gauss%n_w
@@ -222,11 +222,11 @@ CONTAINS
        DO l = 1, mesh%gauss%l_G
           index  = index +1
           dw_loc = mesh%gauss%dw(:,:,l,m)
-          DO TYPE = 1, 6
+          DO TYPE_VEC = 1, 6
              DO k = 1 ,2
-                grad(k,TYPE,l) = SUM(vit(j_loc,TYPE)*dw_loc(k,:))
+                grad(k,TYPE_VEC,l) = SUM(vit(j_loc,TYPE_VEC)*dw_loc(k,:))
              END DO
-             vitloc(TYPE,l) = SUM(vit(j_loc,TYPE)*mesh%gauss%ww(:,l))
+             vitloc(TYPE_VEC,l) = SUM(vit(j_loc,TYPE_VEC)*mesh%gauss%ww(:,l))
           END DO
 
           !===Compute radius of Gauss point
@@ -269,8 +269,8 @@ CONTAINS
           fv = mult*fv
 
           smb =  (ft+fp+fs+fv-rotv_v(index,:))*ray*mesh%gauss%rj(l,m)
-          DO TYPE = 1, 6
-             grad(:,TYPE,l) =  mult(TYPE)*grad(:,TYPE,l)*ray*mesh%gauss%rj(l,m)
+          DO TYPE_VEC = 1, 6
+             grad(:,TYPE_VEC,l) =  mult(TYPE_VEC)*grad(:,TYPE_VEC,l)*ray*mesh%gauss%rj(l,m)
           END DO
 
 !!$        DO j=1,6
@@ -318,9 +318,9 @@ CONTAINS
 !!$        h2 = -ed_st*h(ms)**2
 !!$
 !!$        j_loc(1:mesh%gauss%n_ws) = mesh%jjsi(1:mesh%gauss%n_ws,ms)
-!!$        DO TYPE = 1, 6
+!!$        DO TYPE_VEC = 1, 6
 !!$           DO cotei = 1, 2
-!!$              uloci(:,cotei) = vit(jji_loc(:,cotei),TYPE)
+!!$              uloci(:,cotei) = vit(jji_loc(:,cotei),TYPE_VEC)
 !!$           END DO
 !!$
 !!$           u0loci = 0.d0
@@ -339,7 +339,7 @@ CONTAINS
 !!$
 !!$           DO cotei = 1, 2
 !!$              DO ni = 1, mesh%gauss%n_w
-!!$                 u0(jji_loc(ni,cotei),TYPE) = u0(jji_loc(ni,cotei),TYPE) + u0loci(ni,cotei)
+!!$                 u0(jji_loc(ni,cotei),TYPE_VEC) = u0(jji_loc(ni,cotei),TYPE_VEC) + u0loci(ni,cotei)
 !!$              END DO
 !!$           END DO
 !!$        END DO
@@ -401,7 +401,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(6,mesh%dom_me) :: viscosity
     REAL(KIND=8), DIMENSION(6) :: norm_vit
     REAL(KIND=8) ::  type_fe
-    INTEGER :: m, l , i , ni , index, index2, TYPE, k
+    INTEGER :: m, l , i , ni , index, index2, TYPE_VEC, k
     INTEGER :: ms, nw, ix, ki, iglob
 !!$ WARNING FL Variables removed (used for edge_stab)
 !!$    INTEGER :: cotei, ls
@@ -457,8 +457,8 @@ CONTAINS
     !TEST LES LC October 28, 2014
     normal_vit = vel_tot_max
     !TEST LES LC October 28, 2014
-    DO TYPE = 1, 6
-       norm_vit(TYPE) = SUM(ABS(vit(:,TYPE)))/mesh%np + 1.d-14
+    DO TYPE_VEC = 1, 6
+       norm_vit(TYPE_VEC) = SUM(ABS(vit(:,TYPE_VEC)))/mesh%np + 1.d-14
     END DO
     !ATTENTION: JLG Jan 25 2010
     R_eff = 0.d0
@@ -504,11 +504,11 @@ CONTAINS
              visc1= MAX(visc1,ABS(ft+fp+nlhalf(index2,:)))
 
              !--------Calcul du gradient de la vitesse
-             DO TYPE = 1, 6
+             DO TYPE_VEC = 1, 6
                 DO k = 1 ,2
-                   grad(k,TYPE,l) = SUM(vit(j_loc,TYPE)*dw_loc(k,:))
+                   grad(k,TYPE_VEC,l) = SUM(vit(j_loc,TYPE_VEC)*dw_loc(k,:))
                 END DO
-                vitloc(TYPE,l) = SUM(vit(j_loc,TYPE)*mesh%gauss%ww(:,l))
+                vitloc(TYPE_VEC,l) = SUM(vit(j_loc,TYPE_VEC)*mesh%gauss%ww(:,l))
              END DO
 
              !--------Calcul de la divergence
@@ -521,14 +521,14 @@ CONTAINS
           visc2(3) = visc2(2); visc2(6) = visc2(2)
 
           nu_loc = 0.d0
-          DO TYPE = 1, 6
-             !visc1(type) = MAX(visc1(type)/normal_vit,visc2(type))
-             !visc1(type) = MAX(visc1(type),visc2(type)*normal_vit)/MAXVAL(ABS(vitloc(type,:)))
-             visc1(TYPE) = MAX(visc1(TYPE),2*visc2(TYPE)*normal_vit)/norm_vit(TYPE)
-             visc_eff = mesh%hloc(m)*MIN(coeff_visc_ordre_un*normal_vit,inputs%LES_coeff2*mesh%hloc(m)*visc1(TYPE))
+          DO TYPE_VEC = 1, 6
+             !visc1(TYPE_VEC) = MAX(visc1(TYPE_VEC)/normal_vit,visc2(TYPE_VEC))
+             !visc1(TYPE_VEC) = MAX(visc1(TYPE_VEC),visc2(TYPE_VEC)*normal_vit)/MAXVAL(ABS(vitloc(TYPE_VEC,:)))
+             visc1(TYPE_VEC) = MAX(visc1(TYPE_VEC),2*visc2(TYPE_VEC)*normal_vit)/norm_vit(TYPE_VEC)
+             visc_eff = mesh%hloc(m)*MIN(coeff_visc_ordre_un*normal_vit,inputs%LES_coeff2*mesh%hloc(m)*visc1(TYPE_VEC))
              nu_loc = nu_loc + visc_eff
              !======Semi-implicit version==========
-             viscosity(TYPE,m) = inputs%LES_coeff1*mesh%hloc(m) - visc_eff
+             viscosity(TYPE_VEC,m) = inputs%LES_coeff1*mesh%hloc(m) - visc_eff
              !======Semi-implicit version==========
           END DO
           R_eff = R_eff + (nu_loc + dt**2*mesh%hloc(m))*mesh%hloc(m)**2*ray
@@ -545,8 +545,8 @@ CONTAINS
     END IF
 
 
-    !DO type = 1, 6
-    !   CALL average(mesh,viscosity(type,:))
+    !DO TYPE_VEC = 1, 6
+    !   CALL average(mesh,viscosity(TYPE_VEC,:))
     !END DO
 
     nw = mesh%gauss%n_w
@@ -576,11 +576,11 @@ CONTAINS
        DO l = 1, mesh%gauss%l_G
           index  = index +1
           dw_loc = mesh%gauss%dw(:,:,l,m)
-          DO TYPE = 1, 6
+          DO TYPE_VEC = 1, 6
              DO k = 1 ,2
-                grad(k,TYPE,l) = SUM(vit(j_loc,TYPE)*dw_loc(k,:))
+                grad(k,TYPE_VEC,l) = SUM(vit(j_loc,TYPE_VEC)*dw_loc(k,:))
              END DO
-             vitloc(TYPE,l) = SUM(vit(j_loc,TYPE)*mesh%gauss%ww(:,l))
+             vitloc(TYPE_VEC,l) = SUM(vit(j_loc,TYPE_VEC)*mesh%gauss%ww(:,l))
           END DO
 
           !===Compute radius of Gauss point
@@ -1050,11 +1050,11 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: tensor               !(node)
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: tensor_surface_gauss !(gauss)
     TYPE(mesh_type), TARGET                                :: mesh
-    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: V1m, momentum, momentum_LES   !V(node, type)
+    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: V1m, momentum, momentum_LES   !V(node, TYPE_VEC)
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: P
     REAL(KIND=8),                               INTENT(IN) :: stab
     INTEGER,                                    INTENT(IN) :: mode
-    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: visc_grad_vel        !V(r/th/z, gauss, type)
+    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: visc_grad_vel        !V(r/th/z, gauss, TYPE_VEC)
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: visc_entro
     REAL(KIND=8), DIMENSION(6)                             :: fs , ft , fp, smb, mult
     REAL(KIND=8), DIMENSION(6)                             :: fnl, fvgm, fvgm_LES, fvgu
@@ -1071,7 +1071,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%dom_me)                   :: stab_loc
     LOGICAL,                                 SAVE :: once = .TRUE.
     REAL(KIND=8),                            SAVE :: type_fe
-    INTEGER :: m, l , i , ni , index, TYPE, k
+    INTEGER :: m, l , i , ni , index, TYPE_VEC, k
     INTEGER :: nw, ix, ki, iglob
     !#include "petsc/finclude/petsc.h"
     Vec            :: vb_2_14,vb_2_23,vb_1_5,vb_1_6
@@ -1108,7 +1108,7 @@ CONTAINS
     nw = mesh%gauss%n_w
 
     DO m = 1, mesh%dom_me
-       mult(:)=  - visc_entro(m,1) !visc_entro is the same in type 1 or 2
+       mult(:)=  - visc_entro(m,1) !visc_entro is the same in TYPE_VEC 1 or 2
 
        j_loc = mesh%jj(:,m)
 
@@ -1134,10 +1134,10 @@ CONTAINS
        DO l = 1, mesh%gauss%l_G
           index  = index +1
           dw_loc = mesh%gauss%dw(:,:,l,m)
-          DO TYPE = 1, 6
+          DO TYPE_VEC = 1, 6
              DO k = 1, 3
-                tensor_loc(k,TYPE,l) = SUM(tensor(k,j_loc,TYPE)*mesh%gauss%ww(:,l)) &
-                     + tensor_surface_gauss(k,index,TYPE)
+                tensor_loc(k,TYPE_VEC,l) = SUM(tensor(k,j_loc,TYPE_VEC)*mesh%gauss%ww(:,l)) &
+                     + tensor_surface_gauss(k,index,TYPE_VEC)
              END DO
           END DO
 
@@ -1179,15 +1179,15 @@ CONTAINS
           !-------------------------------------------------------------------------------
 
           IF (inputs%if_level_set) THEN
-             DO TYPE = 1, 6
+             DO TYPE_VEC = 1, 6
 
                 DO k = 1 ,2
-                   grad_mom(k,TYPE,l) = stab_loc(m)* SUM(momentum(j_loc,TYPE)*dw_loc(k,:)) &
-                        + mult(TYPE)*SUM(momentum_LES(j_loc,TYPE)*dw_loc(k,:))
+                   grad_mom(k,TYPE_VEC,l) = stab_loc(m)* SUM(momentum(j_loc,TYPE_VEC)*dw_loc(k,:)) &
+                        + mult(TYPE_VEC)*SUM(momentum_LES(j_loc,TYPE_VEC)*dw_loc(k,:))
                 END DO
 
-                momloc(TYPE,l) = SUM(momentum(j_loc,TYPE)*mesh%gauss%ww(:,l))
-                momloc_LES(TYPE,l) = SUM(momentum_LES(j_loc,TYPE)*mesh%gauss%ww(:,l))
+                momloc(TYPE_VEC,l) = SUM(momentum(j_loc,TYPE_VEC)*mesh%gauss%ww(:,l))
+                momloc_LES(TYPE_VEC,l) = SUM(momentum_LES(j_loc,TYPE_VEC)*mesh%gauss%ww(:,l))
 
              END DO
              fvgm(1) = ((mode*momloc(1,l)+momloc(4,l))*mode + mode*momloc(4,l)+momloc(1,l))/ray**2
@@ -1213,8 +1213,8 @@ CONTAINS
              fvgu(5) = -visc_grad_vel(3,index,4)*mode/ray
              fvgu(6) = visc_grad_vel(3,index,3)*mode/ray
 
-             DO TYPE = 1, 6
-                grad_mom(:,TYPE,l) = grad_mom(:,TYPE,l)*ray*mesh%gauss%rj(l,m)
+             DO TYPE_VEC = 1, 6
+                grad_mom(:,TYPE_VEC,l) = grad_mom(:,TYPE_VEC,l)*ray*mesh%gauss%rj(l,m)
              END DO
              tensor_loc(:,:,l) = tensor_loc(:,:,l) + visc_grad_vel(:,index,:)
 
@@ -1297,11 +1297,11 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: tensor               !(node)
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: tensor_surface_gauss !(gauss)
     TYPE(mesh_type), TARGET                                :: mesh
-    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: V1m, momentum    !V(noeud, type)
+    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: V1m, momentum    !V(noeud, TYPE_VEC)
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: P
     REAL(KIND=8),                               INTENT(IN) :: stab
     INTEGER,                                    INTENT(IN) :: mode
-    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: visc_grad_vel        !V(r/th/z, gauss, type)
+    REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: visc_grad_vel        !V(r/th/z, gauss, TYPE_VEC)
     REAL(KIND=8), DIMENSION(6)                             :: fs , ft , fp, smb, fnl
     REAL(KIND=8), DIMENSION(6)                             :: fvgm, fvgu, fvgmT
     REAL(KIND=8), DIMENSION(2,6,mesh%gauss%l_G)            :: grad_mom, grad_T_mom
@@ -1317,7 +1317,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%dom_me)                   :: stab_loc
     LOGICAL,                                 SAVE :: once = .TRUE.
     REAL(KIND=8),                            SAVE :: type_fe
-    INTEGER :: m, l , i , ni , index, TYPE, k
+    INTEGER :: m, l , i , ni , index, TYPE_VEC, k
     INTEGER :: nw, ix, ki, iglob
     !#include "petsc/finclude/petsc.h"
     Vec            :: vb_3_145, vb_3_236
@@ -1371,10 +1371,10 @@ CONTAINS
        DO l = 1, mesh%gauss%l_G
           index  = index +1
           dw_loc = mesh%gauss%dw(:,:,l,m)
-          DO TYPE = 1, 6
+          DO TYPE_VEC = 1, 6
              DO k = 1, 3
-                tensor_loc(k,TYPE,l) = SUM(tensor(k,j_loc,TYPE)*mesh%gauss%ww(:,l)) &
-                     + tensor_surface_gauss(k,index,TYPE)
+                tensor_loc(k,TYPE_VEC,l) = SUM(tensor(k,j_loc,TYPE_VEC)*mesh%gauss%ww(:,l)) &
+                     + tensor_surface_gauss(k,index,TYPE_VEC)
              END DO
           END DO
 
@@ -1416,12 +1416,12 @@ CONTAINS
           !-------------------------------------------------------------------------------
 
           IF (inputs%if_level_set) THEN
-             DO TYPE = 1, 6
+             DO TYPE_VEC = 1, 6
                 DO k = 1 ,2
-                   grad_mom(k,TYPE,l) = stab_loc(m)*SUM(momentum(j_loc,TYPE)*dw_loc(k,:))
+                   grad_mom(k,TYPE_VEC,l) = stab_loc(m)*SUM(momentum(j_loc,TYPE_VEC)*dw_loc(k,:))
                 END DO
 
-                momloc(TYPE,l) = SUM(momentum(j_loc,TYPE)*mesh%gauss%ww(:,l))
+                momloc(TYPE_VEC,l) = SUM(momentum(j_loc,TYPE_VEC)*mesh%gauss%ww(:,l))
              END DO
 
              fvgm(1) = ((mode*momloc(1,l)+momloc(4,l))*mode + mode*momloc(4,l)+momloc(1,l))/ray**2
@@ -1468,8 +1468,8 @@ CONTAINS
              fvgu(5) = -visc_grad_vel(3,index,4)*mode/ray
              fvgu(6) = visc_grad_vel(3,index,3)*mode/ray
 
-             DO TYPE = 1, 6
-                grad_mom(:,TYPE,l) = grad_mom(:,TYPE,l)*ray*mesh%gauss%rj(l,m)
+             DO TYPE_VEC = 1, 6
+                grad_mom(:,TYPE_VEC,l) = grad_mom(:,TYPE_VEC,l)*ray*mesh%gauss%rj(l,m)
              END DO
              tensor_loc(:,:,l) = tensor_loc(:,:,l) + visc_grad_vel(:,index,:)
 
@@ -1544,7 +1544,7 @@ CONTAINS
     TYPE(petsc_csr_LA)                                     :: vv_1_LA,vv_2_LA
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: ff
     TYPE(mesh_type), TARGET                                :: mesh
-    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: V1m   !V(noeud, type)
+    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: V1m   !V(noeud, TYPE_VEC)
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: tensor, tensor_gauss
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: P
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: rotb_b
@@ -1558,7 +1558,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w)                :: v5_loc, v6_loc
     INTEGER,      DIMENSION(mesh%gauss%n_w)                :: idxm_1
     REAL(KIND=8)   :: ray
-    INTEGER        :: m, l , i , ni , index, TYPE, k
+    INTEGER        :: m, l , i , ni , index, TYPE_VEC, k
     INTEGER        :: nw, ix, ki, iglob
     !#include "petsc/finclude/petsc.h"
     Vec            :: vb_2_14,vb_2_23,vb_1_5,vb_1_6
@@ -1601,10 +1601,10 @@ CONTAINS
           ray = SUM(mesh%rr(1,j_loc)*mesh%gauss%ww(:,l))
 
           !===Compute tensor on gauss points:
-          DO TYPE = 1, 6
+          DO TYPE_VEC = 1, 6
              DO k = 1, 3
-                tensor_loc(k,TYPE,l) = -SUM(tensor(k,j_loc,TYPE)*mesh%gauss%ww(:,l)) &
-                     + tensor_gauss(k,index,TYPE)
+                tensor_loc(k,TYPE_VEC,l) = -SUM(tensor(k,j_loc,TYPE_VEC)*mesh%gauss%ww(:,l)) &
+                     + tensor_gauss(k,index,TYPE_VEC)
              END DO
           END DO
 
@@ -1695,7 +1695,7 @@ CONTAINS
     TYPE(petsc_csr_LA)                                     :: vv_3_LA
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: ff
     TYPE(mesh_type), TARGET                                :: mesh
-    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: V1m   !V(noeud, type)
+    REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: V1m   !V(noeud, TYPE_VEC)
     REAL(KIND=8), DIMENSION(:,:,:),             INTENT(IN) :: tensor, tensor_gauss
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: P
     REAL(KIND=8), DIMENSION(:,:),               INTENT(IN) :: rotb_b
@@ -1709,7 +1709,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w)                :: v5_loc, v6_loc
     INTEGER,      DIMENSION(mesh%gauss%n_w)                :: idxm_1
     REAL(KIND=8)   :: ray
-    INTEGER        :: m, l , i , ni , index, TYPE, k
+    INTEGER        :: m, l , i , ni , index, TYPE_VEC, k
     INTEGER        :: nw, ix, ki, iglob
     !#include "petsc/finclude/petsc.h"
     Vec            :: vb_3_145,vb_3_236
@@ -1750,10 +1750,10 @@ CONTAINS
           ray = SUM(mesh%rr(1,j_loc)*mesh%gauss%ww(:,l))
 
           !===Compute tensor on gauss points:
-          DO TYPE = 1, 6
+          DO TYPE_VEC = 1, 6
              DO k = 1, 3
-                tensor_loc(k,TYPE,l) = -SUM(tensor(k,j_loc,TYPE)*mesh%gauss%ww(:,l)) &
-                     + tensor_gauss(k,index,TYPE)
+                tensor_loc(k,TYPE_VEC,l) = -SUM(tensor(k,j_loc,TYPE_VEC)*mesh%gauss%ww(:,l)) &
+                     + tensor_gauss(k,index,TYPE_VEC)
              END DO
           END DO
 
@@ -1851,7 +1851,7 @@ CONTAINS
 
     DO ms = 1, mesh%mes
        IF (MINVAL(ABS(temp_list_robin_sides - mesh%sides(ms))) > 0) CYCLE
-       c_loc = 0.d0
+       c_loc = 0d0
        coeff_index = MINLOC(ABS(temp_list_robin_sides - mesh%sides(ms)))
        DO ls = 1, mesh%gauss%l_Gs
           !===Compute radius of Gauss point
@@ -1875,104 +1875,8 @@ CONTAINS
 
   END SUBROUTINE qs_00_gauss_surface
 
-  SUBROUTINE qs_00_gauss_surface_Neumann(mesh, vv_1_LA, temp_list_robin_sides, temp_list_dirichlet_sides, &
-       grad_bdy, cb_1, cb_2)
-    USE def_type_mesh
-    USE associate_gauss
-    USE my_util
-    USE input_data
-    IMPLICIT NONE
-    TYPE(mesh_type)                            :: mesh
-    TYPE(petsc_csr_LA)                         :: vv_1_LA
-    INTEGER     , DIMENSION(:),   INTENT(IN)   :: temp_list_robin_sides
-    INTEGER     , DIMENSION(:),   INTENT(IN)   :: temp_list_dirichlet_sides
-    REAL(KIND=8), DIMENSION(:,:), INTENT(IN)   :: grad_bdy
-    INTEGER,      DIMENSION(mesh%gauss%n_ws)   :: idxm
-    INTEGER                                    :: nws, ms, ls, ni, i, iglob, m, k
-    REAL(KIND=8)                               :: ray, y, hm1
-    REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,2) :: v_loc
-    REAL(KIND=8), DIMENSION(2)                 :: normi
-    INTEGER,      DIMENSION(mesh%gauss%n_w)    :: j_loc
-    INTEGER,      DIMENSION(mesh%gauss%n_ws)   :: js_loc
-    INTEGER                                    :: index
-
-    !#include "petsc/finclude/petsc.h"
-    Vec                                      :: cb_1, cb_2
-    PetscErrorCode                           :: ierr
-
-    nws = mesh%gauss%n_ws
-    CALL gauss(mesh)
-
-    index = 0
-    DO ms = 1, mesh%mes
-       v_loc = 0.d0
-
-       m = mesh%neighs(ms)
-       j_loc = mesh%jj(:,m) !for derivative in r/z
-       js_loc = mesh%jjs(:,ms)
-       hm1 = 1.d0 / SUM(mesh%gauss%rjs(:,ms)) !inverse local mesh size
-
-       outer: DO ls = 1, mesh%gauss%l_Gs
-          index = index + 1
-
-          !Skip Dirichlet faces
-          IF (SIZE(temp_list_dirichlet_sides) > 0) THEN
-             !IF (MINVAL(ABS(temp_list_dirichlet_sides - mesh%sides(ms))) == 0) CYCLE
-             IF (MINVAL(ABS(temp_list_dirichlet_sides - mesh%sides(ms))) < 1) CYCLE
-          END IF
-
-          !Skip Robin faces
-          IF (SIZE(temp_list_robin_sides) > 0) THEN
-             !IF (MINVAL(ABS(temp_list_robin_sides - mesh%sides(ms))) == 0) CYCLE
-             IF (MINVAL(ABS(temp_list_robin_sides - mesh%sides(ms))) < 1) CYCLE
-          END IF
-
-          !Skip periodic faces
-          DO k = 1, inputs%my_periodic%nb_periodic_pairs
-             IF (SIZE(inputs%my_periodic%list_periodic(:, k)) > 0) THEN
-                !IF (MINVAL(ABS(inputs%my_periodic%list_periodic(:, k) - mesh%sides(ms))) == 0) CYCLE outer
-                IF (MINVAL(ABS(inputs%my_periodic%list_periodic(:, k) - mesh%sides(ms))) < 1) CYCLE outer
-             END IF
-          END DO
-
-          !Neumann faces
-          !===Compute radius of Gauss point
-          ray = SUM(mesh%rr(1,js_loc)*mesh%gauss%wws(:,ls))
-
-          !===Don't integrate on r=0
-          IF (ray.LT.1.d-10) CYCLE
-
-          !===Get normal vector on Gauss point
-          normi = mesh%gauss%rnorms(:,ls,ms)
-
-          !===Compute grad_bdy dot n
-          DO ni = 1, nws
-             y = ray * mesh%gauss%rjs(ls,ms) * mesh%gauss%wws(ni,ls)
-             v_loc(ni,1) = v_loc(ni,1) &
-                  + (grad_bdy(index,1)*normi(1) + grad_bdy(index,5)*normi(2)) * y
-             v_loc(ni,2) = v_loc(ni,2) &
-                  + (grad_bdy(index,2)*normi(1) + grad_bdy(index,6)*normi(2)) * y
-          END DO
-       END DO outer ! end loop on ls
-
-       DO ni = 1, nws
-          i = mesh%jjs(ni,ms)
-          iglob = vv_1_LA%loc_to_glob(1,i)
-          idxm(ni) = iglob-1
-       END DO
-       CALL VecSetValues(cb_1, nws, idxm, v_loc(:,1), ADD_VALUES, ierr)
-       CALL VecSetValues(cb_2, nws, idxm, v_loc(:,2), ADD_VALUES, ierr)
-    ENDDO
-
-    CALL VecAssemblyBegin(cb_1,ierr)
-    CALL VecAssemblyEnd(cb_1,ierr)
-    CALL VecAssemblyBegin(cb_2,ierr)
-    CALL VecAssemblyEnd(cb_2,ierr)
-
-  END SUBROUTINE qs_00_gauss_surface_Neumann
-
   SUBROUTINE qs_00_gauss_surface_conc(mesh, vv_1_LA, conc_list_robin_sides, convection_coeff_conc_rhs, &
-       exterior_concentration, cb)
+       exterior_concentration, cb) 
     !MODIFICATION: implementation of the term int_(partial Omega) h*Text*v, with h the convection coefficient
     USE def_type_mesh
     USE my_util
@@ -2013,10 +1917,8 @@ CONTAINS
        END DO
        CALL VecSetValues(cb, nws, idxm, c_loc, ADD_VALUES, ierr)
     ENDDO
-
     CALL VecAssemblyBegin(cb,ierr)
     CALL VecAssemblyEnd(cb,ierr)
-
   END SUBROUTINE qs_00_gauss_surface_conc
 
   SUBROUTINE qs_00_gauss_H_conc(mesh, j_H_to_conc, conc_1_LA, cb_1, cb_2)
@@ -2034,7 +1936,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(2)                          :: normi
     REAL(KIND=8) ::  ray, stab, y
     INTEGER      :: i, ni, ms, ls, nws, iglob
-    INTEGER, DIMENSION(mesh%gauss%n_ws)    :: idxm
+    INTEGER, DIMENSION(mesh%gauss%n_ws)    :: idxn
     TYPE(petsc_csr_LA)                     :: conc_1_LA
     PetscErrorCode          :: ierr
     Vec                     :: cb_1, cb_2
@@ -2066,10 +1968,10 @@ CONTAINS
        DO ni = 1, nws
           i = mesh%jjs(ni,ms)
           iglob = conc_1_LA%loc_to_glob(1,i)
-          idxm(ni) = iglob-1
+          idxn(ni) = iglob-1
        END DO
-       CALL VecSetValues(cb_1, nws, idxm, v_loc(:,1), ADD_VALUES, ierr)
-       CALL VecSetValues(cb_2, nws, idxm, v_loc(:,2), ADD_VALUES, ierr)
+       CALL VecSetValues(cb_1, nws, idxn, v_loc(:,1), ADD_VALUES, ierr)
+       CALL VecSetValues(cb_2, nws, idxn, v_loc(:,2), ADD_VALUES, ierr)
     END DO ! end loop on ms
 
     CALL VecAssemblyBegin(cb_1,ierr)

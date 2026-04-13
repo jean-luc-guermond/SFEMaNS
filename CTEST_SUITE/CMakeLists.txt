@@ -1,13 +1,13 @@
 # Cmake minimum version
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.29)
+
+# Project name and version
+project(regression_test)
 
 include(variables.cmake)
 
 # Enable Fortran
 enable_language(Fortran)
-
-# Project name and version
-project(regression_test)
 
 include(CTest) # We include CTest which is part of CMake
 
@@ -60,7 +60,7 @@ add_subdirectory(${ROOT}/REGRESSION_SUITE/TEST10 ${ROOT}/REGRESSION_SUITE/TEST10
 add_subdirectory(${ROOT}/REGRESSION_SUITE/TEST11 ${ROOT}/REGRESSION_SUITE/TEST11/BUILD)
 add_subdirectory(${ROOT}/REGRESSION_SUITE/TEST12 ${ROOT}/REGRESSION_SUITE/TEST12/BUILD)
 add_subdirectory(${ROOT}/REGRESSION_SUITE/TEST13 ${ROOT}/REGRESSION_SUITE/TEST13/BUILD)
-#TEST 14 Disabled (=always passes) to avoid installing arpack
+# #TEST 14 Disabled (=always passes) to avoid installing arpack
 add_subdirectory(${ROOT}/REGRESSION_SUITE/TEST14 ${ROOT}/REGRESSION_SUITE/TEST14/BUILD)
 add_subdirectory(${ROOT}/REGRESSION_SUITE/TEST15 ${ROOT}/REGRESSION_SUITE/TEST15/BUILD)
 add_subdirectory(${ROOT}/REGRESSION_SUITE/TEST16 ${ROOT}/REGRESSION_SUITE/TEST16/BUILD)
@@ -90,5 +90,7 @@ add_subdirectory(${ROOT}/REGRESSION_SUITE/TEST41 ${ROOT}/REGRESSION_SUITE/TEST41
 add_subdirectory(${ROOT}/REGRESSION_SUITE/TEST42 ${ROOT}/REGRESSION_SUITE/TEST42/BUILD)
 add_subdirectory(${ROOT}/REGRESSION_SUITE/TEST43_44 ${ROOT}/REGRESSION_SUITE/TEST43_44/BUILD)
 add_subdirectory(${ROOT}/REGRESSION_SUITE/TEST45 ${ROOT}/REGRESSION_SUITE/TEST45/BUILD)
+add_subdirectory(${ROOT}/REGRESSION_SUITE/TEST46 ${ROOT}/REGRESSION_SUITE/TEST46/BUILD)
+add_subdirectory(${ROOT}/REGRESSION_SUITE/TEST47 ${ROOT}/REGRESSION_SUITE/TEST47/BUILD)
 
 enable_testing()

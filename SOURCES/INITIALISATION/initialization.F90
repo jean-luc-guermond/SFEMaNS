@@ -8,6 +8,7 @@
 
 MODULE initialization
   USE def_type_mesh
+  USE def_type_field
   USE symmetric_field
   USE input_data
   USE my_util
@@ -15,7 +16,7 @@ MODULE initialization
   USE petsc
   USE fourier_to_real_for_vtu
   IMPLICIT NONE
-  PUBLIC :: initial, save_run, run_SFEMaNS, save_snapshot
+  PUBLIC :: initial, build_pointers, save_run, run_SFEMaNS, save_snapshot
   PUBLIC :: prodmat_maxwell_int_by_parts
   PRIVATE
 
@@ -66,8 +67,8 @@ MODULE initialization
 
 
   !Fields for Maxwell---------------------------------------------------------
-  REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:) :: Hn, Hn1, Hext, phin, phin1
-  REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:) :: Bn, Bn1, Bext
+  TYPE(mag_field_type), TARGET                             :: mag_field 
+  REAL(KIND=8), PRIVATE                                    :: alpha 
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:)     :: sigma_field, mu_H_field
   TYPE(mesh_type), TARGET                             :: H_mesh, phi_mesh, pmag_mesh
   TYPE(petsc_csr_LA)                                  :: LA_H, LA_pmag, LA_phi, LA_mhd
@@ -133,16 +134,22 @@ CONTAINS
   !---------------------------------------------------------------------------
 
   !---------------------------------------------------------------------------
-  SUBROUTINE initial(vv_mesh_out, pp_mesh_out, H_mesh_out, phi_mesh_out, temp_mesh_out, &
+!  SUBROUTINE initial(vv_mesh_out, pp_mesh_out, H_mesh_out, phi_mesh_out, temp_mesh_out, &
+!       conc_mesh_out, interface_H_phi_out, interface_H_mu_out, list_mode_out, &
+!       un_out, pn_out, Hn_out, Bn_out, phin_out, v_to_Max_out, &
+!       vol_heat_capacity_field_out, temperature_diffusivity_field_out, concentration_diffusivity_field_out, &
+!       mu_H_field_out, sigma_field_out, &
+!       time_out, m_max_c_out, comm_one_d_out, comm_one_d_ns_out, comm_one_d_temp_out, comm_one_d_conc_out, &
+!       tempn_out, concn_out, level_set_out, density_out, der_un_out, visc_LES_out, visc_LES_level_out)
+
+  SUBROUTINE build_pointers(vv_mesh_out, pp_mesh_out, H_mesh_out, phi_mesh_out, temp_mesh_out, &
        conc_mesh_out, interface_H_phi_out, interface_H_mu_out, list_mode_out, &
-       un_out, pn_out, Hn_out, Bn_out, phin_out, v_to_Max_out, &
+       un_out, pn_out, mag_field_out, v_to_Max_out, &
        vol_heat_capacity_field_out, temperature_diffusivity_field_out, concentration_diffusivity_field_out, &
        mu_H_field_out, sigma_field_out, &
        time_out, m_max_c_out, comm_one_d_out, comm_one_d_ns_out, comm_one_d_temp_out, comm_one_d_conc_out, &
        tempn_out, concn_out, level_set_out, density_out, der_un_out, visc_LES_out, visc_LES_level_out)
-    USE fourier_to_real_for_vtu
-#include "petsc/finclude/petsc.h"
-    USE petsc
+
     IMPLICIT NONE
     TYPE(mesh_type), POINTER                  :: pp_mesh_out, vv_mesh_out
     TYPE(mesh_type), POINTER                  :: H_mesh_out, phi_mesh_out
@@ -151,7 +158,8 @@ CONTAINS
     TYPE(dyn_real_array_three), POINTER, DIMENSION(:):: der_un_out
     TYPE(interface_type), POINTER             :: interface_H_mu_out, interface_H_phi_out
     INTEGER,      POINTER,  DIMENSION(:)      :: list_mode_out
-    REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: un_out, pn_out, Hn_out, Bn_out, phin_out, v_to_Max_out, tempn_out, density_out
+    REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: un_out, pn_out, v_to_Max_out, tempn_out, density_out
+    TYPE(mag_field_type), POINTER             :: mag_field_out
     REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: concn_out
     REAL(KIND=8), POINTER,  DIMENSION(:)      :: concentration_diffusivity_field_out
     REAL(KIND=8), POINTER,  DIMENSION(:,:,:,:):: level_set_out
@@ -164,11 +172,6 @@ CONTAINS
     MPI_Comm, DIMENSION(:), POINTER           :: comm_one_d_out, comm_one_d_ns_out
     MPI_Comm, DIMENSION(:), POINTER           :: comm_one_d_temp_out, comm_one_d_conc_out
 
-    CALL INIT
-
-    !===Initialize meshes for vtu post processing
-    CALL sfemans_initialize_postprocessing(comm_one_d, vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, &
-         conc_mesh, list_mode, inputs%number_of_planes_in_real_space)
     vv_mesh_out => vv_mesh
     pp_mesh_out => pp_mesh
     H_mesh_out => H_mesh
@@ -185,9 +188,7 @@ CONTAINS
     density_out => density
     visc_LES_out => visc_LES
     visc_LES_level_out => visc_LES_level
-    Hn_out => Hn
-    Bn_out => Bn
-    phin_out => phin
+    mag_field_out => mag_field
     v_to_Max_out => v_to_Max
     vol_heat_capacity_field_out => vol_heat_capacity_field
     temperature_diffusivity_field_out => temperature_diffusivity_field
@@ -203,10 +204,58 @@ CONTAINS
     concentration_diffusivity_field_out => concentration_diffusivity_field
     comm_one_d_conc_out => comm_one_d_conc
 
+  END SUBROUTINE build_pointers
+
+  SUBROUTINE initial(vv_mesh_out, pp_mesh_out, H_mesh_out, phi_mesh_out, temp_mesh_out, &
+       conc_mesh_out, interface_H_phi_out, interface_H_mu_out, list_mode_out, &
+       un_out, pn_out, mag_field_out, v_to_Max_out, &
+       vol_heat_capacity_field_out, temperature_diffusivity_field_out, concentration_diffusivity_field_out, &
+       mu_H_field_out, sigma_field_out, &
+       time_out, m_max_c_out, comm_one_d_out, comm_one_d_ns_out, comm_one_d_temp_out, comm_one_d_conc_out, &
+       tempn_out, concn_out, level_set_out, density_out, der_un_out, visc_LES_out, visc_LES_level_out)
+    USE fourier_to_real_for_vtu
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    TYPE(mesh_type), POINTER                  :: pp_mesh_out, vv_mesh_out
+    TYPE(mesh_type), POINTER                  :: H_mesh_out, phi_mesh_out
+    TYPE(mesh_type), POINTER                  :: temp_mesh_out
+    TYPE(mesh_type), POINTER                  :: conc_mesh_out
+    TYPE(dyn_real_array_three), POINTER, DIMENSION(:):: der_un_out
+    TYPE(interface_type), POINTER             :: interface_H_mu_out, interface_H_phi_out
+    INTEGER,      POINTER,  DIMENSION(:)      :: list_mode_out
+    REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: un_out, pn_out, v_to_Max_out, tempn_out, density_out
+    TYPE(mag_field_type), POINTER             :: mag_field_out
+    REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: concn_out
+    REAL(KIND=8), POINTER,  DIMENSION(:)      :: concentration_diffusivity_field_out
+    REAL(KIND=8), POINTER,  DIMENSION(:,:,:,:):: level_set_out
+    REAL(KIND=8), POINTER,  DIMENSION(:)      :: sigma_field_out, mu_H_field_out
+    REAL(KIND=8), POINTER,  DIMENSION(:)      :: vol_heat_capacity_field_out, temperature_diffusivity_field_out
+    REAL(KIND=8), POINTER,  DIMENSION(:,:,:,:):: visc_LES_out
+    REAL(KIND=8), POINTER,  DIMENSION(:,:,:,:):: visc_LES_level_out
+    REAL(KIND=8)                              :: time_out
+    INTEGER                                   :: m_max_c_out
+    MPI_Comm, DIMENSION(:), POINTER           :: comm_one_d_out, comm_one_d_ns_out
+    MPI_Comm, DIMENSION(:), POINTER           :: comm_one_d_temp_out, comm_one_d_conc_out
+
+    CALL INIT
+    !===Initialize meshes for vtu post processing
+    CALL sfemans_initialize_postprocessing(comm_one_d, vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, &
+         conc_mesh, list_mode, inputs%number_of_planes_in_real_space)
+
+    CALL build_pointers(vv_mesh_out, pp_mesh_out, H_mesh_out, phi_mesh_out, temp_mesh_out, &
+       conc_mesh_out, interface_H_phi_out, interface_H_mu_out, list_mode_out, &
+       un_out, pn_out, mag_field_out, v_to_Max_out, &
+       vol_heat_capacity_field_out, temperature_diffusivity_field_out, concentration_diffusivity_field_out, &
+       mu_H_field_out, sigma_field_out, &
+       time_out, m_max_c_out, comm_one_d_out, comm_one_d_ns_out, comm_one_d_temp_out, comm_one_d_conc_out, &
+       tempn_out, concn_out, level_set_out, density_out, der_un_out, visc_LES_out, visc_LES_level_out) 
+
   END SUBROUTINE initial
   !---------------------------------------------------------------------------
 
   !---------------------------------------------------------------------------
+
   SUBROUTINE run_SFEMaNS(time_in, it)
     USE subroutine_mass
     USE update_temperature
@@ -272,8 +321,7 @@ CONTAINS
        END IF
 
        IF (if_induction) THEN
-          CALL compute_rot_h(2*Hn-Hn1, j_Hn)
-          !j_Hn = Hn
+          CALL compute_rot_h(2*mag_field%Hn-mag_field%Hn1, j_Hn)
           CALL projection_mag_field(conc_mesh, j_Hn, jj_c_to_H, .TRUE., j_H_to_conc)
        END IF
        CALL three_level_concentration(comm_one_d_conc, time, conc_1_LA, inputs%dt, list_mode, &
@@ -289,10 +337,10 @@ CONTAINS
           CALL projection_velocity(temp_mesh, 2*un-un_m1, jj_v_to_temp, .FALSE., v_to_energy)
        END IF
        IF (inputs%type_pb=='fhd') THEN
-          CALL projection_mag_field(vv_mesh, 2*Hn-Hn1, jj_v_to_H, .TRUE., H_to_NS)
+          CALL projection_mag_field(vv_mesh, 2*mag_field%Hn-mag_field%Hn1, jj_v_to_H, .TRUE., H_to_NS)
           CALL projection_mag_field(temp_mesh, H_to_NS, jj_v_to_temp, .FALSE., H_to_energy)
           IF (.NOT. inputs%if_steady_current_fhd) THEN
-             CALL projection_mag_field(vv_mesh, (Hn-Hn1)/inputs%dt, jj_v_to_H, .TRUE., H_to_NS)
+             CALL projection_mag_field(vv_mesh, (mag_field%Hn-mag_field%Hn1)/inputs%dt, jj_v_to_H, .TRUE., H_to_NS)
              CALL projection_mag_field(temp_mesh, H_to_NS, jj_v_to_temp, .FALSE., pdt_H_to_energy)
           END IF
        END IF
@@ -310,8 +358,8 @@ CONTAINS
           CALL projection_concentration(vv_mesh, concn, jj_c_to_v, conc_to_v)
        END IF
        IF (if_induction) THEN
-          CALL projection_mag_field(vv_mesh, 2*Hn-Hn1, jj_v_to_H, .TRUE., H_to_NS)
-          CALL projection_mag_field(vv_mesh, 2*Bn-Bn1, jj_v_to_H, .TRUE., B_to_NS)
+          CALL projection_mag_field(vv_mesh, 2*mag_field%Hn-mag_field%Hn1, jj_v_to_H, .TRUE., H_to_NS)
+          CALL projection_mag_field(vv_mesh, 2*mag_field%Bn-mag_field%Bn1, jj_v_to_H, .TRUE., B_to_NS)
        END IF
        !===JLG July 20, 2019, p3 mesh
        !===HF April 2019
@@ -337,14 +385,13 @@ CONTAINS
                 CALL projection_velocity(H_mesh, un, jj_v_to_H, .FALSE., v_to_Max)
              END IF
              CALL maxwell_decouple(comm_one_d, H_mesh, pmag_mesh, phi_mesh, &
-                  interface_H_phi, interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, v_to_Max, &
+                  interface_H_phi, interface_H_mu, mag_field, v_to_Max, &
                   inputs%stab, inputs%stab_jump_h, sigma_field, R_fourier, index_fourier, mu_H_field, inputs%mu_phi, &
                   time, inputs%dt, inputs%Rem, list_mode, H_phi_per, LA_H, LA_pmag, LA_phi, &
                   LA_mhd, one_over_sigma_ns_p1, jj_v_to_H, conc_to_H)
-
-             Hn1 = Hn
-             Bn1 = Bn
-             phin1 = phin
+             mag_field%Hn1 = mag_field%Hn
+             mag_field%Bn1 = mag_field%Bn
+             mag_field%phin1 = mag_field%phin
           END IF
        ELSE
           IF (if_momentum) THEN
@@ -358,7 +405,7 @@ CONTAINS
              CALL projection_concentration(H_mesh, 2*concn-concn_m1, jj_c_to_H, conc_to_H)
           END IF
           CALL maxwell_decouple(comm_one_d, H_mesh, pmag_mesh, phi_mesh, &
-               interface_H_phi, interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, v_to_Max, &
+               interface_H_phi, interface_H_mu, mag_field, v_to_Max, &
                inputs%stab, inputs%stab_jump_h, sigma_field, R_fourier, index_fourier, mu_H_field, inputs%mu_phi, &
                time, inputs%dt, inputs%Rem, list_mode, H_phi_per, LA_H, LA_pmag, LA_phi, LA_mhd, one_over_sigma_ns_p1, &
                jj_v_to_H, conc_to_H)
@@ -385,12 +432,12 @@ CONTAINS
     END IF
     IF (inputs%if_zero_out_modes) THEN
        IF (H_mesh%me /=0 .AND. SIZE(select_mode_mxw)>0) THEN
-          Hn(:,:,select_mode_mxw) = 0.d0
-          Hn1(:,:,select_mode_mxw) = 0.d0
+          mag_field%Hn(:,:,select_mode_mxw) = 0.d0
+          mag_field%Hn1(:,:,select_mode_mxw) = 0.d0
        END IF
        IF (phi_mesh%me /= 0 .AND. SIZE(select_mode_mxw)>0) THEN
-          phin(:,:,select_mode_mxw) = 0.d0
-          phin1(:,:,select_mode_mxw) = 0.d0
+          mag_field%phin(:,:,select_mode_mxw) = 0.d0
+          mag_field%phin1(:,:,select_mode_mxw) = 0.d0
        END IF
        IF (vv_mesh%me /=0 .AND. SIZE(select_mode_ns)>0) THEN
           un(:,:,select_mode_ns) = 0.d0
@@ -638,8 +685,7 @@ CONTAINS
 
     IF (if_induction) THEN
        CALL write_restart_maxwell(comm_one_d, H_mesh, phi_mesh, &
-            time, list_mode, Hn, Hn1, Bn, Bn1, &
-            phin, phin1, inputs%file_name, it, freq_restart)
+            time, list_mode, mag_field, inputs%file_name, it, freq_restart)
     END IF
 
     IF (if_energy) THEN
@@ -711,8 +757,7 @@ CONTAINS
     CALL MPI_COMM_SIZE(PETSC_COMM_WORLD, nb_procs, code)
     CALL MPI_COMM_RANK(PETSC_COMM_WORLD, petsc_rank, code)
 
-    !===Check if regression=========================================================
-    CALL regression_initialize
+
 
 !!$    !===Decide whether debugging or not=============================================
 !!$    CALL sfemansinitialize
@@ -1157,11 +1202,13 @@ CONTAINS
        END IF
 
 
-       !TODO ===Create symmetric points==================================================
-       !IF (inputs%is_mesh_symmetric) THEN
-       !   ALLOCATE(vv_mz_LA(vv_mesh%np))
-       !   CALL symmetric_points(vv_mesh, vv_mesh_glob, vv_mz_LA)
-       !END IF
+       ! ===Create symmetric points==================================================
+       IF (inputs%is_mesh_symmetric) THEN
+          ALLOCATE(vv_sym_tool)
+          CALL vv_sym_tool%init_symmetry_tool(vv_mesh, comm_one_d_ns(1))
+         !  ALLOCATE(vv_mz_LA(vv_mesh%np))
+         !  CALL symmetric_points(vv_mesh, comm_one_d_ns(1), vv_mz_LA)
+       END IF
 
 
        !===Start Gauss points generation============================================
@@ -1218,6 +1265,13 @@ CONTAINS
 
        DEALLOCATE(list_inter_conc)
        CALL free_mesh(p1_c0_mesh_glob_conc)
+
+       ! ===Create symmetric points==================================================
+       IF (inputs%is_mesh_symmetric) THEN
+          ALLOCATE(c_sym_tool)
+          CALL c_sym_tool%init_symmetry_tool(conc_mesh, comm_one_d_conc(1))
+       END IF
+
     END IF
 
     !===Mesh for temp
@@ -1244,6 +1298,13 @@ CONTAINS
 
        DEALLOCATE(list_inter_temp)
        CALL free_mesh(p1_c0_mesh_glob_temp)
+
+       ! ===Create symmetric points==================================================
+       IF (inputs%is_mesh_symmetric) THEN
+          ALLOCATE(T_sym_tool)
+          CALL T_sym_tool%init_symmetry_tool(temp_mesh, comm_one_d_temp(1))
+       END IF
+
     END IF
 
     !===Mesh for pmag in induction
@@ -1445,10 +1506,16 @@ CONTAINS
        !===Prepare csr structure for post processing rot !h==========================+++
        CALL st_aij_csr_glob_block_with_extra_layer(comm_one_d(1), 1, H_mesh, vizu_rot_h_LA)
 
-       !TODO IF (inputs%is_mesh_symmetric) THEN
-       !   ALLOCATE(H_mz_LA(H_mesh%np))
-       !   CALL symmetric_points(H_mesh, H_mesh_glob, H_mz_LA)
-       !END IF
+       IF (inputs%is_mesh_symmetric) THEN
+          ALLOCATE(H_sym_tool)
+          CALL H_sym_tool%init_symmetry_tool(H_mesh, comm_one_d(1))
+         !  ALLOCATE(H_mz_LA(H_mesh%np))
+         !  CALL symmetric_points(H_mesh, comm_one_d(1), H_mz_LA)
+          IF (phi_mesh%me/=0) THEN
+             ALLOCATE(phi_sym_tool)
+             CALL phi_sym_tool%init_symmetry_tool(phi_mesh, comm_one_d(1))
+          END IF
+       END IF
 
        CALL clean_mesh(H_mesh)
        CALL clean_mesh(pmag_mesh)
@@ -1805,21 +1872,23 @@ CONTAINS
              bloc_size = pp_mesh%gauss%l_G * (bloc_size / pp_mesh%gauss%l_G) + pp_mesh%gauss%l_G
              m_max_pad = 3 * SIZE(list_mode) * nb_procs / 2
              ALLOCATE(visc_entro_level(2 * m_max_pad - 1, bloc_size))
-             ALLOCATE(visc_LES_level(inputs%nb_fluid-1, pp_mesh%gauss%l_G*pp_mesh%dom_me, 6, m_max_c))
+             ALLOCATE(visc_LES_level(inputs%nb_fluid-1, vv_mesh%gauss%l_G*vv_mesh%dom_me, 6, m_max_c))
           END IF
        END IF
     END IF
 
-    !===Allocate arrays for Maxwell=================================================
-    IF (if_induction) THEN
-       ALLOCATE(Hn1  (H_mesh%np, 6, m_max_c))
-       ALLOCATE(Hn   (H_mesh%np, 6, m_max_c))
-       ALLOCATE(Bn1  (H_mesh%np, 6, m_max_c))
-       ALLOCATE(Bn   (H_mesh%np, 6, m_max_c))
-       ALLOCATE(phin1(phi_mesh%np, 2, m_max_c))
-       ALLOCATE(phin (phi_mesh%np, 2, m_max_c))
-    END IF
-
+    !===Allocate arrays for Maxwell (VB: THIS IS NOW DONE IN INIT_MAXWELL/RESTART_MAXWELL)=======
+!VB 26/01/2026 
+  !  CALL mag_field%allocate_induction_fields(H_mesh, phi_mesh, m_max_c, list_mode, if_induction, comm_one_d)
+!    IF (if_induction) THEN
+!       ALLOCATE(Hn1  (H_mesh%np, 6, m_max_c))
+!       ALLOCATE(Hn   (H_mesh%np, 6, m_max_c))
+!       ALLOCATE(Bn1  (H_mesh%np, 6, m_max_c))
+!       ALLOCATE(Bn   (H_mesh%np, 6, m_max_c))
+!       ALLOCATE(phin1(phi_mesh%np, 2, m_max_c))
+!       ALLOCATE(phin (phi_mesh%np, 2, m_max_c))
+!    END IF
+!VB 26/01/2026
     !===Allocate arrays for temperature=============================================
     IF (if_energy) THEN
        ALLOCATE(tempn_m1   (temp_mesh%np, 2, m_max_c))
@@ -1850,8 +1919,6 @@ CONTAINS
     IF (if_momentum) THEN
        ALLOCATE(H_to_NS(vv_mesh%np, 6, m_max_c))
        ALLOCATE(B_to_NS(vv_mesh%np, 6, m_max_c))
-       ALLOCATE(Hext(H_mesh%np, 6, m_max_c))
-       ALLOCATE(Bext(H_mesh%np, 6, m_max_c))
     ELSE
        ALLOCATE(H_to_NS(1, 1, 1))
        ALLOCATE(B_to_NS(1, 1, 1))
@@ -1954,10 +2021,10 @@ CONTAINS
                    IF (inputs%irestart_LES) THEN !inputs%LES=.t. true when inputs%if_mass=.t.
                       IF (inputs%if_LES_in_momentum) THEN
                          CALL read_restart_LES(comm_one_d_ns, time_u, list_mode, inputs%file_name, &
-                              opt_LES_NS=visc_LES, opt_LES_level=visc_LES_level)
+                             opt_LES_NS=visc_LES, opt_LES_level=visc_LES_level)
                       ELSE
                          CALL read_restart_LES(comm_one_d_ns, time_u, list_mode, inputs%file_name, &
-                              opt_LES_level=visc_LES_level)
+                             opt_LES_level=visc_LES_level)
                          visc_LES = 0.d0
                       END IF
                    ELSE
@@ -2041,7 +2108,6 @@ CONTAINS
           END IF
        END IF
     END IF
-
     !===Initialize velocity (time-independent) if mxw===============================
     IF ((inputs%type_pb=='mxw') .AND. (H_mesh%me/=0)) THEN
        DO i = 1, m_max_c       !===Initialization of vel
@@ -2099,27 +2165,27 @@ CONTAINS
     !===Initialize Maxwell==========================================================
     time_h = 0.d0
     IF (if_induction) THEN
+       CALL build_pointers_mag_field(H_mesh, phi_mesh, list_mode, comm_one_d, if_induction)
+       CALL build_mag_field_params(mu_H_field)
        IF (inputs%irestart_h) THEN
-          CALL read_restart_maxwell(comm_one_d, H_mesh, phi_mesh, time_h, list_mode, Hn, Hn1, Bn, Bn1, &
-               phin, phin1, inputs%file_name)
+          CALL read_restart_maxwell(comm_one_d, H_mesh, phi_mesh, time_h, list_mode, mag_field, inputs%file_name)
        ELSE
-          CALL init_maxwell(H_mesh, phi_mesh, time_h, inputs%dt, mu_H_field, inputs%mu_phi, list_mode, &
-               Hn1, Hn, phin1, phin)
+          CALL init_maxwell(H_mesh, phi_mesh, time_h, inputs%dt, mu_H_field, inputs%mu_phi, list_mode, mag_field)
           !===Initialize Bn and Bn1
           IF (H_mesh%me/=0) THEN
              IF (inputs%if_permeability_variable_in_theta) THEN
                 CALL MPI_COMM_SIZE(comm_one_d(2), nb_procs, code)
                 m_max_pad = 3 * SIZE(list_mode) * nb_procs / 2
-                bloc_size = SIZE(Bn, 1) / nb_procs + 1
+                bloc_size = SIZE(mag_field%Bn, 1) / nb_procs + 1
                 CALL FFT_PAR_VAR_ETA_PROD_T_DCL(comm_one_d(2), mu_in_real_space, &
-                     H_mesh, Hn, Bn, nb_procs, bloc_size, m_max_pad, time)
+                     H_mesh, mag_field%Hn, mag_field%Bn, nb_procs, bloc_size, m_max_pad, time)
                 CALL FFT_PAR_VAR_ETA_PROD_T_DCL(comm_one_d(2), mu_in_real_space, &
-                     H_mesh, Hn1, Bn1, nb_procs, bloc_size, m_max_pad, time)
+                     H_mesh, mag_field%Hn1, mag_field%Bn1, nb_procs, bloc_size, m_max_pad, time)
              ELSE
                 DO i = 1, m_max_c
                    DO k = 1, 6
-                      Bn(:, k, i) = mu_H_field * Hn(:, k, i)
-                      Bn1(:, k, i) = mu_H_field * Hn1(:, k, i)
+                      mag_field%Bn(:, k, i) = mu_H_field * mag_field%Hn(:, k, i)
+                      mag_field%Bn1(:, k, i) = mu_H_field * mag_field%Hn1(:, k, i)
                    END DO
                 END DO
              END IF
@@ -2130,13 +2196,13 @@ CONTAINS
           IF (list_mode(i) == 0) THEN
              IF (H_mesh%me/=0) THEN
                 DO k = 1, 3
-                   Hn(:, 2 * k, i) = 0.d0
-                   Hn1(:, 2 * k, i) = 0.d0
+                   mag_field%Hn(:, 2 * k, i) = 0.d0
+                   mag_field%Hn1(:, 2 * k, i) = 0.d0
                 END DO
              END IF
              IF (phi_mesh%me/=0) THEN
-                phin(:, 2, i) = 0.d0
-                phin1(:, 2, i) = 0.d0
+                mag_field%phin(:, 2, i) = 0.d0
+                mag_field%phin1(:, 2, i) = 0.d0
              END IF
           END IF
        END DO
@@ -2199,6 +2265,13 @@ CONTAINS
        END IF
     END IF
 
+    IF (inputs%if_write_mesh) THEN
+        CALL WRITE_ALL_MESHES
+    END IF
+    
+    !===Check if regression=========================================================
+    CALL regression_initialize
+
   END SUBROUTINE INIT
 
   SUBROUTINE prodmat_maxwell_int_by_parts(vect_in, vect_out, ndim, i)
@@ -2208,51 +2281,51 @@ CONTAINS
     REAL(KIND=8), DIMENSION(ndim) :: vect_in
     REAL(KIND=8), DIMENSION(ndim) :: vect_out
     INTEGER                       :: i
-    INTEGER                       :: TYPE, i_deb, i_fin
+    INTEGER                       :: TYPE_VEC, i_deb, i_fin
     REAL(KIND=8), DIMENSION(vv_mesh%np, 2, SIZE(list_mode)) :: sigma_ns
 
     time = 0.d0
-    DO TYPE = 1, 6
-       i_deb = (TYPE - 1) * H_mesh%np + 1
+    DO TYPE_VEC = 1, 6
+       i_deb = (TYPE_VEC - 1) * H_mesh%np + 1
        i_fin = i_deb + H_mesh%np - 1
-       IF (MODULO(TYPE, 2)==0 .AND. list_mode(i)==0) THEN
-          Hn(:, TYPE, i) = 0.d0
+       IF (MODULO(TYPE_VEC, 2)==0 .AND. list_mode(i)==0) THEN
+          mag_field%Hn(:, TYPE_VEC, i) = 0.d0
        ELSE
-          Hn(:, TYPE, i) = vect_in(i_deb:i_fin)
+          mag_field%Hn(:, TYPE_VEC, i) = vect_in(i_deb:i_fin)
        END IF
     END DO
-    DO TYPE = 1, 2
-       phin(:, TYPE, i) = 0.d0
+    DO TYPE_VEC = 1, 2
+       mag_field%phin(:, TYPE_VEC, i) = 0.d0
     END DO
 
-    DO TYPE = 1, 6
-       i_deb = 6 * H_mesh%np + (TYPE - 1) * H_mesh%np + 1
+    DO TYPE_VEC = 1, 6
+       i_deb = 6 * H_mesh%np + (TYPE_VEC - 1) * H_mesh%np + 1
        i_fin = i_deb + H_mesh%np - 1
-       IF (MODULO(TYPE, 2)==0 .AND. list_mode(i)==0) THEN
-          Hn1(:, TYPE, i) = 0.d0
+       IF (MODULO(TYPE_VEC, 2)==0 .AND. list_mode(i)==0) THEN
+          mag_field%Hn1(:, TYPE_VEC, i) = 0.d0
        ELSE
-          Hn1(:, TYPE, i) = vect_in(i_deb:i_fin)
+          mag_field%Hn1(:, TYPE_VEC, i) = vect_in(i_deb:i_fin)
        END IF
     END DO
-    DO TYPE = 1, 2
-       phin1(:, TYPE, i) = 0.d0
+    DO TYPE_VEC = 1, 2
+       mag_field%phin1(:, TYPE_VEC, i) = 0.d0
     END DO
 
     CALL maxwell_decouple(comm_one_d, H_mesh, pmag_mesh, phi_mesh, interface_H_phi, interface_H_mu, &
-         Hn, Bn, phin, Hn1, Bn1, phin1, v_to_Max, inputs%stab, inputs%stab_jump_h, sigma_field, R_fourier, index_fourier, &
+         mag_field, v_to_Max, inputs%stab, inputs%stab_jump_h, sigma_field, R_fourier, index_fourier, &
          mu_H_field, inputs%mu_phi, time, inputs%dt, inputs%Rem, list_mode, H_phi_per, LA_H, LA_pmag, &
          LA_phi, LA_mhd, sigma_ns, jj_v_to_H, conc_to_H)
 
-    DO TYPE = 1, 6
-       i_deb = (TYPE - 1) * H_mesh%np + 1
+    DO TYPE_VEC = 1, 6
+       i_deb = (TYPE_VEC - 1) * H_mesh%np + 1
        i_fin = i_deb + H_mesh%np - 1
-       vect_out(i_deb:i_fin) = Hn(:, TYPE, i)
+       vect_out(i_deb:i_fin) = mag_field%Hn(:, TYPE_VEC, i)
     END DO
 
-    DO TYPE = 1, 6
-       i_deb = 6 * H_mesh%np + (TYPE - 1) * H_mesh%np + 1
+    DO TYPE_VEC = 1, 6
+       i_deb = 6 * H_mesh%np + (TYPE_VEC - 1) * H_mesh%np + 1
        i_fin = i_deb + H_mesh%np - 1
-       vect_out(i_deb:i_fin) = Hn1(:, TYPE, i)
+       vect_out(i_deb:i_fin) = mag_field%Hn1(:, TYPE_VEC, i)
     END DO
 
   END SUBROUTINE prodmat_maxwell_int_by_parts
@@ -2306,7 +2379,6 @@ CONTAINS
 
     narg = 0
     ok = .TRUE.
-
     DO WHILE (ok)
        CALL getarg(narg + 1, tit)
        IF (tit == '   ') THEN
@@ -2323,6 +2395,22 @@ CONTAINS
           inputs%if_regression = .TRUE.
        END IF
     END IF
+
+!=== testing matvec in ctests. For now, only on pbs with mag_field and without writing restart files
+    IF ((inputs%if_regression) .AND. (if_induction)) THEN
+      inputs%LK%ctest_exptA = .TRUE.
+      !====== Testing that several applications of exptA are consistent with SFEMaNS time integration
+      IF (MOD(inputs%nb_iteration, 10) .EQ. 0) THEN
+         inputs%nb_iteration = inputs%nb_iteration / 10
+         inputs%LK%nb_exptA = inputs%LK%nb_exptA * 10
+      ELSE IF (MOD(inputs%nb_iteration, 2) .EQ. 0) THEN
+         inputs%nb_iteration = inputs%nb_iteration / 2
+         inputs%LK%nb_exptA = inputs%LK%nb_exptA * 2
+      ELSE IF (inputs%nb_iteration /= 1) THEN
+         WRITE(*,*) "test contains iterations non-multiples of 2 or 10 => cannot test several applications of exptA"
+      END IF
+    END IF
+
   END SUBROUTINE regression_initialize
 
   SUBROUTINE compute_local_mesh_size(mesh)
@@ -2391,6 +2479,43 @@ CONTAINS
   END SUBROUTINE compute_local_mesh_size_level_set
 
   !----------------SAVE SNAPSHOT----------------------------------------------
+
+  SUBROUTINE WRITE_ALL_MESHES
+    USE snapshot
+    IMPLICIT NONE
+    CHARACTER(LEN=250) :: opt_dir
+    LOGICAL, SAVE :: once_mesh=.TRUE.
+    
+    IF (once_mesh) THEN
+       once_mesh = .FALSE.
+       opt_dir = inputs%folder_for_snapshot
+       CALL system('mkdir -p ' // TRIM(ADJUSTL(opt_dir)))
+    END IF
+
+    IF (if_momentum) THEN
+       opt_dir = TRIM(ADJUSTL(inputs%folder_for_snapshot )) //'/vvmesh'
+       CALL WRITE_MESH(comm_one_d_ns, vv_mesh, opt_dir, "vv")
+       opt_dir = TRIM(ADJUSTL(inputs%folder_for_snapshot )) //'/ppmesh'
+       CALL WRITE_MESH(comm_one_d_ns, pp_mesh, opt_dir, "pp")
+    END IF
+    IF (if_induction) THEN
+       opt_dir = TRIM(ADJUSTL(inputs%folder_for_snapshot )) //'/Hmesh'
+       CALL WRITE_MESH(comm_one_d, H_mesh, opt_dir, "H")
+       IF (phi_mesh%me /= 0) THEN
+          opt_dir = TRIM(ADJUSTL(inputs%folder_for_snapshot )) //'/phimesh'
+          CALL WRITE_MESH(comm_one_d, phi_mesh, opt_dir, "phi")
+       END IF
+    END IF
+    IF (if_energy) THEN
+       opt_dir = TRIM(ADJUSTL(inputs%folder_for_snapshot )) //'/temp_mesh'
+       CALL WRITE_MESH(comm_one_d, H_mesh, opt_dir, "temp_")
+    END IF
+    IF (if_concentration) THEN
+       opt_dir = TRIM(ADJUSTL(inputs%folder_for_snapshot )) //'/conc_mesh'
+       CALL WRITE_MESH(comm_one_d, H_mesh, opt_dir, "conc_")
+    END IF
+  END SUBROUTINE WRITE_ALL_MESHES
+
   SUBROUTINE save_snapshot(it, freq_snapshot)
     USE restart
     USE subroutine_compute_visc_LES_level
@@ -2402,101 +2527,113 @@ CONTAINS
     INTEGER :: rang_S , rang_F, code
     CHARACTER(len = 2)  :: tit_I
     CHARACTER(len = 250) :: name_I, opt_dir
-    LOGICAL, SAVE :: once=.TRUE.
+    LOGICAL, SAVE :: once_snapshot=.TRUE.
 
     CALL MPI_COMM_RANK(comm_one_d(1), rang_S, code)
     CALL MPI_COMM_RANK(comm_one_d(2), rang_F, code)
-
+   
     opt_dir = inputs%folder_for_snapshot
     IF ( rang_S==0 .AND. rang_F == 0) THEN
-       IF (once) THEN
-          once = .FALSE.
-          CALL system('mkdir -p ' // TRIM(ADJUSTL(opt_dir)))
+       IF (once_snapshot) THEN
+          once_snapshot = .FALSE.
+          CALL WRITE_ALL_MESHES
           CALL system('touch ' // TRIM(ADJUSTL(opt_dir)) //'/times' )
        END IF
        OPEN(UNIT = 666, FILE = TRIM(ADJUSTL(opt_dir)) //'/times', position = 'append', action = 'write')
-       WRITE(666,*)  it, inputs%dt
+       WRITE(666,*)  it, it*inputs%dt
        CLOSE(666)
     END IF
 
     IF (if_momentum) THEN
-
-       ! Write mesh anyway
-       opt_dir = TRIM(ADJUSTL(inputs%folder_for_snapshot )) //'/vvmesh'
-       CALL WRITE_MESH(comm_one_d_ns, vv_mesh, opt_dir, "vv")
-       opt_dir = TRIM(ADJUSTL(inputs%folder_for_snapshot )) //'/ppmesh'
-       CALL WRITE_MESH(comm_one_d_ns, pp_mesh, opt_dir, "pp")
-
        IF (pp_mesh%me /= 0) THEN !because of mxx pb_type
 
           IF (inputs%if_snapshot_u) CALL write_snapshot(comm_one_d_ns, vv_mesh, list_mode, &
                un, 'u', it, freq_snapshot)
 
+          IF (inputs%if_snapshot_un_m1) CALL write_snapshot(comm_one_d_ns, vv_mesh, list_mode, &
+               un_m1, 'un_m1', it, freq_snapshot)
+          
           IF (inputs%if_snapshot_p) CALL write_snapshot(comm_one_d_ns, pp_mesh, list_mode, &
                pn, 'p', it, freq_snapshot)
+
+          IF (inputs%if_snapshot_pn_m1) CALL write_snapshot(comm_one_d_ns, pp_mesh, list_mode, &
+               pn_m1, 'pn_m1', it, freq_snapshot)
+
 
           !IF (inputs%if_ns_penalty) THEN
           ! disabled / TO DO
           !END IF
-          IF (inputs%if_snapshot_level_set) THEN
-             IF (if_mass) THEN
-                IF (inputs%if_level_set_P2) THEN
-                   DO n = 1, inputs%nb_fluid-1
-                      WRITE(tit_I, '(i2)') n
-                      lblank = eval_blank(2, tit_I)
-                      DO l = 1, lblank - 1
-                         tit_I(l:l) = '0'
-                      END DO
-                      name_I = 'Level_set_' // tit_I
+          IF ((inputs%if_snapshot_level_set) .AND. (if_mass)) THEN
+              DO n = 1, inputs%nb_fluid-1
+                 WRITE(tit_I, '(i2)') n
+                 lblank = eval_blank(2, tit_I)
+                 DO l = 1, lblank - 1
+                    tit_I(l:l) = '0'
+                 END DO
+                 name_I = 'Level_set_' // tit_I
+                 IF (inputs%if_level_set_P2) THEN
                       CALL write_snapshot(comm_one_d_ns, vv_mesh, list_mode, &
                            level_set(n,:,:,:), name_I, it, freq_snapshot)
-                   END DO
-                ELSE
-                   DO n = 1, inputs%nb_fluid-1
-                      WRITE(tit_I, '(i2)') n
-                      lblank = eval_blank(2, tit_I)
-                      DO l = 1, lblank - 1
-                         tit_I(l:l) = '0'
-                      END DO
-                      name_I = 'Level_set_' // tit_I
+                 ELSE
                       CALL write_snapshot(comm_one_d_ns, pp_mesh, list_mode, &
                            level_set(n,:,:,:), name_I, it, freq_snapshot)
-                   END DO
-                END IF
-             END IF
+                 END IF
+              END DO
+          END IF
+          
+          IF ((inputs%if_snapshot_level_set_m1) .AND. (if_mass)) THEN
+              DO n = 1, inputs%nb_fluid-1
+                 WRITE(tit_I, '(i2)') n
+                 lblank = eval_blank(2, tit_I)
+                 DO l = 1, lblank - 1
+                    tit_I(l:l) = '0'
+                 END DO
+                 name_I = 'Level_set_' // tit_I
+                 IF (inputs%if_level_set_P2) THEN
+                      CALL write_snapshot(comm_one_d_ns, vv_mesh, list_mode, &
+                           level_set_m1(n,:,:,:), name_I, it, freq_snapshot)
+                 ELSE
+                      CALL write_snapshot(comm_one_d_ns, pp_mesh, list_mode, &
+                           level_set_m1(n,:,:,:), name_I, it, freq_snapshot)
+                 END IF
+              END DO
           END IF
        END IF
     END IF
 
     IF (if_induction) THEN
-       ! Write mesh anyway
-       opt_dir = TRIM(ADJUSTL(inputs%folder_for_snapshot )) //'/Hmesh'
-       CALL WRITE_MESH(comm_one_d, H_mesh, opt_dir, "H")
 
        IF (inputs%if_snapshot_B) CALL write_snapshot(comm_one_d, H_mesh, list_mode, &
-            Bn, 'B', it, freq_snapshot)
+            mag_field%Bn, 'B', it, freq_snapshot)
+       IF (inputs%if_snapshot_Bn_m1) CALL write_snapshot(comm_one_d, H_mesh, list_mode, &
+            mag_field%Bn1, 'Bn_m1', it, freq_snapshot)
        IF (inputs%if_snapshot_H) CALL write_snapshot(comm_one_d, H_mesh, list_mode, &
-            Hn, 'H', it, freq_snapshot)
+            mag_field%Hn, 'H', it, freq_snapshot)
+       IF (inputs%if_snapshot_Hn_m1) CALL write_snapshot(comm_one_d, H_mesh, list_mode, &
+            mag_field%Hn1, 'Hn_m1', it, freq_snapshot)
 
        IF (phi_mesh%me /= 0) THEN
-          opt_dir = TRIM(ADJUSTL(inputs%folder_for_snapshot )) //'/phimesh'
-          CALL WRITE_MESH(comm_one_d, phi_mesh, opt_dir, "phi")
           IF (inputs%if_snapshot_phi) CALL write_snapshot(comm_one_d, phi_mesh, list_mode, &
-               phin, 'Phi', it, freq_snapshot)
+               mag_field%phin, 'Phi', it, freq_snapshot)
+          IF (inputs%if_snapshot_phin_m1) CALL write_snapshot(comm_one_d, phi_mesh, list_mode, &
+               mag_field%phin1, 'Phin_m1', it, freq_snapshot)
        END IF
     END IF
 
     IF (if_energy) THEN
        IF (inputs%if_snapshot_temp) CALL write_snapshot(comm_one_d_temp, temp_mesh, list_mode, &
             tempn, 'Temperature', it, freq_snapshot)
+       IF (inputs%if_snapshot_tempn_m1) CALL write_snapshot(comm_one_d_temp, temp_mesh, list_mode, &
+            tempn_m1, 'Temperature_m1', it, freq_snapshot)
     END IF
 
     IF (if_concentration) THEN
        IF (inputs%if_snapshot_conc) CALL write_snapshot(comm_one_d_conc, conc_mesh, list_mode, &
             concn, 'Concentration', it, freq_snapshot)
+       IF (inputs%if_snapshot_concn_m1) CALL write_snapshot(comm_one_d_conc, conc_mesh, list_mode, &
+            concn_m1, 'Concentration_m1', it, freq_snapshot)
     END IF
 
   END SUBROUTINE save_snapshot
   !---------------------------------------------------------------------------
-
 END MODULE initialization

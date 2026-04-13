@@ -420,7 +420,7 @@ CONTAINS
     INTEGER, DIMENSION(1)                        :: loc
     REAL(KIND=8)                                 :: pi, dtheta, theta
     INTEGER                                      :: i, k, m, n, np_b, np_e, np_loc, np_loc_max, &
-         type, nb_angle, count, dim, np1, nb_procs, rank, it
+         TYPE_VEC, nb_angle, count, dim, np1, nb_procs, rank, it
 
     !===Initialization
     width    = fourier_width
@@ -484,12 +484,12 @@ CONTAINS
     DO i = 1, width
        IF (MINVAL(ABS(list_mode - (mode_min+i-1)))/=0) CYCLE
        loc = MINLOC(ABS(list_mode - (mode_min+i-1)))
-       DO type = 1, SIZE(field_in,2)
+       DO TYPE_VEC = 1, SIZE(field_in,2)
           DO n = 1, nb_procs
              np_b = (n-1)*np_loc_max + 1
              np_loc = SIZE(loc_to_glob(n)%DIL)
              np_e = np_b + np_loc - 1
-             dist_field(np_b:np_e,type,i) = field_in(loc_to_glob(n)%DIL,type,loc(1))
+             dist_field(np_b:np_e,TYPE_VEC,i) = field_in(loc_to_glob(n)%DIL,TYPE_VEC,loc(1))
           END DO
        END DO
     END DO
@@ -625,7 +625,7 @@ CONTAINS
     INTEGER, DIMENSION(1)                      :: loc
     REAL(KIND=8)                               :: pi, dtheta, theta
     INTEGER                                    :: i, k, m, n, np_b, np_e, np_loc, np_loc_max, &
-         type, nb_angle, count, dim, np1
+         TYPE_VEC, nb_angle, count, dim, np1
     PetscErrorCode :: ierr
     PetscMPIInt    :: rank, nb_procs
     MPI_Comm       :: communicator
@@ -654,12 +654,12 @@ CONTAINS
     DO i = 1, width
        IF (MINVAL(ABS(list_mode - (mode_min+i-1)))/=0) CYCLE
        loc = MINLOC(ABS(list_mode - (mode_min+i-1)))
-       DO type = 1, SIZE(field_in,2)
+       DO TYPE_VEC = 1, SIZE(field_in,2)
           DO n = 1, nb_procs
              np_b = (n-1)*np_loc_max + 1
              np_loc = SIZE(loc_to_glob(n)%DIL)
              np_e = np_b + np_loc - 1
-             dist_field(np_b:np_e,type,i) = field_in(loc_to_glob(n)%DIL,type,loc(1))
+             dist_field(np_b:np_e,TYPE_VEC,i) = field_in(loc_to_glob(n)%DIL,TYPE_VEC,loc(1))
           END DO
        END DO
     END DO

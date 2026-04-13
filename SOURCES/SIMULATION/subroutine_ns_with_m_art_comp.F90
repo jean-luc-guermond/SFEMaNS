@@ -102,8 +102,8 @@ CONTAINS
     REAL(KIND=8), DIMENSION(vv_mesh%np) :: vel_loc, vel_tot
     REAL(KIND=8)   :: tps, tps_tot, tps_cumul, coeff, cfl, cfl_max, norm, vloc
     INTEGER        :: nb_procs_LES, bloc_size_LES, m_max_pad_LES
-    REAL(KIND=8) :: one, zero, three
-    DATA zero, one, three/0.d0,1.d0,3.d0/
+    REAL(KIND=8) :: one, my_zero, three
+    DATA my_zero, one, three/0.d0,1.d0,3.d0/
     !===End Other variables
 
     !Communicators for Petsc, in space and Fourier------------------------------

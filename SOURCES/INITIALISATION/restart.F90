@@ -395,14 +395,18 @@ CONTAINS
              IF (PRESENT(opt_dt)) THEN
                 IF (mono) THEN
                    WRITE(10) time, vv_mesh%np , pp_mesh%np , nb_procs_F, SIZE(list_mode), opt_dt
+                   WRITE(*,*) 'out1', time, vv_mesh%np , pp_mesh%np , nb_procs_F, SIZE(list_mode), opt_dt
                 ELSE
                    WRITE(10) time, nb_procs_S, nb_procs_F, SIZE(list_mode), opt_dt
+                   WRITE(*,*) 'out2', time, nb_procs_S, nb_procs_F, SIZE(list_mode), opt_dt
                 END IF
              ELSE
                 IF (mono) THEN
                    WRITE(10) time, vv_mesh%np , pp_mesh%np , nb_procs_F, SIZE(list_mode)
+                   WRITE(*,*) 'out3',  time, vv_mesh%np , pp_mesh%np , nb_procs_F, SIZE(list_mode)
                 ELSE
                    WRITE(10) time, nb_procs_S, nb_procs_F, SIZE(list_mode)
+                   WRITE(*,*) 'out4',  time, nb_procs_S, nb_procs_F, SIZE(list_mode)
                 END IF
              END IF
           ELSE
@@ -955,8 +959,10 @@ CONTAINS
 
   END SUBROUTINE read_restart_ns_taylor
 
-  SUBROUTINE write_restart_maxwell(communicator, H_mesh, phi_mesh, time, list_mode, Hn, Hn1, Bn, Bn1, phin, phin1, &
+  SUBROUTINE write_restart_maxwell(communicator, H_mesh, phi_mesh, time, list_mode, mag_field, &
        filename, it, freq_restart, opt_mono, opt_dt)
+
+    USE def_type_field
 
     USE def_type_mesh
     USE chaine_caractere
@@ -965,8 +971,7 @@ CONTAINS
     INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator
     REAL(KIND=8),                                   INTENT(IN) :: time
     INTEGER,      DIMENSION(:),                     INTENT(IN) :: list_mode
-    REAL(KIND=8), DIMENSION(:,:,:),                 INTENT(IN) :: Hn, Hn1, Bn, Bn1
-    REAL(KIND=8), DIMENSION(:,:,:),                 INTENT(IN) :: phin, phin1
+    TYPE(mag_field_type),                                INTENT(IN) :: mag_field
     CHARACTER(len=200),                              INTENT(IN) :: filename
     INTEGER,                                        INTENT(IN) :: it, freq_restart
     LOGICAL, OPTIONAL,                              INTENT(IN) :: opt_mono
@@ -1031,10 +1036,10 @@ CONTAINS
           DO i= 1, SIZE(list_mode)
              WRITE(10) list_mode(i)
              IF (H_mesh%me /=0) THEN
-                WRITE(10) Hn(:,:,i)
-                WRITE(10) Hn1(:,:,i)
-                WRITE(10) Bn(:,:,i)
-                WRITE(10) Bn1(:,:,i)
+                WRITE(10) mag_field%Hn(:,:,i)
+                WRITE(10) mag_field%Hn1(:,:,i)
+                WRITE(10) mag_field%Bn(:,:,i)
+                WRITE(10) mag_field%Bn1(:,:,i)
              ELSE
                 WRITE(10) 1
                 WRITE(10) 1
@@ -1042,8 +1047,8 @@ CONTAINS
                 WRITE(10) 1
              END IF
              IF (phi_mesh%me /=0) THEN
-                WRITE(10) phin(:,:,i)
-                WRITE(10) phin1(:,:,i)
+                WRITE(10) mag_field%phin(:,:,i)
+                WRITE(10) mag_field%phin1(:,:,i)
              ELSE
                 WRITE(10) 1
                 WRITE(10) 1
@@ -1056,10 +1061,11 @@ CONTAINS
 
   END SUBROUTINE write_restart_maxwell
 
-
-  SUBROUTINE read_restart_maxwell(communicator, H_mesh, phi_mesh, time, list_mode, Hn, Hn1, Bn, Bn1, phin, phin1, &
+  SUBROUTINE read_restart_maxwell(communicator, H_mesh, phi_mesh, time, list_mode, mag_field, &
        filename, val_init, interpol, opt_mono, &
        opt_it, opt_dt)
+
+    USE def_type_field
 
     USE def_type_mesh
     USE chaine_caractere
@@ -1069,9 +1075,9 @@ CONTAINS
     INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator
     REAL(KIND=8),                                   INTENT(OUT):: time
     INTEGER,      DIMENSION(:)                                 :: list_mode
-    REAL(KIND=8), DIMENSION(:,:,:),                 INTENT(OUT):: Hn, Hn1, Bn, Bn1
-    REAL(KIND=8), DIMENSION(:,:,:),                 INTENT(OUT):: phin, phin1
-    CHARACTER(len=200),                              INTENT(IN):: filename
+    TYPE(mag_field_type),                           INTENT(INOUT):: mag_field
+   !  TYPE(mag_field_type),                           INTENT(OUT):: mag_field
+    CHARACTER(len=200),                             INTENT(IN) :: filename
     REAL(KIND=8), OPTIONAL,                         INTENT(IN) :: val_init
     LOGICAL     , OPTIONAL,                         INTENT(IN) :: interpol
     LOGICAL     , OPTIONAL,                         INTENT(IN) :: opt_mono
@@ -1095,6 +1101,8 @@ CONTAINS
     CALL MPI_COMM_RANK(communicator(1),rang_S,code)
     CALL MPI_COMM_SIZE(communicator(1),nb_procs_S,code)
     CALL MPI_COMM_RANK(MPI_COMM_WORLD,rank,code)
+     
+    CALL mag_field%zero()
 
     IF (PRESENT(opt_it)) THEN
        WRITE(tit,'(i3)') opt_it
@@ -1208,10 +1216,10 @@ CONTAINS
           !June 7 2007, JLG
           IF (mode == mode_cherche) THEN !we found mode_cherche
              IF (H_mesh%me /=0) THEN
-                READ(10) Hn(:,:,i)
-                READ(10) Hn1(:,:,i)
-                READ(10) Bn(:,:,i)
-                READ(10) Bn1(:,:,i)
+                READ(10) mag_field%Hn(:,:,i)
+                READ(10) mag_field%Hn1(:,:,i)
+                READ(10) mag_field%Bn(:,:,i)
+                READ(10) mag_field%Bn1(:,:,i)
              ELSE
                 READ(10)
                 READ(10)
@@ -1219,8 +1227,8 @@ CONTAINS
                 READ(10)
              END IF
              IF (phi_mesh%me /=0) THEN
-                READ(10) phin(:,:,i)
-                READ(10) phin1(:,:,i)
+                READ(10) mag_field%phin(:,:,i)
+                READ(10) mag_field%phin1(:,:,i)
              ELSE
                 READ(10)
                 READ(10)
@@ -1236,14 +1244,14 @@ CONTAINS
        ENDDO
        IF (.NOT.trouve) THEN !mode_cherche not found
           IF (PRESENT(val_init)) THEN
-             Hn(:,:,i)   = val_init ; Hn1(:,:,i)   = val_init
-             Bn(:,:,i)   = val_init ; Bn1(:,:,i)   = val_init
-             phin(:,:,i) = val_init ; phin1(:,:,i) = val_init
+             mag_field%Hn(:,:,i)   = val_init ; mag_field%Hn1(:,:,i)   = val_init
+             mag_field%Bn(:,:,i)   = val_init ; mag_field%Bn1(:,:,i)   = val_init
+             mag_field%phin(:,:,i) = val_init ; mag_field%phin1(:,:,i) = val_init
              WRITE(*,*) 'mode maxwell',mode_cherche,' non trouve'
           ELSE
-             Hn(:,:,i)   = 0.d0 ; Hn1(:,:,i)   = 0.d0
-             Bn(:,:,i)   = 0.d0 ; Bn1(:,:,i)   = 0.d0
-             phin(:,:,i) = 0.d0 ; phin1(:,:,i) = 0.d0
+             mag_field%Hn(:,:,i)   = 0.d0 ; mag_field%Hn1(:,:,i)   = 0.d0
+             mag_field%Bn(:,:,i)   = 0.d0 ; mag_field%Bn1(:,:,i)   = 0.d0
+             mag_field%phin(:,:,i) = 0.d0 ; mag_field%phin1(:,:,i) = 0.d0
              WRITE(*,*) 'mode maxwell',mode_cherche,' non trouve'
           ENDIF
        ENDIF
@@ -1257,11 +1265,13 @@ CONTAINS
              WRITE(*,*) 'In Maxwell restart, suite_time_step different from inputs%dt ...'
              WRITE(*,*) ' opt_dt, dt_read =', opt_dt, dt_read
           END IF
-          Hn1 = dt_ratio * Hn1 +(1.d0 - dt_ratio)* Hn
-          Bn1 = dt_ratio * Bn1 +(1.d0 - dt_ratio)* Bn
-          phin1 = dt_ratio * phin1 +(1.d0 - dt_ratio)* phin
+          mag_field%Hn1 = dt_ratio * mag_field%Hn1 +(1.d0 - dt_ratio)* mag_field%Hn
+          mag_field%Bn1 = dt_ratio * mag_field%Bn1 +(1.d0 - dt_ratio)* mag_field%Bn
+          mag_field%phin1 = dt_ratio * mag_field%phin1 +(1.d0 - dt_ratio)* mag_field%phin
        END IF
     END IF
+    IF (.NOT. ALLOCATED(mag_field%time)) ALLOCATE(mag_field%time)
+    mag_field%time = time
   END SUBROUTINE read_restart_maxwell
 
   SUBROUTINE write_restart_temp(communicator, temp_mesh, time, list_mode, &

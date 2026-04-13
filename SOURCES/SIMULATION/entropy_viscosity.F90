@@ -53,7 +53,7 @@ CONTAINS
     REAL(KIND=8)    :: norm_vel_L2
     !REAL(KIND=8)    :: norm_res_ns_L2
     !INTEGER         :: rank
-    INTEGER         :: i, k, nu_mat, mode, m, l, TYPE, index, n
+    INTEGER         :: i, k, nu_mat, mode, m, l, TYPE_VEC, index, n
     INTEGER         :: nb_procs, code, bloc_size, m_max_pad
     PetscErrorCode                   :: ierr
     MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
@@ -171,9 +171,9 @@ CONTAINS
           j_loc = vv_mesh%jj(:,m)
           DO l = 1, vv_mesh%gauss%l_G
              index = index + 1
-             DO TYPE = 1, 6
-                un_m1_gauss(index,TYPE,i)  = SUM(un_m1(j_loc,TYPE,i)*vv_mesh%gauss%ww(:,l))
-                res_ns_gauss(index,TYPE,i) = SUM(res_ns(j_loc,TYPE,i)*vv_mesh%gauss%ww(:,l))
+             DO TYPE_VEC = 1, 6
+                un_m1_gauss(index,TYPE_VEC,i)  = SUM(un_m1(j_loc,TYPE_VEC,i)*vv_mesh%gauss%ww(:,l))
+                res_ns_gauss(index,TYPE_VEC,i) = SUM(res_ns(j_loc,TYPE_VEC,i)*vv_mesh%gauss%ww(:,l))
              END DO
           END DO
        END DO
@@ -257,7 +257,7 @@ CONTAINS
     REAL(KIND=8)    :: norm_vel_L2, norm_mom_L2
     !REAL(KIND=8)    :: norm_res_ns_L2
     !INTEGER         :: rank
-    INTEGER         :: i, k, nu_mat, mode, m, l, TYPE, index, n
+    INTEGER         :: i, k, nu_mat, mode, m, l, TYPE_VEC, index, n
     INTEGER         :: nb_procs, code, bloc_size, m_max_pad
     PetscErrorCode                   :: ierr
     MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
@@ -321,9 +321,9 @@ CONTAINS
           j_loc = vv_mesh%jj(:,m)
           DO l = 1, vv_mesh%gauss%l_G
              index = index + 1
-             DO TYPE = 1, 6
+             DO TYPE_VEC = 1, 6
                 DO k = 1, 3
-                   tensor_m1_gauss(k,index,TYPE,i)=SUM(tensor_m1(k,j_loc,TYPE,i)*vv_mesh%gauss%ww(:,l))
+                   tensor_m1_gauss(k,index,TYPE_VEC,i)=SUM(tensor_m1(k,j_loc,TYPE_VEC,i)*vv_mesh%gauss%ww(:,l))
                 END DO
              END DO
           END DO
@@ -383,10 +383,10 @@ CONTAINS
           j_loc = vv_mesh%jj(:,m)
           DO l = 1, vv_mesh%gauss%l_G
              index = index + 1
-             DO TYPE = 1, 6
-                un_m1_gauss(index,TYPE,i)  = SUM(un_m1(j_loc,TYPE,i)*vv_mesh%gauss%ww(:,l))
-                momentum_m1_gauss(index,TYPE,i)  = SUM(momentum_m1(j_loc,TYPE,i)*vv_mesh%gauss%ww(:,l))
-                res_ns_gauss(index,TYPE,i) = SUM(res_ns(j_loc,TYPE,i)*vv_mesh%gauss%ww(:,l))
+             DO TYPE_VEC = 1, 6
+                un_m1_gauss(index,TYPE_VEC,i)  = SUM(un_m1(j_loc,TYPE_VEC,i)*vv_mesh%gauss%ww(:,l))
+                momentum_m1_gauss(index,TYPE_VEC,i)  = SUM(momentum_m1(j_loc,TYPE_VEC,i)*vv_mesh%gauss%ww(:,l))
+                res_ns_gauss(index,TYPE_VEC,i) = SUM(res_ns(j_loc,TYPE_VEC,i)*vv_mesh%gauss%ww(:,l))
              END DO
           END DO
        END DO
@@ -442,10 +442,10 @@ CONTAINS
              j_loc_P1 = pp_mesh%jj(:,m)
              DO l = 1, pp_mesh%gauss%l_G
                 index = index + 1
-                DO TYPE = 1, 6
-                   un_m1_P1_gauss(index,TYPE,i)  = SUM(un_m1_P1(j_loc_P1,TYPE,i)*pp_mesh%gauss%ww(:,l))
-                   momentum_m1_P1_gauss(index,TYPE,i)  = SUM(momentum_m1_P1(j_loc_P1,TYPE,i)*pp_mesh%gauss%ww(:,l))
-                   res_ns_P1_gauss(index,TYPE,i) = SUM(res_ns_P1(j_loc_P1,TYPE,i)*pp_mesh%gauss%ww(:,l))
+                DO TYPE_VEC = 1, 6
+                   un_m1_P1_gauss(index,TYPE_VEC,i)  = SUM(un_m1_P1(j_loc_P1,TYPE_VEC,i)*pp_mesh%gauss%ww(:,l))
+                   momentum_m1_P1_gauss(index,TYPE_VEC,i)  = SUM(momentum_m1_P1(j_loc_P1,TYPE_VEC,i)*pp_mesh%gauss%ww(:,l))
+                   res_ns_P1_gauss(index,TYPE_VEC,i) = SUM(res_ns_P1(j_loc_P1,TYPE_VEC,i)*pp_mesh%gauss%ww(:,l))
                 END DO
              END DO
           END DO
@@ -536,7 +536,7 @@ CONTAINS
     REAL(KIND=8)    :: norm_vel_L2, norm_mom_L2
     !REAL(KIND=8)    :: norm_res_ns_L2
     !INTEGER         :: rank
-    INTEGER         :: i, k, nu_mat, mode, m, l, TYPE, index, n
+    INTEGER         :: i, k, nu_mat, mode, m, l, TYPE_VEC, index, n
     INTEGER         :: nb_procs, code, bloc_size, m_max_pad
     PetscErrorCode                   :: ierr
     MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
@@ -598,9 +598,9 @@ CONTAINS
           j_loc = vv_mesh%jj(:,m)
           DO l = 1, vv_mesh%gauss%l_G
              index = index + 1
-             DO TYPE = 1, 6
+             DO TYPE_VEC = 1, 6
                 DO k = 1, 3
-                   tensor_m1_gauss(k,index,TYPE,i)=SUM(tensor_m1(k,j_loc,TYPE,i)*vv_mesh%gauss%ww(:,l))
+                   tensor_m1_gauss(k,index,TYPE_VEC,i)=SUM(tensor_m1(k,j_loc,TYPE_VEC,i)*vv_mesh%gauss%ww(:,l))
                 END DO
              END DO
           END DO
@@ -646,10 +646,10 @@ CONTAINS
           j_loc = vv_mesh%jj(:,m)
           DO l = 1, vv_mesh%gauss%l_G
              index = index + 1
-             DO TYPE = 1, 6
-                un_m1_gauss(index,TYPE,i)  = SUM(un_m1(j_loc,TYPE,i)*vv_mesh%gauss%ww(:,l))
-                momentum_m1_gauss(index,TYPE,i)  = SUM(momentum_m1(j_loc,TYPE,i)*vv_mesh%gauss%ww(:,l))
-                res_ns_gauss(index,TYPE,i) = SUM(res_ns(j_loc,TYPE,i)*vv_mesh%gauss%ww(:,l))
+             DO TYPE_VEC = 1, 6
+                un_m1_gauss(index,TYPE_VEC,i)  = SUM(un_m1(j_loc,TYPE_VEC,i)*vv_mesh%gauss%ww(:,l))
+                momentum_m1_gauss(index,TYPE_VEC,i)  = SUM(momentum_m1(j_loc,TYPE_VEC,i)*vv_mesh%gauss%ww(:,l))
+                res_ns_gauss(index,TYPE_VEC,i) = SUM(res_ns(j_loc,TYPE_VEC,i)*vv_mesh%gauss%ww(:,l))
              END DO
           END DO
        END DO

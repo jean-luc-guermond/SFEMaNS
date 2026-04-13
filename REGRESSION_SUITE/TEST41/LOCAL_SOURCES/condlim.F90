@@ -1,6 +1,7 @@
 SUBMODULE (boundary_generic_module) boundary_generic
   USE my_util
   USE def_type_mesh
+  USE def_type_field
   USE input_data
   USE bessel
   USE user_data
@@ -116,9 +117,9 @@ CONTAINS
   END SUBROUTINE init_level_set
 
   !===Source in momemtum equation. Always called.
-  MODULE FUNCTION source_in_NS_momentum(TYPE, rr, mode, i, time, Re, ty, density, tempn, concn) RESULT(vv)
+  MODULE FUNCTION source_in_NS_momentum(TYPE_VEC, rr, mode, i, time, Re, ty, density, tempn, concn) RESULT(vv)
     IMPLICIT NONE
-    INTEGER     ,                             INTENT(IN) :: TYPE
+    INTEGER     ,                             INTENT(IN) :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:,:),             INTENT(IN) :: rr
     INTEGER     ,                             INTENT(IN) :: mode, i
     REAL(KIND=8),                             INTENT(IN) :: time
@@ -157,55 +158,55 @@ CONTAINS
        grav2=inputs%heat_grav_fluid(2)*inputs%density_fluid(2)-grav1
 
        !Compute ft
-       IF (m==2 .AND. TYPE==1) THEN      !type 1-2
+       IF (m==2 .AND. TYPE_VEC==1) THEN      !type 1-2
           ft =  amp*r*rho1*z**2*Cos(t - 1.*z) + 0.5d0*amp*r*rho2*z**2*Cos(t - 1.*z) &
                + 0.25d0*amp*r*rho2*z**2*Cos(0. + 4.*amp*t - 4.*z)*Cos(t - 1.*z) &
                - amp**2*r*rho2*z**2*Sin(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z)
-       ELSE IF (m==4 .AND. TYPE==2) THEN
+       ELSE IF (m==4 .AND. TYPE_VEC==2) THEN
           ft =  0.03125d0*a*amp*r**3*rho2*z**2*Cos(0. + t + 4.*amp*t - 5.*z) &
                + 0.125d0*a*amp**2*r**3*rho2*z**2*Cos(0. + t + 4.*amp*t - 5.*z) &
                + 0.03125d0*a*amp*r**3*rho2*z**2*Cos(0. + t - 4.*amp*t + 3.*z) &
                - 0.125d0*a*amp**2*r**3*rho2*z**2*Cos(0. + t - 4.*amp*t + 3.*z)
-       ELSE IF (m==0 .AND. TYPE==3) THEN !type 3-4
+       ELSE IF (m==0 .AND. TYPE_VEC==3) THEN !type 3-4
           ft = 0.25d0*a*amp*r**3*rho2*z**2*(-0.25*Cos(4.*amp*t - 4.*z)*Cos(t - 1.*z) &
                +amp*Sin(4.*amp*t - 4.*z)*Sin(t - 1.*z))
-       ELSE IF (m==2 .AND. TYPE==4) THEN
+       ELSE IF (m==2 .AND. TYPE_VEC==4) THEN
           ft =  -amp*r*rho1*z**2*Cos(t - 1.*z) - 0.5*amp*r*rho2*z**2*Cos(t - 1.*z) &
                - 0.25d0*amp*r*rho2*z**2*Cos(0. + 4.*amp*t - 4.*z)*Cos(t - 1.*z) &
                + amp**2*r*rho2*z**2*Sin(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z)
-       ELSE IF (m==4 .AND. TYPE==3) THEN
+       ELSE IF (m==4 .AND. TYPE_VEC==3) THEN
           ft =  0.03125d0*a*amp*r**3*rho2*z**2*Cos(0. + t + 4.*amp*t - 5.*z) &
                + 0.125d0*a*amp**2*r**3*rho2*z**2*Cos(0. + t + 4.*amp*t - 5.*z) &
                + 0.03125d0*a*amp*r**3*rho2*z**2*Cos(0. + t - 4.*amp*t + 3.*z) &
                - 0.125d0*a*amp**2*r**3*rho2*z**2*Cos(0. + t - 4.*amp*t + 3.*z)
-       ELSE IF (m ==0 .AND. TYPE==5) THEN !type 5-6
+       ELSE IF (m ==0 .AND. TYPE_VEC==5) THEN !type 5-6
           ft = -amp**2*rho2*Sin(4.*amp*t - 4.*z)
-       ELSE IF (m==2 .AND. TYPE==6) THEN
+       ELSE IF (m==2 .AND. TYPE_VEC==6) THEN
           ft = -0.5d0*a*amp**2*r**2*rho2*Sin(4.*amp*t - 4.*z)
        ELSE
           ft = 0.d0
        END IF
 
        !Compute fnl
-       IF (m==0 .AND. TYPE==1) THEN      !type 1-2
+       IF (m==0 .AND. TYPE_VEC==1) THEN      !type 1-2
           fnl = 0.25d0*amp**2*r*z**4*(4.*rho1 + 2.*rho2 + rho2*Cos(4.*amp*t - 4.*z))*Sin(t - 1.*z)**2
-       ELSE IF (m==2 .AND. TYPE==1) THEN
+       ELSE IF (m==2 .AND. TYPE_VEC==1) THEN
           fnl =  - 1.d0*amp**2*r*rho1*z**2*Cos(t - 1.*z) &
                - 0.5d0*amp**2*r*rho2*z**2*Cos(t - 1.*z) &
                - 0.25d0*amp**2*r*rho2*z**2*Cos(0. + 4.*amp*t - 4.*z)*Cos(t - 1.*z) &
                + 2.d0*amp**2*r*rho1*z*Sin(t - 1.*z) + 1.*amp**2*r*rho2*z*Sin(t - 1.*z) &
                + 0.5d0*amp**2*r*rho2*z*Cos(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z) &
                + amp**2*r*rho2*z**2*Sin(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z)
-       ELSE IF (m==2 .AND. TYPE==2) THEN
+       ELSE IF (m==2 .AND. TYPE_VEC==2) THEN
           fnl = 0.125d0*a*amp**2*r**3*rho2*z**4*Cos(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z)**2
-       ELSE IF (m==4 .AND. TYPE==2) THEN
+       ELSE IF (m==4 .AND. TYPE_VEC==2) THEN
           fnl = -0.15625d0*a*amp**2*r**3*rho2*z**2*Cos(0. + t + 4.*amp*t - 5.*z) &
                + 0.09375d0*a*amp**2*r**3*rho2*z**2*Cos(0. + t - 4.*amp*t + 3.*z) &
                + 0.125d0*a*amp**2*r**3*rho2*z*Cos(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z)
-       ELSE IF (m==0 .AND. TYPE==3) THEN !type 3-4
+       ELSE IF (m==0 .AND. TYPE_VEC==3) THEN !type 3-4
           fnl = 0.15625d0*a*amp**2*r**3*rho2*z*(1.*z*Cos(t + 4.*amp*t - 5.*z) &
                - 0.6*z*Cos(t - 4.*amp*t + 3.*z) - 0.8*Cos(4.*amp*t - 4.*z)*Sin(t - 1.*z))
-       ELSE IF (m==2 .AND. TYPE==4) THEN
+       ELSE IF (m==2 .AND. TYPE_VEC==4) THEN
           fnl = 0.625d0*amp**2*r*rho2*z**2*Cos(0. + t + 4.*amp*t - 5.*z) &
                + amp**2*r*rho1*z**2*Cos(t - 1.*z) &
                + 0.5d0*amp**2*r*rho2*z**2*Cos(t - 1.*z) &
@@ -213,20 +214,20 @@ CONTAINS
                - 0.25d0*amp**2*r*rho2*z*Sin(0. + t + 4.*amp*t - 5.*z) &
                - 2.d0*amp**2*r*rho1*z*Sin(t - 1.*z) - 1.*amp**2*r*rho2*z*Sin(t - 1.*z) &
                - 0.25d0*amp**2*r*rho2*z*Sin(0. + t - 4.*amp*t + 3.*z)
-       ELSE IF (m==4 .AND. TYPE==3) THEN
+       ELSE IF (m==4 .AND. TYPE_VEC==3) THEN
           fnl =  -0.15625d0*a*amp**2*r**3*rho2*z**2*Cos(0. + t + 4.*amp*t - 5.*z) &
                + 0.09375d0*a*amp**2*r**3*rho2*z**2*Cos(0. + t - 4.*amp*t + 3.*z) &
                + 0.125d0*a*amp**2*r**3*rho2*z*Cos(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z)
-       ELSE IF (m==0 .AND. TYPE==5) THEN !type 5-6
+       ELSE IF (m==0 .AND. TYPE_VEC==5) THEN !type 5-6
           fnl = amp**2*rho2*Sin(4.*amp*t - 4.*z)
-       ELSE IF (m==2 .AND. TYPE==6) THEN
+       ELSE IF (m==2 .AND. TYPE_VEC==6) THEN
           fnl = 0.5d0*a*amp**2*r**2*rho2*Sin(4.*amp*t - 4.*z)
        ELSE
           fnl = 0.d0
        END IF
 
        !Compute fd
-       IF (m==2 .AND. TYPE==1) THEN      !type 1-2
+       IF (m==2 .AND. TYPE_VEC==1) THEN      !type 1-2
           fd =  1.5*amp*eta2*r*z*Cos(0. + t + 4.*amp*t - 5.*z) &
                + 4.d0*amp*eta1*r*z*Cos(t - 1.*z) + 2.*amp*eta2*r*z*Cos(t - 1.*z) &
                - 0.5d0*amp*eta2*r*z*Cos(0. + t - 4.*amp*t + 3.*z) &
@@ -236,19 +237,19 @@ CONTAINS
                + amp*eta1*r*z**2*Sin(t - 1.*z) + 0.5*amp*eta2*r*z**2*Sin(t - 1.*z) &
                - 0.25d0*amp*eta2*r*Sin(0. + t - 4.*amp*t + 3.*z) &
                - 0.375d0*amp*eta2*r*z**2*Sin(0. + t - 4.*amp*t + 3.*z)
-       ELSE IF (m==4 .AND. TYPE==2) THEN
+       ELSE IF (m==4 .AND. TYPE_VEC==2) THEN
           fd =  0.375*a*amp*eta2*r**3*z*Cos(0. + t + 4.*amp*t - 5.*z) &
                - 0.125*a*amp*eta2*r**3*z*Cos(0. + t - 4.*amp*t + 3.*z) &
                - 0.0625*a*amp*eta2*r**3*Sin(0. + t + 4.*amp*t - 5.*z) &
                + 0.15625*a*amp*eta2*r**3*z**2*Sin(0. + t + 4.*amp*t - 5.*z) &
                - 0.0625*a*amp*eta2*r**3*Sin(0. + t - 4.*amp*t + 3.*z) &
                - 0.09375*a*amp*eta2*r**3*z**2*Sin(0. + t - 4.*amp*t + 3.*z)
-       ELSE IF (m==0 .AND. TYPE==3) THEN !type 3-4
+       ELSE IF (m==0 .AND. TYPE_VEC==3) THEN !type 3-4
           fd =  -0.0625d0*a*amp*eta2*r*(r**2*z*Sin(4.*amp*t - 4.*z)* &
                ( 4.d0*z*Cos(t - 1.*z) - 8.d0*Sin(t - 1.*z)) &
                + Cos(4.*amp*t - 4.*z)*(4.d0*r**2*z*Cos(t - 1.*z) &
                + (-8.d0*z**2 + r**2*(-2. + z**2))*Sin(t - 1.*z)))
-       ELSE IF (m==2 .AND. TYPE==4) THEN
+       ELSE IF (m==2 .AND. TYPE_VEC==4) THEN
           fd =  -1.5d0*amp*eta2*r*z*Cos(0. + t + 4.*amp*t - 5.*z) &
                - 4.d0*amp*eta1*r*z*Cos(t - 1.*z) - 2.*amp*eta2*r*z*Cos(t - 1.*z) &
                + 0.5d0*amp*eta2*r*z*Cos(0. + t - 4.*amp*t + 3.*z) &
@@ -258,7 +259,7 @@ CONTAINS
                - amp*eta1*r*z**2*Sin(t - 1.*z) - 0.5*amp*eta2*r*z**2*Sin(t - 1.*z) &
                + 0.25d0*amp*eta2*r*Sin(0. + t - 4.*amp*t + 3.*z) &
                + 0.375d0*amp*eta2*r*z**2*Sin(0. + t - 4.*amp*t + 3.*z)
-       ELSE IF (m==4 .AND. TYPE==3) THEN
+       ELSE IF (m==4 .AND. TYPE_VEC==3) THEN
           fd =  0.375d0*a*amp*eta2*r**3*z*Cos(0. + t + 4.*amp*t - 5.*z) &
                - 0.125d0*a*amp*eta2*r**3*z*Cos(0. + t - 4.*amp*t + 3.*z) &
                - 0.0625d0*a*amp*eta2*r**3*Sin(0. + t + 4.*amp*t - 5.*z) &
@@ -271,21 +272,21 @@ CONTAINS
        fd = fd/inputs%Re
 
        !Compute fp
-       IF (m==0 .AND. TYPE==1) THEN
+       IF (m==0 .AND. TYPE_VEC==1) THEN
           fp = 2.d0*r*z**3*COS(t)
-       ELSE IF (m==1 .AND. TYPE==2) THEN
+       ELSE IF (m==1 .AND. TYPE_VEC==2) THEN
           fp = 2.d0*r*COS(t-z)
-       ELSE IF (m==2 .AND. TYPE==1) THEN
+       ELSE IF (m==2 .AND. TYPE_VEC==1) THEN
           fp = z*SIN(t-r) - r*z*COS(t-r)
-       ELSE IF (m==1 .AND. TYPE==3) THEN
+       ELSE IF (m==1 .AND. TYPE_VEC==3) THEN
           fp = r*COS(t-z)
-       ELSE IF (m==2 .AND. TYPE==4) THEN
+       ELSE IF (m==2 .AND. TYPE_VEC==4) THEN
           fp = -2.d0*z*SIN(t-r)
-       ELSE IF (m==0 .AND. TYPE==5) THEN
+       ELSE IF (m==0 .AND. TYPE_VEC==5) THEN
           fp = 3.d0*r**2*z**2*COS(t)
-       ELSE IF (m==1 .AND. TYPE==6) THEN
+       ELSE IF (m==1 .AND. TYPE_VEC==6) THEN
           fp = r**2*SIN(t-z)
-       ELSE IF (m==2 .AND. TYPE==5) THEN
+       ELSE IF (m==2 .AND. TYPE_VEC==5) THEN
           fp = r*SIN(t-r)
        ELSE
           fp = 0.d0
@@ -293,23 +294,23 @@ CONTAINS
 
        !Compute ftemp
        ftemp = 0.d0
-       IF (m==0 .AND. TYPE==5) THEN
+       IF (m==0 .AND. TYPE_VEC==5) THEN
           ftemp = 0.25d0*r**2*z*Cos(t)*(4.d0*grav1 + 2.d0*grav2 + grav2*Cos(4.*amp*t - 4.*z))
-       ELSE IF (m==1 .AND. TYPE==5) THEN
+       ELSE IF (m==1 .AND. TYPE_VEC==5) THEN
           ftemp = 0. + 1.*grav1*r**2*z**2*Cos(t - 1.*z) + 0.5*grav2*r**2*z**2*Cos(t - 1.*z) + &
                0.25d0*grav2*r**2*z**2*Cos(0. + 4.*amp*t - 4.*z)*Cos(t - 1.*z) + &
                0.125d0*a*grav2*r**4*z**2*Cos(0. + 4.*amp*t - 4.*z)*Cos(t - 1.*z)
-       ELSE IF (m==1 .AND. TYPE==6) THEN
+       ELSE IF (m==1 .AND. TYPE_VEC==6) THEN
           ftemp = 0. + 2.*grav1*r**2*z**2*Cos(t - 1.*z) + 1.*grav2*r**2*z**2*Cos(t - 1.*z) + &
                0.5d0*grav2*r**2*z**2*Cos(0. + 4.*amp*t - 4.*z)*Cos(t - 1.*z) + &
                0.0625d0*a*grav2*r**4*z**2*Cos(0. + 4.*amp*t - 4.*z)*Cos(t - 1.*z)
-       ELSE IF (m==2 .AND. TYPE==5) THEN
+       ELSE IF (m==2 .AND. TYPE_VEC==5) THEN
           ftemp = 0.d0
-       ELSE IF (m==2 .AND. TYPE==6) THEN
+       ELSE IF (m==2 .AND. TYPE_VEC==6) THEN
           ftemp = 0.1250d0*a*grav2*r**4*z*Cos(t)*cos(4.*amp*t - 4.*z)
-       ELSE IF (m==3 .AND. TYPE==5) THEN
+       ELSE IF (m==3 .AND. TYPE_VEC==5) THEN
           ftemp = 0. - 0.125d0*a*grav2*r**4*z**2*Cos(4.*amp*t - 4.*z)*Cos(t - 1.*z)
-       ELSE IF (m==3 .AND. TYPE==6) THEN
+       ELSE IF (m==3 .AND. TYPE_VEC==6) THEN
           ftemp = 0. + 0.0625d0*a*grav2*r**4*z**2*Cos(4.*amp*t - 4.*z)*Cos(t - 1.*z)
        ELSE
           ftemp = 0.d0
@@ -322,15 +323,15 @@ CONTAINS
     END IF
     RETURN
     !===Dummy variables to avoid warning
-    nd=TYPE; nd=SIZE(rr,1); nd=mode; nd=i; rd=time; rd=Re; cd2=ty
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=mode; nd=i; rd=time; rd=Re; cd2=ty
     nd=SIZE(density,1); nd=SIZE(tempn,1); nd=SIZE(concn,1)
     !===Dummy variables to avoid warning
   END FUNCTION source_in_NS_momentum
 
   !===Extra source in temperature equation. Always called.
-  MODULE FUNCTION source_in_temperature(TYPE, rr, m, t)RESULT(vv)
+  MODULE FUNCTION source_in_temperature(TYPE_VEC, rr, m, t)RESULT(vv)
     IMPLICIT NONE
-    INTEGER     ,                        INTENT(IN)   :: TYPE
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: t
@@ -357,30 +358,30 @@ CONTAINS
             -inputs%heat_capacity_fluid(1)*inputs%density_fluid(1)
 
        !Compute ft
-       IF (m==0 .AND. TYPE==1) THEN
+       IF (m==0 .AND. TYPE_VEC==1) THEN
           ft = -0.25*r**2*z*((4.*crho1 + 2.*crho2 + crho2*Cos(4.*amp*t - 4.*z))*Sin(t) &
                + 4.*amp*crho2*Cos(t)*Sin(4.*amp*t - 4.*z))
-       ELSE IF (m==1 .AND. TYPE==1) THEN
+       ELSE IF (m==1 .AND. TYPE_VEC==1) THEN
           ft = 0. - 1.*amp*crho2*r**2*z**2*Cos(t - 1.*z)*Sin(0. + 4.*amp*t - 4.*z) - &
                0.5*a*amp*crho2*r**4*z**2*Cos(t - 1.*z)*Sin(0. + 4.*amp*t - 4.*z) - &
                1.*crho1*r**2*z**2*Sin(t - 1.*z) - 0.5*crho2*r**2*z**2*Sin(t - 1.*z) - &
                0.25*crho2*r**2*z**2*Cos(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z) - &
                0.125*a*crho2*r**4*z**2*Cos(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z)
-       ELSE IF (m==1 .AND. TYPE==2) THEN
+       ELSE IF (m==1 .AND. TYPE_VEC==2) THEN
           ft = 0. - 2.*amp*crho2*r**2*z**2*Cos(t - 1.*z)*Sin(0. + 4.*amp*t - 4.*z) - &
                0.25*a*amp*crho2*r**4*z**2*Cos(t - 1.*z)*Sin(0. + 4.*amp*t - 4.*z) - &
                2.*crho1*r**2*z**2*Sin(t - 1.*z) - 1.*crho2*r**2*z**2*Sin(t - 1.*z) - &
                0.5*crho2*r**2*z**2*Cos(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z) - &
                0.0625*a*crho2*r**4*z**2*Cos(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z)
-       ELSE IF (m==2 .AND. TYPE==1) THEN
+       ELSE IF (m==2 .AND. TYPE_VEC==1) THEN
           ft = 0.d0
-       ELSE IF (m==2 .AND. TYPE==2) THEN
+       ELSE IF (m==2 .AND. TYPE_VEC==2) THEN
           ft = 0. - 0.125*a*crho2*r**4*z*Cos(0. + 4.*amp*t - 4.*z)*Sin(t) - &
                0.5*a*amp*crho2*r**4*z*Cos(t)*Sin(0. + 4.*amp*t - 4.*z)
-       ELSE IF (m==3 .AND. TYPE==1) THEN
+       ELSE IF (m==3 .AND. TYPE_VEC==1) THEN
           ft = 0. + 0.5*a*amp*crho2*r**4*z**2*Cos(t - 1.*z)*Sin(0. + 4.*amp*t - 4.*z) + &
                0.125*a*crho2*r**4*z**2*Cos(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z)
-       ELSE IF (m==3 .AND. TYPE==2) THEN
+       ELSE IF (m==3 .AND. TYPE_VEC==2) THEN
           ft = 0. - 0.25*a*amp*crho2*r**4*z**2*Cos(t - 1.*z)*Sin(0. + 4.*amp*t - 4.*z) - &
                0.0625*a*crho2*r**4*z**2*Cos(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z)
        ELSE
@@ -388,10 +389,10 @@ CONTAINS
        END IF
 
        !Compute fd
-       IF (m==0 .AND. TYPE==1) THEN
+       IF (m==0 .AND. TYPE_VEC==1) THEN
           fd = Cos(t)*(4.*kappa1*z + 2.*kappa2*z + kappa2*z*Cos(4.*amp*t - 4.*z) + &
                1.*kappa2*r**2*Sin(4.*amp*t - 4.*z))
-       ELSE IF (m==1 .AND. TYPE==1) THEN
+       ELSE IF (m==1 .AND. TYPE_VEC==1) THEN
           fd = 0. + 2.*kappa1*r**2*Cos(t - 1.*z) + 1.*kappa2*r**2*Cos(t - 1.*z) + &
                3.*kappa1*z**2*Cos(t - 1.*z) + 1.5*kappa2*z**2*Cos(t - 1.*z) - &
                1.*kappa1*r**2*z**2*Cos(t - 1.*z) - 0.5*kappa2*r**2*z**2*Cos(t - 1.*z) + &
@@ -408,7 +409,7 @@ CONTAINS
                0.5*a*kappa2*r**4*z*Cos(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z) + &
                1.*kappa2*r**2*z**2*Sin(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z) + &
                0.5*a*kappa2*r**4*z**2*Sin(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z)
-       ELSE IF (m==1 .AND. TYPE==2) THEN
+       ELSE IF (m==1 .AND. TYPE_VEC==2) THEN
           fd = 0. + 4.*kappa1*r**2*Cos(t - 1.*z) + 2.*kappa2*r**2*Cos(t - 1.*z) + &
                6.*kappa1*z**2*Cos(t - 1.*z) + 3.*kappa2*z**2*Cos(t - 1.*z) - &
                2.*kappa1*r**2*z**2*Cos(t - 1.*z) - 1.*kappa2*r**2*z**2*Cos(t - 1.*z) + &
@@ -425,12 +426,12 @@ CONTAINS
                0.25*a*kappa2*r**4*z*Cos(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z) + &
                2.*kappa2*r**2*z**2*Sin(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z) + &
                0.25*a*kappa2*r**4*z**2*Sin(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z)
-       ELSE IF (m==2 .AND. TYPE==1) THEN
+       ELSE IF (m==2 .AND. TYPE_VEC==1) THEN
           fd = 0.d0
-       ELSE IF (m==2 .AND. TYPE==2) THEN
+       ELSE IF (m==2 .AND. TYPE_VEC==2) THEN
           fd = 0. + 1.*a*kappa2*r**2*z*Cos(t)*Cos(0. + 4.*amp*t - 4.*z) + &
                0.5*a*kappa2*r**4*Cos(t)*Sin(0. + 4.*amp*t - 4.*z)
-       ELSE IF (m==3 .AND. TYPE==1) THEN
+       ELSE IF (m==3 .AND. TYPE_VEC==1) THEN
           fd = 0. - 0.125*a*kappa2*r**4*Cos(0. + t + 4.*amp*t - 5.*z) - &
                0.3125*a*kappa2*r**2*z**2*Cos(0. + t + 4.*amp*t - 5.*z) + &
                0.3125*a*kappa2*r**4*z**2*Cos(0. + t + 4.*amp*t - 5.*z) - &
@@ -439,7 +440,7 @@ CONTAINS
                0.1875*a*kappa2*r**4*z**2*Cos(0. + t - 4.*amp*t + 3.*z) - &
                0.75*a*kappa2*r**4*z*Sin(0. + t + 4.*amp*t - 5.*z) + &
                0.25*a*kappa2*r**4*z*Sin(0. + t - 4.*amp*t + 3.*z)
-       ELSE IF (m==3 .AND. TYPE==2) THEN
+       ELSE IF (m==3 .AND. TYPE_VEC==2) THEN
           fd = 0. + 0.0625*a*kappa2*r**4*Cos(0. + t + 4.*amp*t - 5.*z) + &
                0.15625*a*kappa2*r**2*z**2*Cos(0. + t + 4.*amp*t - 5.*z) - &
                0.15625*a*kappa2*r**4*z**2*Cos(0. + t + 4.*amp*t - 5.*z) + &
@@ -453,10 +454,10 @@ CONTAINS
        END IF
 
        !Compute fnl
-       IF (m==0 .AND. TYPE==1) THEN
+       IF (m==0 .AND. TYPE_VEC==1) THEN
           fnl = amp*r**2*Cos(t)*(crho1 + 0.5*crho2 + 0.25*crho2*Cos(4.*amp*t - 4.*z) + &
                1.*crho2*z*Sin(4.*amp*t - 4.*z))
-       ELSE IF (m==1 .AND. TYPE==1) THEN
+       ELSE IF (m==1 .AND. TYPE_VEC==1) THEN
           fnl = 0. + 2.*amp*crho1*r**2*z*Cos(t - 1.*z) + 1.*amp*crho2*r**2*z*Cos(t - 1.*z) + &
                0.5*amp*crho2*r**2*z*Cos(0. + 4.*amp*t - 4.*z)*Cos(t - 1.*z) + &
                0.25*a*amp*crho2*r**4*z*Cos(0. + 4.*amp*t - 4.*z)*Cos(t - 1.*z) + &
@@ -472,7 +473,7 @@ CONTAINS
                Sin(t - 1.*z) - &
                0.125*a*amp*crho2*r**4*z**4*Cos(0. + 4.*amp*t - 4.*z)* &
                Cos(t - 1.*z)*Sin(t - 1.*z)
-       ELSE IF (m==1 .AND. TYPE==2) THEN
+       ELSE IF (m==1 .AND. TYPE_VEC==2) THEN
           fnl = 0. + 4.*amp*crho1*r**2*z*Cos(t - 1.*z) + 2.*amp*crho2*r**2*z*Cos(t - 1.*z) + &
                1.*amp*crho2*r**2*z*Cos(0. + 4.*amp*t - 4.*z)*Cos(t - 1.*z) + &
                0.125*a*amp*crho2*r**4*z*Cos(0. + 4.*amp*t - 4.*z)*Cos(t - 1.*z) + &
@@ -487,14 +488,14 @@ CONTAINS
                0.75*amp*crho2*r**2*z**4*Cos(0. + 4.*amp*t - 4.*z)*Cos(t - 1.*z)* &
                Sin(t - 1.*z) + 0.0625*a*amp*crho2*r**4*z**4*Cos(0. + 4.*amp*t - 4.*z)* &
                Cos(t - 1.*z)*Sin(t - 1.*z)
-       ELSE IF (m==2 .AND. TYPE==1) THEN
+       ELSE IF (m==2 .AND. TYPE_VEC==1) THEN
           fnl = 2.*amp*crho1*r**2*z**3*Cos(t)*Sin(t - 1.*z) + &
                1.*amp*crho2*r**2*z**3*Cos(t)*Sin(t - 1.*z) + &
                0.5*amp*crho2*r**2*z**3*Cos(t)*Cos(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z)
-       ELSE IF (m==2 .AND. TYPE==2) THEN
+       ELSE IF (m==2 .AND. TYPE_VEC==2) THEN
           fnl = 0. + 0.125*a*amp*crho2*r**4*Cos(t)*Cos(0. + 4.*amp*t - 4.*z) + &
                0.5*a*amp*crho2*r**4*z*Cos(t)*Sin(0. + 4.*amp*t - 4.*z)
-       ELSE IF (m==3 .AND. TYPE==1) THEN
+       ELSE IF (m==3 .AND. TYPE_VEC==1) THEN
           fnl = 0. - 0.25*a*amp*crho2*r**4*z*Cos(0. + 4.*amp*t - 4.*z)*Cos(t - 1.*z) - &
                0.5*a*amp*crho2*r**4*z**2*Cos(t - 1.*z)*Sin(0. + 4.*amp*t - 4.*z) - &
                0.125*a*amp*crho2*r**4*z**2*Cos(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z) + &
@@ -502,7 +503,7 @@ CONTAINS
                0.25*amp*crho2*r**2*z**4*Cos(t - 1.*z)*Sin(t - 1.*z) + &
                0.125*amp*crho2*r**2*z**4*Cos(0. + 4.*amp*t - 4.*z)*Cos(t - 1.*z)*Sin(t - 1.*z) + &
                0.1875*a*amp*crho2*r**4*z**4*Cos(0. + 4.*amp*t - 4.*z)*Cos(t - 1.*z)*Sin(t - 1.*z)
-       ELSE IF (m==3 .AND. TYPE==2) THEN
+       ELSE IF (m==3 .AND. TYPE_VEC==2) THEN
           fnl = 0. + 0.125*a*amp*crho2*r**4*z*Cos(0. + 4.*amp*t - 4.*z)*Cos(t - 1.*z) + &
                0.25*a*amp*crho2*r**4*z**2*Cos(t - 1.*z)*Sin(0. + 4.*amp*t - 4.*z) + &
                0.0625*a*amp*crho2*r**4*z**2*Cos(0. + 4.*amp*t - 4.*z)*Sin(t - 1.*z) + &
@@ -510,13 +511,13 @@ CONTAINS
                0.5*amp*crho2*r**2*z**4*Cos(t - 1.*z)*Sin(t - 1.*z) + &
                0.25*amp*crho2*r**2*z**4*Cos(0. + 4.*amp*t - 4.*z)*Cos(t - 1.*z)*Sin(t - 1.*z) + &
                0.09375*a*amp*crho2*r**4*z**4*Cos(0. + 4.*amp*t - 4.*z)*Cos(t - 1.*z)*Sin(t - 1.*z)
-       ELSE IF (m==4 .AND. TYPE==1) THEN
+       ELSE IF (m==4 .AND. TYPE_VEC==1) THEN
           fnl = 0.d0
-       ELSE IF (m==4 .AND. TYPE==2) THEN
+       ELSE IF (m==4 .AND. TYPE_VEC==2) THEN
           fnl = 0. + 0.125*a*amp*crho2*r**4*z**3*Cos(t)*Cos(4.*amp*t - 4.*z)*Sin(t - 1.*z)
-       ELSE IF (m==5 .AND. TYPE==1) THEN
+       ELSE IF (m==5 .AND. TYPE_VEC==1) THEN
           fnl = 0. - 0.03125*a*amp*crho2*r**4*z**4*Cos(4.*amp*t - 4.*z)*Sin(0. + 2.*t - 2.*z)
-       ELSE IF (m==5 .AND. TYPE==2) THEN
+       ELSE IF (m==5 .AND. TYPE_VEC==2) THEN
           fnl = 0. + 0.015625*a*amp*crho2*r**4*z**4*Cos(4.*amp*t - 4.*z)*Sin(0. + 2.*t - 2.*z)
        ELSE
           fnl = 0.d0
@@ -530,14 +531,14 @@ CONTAINS
 
     RETURN
     !===Dummy variables to avoid warning
-    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=t
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION source_in_temperature
 
   !===Extra source in level set equation. Always called.
-  MODULE FUNCTION source_in_level_set(interface_nb,TYPE, rr, m, t)RESULT(vv)
+  MODULE FUNCTION source_in_level_set(interface_nb,TYPE_VEC, rr, m, t)RESULT(vv)
     IMPLICIT NONE
-    INTEGER     ,                        INTENT(IN)   :: TYPE
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m, interface_nb
     REAL(KIND=8),                        INTENT(IN)   :: t
@@ -546,15 +547,15 @@ CONTAINS
     vv = 0.d0
     RETURN
     !===Dummy variables to avoid warning
-    nd=TYPE; nd=SIZE(rr,1); nd=m; nd=interface_nb; rd=t
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; nd=interface_nb; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION source_in_level_set
 
   !===Velocity for boundary conditions in Navier-Stokes.
   !===Can be used also to initialize velocity in: init_velocity_pressure_temperature
-  MODULE FUNCTION vv_exact(TYPE,rr,m,t) RESULT(vv)
+  MODULE FUNCTION vv_exact(TYPE_VEC,rr,m,t) RESULT(vv)
     IMPLICIT NONE
-    INTEGER     ,                        INTENT(IN)   :: TYPE
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER,                             INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: t
@@ -565,11 +566,11 @@ CONTAINS
     z = rr(2,:)
 
     vv = 0.d0
-    IF (m==2 .AND. TYPE==1) THEN
+    IF (m==2 .AND. TYPE_VEC==1) THEN
        vv = r*z**2*Sin(t-z)
-    ELSE IF (m==2 .AND. TYPE==4) THEN
+    ELSE IF (m==2 .AND. TYPE_VEC==4) THEN
        vv = -r*z**2*Sin(t-z)
-    ELSE IF (m==0 .AND. TYPE==5) THEN
+    ELSE IF (m==0 .AND. TYPE_VEC==5) THEN
        vv = 1.d0
     ELSE
        vv = 0.d0
@@ -577,7 +578,7 @@ CONTAINS
     vv=amp*vv
     RETURN
     !===Dummy variables to avoid warning
-    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=t
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION vv_exact
 
@@ -601,33 +602,33 @@ CONTAINS
   !===Use this routine for outflow BCs only.
   !===CAUTION: Do not enfore BCs on pressure where normal component
   !            of velocity is prescribed.
-  MODULE FUNCTION pp_exact(TYPE,rr,m,t) RESULT (vv)
+  MODULE FUNCTION pp_exact(TYPE_VEC,rr,m,t) RESULT (vv)
     IMPLICIT NONE
-    INTEGER     ,                        INTENT(IN)   :: TYPE
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
 
-    IF (m==0.AND.TYPE==1) THEN
+    IF (m==0.AND.TYPE_VEC==1) THEN
        vv(:) = rr(1,:)**2*rr(2,:)**3*COS(t)
-    ELSE IF (m==1 .AND. TYPE==2) THEN
+    ELSE IF (m==1 .AND. TYPE_VEC==2) THEN
        vv = rr(1,:)**2*COS(t-rr(2,:))
-    ELSE IF (m==2 .AND. TYPE==1) THEN
+    ELSE IF (m==2 .AND. TYPE_VEC==1) THEN
        vv = rr(1,:)*rr(2,:)*SIN(t-rr(1,:))
     ELSE
        vv = 0.d0
     END IF
     RETURN
     !===Dummy variables to avoid warning
-    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=t
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION pp_exact
 
   !===Temperature for boundary conditions in temperature equation.
-  MODULE FUNCTION temperature_exact(TYPE,rr,m,t) RESULT (vv)
+  MODULE FUNCTION temperature_exact(TYPE_VEC,rr,m,t) RESULT (vv)
     IMPLICIT NONE
-    INTEGER     ,                        INTENT(IN)   :: TYPE
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: t
@@ -636,25 +637,25 @@ CONTAINS
 
     r = rr(1,:)
     z = rr(2,:)
-    IF (m==0 .AND. TYPE==1) THEN
+    IF (m==0 .AND. TYPE_VEC==1) THEN
        vv = r**2*z*COS(t)
-    ELSE IF (m==1 .AND. TYPE==1) THEN
+    ELSE IF (m==1 .AND. TYPE_VEC==1) THEN
        vv = r**2*z**2*Cos(t-z)
-    ELSE IF (m==1 .AND. TYPE==2) THEN
+    ELSE IF (m==1 .AND. TYPE_VEC==2) THEN
        vv = 2.d0*r**2*z**2*Cos(t-z)
     ELSE
        vv = 0.d0
     END IF
     RETURN
     !===Dummy variables to avoid warning
-    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=t
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION temperature_exact
 
   !===Concentration for boundary conditions in concentration equation.
-  MODULE FUNCTION concentration_exact(TYPE,rr,m,t) RESULT (vv)
+  MODULE FUNCTION concentration_exact(TYPE_VEC,rr,m,t) RESULT (vv)
     IMPLICIT NONE
-    INTEGER     ,                        INTENT(IN)   :: TYPE
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: t
@@ -664,14 +665,14 @@ CONTAINS
     CALL error_petsc('concentration_exact: should not be called for this test')
     RETURN
     !===Dummy variables to avoid warning
-    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=t
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION concentration_exact
 
   !===Can be used to initialize level set in the subroutine init_level_set.
-  MODULE FUNCTION level_set_exact(interface_nb,TYPE,rr,m,t)  RESULT (vv)
+  MODULE FUNCTION level_set_exact(interface_nb,TYPE_VEC,rr,m,t)  RESULT (vv)
     IMPLICIT NONE
-    INTEGER     ,                        INTENT(IN)   :: TYPE
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m, interface_nb
     REAL(KIND=8),                        INTENT(IN)   :: t
@@ -682,9 +683,9 @@ CONTAINS
     z = rr(2,:)
 
     IF (interface_nb==1) THEN
-       IF (m==0 .AND. TYPE==1) THEN
+       IF (m==0 .AND. TYPE_VEC==1) THEN
           vv = 0.25d0*(2.d0 + Cos(4.d0*(amp*t-z)))
-       ELSE IF (m==2 .AND. TYPE==2) THEN
+       ELSE IF (m==2 .AND. TYPE_VEC==2) THEN
           vv = 0.125d0*a*r**2*Cos(4.d0*(amp*t-z))
        ELSE
           vv = 0.d0
@@ -694,7 +695,7 @@ CONTAINS
     END IF
     RETURN
     !===Dummy variables to avoid warning
-    nd=TYPE; nd=SIZE(rr,1); nd=m; nd=interface_nb; rd=t
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; nd=interface_nb; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION level_set_exact
 
@@ -725,10 +726,10 @@ CONTAINS
   !===velocity field on the temperature and the Maxwell domain.
   !===It is also used if problem type=mxw and restart velocity
   !===is set to true in data (type problem denoted mxx in the code).
-  MODULE FUNCTION extension_velocity(TYPE, H_mesh, mode, t, n_start) RESULT(vv)
+  MODULE FUNCTION extension_velocity(TYPE_VEC, H_mesh, mode, t, n_start) RESULT(vv)
     IMPLICIT NONE
     TYPE(mesh_type),                     INTENT(IN)   :: H_mesh
-    INTEGER     ,                        INTENT(IN)   :: TYPE, n_start
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC, n_start
     INTEGER,                             INTENT(IN)   :: mode
     REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(H_mesh%np)                :: vv
@@ -736,14 +737,14 @@ CONTAINS
     vv = 0.d0
     RETURN
     !===Dummy variables to avoid warning
-    nd=H_mesh%np; nd=TYPE; nd=n_start; nd=mode; rd=t
+    nd=H_mesh%np; nd=TYPE_VEC; nd=n_start; nd=mode; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION extension_velocity
 
-  MODULE FUNCTION extension_temperature(TYPE, H_mesh, mode, t, n_start) RESULT(vv)
+  MODULE FUNCTION extension_temperature(TYPE_VEC, H_mesh, mode, t, n_start) RESULT(vv)
     IMPLICIT NONE
     TYPE(mesh_type),                     INTENT(IN)   :: H_mesh
-    INTEGER     ,                        INTENT(IN)   :: TYPE, n_start
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC, n_start
     INTEGER,                             INTENT(IN)   :: mode
     REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(H_Mesh%np)                :: vv
@@ -751,14 +752,14 @@ CONTAINS
     vv = 0.d0
     RETURN
     !===Dummy variables to avoid warning
-    nd=H_mesh%np; nd=TYPE; nd=n_start; nd=mode; rd=t
+    nd=H_mesh%np; nd=TYPE_VEC; nd=n_start; nd=mode; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION extension_temperature
 
-  MODULE FUNCTION extension_concentration(TYPE, vv_mesh, mode, t, n_start) RESULT(vv)
+  MODULE FUNCTION extension_concentration(TYPE_VEC, vv_mesh, mode, t, n_start) RESULT(vv)
     IMPLICIT NONE
     TYPE(mesh_type),                     INTENT(IN)   :: vv_mesh
-    INTEGER     ,                        INTENT(IN)   :: TYPE, n_start
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC, n_start
     INTEGER,                             INTENT(IN)   :: mode
     REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(vv_mesh%np)                :: vv
@@ -766,7 +767,7 @@ CONTAINS
     vv = 0.d0
     RETURN
     !===Dummy variables to avoid warning
-    nd=vv_mesh%np; nd=TYPE; nd=n_start; nd=mode; rd=t
+    nd=vv_mesh%np; nd=TYPE_VEC; nd=n_start; nd=mode; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION extension_concentration
 
@@ -806,10 +807,10 @@ CONTAINS
   END FUNCTION H_B_quasi_static
 
   !===Magnetic field for boundary conditions in the Maxwell equations.
-  MODULE FUNCTION Hexact(H_mesh, TYPE, rr, m, mu_H_field, t) RESULT(vv)
+  MODULE FUNCTION Hexact(H_mesh, TYPE_VEC, rr, m, mu_H_field, t) RESULT(vv)
     IMPLICIT NONE
     TYPE(mesh_type),                     INTENT(IN)   :: H_mesh
-    INTEGER     ,                        INTENT(IN)   :: TYPE
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: t
@@ -820,14 +821,14 @@ CONTAINS
     CALL error_petsc('Hexact: should not be called for this test')
     RETURN
     !===Dummy variables to avoid warning
-    nd=H_mesh%np; nd=TYPE; nd=SIZE(rr,1); nd=m; rd=t; nd=SIZE(mu_H_field)
+    nd=H_mesh%np; nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=t; nd=SIZE(mu_H_field)
     !===Dummy variables to avoid warning
   END FUNCTION Hexact
 
   !===Scalar potential for boundary conditions in the Maxwell equations.
-  MODULE FUNCTION Phiexact(TYPE, rr, m, mu_phi,t) RESULT(vv)
+  MODULE FUNCTION Phiexact(TYPE_VEC, rr, m, mu_phi,t) RESULT(vv)
     IMPLICIT NONE
-    INTEGER     ,                        INTENT(IN)   :: TYPE
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: mu_phi, t
@@ -837,14 +838,14 @@ CONTAINS
     CALL error_petsc('Phiexact: should not be called for this test')
     RETURN
     !===Dummy variables to avoid warning
-    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=mu_phi; rd=t
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=mu_phi; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION Phiexact
 
   !===Current in Ohm's law. Curl(H) = sigma(E + uxB) + current
-  MODULE FUNCTION Jexact_gauss(TYPE, rr, m, mu_phi, sigma, mu_H, t, mesh_id, opt_B_ext) RESULT(vv)
+  MODULE FUNCTION Jexact_gauss(TYPE_VEC, rr, m, mu_phi, sigma, mu_H, t, mesh_id, opt_B_ext) RESULT(vv)
     IMPLICIT NONE
-    INTEGER     ,                        INTENT(IN)   :: TYPE
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:),          INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: mu_phi, sigma, mu_H, t
@@ -856,15 +857,15 @@ CONTAINS
     CALL error_petsc('Jexact_gauss: should not be called for this test')
     RETURN
     !===Dummy variables to avoid warning
-    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=mu_phi; rd=sigma; rd=mu_H; rd=t; nd=mesh_id
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=mu_phi; rd=sigma; rd=mu_H; rd=t; nd=mesh_id
     IF (PRESENT(opt_B_ext)) nd=SIZE(opt_B_ext)
     !===Dummy variables to avoid warning
   END FUNCTION Jexact_gauss
 
   !===Electric field for Neumann BC (cf. doc)
-  MODULE FUNCTION Eexact_gauss(TYPE, rr, m, mu_phi, sigma, mu_H, t) RESULT(vv)
+  MODULE FUNCTION Eexact_gauss(TYPE_VEC, rr, m, mu_phi, sigma, mu_H, t) RESULT(vv)
     IMPLICIT NONE
-    INTEGER,                             INTENT(IN)   :: TYPE
+    INTEGER,                             INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:),          INTENT(IN)   :: rr
     INTEGER,                             INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: mu_phi, sigma, mu_H, t
@@ -874,13 +875,13 @@ CONTAINS
     CALL error_petsc('Eexact_gauss: should not be called for this test')
     RETURN
     !===Dummy variables to avoid warning
-    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=mu_phi; rd=sigma; rd=mu_H; rd=t
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=mu_phi; rd=sigma; rd=mu_H; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION Eexact_gauss
 
   !===Initialization of magnetic field and scalar potential (if present)
   MODULE SUBROUTINE init_maxwell(H_mesh, phi_mesh, time, dt, mu_H_field, mu_phi, &
-       list_mode, Hn1, Hn, phin1, phin)
+       list_mode, mag_field)
     IMPLICIT NONE
     TYPE(mesh_type)                            :: H_mesh, phi_mesh
     REAL(KIND=8),                   INTENT(OUT):: time
@@ -888,17 +889,16 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:),     INTENT(IN) :: mu_H_field
     REAL(KIND=8),                   INTENT(IN) :: mu_phi
     INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: Hn, Hn1
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: phin, phin1
+    TYPE(mag_field_type),           INTENT(OUT):: mag_field
     INTEGER                                    :: i, k
-
+    CALL mag_field%allocate_induction_fields
     time = -dt
     DO k=1,6
        DO i=1, SIZE(list_mode)
-          Hn1(:,k,i) = Hexact(H_mesh,k, H_mesh%rr, list_mode(i), mu_H_field, time)
+          mag_field%Hn1(:,k,i) = Hexact(H_mesh,k, H_mesh%rr, list_mode(i), mu_H_field, time)
           IF (inputs%nb_dom_phi>0) THEN
              IF (k<3) THEN
-                phin1(:,k,i) = Phiexact(k, phi_mesh%rr, list_mode(i) , mu_phi, time)
+                mag_field%phin1(:,k,i) = Phiexact(k, phi_mesh%rr, list_mode(i) , mu_phi, time)
              ENDIF
           ENDIF
        ENDDO
@@ -907,14 +907,15 @@ CONTAINS
     time = time + dt
     DO k=1,6
        DO i=1, SIZE(list_mode)
-          Hn(:,k,i) = Hexact(H_mesh,k, H_mesh%rr, list_mode(i), mu_H_field, time)
+          mag_field%Hn(:,k,i) = Hexact(H_mesh,k, H_mesh%rr, list_mode(i), mu_H_field, time)
           IF (inputs%nb_dom_phi>0) THEN
              IF (k<3) THEN
-                phin(:,k,i) = Phiexact(k, phi_mesh%rr, list_mode(i), mu_phi, time)
+                mag_field%phin(:,k,i) = Phiexact(k, phi_mesh%rr, list_mode(i), mu_phi, time)
              ENDIF
           ENDIF
        ENDDO
     ENDDO
+    CALL mag_field%set_time(time)
   END SUBROUTINE init_maxwell
 
   !===Analytical permeability (if needed)

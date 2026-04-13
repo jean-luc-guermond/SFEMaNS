@@ -82,8 +82,8 @@ CONTAINS
     REAL(KIND=8), DIMENSION(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: two_nu_tilde_grads_u_ext
     REAL(KIND=8), DIMENSION(vv_mesh%np) :: vel_loc, vel_tot
     REAL(KIND=8)   :: tps, tps_tot, tps_cumul, coeff, vloc, cfl, cfl_max, norm
-    REAL(KIND=8) :: one, zero, three
-    DATA zero, one, three/0.d0,1.d0,3.d0/
+    REAL(KIND=8) :: one, my_zero, three
+    DATA my_zero, one, three/0.d0,1.d0,3.d0/
     !===End Other variables
 
     !Communicators for Petsc, in space and Fourier------------------------------
@@ -206,7 +206,7 @@ CONTAINS
           CALL create_local_petsc_matrix(comm_one_d(1), pp_1_LA, press_mat(i), clean=.FALSE.)
           !JLG Jan 2014 (regularize pressure matrix)
           !CALL qs_diff_mass_scal_M(pp_mesh, pp_1_LA, one, zero, zero, mode, press_mat(i))
-          CALL qs_diff_mass_scal_M(pp_mesh, pp_1_LA, one, 1.d-10, zero, mode, press_mat(i))
+          CALL qs_diff_mass_scal_M(pp_mesh, pp_1_LA, one, 1.d-10, my_zero, mode, press_mat(i))
           IF (inputs%my_periodic%nb_periodic_pairs/=0) THEN
              CALL periodic_matrix_petsc(pp_per%n_bord, pp_per%list, pp_per%perlist, press_mat(i), pp_1_LA)
           END IF

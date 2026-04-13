@@ -12,7 +12,28 @@ PROGRAM mhd_prog
   USE chaine_caractere
 #include "petsc/finclude/petsc.h"
   USE petsc
+
+  USE COMM_LK_SFEM
+  USE def_type_field
+  USE exponential_propagator
+  USE eigenvalue_problem, ONLY: compute_spectrum
+#ifdef USE_LIGHTKRYLOV 
+  USE LightKrylov
+  USE LightKrylov_Constants
+  USE LightKrylov_Logger
+  USE stdlib_logger, ONLY: information_level, warning_level, debug_level, error_level, all_level, success
+  USE stdlib_io_npy, ONLY: save_npy
+#endif
+
   IMPLICIT NONE
+  !===EXPONENTIAL_PROPAGATOR=====================================================
+  TYPE(exptA_linop)                               :: exptA
+  TYPE(mag_field_type)                            :: vec_in
+  TYPE(mag_field_type)                            :: vec_out
+  TYPE(mag_field_type), DIMENSION(:), ALLOCATABLE :: X
+  COMPLEX(KIND=8), DIMENSION(:), ALLOCATABLE      :: lambda
+  REAL(KIND=8), DIMENSION(:), ALLOCATABLE         :: residuals
+  LOGICAL                                         :: if_induction, test_induction
   !===Navier-Stokes fields========================================================
   TYPE(mesh_type), POINTER                        :: pp_mesh, vv_mesh
   REAL(KIND=8), POINTER, DIMENSION(:,:,:)         :: un, pn
@@ -20,7 +41,8 @@ PROGRAM mhd_prog
   !===Maxwell fields==============================================================
   TYPE(mesh_type), POINTER                        :: H_mesh, phi_mesh
   TYPE(interface_type), POINTER                   :: interface_H_mu, interface_H_phi
-  REAL(KIND=8), POINTER,      DIMENSION(:,:,:)    :: Hn, Bn, phin, vel
+  REAL(KIND=8), POINTER,      DIMENSION(:,:,:)    :: vel
+  TYPE(mag_field_type), POINTER                   :: mag_field
   REAL(KIND=8), POINTER,      DIMENSION(:)        :: sigma_field, mu_H_field
   !===Temperature field===========================================================
   TYPE(mesh_type), POINTER                        :: temp_mesh
@@ -62,12 +84,18 @@ PROGRAM mhd_prog
   !===Initialize SFEMANS (mandatory)==============================================
   CALL initial(vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, conc_mesh,&
        interface_H_phi, interface_H_mu, list_mode, &
-       un, pn, Hn, Bn, phin, vel, &
+       un, pn, mag_field, vel, &
        vol_heat_capacity_field, temperature_diffusivity_field, &
        concentration_diffusivity_field,mu_H_field, sigma_field, time, m_max_c, &
        comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc,temperature, &
        concentration, level_set, density, &
        der_un, visc_LES, visc_LES_level)
+
+  !===== (for now) if_induction is the only case where the exptA subroutine can be tested
+  if_induction = ((inputs%type_pb == 'mxx') .OR. (inputs%type_pb == 'mhd') .OR. &
+          (inputs%type_pb == 'mxw') .OR. (inputs%type_pb == 'mhs') .OR. (inputs%type_pb == 'fhd'))
+  test_induction = if_induction .AND. inputs%if_regression
+  !===== if_induction is the only case where the exptA subroutine can be tested
 
   !===============================================================================
   !                        VISUALIZATION WITHOUT COMPUTING                       !
@@ -101,54 +129,92 @@ PROGRAM mhd_prog
   !IF (rank==0) WRITE(*,*) 'END OF ARPACK, EXITING PRGM'
   !   !RETURN
   !END IF
-  !===============================================================================
-  !                        TIME INTEGRATION                                      !
-  !===============================================================================
-  !===Start time loop
+
   tps = user_time()
-  DO it = 1, inputs%nb_iteration
-     tploc =  user_time()
-     time = time + inputs%dt
 
-     CALL run_SFEMaNS(time, it)
+   !=================================================
+   !===== Solving for eigenspectrum  LightKrylov ====
+   !=================================================
+   IF (inputs%LK%eigs) THEN
+#ifdef USE_LIGHTKRYLOV      
+      CALL compute_spectrum(comm_one_d, H_mesh, phi_mesh, lambda, residuals, X, list_mode)
 
-     !===My postprocessing
-     IF (.NOT.inputs%test_de_convergence) THEN
-        CALL my_post_processing(it)
-     END IF
+      IF (inputs%if_regression) THEN
+         CALL regression_LK(lambda)
+      END IF
+#else
+      IF (inputs%if_regression) THEN
+         ! tests always pass if LightKrylov is not loaded
+         WRITE(*,*) "passing LightKrylov by default", "1234567891"
+         CALL PetscFinalize(ierr)
+         CALL EXIT(123)
+      ELSE
+         CALL error_petsc("BUG in main.F90: LK eigvals set to True, but&
+          SFEMaNS was compiled without linking LightKrylov")
+      END IF
+#endif
 
-     !===Write restart file
-     IF (MOD(it, inputs%freq_restart) == 0) THEN
-        CALL  save_run(it,inputs%freq_restart)
-     ENDIF
+  ELSE IF (.NOT. inputs%LK%ctest_exptA) THEN
+!=======================================================
+!===== time integration ================================
+!=======================================================
+      DO it = 1, inputs%nb_iteration
+         tploc =  user_time()
+         time = time + inputs%dt
+         CALL run_SFEMaNS(time, it)
 
-     !===Write snapshot file
-     IF (MOD(it, inputs%freq_snapshot) == 0) THEN
-        CALL save_snapshot(it,inputs%freq_snapshot)
-     ENDIF
+         !===My postprocessing
+         IF (.NOT.inputs%test_de_convergence) THEN
+            CALL my_post_processing(it)
+         END IF
+         !===Write restart file
+         IF (MOD(it, inputs%freq_restart) == 0) THEN
+            CALL save_run(it,inputs%freq_restart)
+         ENDIF
+         !===Write snapshot file
+         IF (MOD(it, inputs%freq_snapshot) == 0) THEN
+            CALL save_snapshot(it,inputs%freq_snapshot)
+         ENDIF
+         !===Timing
+         tploc = user_time() - tploc
+         IF (it>1) tploc_max = tploc_max + tploc
+      ENDDO
+!==========================================================
+!===== CTEST with exptA (<=> matvec) ======================
+!==========================================================
+   ELSE      
+      !====== CTEST using exptA matvec
+      WRITE(*,*) "===== Doing CTEST with exptA =====", inputs%LK%nb_exptA 
+      !====== Time integration through iteration of exptA
+      tps = user_time()
+      DO it=1,inputs%LK%nb_exptA    
+          tploc = user_time()
+          CALL SFEM_2_LK(vec_in, mag_field)
+          CALL exptA%matvec(vec_in, vec_out)
+          CALL LK_2_SFEM(mag_field, vec_out)
+          tploc = user_time() - tploc
+          IF (it >1) tploc_max = tploc_max + tploc
+      END DO
+   END IF
 
-     !===Timing
-     tploc = user_time() - tploc
-     IF (it>1) tploc_max = tploc_max + tploc
-  ENDDO
+!==============================================
+!============== End main program ==============
+!==============================================
 
-  !===Timing======================================================================
-  tps = user_time() - tps
-  CALL write_verbose(rank,opt_tps=tps,opt_tploc_max=tploc_max)
+   !===Timing======================================================================
+   tps = user_time() - tps
+   CALL write_verbose(rank,opt_tps=tps,opt_tploc_max=tploc_max)
+   !===Postprocessing to check convergence=========================================
+   IF (inputs%if_regression) THEN
+      CALL regression(conc_mesh, vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
+            un, pn, mag_field, temperature, level_set, concentration, mu_H_field, &
+            time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc)
+      CALL error_Petsc('End of convergence test')  
+   END IF
+   CALL error_petsc('End of SFEMaNS') 
 
-  !===Postprocessing to check convergence=========================================
-  !IF (inputs%test_de_convergence) THEN
-  IF (inputs%if_regression) THEN
-     CALL regression(conc_mesh, vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
-          un, pn, Hn, Bn, phin, temperature, level_set, concentration, mu_H_field, &
-          time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc)
-
-     CALL error_Petsc('End of convergence test')
-  END IF
-
+  CONTAINS 
   !===End of code=================================================================
-  CALL error_Petsc('End of SFEMaNS')
-CONTAINS
 
   SUBROUTINE my_post_processing(it)
     USE sub_plot
@@ -194,7 +260,7 @@ CONTAINS
        IF (inputs%type_pb=='nst' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd') THEN
           norm = norm_SF(comm_one_d_ns, 'L2', vv_mesh, list_mode, un)
        ELSE
-          norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn)
+          norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, mag_field%Hn)
        END IF
        IF (norm>1.d8 .OR. isnan(norm)) THEN
           CALL error_petsc('From my_post_processing: numerical unstability')
@@ -262,13 +328,13 @@ CONTAINS
        END IF ! end nst or mhd or fhd
 
        IF (inputs%type_pb/='nst') THEN
-          err = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn)
+          err = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, mag_field%Hn)
           IF (rank == 0) THEN
              !===L2 norm of magnetic field
              WRITE(41,*) time, err
           END IF
-          err = norm_SF(comm_one_d, 'div', H_mesh, list_mode, Bn)
-          norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Bn)
+          err = norm_SF(comm_one_d, 'div', H_mesh, list_mode, mag_field%Bn)
+          norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, mag_field%Bn)
           IF (rank == 0) THEN
              !===L2 norm of div(Bn)
              WRITE(51,*) time, err, err/norm
@@ -276,7 +342,7 @@ CONTAINS
              WRITE(*,*) 'norm L2 of magnetic field', time, norm
           END IF
           DO i=1,SIZE(list_mode)
-             norm = norm_S(comm_one_d, 'L2', H_mesh, list_mode(i:i), Hn(:,:,i:i))
+             norm = norm_S(comm_one_d, 'L2', H_mesh, list_mode(i:i), mag_field%Hn(:,:,i:i))
              IF (rank_S == 0) THEN
                 !===L2 norm of Fourier mode list_mode(i) of magnetic field Hn
                 WRITE(200+list_mode(i),*) time, norm

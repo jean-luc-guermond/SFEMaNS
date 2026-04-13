@@ -181,8 +181,10 @@ CONTAINS
     REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode))   :: uext, dtt_un_p1, dt_un_p1
     REAL(KIND=8), DIMENSION(vv_mesh%np)                     :: vel_loc, vel_tot
     REAL(KIND=8) :: tps, tps_tot, tps_cumul, coeff, vloc, cfl, cfl_max, norm
-    REAL(KIND=8) :: one, zero, three
-    DATA zero, one, three/0.d0,1.d0,3.d0/
+! VB 04/03/2026
+    REAL(KIND=8) :: one, my_zero, three
+    DATA my_zero, one, three/0.d0,1.d0,3.d0/
+! VB 04/03/2026
     !===Communicators for Petsc, in space and Fourier
     PetscErrorCode                   :: ierr
     MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
@@ -766,8 +768,10 @@ CONTAINS
     REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode))   :: uext, dttt_un_p1, dtt_un_p1, dt_un_p1
     REAL(KIND=8), DIMENSION(vv_mesh%np)                     :: vel_loc, vel_tot
     REAL(KIND=8) :: tps, tps_tot, tps_cumul, coeff, vloc, cfl, cfl_max, norm
-    REAL(KIND=8) :: one, zero, three
-    DATA zero, one, three/0.d0,1.d0,3.d0/
+! VB 04/03/2026
+    REAL(KIND=8) :: one, my_zero, three
+    DATA my_zero, one, three/0.d0,1.d0,3.d0/
+! VB 04/03/2026
     !===Communicators for Petsc, in space and Fourier
     PetscErrorCode                   :: ierr
     MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
@@ -1671,7 +1675,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(vv_mesh%dom_me*vv_mesh%gauss%l_G,6,SIZE(list_mode)) :: fp, rhs_gauss_penal
     REAL(KIND=8), DIMENSION(2,vv_mesh%gauss%l_G*vv_mesh%dom_me)  :: rr_gauss
     REAL(KIND=8) :: ray
-    INTEGER :: m, l , i, k, index, TYPE
+    INTEGER :: m, l , i, k, index, TYPE_VEC
     INTEGER :: nb_procs, m_max_pad, bloc_size
 #include "petsc/finclude/petsc.h"
     PetscErrorCode                   :: ierr
@@ -1774,8 +1778,8 @@ CONTAINS
                       j_loc = vv_mesh%jj(:,m)
                       DO l = 1, vv_mesh%gauss%l_G
                          index  = index +1
-                         DO TYPE = 1, 6
-                            imposed_vel_gauss(index,TYPE) = SUM(imposed_vel(j_loc,TYPE) &
+                         DO TYPE_VEC = 1, 6
+                            imposed_vel_gauss(index,TYPE_VEC) = SUM(imposed_vel(j_loc,TYPE_VEC) &
                                  * vv_mesh%gauss%ww(:,l))
                          END DO
                       END DO
@@ -1796,8 +1800,8 @@ CONTAINS
                       j_loc = vv_mesh%jj(:,m)
                       DO l = 1, vv_mesh%gauss%l_G
                          index  = index +1
-                         DO TYPE = 1, 6
-                            imposed_vel_gauss(index,TYPE) = SUM(imposed_vel(j_loc,TYPE) &
+                         DO TYPE_VEC = 1, 6
+                            imposed_vel_gauss(index,TYPE_VEC) = SUM(imposed_vel(j_loc,TYPE_VEC) &
                                  * vv_mesh%gauss%ww(:,l))
                          END DO
                       END DO
@@ -1816,8 +1820,8 @@ CONTAINS
                       j_loc = vv_mesh%jj(:,m)
                       DO l = 1, vv_mesh%gauss%l_G
                          index  = index +1
-                         DO TYPE = 1, 6
-                            imposed_vel_gauss(index,TYPE) = SUM(imposed_vel(j_loc,TYPE) &
+                         DO TYPE_VEC = 1, 6
+                            imposed_vel_gauss(index,TYPE_VEC) = SUM(imposed_vel(j_loc,TYPE_VEC) &
                                  * vv_mesh%gauss%ww(:,l))
                          END DO
                       END DO
@@ -1835,8 +1839,8 @@ CONTAINS
                       j_loc = vv_mesh%jj(:,m)
                       DO l = 1, vv_mesh%gauss%l_G
                          index  = index +1
-                         DO TYPE = 1, 6
-                            imposed_vel_gauss(index,TYPE) = SUM(imposed_vel(j_loc,TYPE) &
+                         DO TYPE_VEC = 1, 6
+                            imposed_vel_gauss(index,TYPE_VEC) = SUM(imposed_vel(j_loc,TYPE_VEC) &
                                  * vv_mesh%gauss%ww(:,l))
                          END DO
                       END DO

@@ -17,10 +17,17 @@ CONTAINS
   !------------------------------------------------------------------------------
   !------------------------------------------------------------------------------
 
+  !SUBROUTINE maxwell_mxs_with_H(comm_one_d, H_mesh, pmag_mesh, phi_mesh, interface_H_phi, &
+  !     interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, vel, stab_in, stab_jump_h, sigma_in, &
+  !     R_fourier, index_fourier, mu_H_field, mu_phi, time, dt_in, Rem, list_mode, &
+  !     H_phi_per, LA_H, LA_pmag, LA_phi, LA_mhd, one_over_sigma_ns_in, jj_v_to_H, conc_to_H)
   SUBROUTINE maxwell_mxs_with_H(comm_one_d, H_mesh, pmag_mesh, phi_mesh, interface_H_phi, &
-       interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, vel, stab_in, stab_jump_h, sigma_in, &
+       interface_H_mu, mag_field, vel, stab_in, stab_jump_h, sigma_in, &
        R_fourier, index_fourier, mu_H_field, mu_phi, time, dt_in, Rem, list_mode, &
        H_phi_per, LA_H, LA_pmag, LA_phi, LA_mhd, one_over_sigma_ns_in, jj_v_to_H, conc_to_H)
+
+    USE def_type_field
+
     USE def_type_mesh
     USE chaine_caractere
     USE solver_petsc
@@ -45,9 +52,10 @@ CONTAINS
     TYPE(interface_type),           INTENT(IN)     :: interface_H_phi, interface_H_mu
     INTEGER,      DIMENSION(:),     INTENT(IN)     :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)  :: vel
-    REAL(KIND=8), DIMENSION(H_mesh%np,6,SIZE(list_mode)), INTENT(INOUT)  :: Hn, Hn1
-    REAL(KIND=8), DIMENSION(H_mesh%np,6,SIZE(list_mode)), INTENT(INOUT)  :: Bn, Bn1
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)  :: phin, phin1
+    TYPE(mag_field_type),                INTENT(INOUT)  :: mag_field
+    ! REAL(KIND=8), DIMENSION(H_mesh%np,6,SIZE(list_mode)), INTENT(INOUT)  :: Hn, Hn1
+   ! REAL(KIND=8), DIMENSION(H_mesh%np,6,SIZE(list_mode)), INTENT(INOUT)  :: Bn, Bn1
+   ! REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)  :: phin, phin1
     REAL(KIND=8), DIMENSION(3),     INTENT(IN)     :: stab_in
     REAL(KIND=8),                   INTENT(IN)     :: stab_jump_h
     REAL(KIND=8),                   INTENT(IN)     :: R_fourier
@@ -92,7 +100,7 @@ CONTAINS
     LOGICAL, ALLOCATABLE, DIMENSION(:)                   :: Dir_pmag
     REAL(KIND=8), DIMENSION(H_mesh%np,6)                 :: rhs_H
     REAL(KIND=8), DIMENSION(phi_mesh%np,2)               :: rhs_phi
-    REAL(KIND=8), DIMENSION(SIZE(Hn,1),6,SIZE(Hn,3))     :: NL, H_ext, B_ext
+    REAL(KIND=8), DIMENSION(SIZE(mag_field%Hn,1),6,SIZE(mag_field%Hn,3))     :: NL, H_ext, B_ext
     REAL(KIND=8), DIMENSION(3)                           :: temps_par
     INTEGER,          POINTER, DIMENSION(:)              :: H_ifrom, pmag_ifrom, phi_ifrom, H_p_phi_ifrom
     REAL(KIND=8), DIMENSION(phi_mesh%np, 2)              :: phin_p1
@@ -173,17 +181,10 @@ CONTAINS
 
   !     stab = stab_in / Rem ! MODIFICATION: stab_in = data coefficients, normalization by Rm
 
+
        !MARCH, 2010
        IF (inputs%type_pb=='mhd') THEN
-          ! FL, 31/03/11
-          !stab = stab_in*(1/MINVAL(sigma)+1.d0)
-
-          ! VB 11/06/2025
-          !stab = stab_in*(1/sigma_min+1.d0)
           stab = stab_in*(1/Rem+1.d0)
-          ! VB 11/06/2025
-          
-          ! FL, 31/03/11
 	  ! Velocity assume to be used as reference scale
 !LC 2016/02/29
           IF (inputs%if_level_set.AND.inputs%variation_sigma_fluid) THEN
@@ -192,28 +193,10 @@ CONTAINS
 !LC 2016/02/29
        ELSE
           nr_vel = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, vel)
-
           IF (nr_vel .LE. 1.d-10) THEN
-             ! FL, 31/03/11
-             !stab = stab_in*(1/MINVAL(sigma))
-             
-             !VB 11/06/2025
-             !stab = stab_in*(1/sigma_min)
              stab = stab_in*(1/Rem)
-             !VB 11/06/2025
-
-             ! FL, 31/03/11
-             !WRITE(*,*) 'case 1, stab = ',stab
           ELSE
-             ! FL, 31/03/11
-             !stab = stab_in*(1/MINVAL(sigma)+1.d0)
-
-             !VB 11/06/2025
-             !stab = stab_in*(1/sigma_min+1.d0)
              stab = stab_in*(1/Rem+1.d0)
-             !VB 11/06/2025
-             ! FL, 31/03/11
-             !WRITE(*,*) 'case 2, stab = ',stab
           ENDIF
           ! Velocity could be zero in case of Ohmic decay
        END IF
@@ -228,7 +211,7 @@ CONTAINS
        !------------SIGMA IF LEVEL SET------------------------------------------------
        ALLOCATE(sigma_nj_m(H_mesh%gauss%n_w,H_mesh%me))
        IF (inputs%if_level_set.AND.inputs%variation_sigma_fluid) THEN
-          ALLOCATE(sigma_ns_bar(SIZE(Hn,1)))
+          ALLOCATE(sigma_ns_bar(SIZE(mag_field%Hn,1)))
           sigma_ns_bar = sigma_bar_in_fourier_space(H_mesh)*Rem
 
           !===check if j=H_mesh%jj(nj,m) is in ns domain or not and define sigma in consequence
@@ -248,7 +231,7 @@ CONTAINS
           END DO
        END IF
 
-       ALLOCATE(sigma_np(SIZE(Hn,1)))
+       ALLOCATE(sigma_np(SIZE(mag_field%Hn,1)))
        sigma_np = 0.d0
        DO m = 1, H_mesh%me
           DO nj = 1, H_mesh%gauss%n_w
@@ -541,8 +524,8 @@ CONTAINS
     !-------------TRANSPORT TERM---------------------------------------------------
     tps = user_time()
     nr_vel = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, vel)
-    H_ext = 2*Hn - Hn1
-    B_ext = 2*Bn - Bn1
+    H_ext = 2*mag_field%Hn - mag_field%Hn1
+    B_ext = 2*mag_field%Bn - mag_field%Bn1
     IF (nr_vel .LE. 1.d-10) THEN
        NL = 0.d0
     ELSE IF (inputs%type_pb=="fhd" .OR. inputs%type_pb=="mhs") THEN
@@ -661,7 +644,7 @@ CONTAINS
 !!$       END DO
        !SB-CN-LC 2022/01/25
        DO k = 1, 6
-          rhs_H (:,k) = (4*Bn(:,k,i)-Bn1(:,k,i))/(2*dt)
+          rhs_H (:,k) = (4*mag_field%Bn(:,k,i)-mag_field%Bn1(:,k,i))/(2*dt)
        END DO
        rhs_phi = 0.d0
 
@@ -819,29 +802,29 @@ CONTAINS
 
        tps = user_time()
        IF (H_mesh%me /=0) THEN
-          Hn1(:,:,i) = Hn(:,:,i)
+          mag_field%Hn1(:,:,i) = mag_field%Hn(:,:,i)
 
-          Hn(:,1,i)   = Hn_p1(:,1)
-          Hn(:,4,i)   = Hn_p1(:,4)
-          Hn(:,5,i)   = Hn_p1(:,5)
+          mag_field%Hn(:,1,i)   = Hn_p1(:,1)
+          mag_field%Hn(:,4,i)   = Hn_p1(:,4)
+          mag_field%Hn(:,5,i)   = Hn_p1(:,5)
 
-          Hn(:,2,i)   = Hn_p1(:,2)
-          Hn(:,3,i)   = Hn_p1(:,3)
-          Hn(:,6,i)   = Hn_p1(:,6)
+          mag_field%Hn(:,2,i)   = Hn_p1(:,2)
+          mag_field%Hn(:,3,i)   = Hn_p1(:,3)
+          mag_field%Hn(:,6,i)   = Hn_p1(:,6)
 
           DO k = 1, 6
-             Bn1(:,k,i) = Bn(:,k,i)
-             Bn(:,k,i)  = mu_H_field*Hn(:,k,i)
+             mag_field%Bn1(:,k,i) = mag_field%Bn(:,k,i)
+             mag_field%Bn(:,k,i)  = mu_H_field*mag_field%Hn(:,k,i)
           END DO
 
        END IF
 
        IF (phi_mesh%me /= 0) THEN
-          phin1(:,:,i) = phin(:,:,i)
+          mag_field%phin1(:,:,i) = mag_field%phin(:,:,i)
 
-          phin(:,1,i) = phin_p1(:,1)
+          mag_field%phin(:,1,i) = phin_p1(:,1)
 
-          phin(:,2,i) = phin_p1(:,2)
+          mag_field%phin(:,2,i) = phin_p1(:,2)
        END IF
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
        !WRITE(*,*) ' Tps update', tps
@@ -851,8 +834,8 @@ CONTAINS
 
     !===Verbose divergence of velocity
     IF (inputs%verbose_divergence) THEN
-       norm = norm_SF(comm_one_d, 'L2',  H_mesh, list_mode, Bn)
-       talk_to_me%div_B_L2  = norm_SF(comm_one_d, 'div', H_mesh, list_mode, Bn)/norm
+       norm = norm_SF(comm_one_d, 'L2',  H_mesh, list_mode, mag_field%Bn)
+       talk_to_me%div_B_L2  = norm_SF(comm_one_d, 'div', H_mesh, list_mode, mag_field%Bn)/norm
        talk_to_me%time=time
     END IF
 

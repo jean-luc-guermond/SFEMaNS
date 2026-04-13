@@ -76,8 +76,9 @@ CONTAINS
     REAL(KIND=8), DIMENSION(cc_mesh%gauss%l_G*cc_mesh%me, 2, SIZE(list_mode)) :: ff_phi_1mphi
     REAL(KIND=8) :: int_mass_correct
     REAL(KIND=8) :: tps, tps_tot, tps_cumul
-    REAL(KIND=8) :: one, zero, three
-    DATA zero, one, three/0.d0,1.d0,3.d0/
+
+    REAL(KIND=8) :: one, my_zero, three
+    DATA my_zero, one, three/0.d0,1.d0,3.d0/
     !Communicators for Petsc, in space and Fourier------------------------------
     !#include "petsc/finclude/petsc.h"
     PetscErrorCode                   :: ierr
@@ -969,7 +970,7 @@ CONTAINS
 
   END SUBROUTINE compute_int_mass_correct
 
-  SUBROUTINE qs_00_level_set_gauss (mesh, LA, ff,  ff_gauss, mode, type, vect, level_set_ext, &
+  SUBROUTINE qs_00_level_set_gauss (mesh, LA, ff,  ff_gauss, mode, TYPE_VEC, vect, level_set_ext, &
        fcompr, ff_phi_1mphi, stab_mass)
     !=================================
     USE def_type_mesh
@@ -980,7 +981,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:),   INTENT(IN)    :: ff, ff_gauss
     REAL(KIND=8), DIMENSION(:),   INTENT(IN)    :: level_set_ext
     INTEGER     ,                 INTENT(IN)    :: mode
-    INTEGER     ,                 INTENT(IN)    :: type ! 1 = cosine, 2 = sine
+    INTEGER     ,                 INTENT(IN)    :: TYPE_VEC ! 1 = cosine, 2 = sine
     REAL(KIND=8), DIMENSION(:,:), INTENT(IN)    :: fcompr
     REAL(KIND=8), DIMENSION(:),   INTENT(IN)    :: ff_phi_1mphi
     REAL(KIND=8),                 INTENT(IN)    :: stab_mass
@@ -1023,17 +1024,17 @@ CONTAINS
 
           ! Compute compressive term on gauss points
           fcomprl=0.d0
-          IF (type==1) THEN
+          IF (TYPE_VEC==1) THEN
              fcomprl(1) = fcompr(index,1)*mesh%gauss%rj(l,m)*ray
              fcomprl(2) = -mode*fcompr(index,4)*mesh%gauss%rj(l,m)
              fcomprl(3) = fcompr(index,5)*mesh%gauss%rj(l,m)*ray
 
-          ELSE IF (type==2) THEN
+          ELSE IF (TYPE_VEC==2) THEN
              fcomprl(1) = fcompr(index,2)*mesh%gauss%rj(l,m)*ray
              fcomprl(2) = mode*fcompr(index,3)*mesh%gauss%rj(l,m)
              fcomprl(3) = fcompr(index,6)*mesh%gauss%rj(l,m)*ray
           ELSE
-             CALL error_petsc('error in type while calling qs_00_level_set_gauss')
+             CALL error_petsc('error in TYPE_VEC while calling qs_00_level_set_gauss')
           END IF
 
           DO ni = 1,  mesh%gauss%n_w

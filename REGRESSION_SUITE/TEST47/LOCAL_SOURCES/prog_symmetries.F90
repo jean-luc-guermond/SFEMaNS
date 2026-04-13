@@ -1,4 +1,4 @@
-PROGRAM mhd_prog
+PROGRAM prog_write_ns
   USE def_type_mesh
   USE initialization
   USE my_util
@@ -8,17 +8,36 @@ PROGRAM mhd_prog
   USE user_data
   USE post_processing_debug
   USE verbose
+  USE sub_plot
+  USE chaine_caractere
 #include "petsc/finclude/petsc.h"
   USE petsc
+  USE restart
+  USE def_type_field 
+  USE user_data_module
+  USE symmetric_field
+  USE tn_axi
+  
   IMPLICIT NONE
   !===Navier-Stokes fields========================================================
   TYPE(mesh_type), POINTER                        :: pp_mesh, vv_mesh
   REAL(KIND=8), POINTER, DIMENSION(:,:,:)         :: un, pn
+  REAL(KIND=8), DIMENSION(:), ALLOCATABLE         :: ek, ek_sym, ek_anti
+  REAL(KIND=8), DIMENSION(:), ALLOCATABLE         :: em, em_sym, em_anti
+  REAL(KIND=8)                                    :: norm
+  REAL(KIND=8) :: ur_th_rpi_s, ut_th_rpi_s, uz_th_rpi_s, ur_th_rpi_a, ut_th_rpi_a, uz_th_rpi_a
+  REAL(KIND=8) :: hr_th_rpi_s, ht_th_rpi_s, hz_th_rpi_s, hr_th_rpi_a, ht_th_rpi_a, hz_th_rpi_a
+  REAL(KIND=8), PARAMETER :: PI = ACOS(-1.d0), tor_over_pol = 0.73d0,  alpha = 0.5d0
+!   REAL(KIND=8), PARAMETER :: heigth_conc = 1.6d0, heigth_vel = 1.6d0, heigth_temp = 2.0d0, heigth_mag = 2.4d0
+  LOGICAL :: test_loc, test_glob=.TRUE., test_glob_comm
+  REAL(KIND=8), PARAMETER :: heigth_conc=1.2d0, heigth_vel=1.2d0, heigth_temp=1.6d0, heigth_mag=2.0d0, heigth_phi=2.4d0
+
   TYPE(dyn_real_array_three), POINTER, DIMENSION(:):: der_un
   !===Maxwell fields==============================================================
   TYPE(mesh_type), POINTER                        :: H_mesh, phi_mesh
   TYPE(interface_type), POINTER                   :: interface_H_mu, interface_H_phi
-  REAL(KIND=8), POINTER,      DIMENSION(:,:,:)    :: Hn, Bn, phin, vel
+  REAL(KIND=8), POINTER,      DIMENSION(:,:,:)    :: vel
+  TYPE(mag_field_type), POINTER                   :: mag_field
   REAL(KIND=8), POINTER,      DIMENSION(:)        :: sigma_field, mu_H_field
   !===Temperature field===========================================================
   TYPE(mesh_type), POINTER                        :: temp_mesh
@@ -41,7 +60,7 @@ PROGRAM mhd_prog
   INTEGER,      POINTER,      DIMENSION(:)        :: list_mode
   !===Time iterations=============================================================
   REAL(KIND=8)                                    :: time
-  INTEGER                                         :: it
+  INTEGER                                         :: i
   !===Timing======================================================================
   REAL(KIND=8)                                    :: tps, tploc, tploc_max=0.d0
   !===Declare PETSC===============================================================
@@ -60,100 +79,277 @@ PROGRAM mhd_prog
   !===Initialize SFEMANS (mandatory)==============================================
   CALL initial(vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, conc_mesh,&
        interface_H_phi, interface_H_mu, list_mode, &
-       un, pn, Hn, Bn, phin, vel, &
+       un, pn, mag_field, vel, &
        vol_heat_capacity_field, temperature_diffusivity_field, &
        concentration_diffusivity_field,mu_H_field, sigma_field, time, m_max_c, &
        comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc,temperature, &
        concentration, level_set, density, &
        der_un, visc_LES, visc_LES_level)
 
-  !===============================================================================
-  !                        VISUALIZATION WITHOUT COMPUTING                       !
-  !===============================================================================
-  IF (inputs%if_just_processing) THEN
-     inputs%freq_plot=1
-     CALL my_post_processing(1)
-     CALL error_petsc('End post_processing')
-  END IF
+!=== TESTING VELOCITY FIELD SYMMETRIES 
 
-  !===============================================================================
-  !                        EIGENVALUE PROBLEMS/ARPACK                            !
-  !===============================================================================
-  !IF (inputs%if_arpack) THEN
-  !   !ATTENTION: m_max_c should be equal to 1, meaning each processors is dealing with 1 Fourier mode
-  !   CALL solver_arpack_mhd(comm_one_d,H_mesh,phi_mesh,&
-  !        inputs%dt,list_mode,mu_H_field)
-  !   !===Postprocessing to check convergence
-  !   IF (inputs%test_de_convergence) THEN
-  !      CALL post_proc_test(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
-  !           un, pn, Hn, Bn, phin, temperature, level_set, mu_H_field, &
-  !           time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp)
-  !      CALL error_Petsc('End of convergence test')
-  !      !IF (rank==0) WRITE(*,*) 'End of convergence test'
-  !      !RETURN
-  !   END IF
-  !   !=== Put your postprocessing here
-  !
-  !   !===End of code for ARPACK problem
-  !   CALL error_Petsc('END OF ARPACK, EXITING PRGM')
-  !IF (rank==0) WRITE(*,*) 'END OF ARPACK, EXITING PRGM'
-  !   !RETURN
-  !END IF
-  !===Test 14 disabled so user don't need to install arpack
-  IF (inputs%if_regression) THEN
-     !CALL regression(conc_mesh, vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
-     !     un, pn, Hn, Bn, phin, temperature, level_set, concentration, mu_H_field, &
-     !     time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc)
-     it= 123
-     write(*,*) 1234567891
-     CALL PetscFinalize(ierr)
-     CALL EXIT(it)
-     CALL error_Petsc('End of convergence test')
-  END IF
+   CALL test_symmetry_u_H_temp_conc(heigth_vel, comm_one_d_ns(1), vv_mesh, un, 'u', test_loc)
+   test_glob = test_glob .AND. test_loc
+   IF (.NOT. test_loc) THEN
+      WRITE(*,*) "ctest RPI/CENTRO SYM: FAILURE in velocity field modes ", list_mode
+   ELSE
+      WRITE(*,*) "ctest RPI/CENTRO SYM: SUCCESS in velocity field modes ", list_mode
+   END IF
 
-  !===============================================================================
-  !                        TIME INTEGRATION                                      !
-  !===============================================================================
-  !===Start time loop
-  tps = user_time()
-  DO it = 1, inputs%nb_iteration
-     tploc =  user_time()
-     time = time + inputs%dt
+!=== TESTING MAGNETIC FIELD SYMMETRIES 
 
-     CALL run_SFEMaNS(time, it)
+   CALL test_symmetry_u_H_temp_conc(heigth_mag, comm_one_d(1), H_mesh, mag_field%Hn, 'h', test_loc)
+   test_glob = test_glob .AND. test_loc
+   IF (.NOT. test_loc) THEN
+      WRITE(*,*) "ctest RPI/CENTRO SYM: FAILURE in magnetic field modes ", list_mode
+   ELSE 
+      WRITE(*,*) "ctest RPI/CENTRO SYM: SUCCESS in magnetic field modes ", list_mode
+   END IF
 
-     !===My postprocessing
-     IF (.NOT.inputs%test_de_convergence) THEN
-        CALL my_post_processing(it)
-     END IF
+!=== TESTING TEMPERATURE FIELD SYMMETRIES 
 
-     !===Write restart file
-     IF (MOD(it, inputs%freq_restart) == 0) THEN
-        CALL  save_run(it,inputs%freq_restart)
-     ENDIF
+   CALL test_symmetry_u_H_temp_conc(heigth_temp, comm_one_d_temp(1), temp_mesh, temperature, 'T', test_loc)
+   test_glob = test_glob .AND. test_loc
+   IF (.NOT. test_loc) THEN
+      WRITE(*,*) "ctest RPI/CENTRO SYM: FAILURE in temperature field modes ", list_mode
+   ELSE
+      WRITE(*,*) "ctest RPI/CENTRO SYM: SUCCESS in temperature field modes ", list_mode
+   END IF
 
-     !===Timing
-     tploc = user_time() - tploc
-     IF (it>1) tploc_max = tploc_max + tploc
-  ENDDO
+!=== TESTING CONCENTRATION FIELD SYMMETRIES 
 
-  !===Timing======================================================================
-  tps = user_time() - tps
-  CALL write_verbose(rank,opt_tps=tps,opt_tploc_max=tploc_max)
+   CALL test_symmetry_u_H_temp_conc(heigth_conc, comm_one_d_conc(1), conc_mesh, concentration, 'c', test_loc)
+   test_glob = test_glob .AND. test_loc
+   IF (.NOT. test_loc) THEN
+      WRITE(*,*) "ctest RPI/CENTRO SYM: FAILURE in concentration field modes ", list_mode
+   ELSE
+      WRITE(*,*) "ctest RPI/CENTRO SYM: SUCCESS in concentration field modes ", list_mode
+   END IF
 
-  !===Postprocessing to check convergence=========================================
-  !IF (inputs%test_de_convergence) THEN
-  IF (inputs%if_regression) THEN
-     CALL regression(conc_mesh, vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
-          un, pn, Hn, Bn, phin, temperature, level_set, concentration, mu_H_field, &
-          time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc)
-     CALL error_Petsc('End of convergence test')
-  END IF
+!=== TESTING CONCENTRATION FIELD SYMMETRIES 
 
+   CALL test_symmetry_phi(heigth_phi, heigth_mag, comm_one_d(1), phi_mesh, mag_field%phin, test_loc)
+   test_glob = test_glob .AND. test_loc
+   IF (.NOT. test_loc) THEN
+      WRITE(*,*) "ctest RPI/CENTRO SYM: FAILURE in phi field modes ", list_mode
+   ELSE
+      WRITE(*,*) "ctest RPI/CENTRO SYM: SUCCESS in phi field modes ", list_mode
+   END IF
+
+!=== SUMMARY OF TESTS
+   CALL MPI_Allreduce(test_glob, test_glob_comm, 1, MPI_LOGICAL, MPI_LAND, MPI_COMM_WORLD, ierr)
+   IF (test_glob_comm) THEN
+       WRITE(*,*) "ctest RPI/CENTRO SYM: SUCCESS"
+       WRITE(*,*) "1234567891"
+   ELSE
+       WRITE(*,*) "ctest RPI/CENTRO SYM: FAILURE"
+   END IF
+
+   CALL error_petsc("END OF ctest RPI/CENTRO SYM")
+  
+  CONTAINS 
   !===End of code=================================================================
-  CALL error_Petsc('End of SFEMaNS')
-CONTAINS
 
+  SUBROUTINE test_symmetry_u_H_temp_conc(heigth, communicator, mesh, field, if_u_h_T_c, test_loc)
+       IMPLICIT NONE
+       REAL(KIND=8),                         INTENT(IN)   :: heigth
+       TYPE(mesh_type),                      INTENT(IN)   :: mesh
+       REAL(KIND=8), DIMENSION(:,:,:),       INTENT(IN)   :: field
+       CHARACTER(LEN=1),                     INTENT(IN)   :: if_u_h_T_c
+       LOGICAL,                              INTENT(OUT)  :: test_loc
+       REAL(KIND=8), DIMENSION(:), ALLOCATABLE            :: ek, ek_sym, ek_anti
+       REAL(KIND=8), DIMENSION(:), ALLOCATABLE            :: ref_rpi_sym, ref_rpi_anti, ref_centro_sym, ref_centro_anti
+       REAL(KIND=8), DIMENSION(:), ALLOCATABLE            :: err_rpi_sym, err_rpi_anti, err_centro_sym, err_centro_anti
+       INTEGER                                            :: i
+       REAL(KIND=8) :: ur_th_rpi_s, ut_th_rpi_s, uz_th_rpi_s, ur_th_rpi_a, ut_th_rpi_a, uz_th_rpi_a
+       REAL(KIND=8) :: relat_tol = 1d-6
+       MPI_Comm     :: communicator
+
+!========== ANALYTICAL SOLUTIONS
+      ALLOCATE(ref_rpi_sym(SIZE(list_mode)), ref_rpi_anti(SIZE(list_mode)), SOURCE=0.d0)
+      ALLOCATE(ref_centro_sym(SIZE(list_mode)), ref_centro_anti(SIZE(list_mode)), SOURCE=0.d0)
+
+      ur_th_rpi_s = 2*PI * heigth/2.d0 * (PI/heigth)**2 * 1/60
+      IF (SIZE(field, 2) == 6) THEN
+         ut_th_rpi_s = 2*PI * heigth/2.d0 * (4*tor_over_pol)**2 * 1/60
+         uz_th_rpi_s = 2*PI * heigth/2.d0 * 1/4
+      ELSE
+         ut_th_rpi_s = 0.d0
+         uz_th_rpi_s = 0.d0
+      END IF
+
+      ur_th_rpi_a = (alpha/2)**2 * ur_th_rpi_s
+      IF (SIZE(field, 2) == 6) THEN
+         ut_th_rpi_a = 2.d0/heigth*heigth * alpha**2 * ut_th_rpi_s
+         uz_th_rpi_a = alpha**2 * uz_th_rpi_s
+      ELSE
+         ut_th_rpi_a = 0.d0
+         uz_th_rpi_a = 0.d0
+      END IF
+
+   DO i=1, SIZE(list_mode)
+   !=== mF = 0
+      IF (list_mode(i) == 0) THEN
+         ref_rpi_sym(i) = (ur_th_rpi_s + ut_th_rpi_s + uz_th_rpi_s)/2
+         ref_rpi_anti(i) = (ur_th_rpi_a + ut_th_rpi_a + uz_th_rpi_a)/2
+
+         ref_centro_sym(i) = (ur_th_rpi_s + ut_th_rpi_a + uz_th_rpi_s)/2
+         ref_centro_anti(i) = (ur_th_rpi_a + ut_th_rpi_s + uz_th_rpi_a)/2
+   !=== mF = 1
+      ELSE IF (list_mode(i) == 1) THEN
+         ref_rpi_sym(i) = (ur_th_rpi_s/2 + ut_th_rpi_s/2 + uz_th_rpi_s/2)/2
+         ref_rpi_anti(i) = (ur_th_rpi_a/2 + ut_th_rpi_a/2 + uz_th_rpi_a/2)/2
+
+         ref_centro_sym(i) = (ur_th_rpi_a/2 + ut_th_rpi_s/2 + uz_th_rpi_a/2)/2
+         ref_centro_anti(i) = (ur_th_rpi_s/2 + ut_th_rpi_a/2 + uz_th_rpi_s/2)/2
+      END IF
+   END DO
+!========== ANALYTICAL SOLUTIONS
+
+      ALLOCATE(ek(SIZE(list_mode)), ek_sym(SIZE(list_mode)), ek_anti(SIZE(list_mode)))
+      ALLOCATE(err_rpi_sym(SIZE(list_mode)), err_rpi_anti(SIZE(list_mode)))
+      ALLOCATE(err_centro_sym(SIZE(list_mode)), err_centro_anti(SIZE(list_mode)))
+      test_loc = .TRUE.
+
+!========== TEST OF RPI SYMMETRY
+      CALL val_ener_sym_rpi(communicator, mesh, list_mode, field, ek, ek_sym, ek_anti, if_u_h_T_c)
+
+      err_rpi_sym = ABS(ek_sym - ref_rpi_sym)/ABS(ek_sym)
+      err_rpi_anti = ABS(ek_anti - ref_rpi_anti)/ABS(ek_anti)
+      DO i=1,SIZE(list_mode)
+         IF ((list_mode(i)<2)) THEN
+            IF ((MAXVAL(err_rpi_sym) > relat_tol) .OR. MAXVAL(err_rpi_anti) > relat_tol) THEN
+               WRITE(*,*) 'FAILURE RPI symmetry test for '//trim(adjustl(if_u_h_T_c))//' mF=', list_mode(i)
+               test_loc = .FALSE.
+               WRITE(*,*) if_u_h_T_c,' ==> Rpi for mF=', list_mode(i), ': ', ek(i)
+               
+               WRITE(*,*) if_u_h_T_c,' ==> Rpi Sym for mF=', list_mode(i), ': ', ek_sym(i),&
+               "ref=",ref_rpi_sym(i), 'err=', err_rpi_sym(i)
+               
+               WRITE(*,*) if_u_h_T_c,' ==> Rpi Anti-sym for mF=', list_mode(i), ': ', ek_anti(i),&
+               "ref=",ref_rpi_anti(i), 'err=', err_rpi_anti(i)
+            END IF
+         END IF
+      END DO
+
+!========== TEST OF CENTRO SYMMETRY
+      CALL val_ener_sym_centrale(communicator, mesh, list_mode, field, ek, ek_sym, ek_anti, if_u_h_T_c)
+
+      err_centro_sym = ABS(ek_sym - ref_centro_sym)/ABS(ek_sym)
+      err_centro_anti = ABS(ek_anti - ref_centro_anti)/ABS(ek_anti)
+      DO i=1,SIZE(list_mode)
+         IF ((list_mode(i)<2)) THEN
+            IF ((MAXVAL(err_centro_sym) > relat_tol) .OR. MAXVAL(err_centro_anti) > relat_tol) THEN
+               WRITE(*,*) 'FAILURE CENTRO symmetry test for '//trim(adjustl(if_u_h_T_c))//' mF=', list_mode(i)
+               test_loc = .FALSE.
+               
+               WRITE(*,*) if_u_h_T_c,' ==> centro for mF=', list_mode(i), ': ', ek(i)
+               
+               WRITE(*,*) if_u_h_T_c,' ==> centro Sym for mF=', list_mode(i), ': ', ek_sym(i),&
+               "ref=",ref_centro_sym(i), 'err=', err_centro_sym(i)
+               
+               WRITE(*,*) if_u_h_T_c,' ==> centro Anti-sym for mF=', list_mode(i), ': ', ek_anti(i),&
+               "ref=",ref_centro_anti(i), 'err=', err_centro_anti(i)
+            END IF
+         END IF
+      END DO
+  END SUBROUTINE test_symmetry_u_H_temp_conc
+
+  SUBROUTINE test_symmetry_phi(heigth_phi, heigth_mag, communicator, mesh, field, test_loc)
+       IMPLICIT NONE
+       REAL(KIND=8),                         INTENT(IN)   :: heigth_phi, heigth_mag
+       TYPE(mesh_type),                      INTENT(IN)   :: mesh
+       REAL(KIND=8), DIMENSION(:,:,:),       INTENT(IN)   :: field
+       LOGICAL,                              INTENT(OUT)  :: test_loc
+       REAL(KIND=8), DIMENSION(:), ALLOCATABLE            :: ek, ek_sym, ek_anti
+       REAL(KIND=8), DIMENSION(:), ALLOCATABLE            :: ref_rpi_sym, ref_rpi_anti, ref_centro_sym, ref_centro_anti
+       REAL(KIND=8), DIMENSION(:), ALLOCATABLE            :: err_rpi_sym, err_rpi_anti, err_centro_sym, err_centro_anti
+       INTEGER                                            :: i
+       REAL(KIND=8) :: ur_th_rpi_s, ut_th_rpi_s, uz_th_rpi_s, ur_th_rpi_a, ut_th_rpi_a, uz_th_rpi_a
+       REAL(KIND=8) :: int_z, relat_tol = 1d-6
+       MPI_Comm     :: communicator
+
+!========== ANALYTICAL SOLUTIONS
+      ALLOCATE(ref_rpi_sym(SIZE(list_mode)), ref_rpi_anti(SIZE(list_mode)), SOURCE=0.d0)
+      ALLOCATE(ref_centro_sym(SIZE(list_mode)), ref_centro_anti(SIZE(list_mode)), SOURCE=0.d0)
+
+      int_z = (heigth_phi-heigth_mag)/4.d0 - heigth_phi/(8*PI)*SIN(2*PI*heigth_mag/heigth_phi)
+      ur_th_rpi_s = 2*PI * 2*(int_z) * (PI/heigth_phi)**2 * 1/60
+
+      int_z = (heigth_phi-heigth_mag)/4.d0 + heigth_phi/(4*PI)*SIN(PI*heigth_mag/heigth_phi)
+      ur_th_rpi_a = (alpha/2)**2 * (2*PI * 2*(int_z) * (PI/heigth_phi)**2 * 1/60)
+
+      ut_th_rpi_s = 0.d0; ut_th_rpi_a = 0.d0; uz_th_rpi_s = 0.d0; uz_th_rpi_a = 0.d0
+
+   DO i=1, SIZE(list_mode)
+   !=== mF = 0
+      IF (list_mode(i) == 0) THEN
+         ref_rpi_sym(i) = (ur_th_rpi_s + ut_th_rpi_s + uz_th_rpi_s)/2
+         ref_rpi_anti(i) = (ur_th_rpi_a + ut_th_rpi_a + uz_th_rpi_a)/2
+
+         ref_centro_sym(i) = (ur_th_rpi_s + ut_th_rpi_a + uz_th_rpi_s)/2
+         ref_centro_anti(i) = (ur_th_rpi_a + ut_th_rpi_s + uz_th_rpi_a)/2
+   !=== mF = 1
+      ELSE IF (list_mode(i) == 1) THEN
+         ref_rpi_sym(i) = (ur_th_rpi_s/2 + ut_th_rpi_s/2 + uz_th_rpi_s/2)/2
+         ref_rpi_anti(i) = (ur_th_rpi_a/2 + ut_th_rpi_a/2 + uz_th_rpi_a/2)/2
+
+         ref_centro_sym(i) = (ur_th_rpi_a/2 + ut_th_rpi_s/2 + uz_th_rpi_a/2)/2
+         ref_centro_anti(i) = (ur_th_rpi_s/2 + ut_th_rpi_a/2 + uz_th_rpi_s/2)/2
+      END IF
+   END DO
+!========== ANALYTICAL SOLUTIONS
+
+      ALLOCATE(ek(SIZE(list_mode)), ek_sym(SIZE(list_mode)), ek_anti(SIZE(list_mode)))
+      ALLOCATE(err_rpi_sym(SIZE(list_mode)), err_rpi_anti(SIZE(list_mode)))
+      ALLOCATE(err_centro_sym(SIZE(list_mode)), err_centro_anti(SIZE(list_mode)))
+      test_loc = .TRUE.
+
+!========== TEST OF RPI SYMMETRY
+      CALL val_ener_sym_rpi(communicator, mesh, list_mode, field, ek, ek_sym, ek_anti, 'phi')
+
+      err_rpi_sym = ABS(ek_sym - ref_rpi_sym)/ABS(ek_sym)
+      err_rpi_anti = ABS(ek_anti - ref_rpi_anti)/ABS(ek_anti)
+      DO i=1,SIZE(list_mode)
+         IF ((list_mode(i)<2)) THEN
+            IF ((MAXVAL(err_rpi_sym) > relat_tol) .OR. MAXVAL(err_rpi_anti) > relat_tol) THEN
+               WRITE(*,*) 'FAILURE RPI symmetry test for '//trim(adjustl('phi'))//' mF=', list_mode(i)
+               test_loc = .FALSE.
+               WRITE(*,*) 'phi',' ==> Rpi for mF=', list_mode(i), ': ', ek(i)
+               
+               WRITE(*,*) 'phi',' ==> Rpi Sym for mF=', list_mode(i), ': ', ek_sym(i),&
+               "ref=",ref_rpi_sym(i), 'err=', err_rpi_sym(i)
+               
+               WRITE(*,*) 'phi',' ==> Rpi Anti-sym for mF=', list_mode(i), ': ', ek_anti(i),&
+               "ref=",ref_rpi_anti(i), 'err=', err_rpi_anti(i)
+            END IF
+         END IF
+      END DO
+
+!========== TEST OF CENTRO SYMMETRY
+      CALL val_ener_sym_centrale(communicator, mesh, list_mode, field, ek, ek_sym, ek_anti, 'phi')
+
+      err_centro_sym = ABS(ek_sym - ref_centro_sym)/ABS(ek_sym)
+      err_centro_anti = ABS(ek_anti - ref_centro_anti)/ABS(ek_anti)
+      DO i=1,SIZE(list_mode)
+         IF ((list_mode(i)<2)) THEN
+            IF ((MAXVAL(err_centro_sym) > relat_tol) .OR. MAXVAL(err_centro_anti) > relat_tol) THEN
+               WRITE(*,*) 'FAILURE CENTRO symmetry test for '//trim(adjustl('phi'))//' mF=', list_mode(i)
+               test_loc = .FALSE.
+               
+               WRITE(*,*) 'phi' ,' ==> centro for mF=', list_mode(i), ': ', ek(i)
+               
+               WRITE(*,*) 'phi',' ==> centro Sym for mF=', list_mode(i), ': ', ek_sym(i),&
+               "ref=",ref_centro_sym(i), 'err=', err_centro_sym(i)
+               
+               WRITE(*,*) 'phi',' ==> centro Anti-sym for mF=', list_mode(i), ': ', ek_anti(i),&
+               "ref=",ref_centro_anti(i), 'err=', err_centro_anti(i)
+            END IF
+         END IF
+      END DO
+  END SUBROUTINE test_symmetry_phi
+
+  
   SUBROUTINE my_post_processing(it)
     USE sub_plot
     USE chaine_caractere
@@ -176,6 +372,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(pp_mesh%np, 2, SIZE(list_mode)) :: level_1_P1
     REAL(KIND=8), DIMENSION(vv_mesh%np,2,SIZE(list_mode)) :: chi, one_chi
     INTEGER :: nb_procs, m_max_pad, bloc_size
+    LOGICAL, SAVE :: once_plot=.TRUE.
     !===VTU 2d======================================================================
     CHARACTER(LEN=3)   :: st_mode
     CHARACTER(LEN=200) :: header
@@ -197,7 +394,7 @@ CONTAINS
        IF (inputs%type_pb=='nst' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd') THEN
           norm = norm_SF(comm_one_d_ns, 'L2', vv_mesh, list_mode, un)
        ELSE
-          norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn)
+          norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, mag_field%Hn)
        END IF
        IF (norm>1.d8 .OR. isnan(norm)) THEN
           CALL error_petsc('From my_post_processing: numerical unstability')
@@ -265,13 +462,13 @@ CONTAINS
        END IF ! end nst or mhd or fhd
 
        IF (inputs%type_pb/='nst') THEN
-          err = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn)
+          err = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, mag_field%Hn)
           IF (rank == 0) THEN
              !===L2 norm of magnetic field
              WRITE(41,*) time, err
           END IF
-          err = norm_SF(comm_one_d, 'div', H_mesh, list_mode, Bn)
-          norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Bn)
+          err = norm_SF(comm_one_d, 'div', H_mesh, list_mode, mag_field%Bn)
+          norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, mag_field%Bn)
           IF (rank == 0) THEN
              !===L2 norm of div(Bn)
              WRITE(51,*) time, err, err/norm
@@ -279,7 +476,7 @@ CONTAINS
              WRITE(*,*) 'norm L2 of magnetic field', time, norm
           END IF
           DO i=1,SIZE(list_mode)
-             norm = norm_S(comm_one_d, 'L2', H_mesh, list_mode(i:i), Hn(:,:,i:i))
+             norm = norm_S(comm_one_d, 'L2', H_mesh, list_mode(i:i), mag_field%Hn(:,:,i:i))
              IF (rank_S == 0) THEN
                 !===L2 norm of Fourier mode list_mode(i) of magnetic field Hn
                 WRITE(200+list_mode(i),*) time, norm
@@ -290,7 +487,9 @@ CONTAINS
 
     IF (MOD(it,inputs%freq_plot) == 0) THEN
        !===Plot whatever you want here
-       IF (it==inputs%freq_plot) THEN
+       !IF (it==inputs%freq_plot) THEN
+       IF (once_plot) THEN
+          once_plot=.FALSE.
           what = 'new'
        ELSE
           what = 'old'
@@ -595,4 +794,4 @@ CONTAINS
     END IF
   END SUBROUTINE compute_level_set_conservation
 
-END PROGRAM mhd_prog
+END PROGRAM prog_write_ns

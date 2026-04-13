@@ -65,8 +65,8 @@ CONTAINS
     REAL(KIND=8), DIMENSION(conc_mesh%np, 2)                   :: concn_p1
     REAL(KIND=8), DIMENSION(conc_mesh%gauss%l_G*conc_mesh%me,2, SIZE(list_mode)) :: ff_conv
     REAL(KIND=8)   ::tps, tps_tot, tps_cumul
-    REAL(KIND=8) :: one, zero, three
-    DATA zero, one, three/0.d0,1.d0,3.d0/
+    REAL(KIND=8) :: one, my_zero, three
+    DATA my_zero, one, three/0.d0,1.d0,3.d0/
     REAL(KIND=8), DIMENSION(2,conc_mesh%gauss%l_G*conc_mesh%me)                :: rr_gauss
     INTEGER,      DIMENSION(conc_mesh%gauss%n_w)                               :: j_loc
     !Communicators for Petsc, in space and Fourier------------------------------
@@ -130,7 +130,7 @@ CONTAINS
           !---CONCENTRATION MATRIX
           CALL create_local_petsc_matrix(comm_one_d(1), conc_1_LA, conc_mat(i), clean=.FALSE.)
           CALL qs_diff_mass_scal_M_conc(conc_mesh, conc_1_LA, conc_diffusivity, &
-               1.5d0/dt, conc_list_robin_sides, convection_coeff_conc_lhs, zero, mode, conc_mat(i))
+               1.5d0/dt, conc_list_robin_sides, convection_coeff_conc_lhs, my_zero, mode, conc_mat(i))
           IF (conc_per%n_bord/=0) THEN
              CALL periodic_matrix_petsc(conc_per%n_bord, conc_per%list, conc_per%perlist, conc_mat(i), conc_1_LA)
           END IF

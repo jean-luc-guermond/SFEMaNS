@@ -1,6 +1,7 @@
 SUBMODULE (boundary_generic_module) boundary_generic
   USE my_util
   USE def_type_mesh
+  USE def_type_field
   USE input_data
   USE bessel
   USE user_data
@@ -117,9 +118,9 @@ CONTAINS
   END SUBROUTINE init_level_set
 
   !===Source in momemtum equation. Always called.
-  MODULE FUNCTION source_in_NS_momentum(TYPE, rr, mode, i, time, Re, ty, density, tempn, concn) RESULT(vv)
+  MODULE FUNCTION source_in_NS_momentum(TYPE_VEC, rr, mode, i, time, Re, ty, density, tempn, concn) RESULT(vv)
     IMPLICIT NONE
-    INTEGER     ,                             INTENT(IN) :: TYPE
+    INTEGER     ,                             INTENT(IN) :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:,:),             INTENT(IN) :: rr
     INTEGER     ,                             INTENT(IN) :: mode, i
     REAL(KIND=8),                             INTENT(IN) :: time
@@ -133,15 +134,15 @@ CONTAINS
     vv = 0.d0
     RETURN
     !===Dummy variables to avoid warning
-    nd=TYPE; nd=SIZE(rr,1); nd=mode; nd=i; rd=time; rd=Re; cd2=ty
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=mode; nd=i; rd=time; rd=Re; cd2=ty
     nd=SIZE(density,1); nd=SIZE(tempn,1); nd=SIZE(concn,1)
     !===Dummy variables to avoid warning
   END FUNCTION source_in_NS_momentum
 
   !===Extra source in temperature equation. Always called.
-  MODULE FUNCTION source_in_temperature(TYPE, rr, m, t)RESULT(vv)
+  MODULE FUNCTION source_in_temperature(TYPE_VEC, rr, m, t)RESULT(vv)
     IMPLICIT NONE
-    INTEGER     ,                        INTENT(IN)   :: TYPE
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: t
@@ -151,13 +152,13 @@ CONTAINS
     CALL error_petsc('source_in_temperature: should not be called for this test')
     RETURN
     !===Dummy variables to avoid warning
-    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=t
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION source_in_temperature
 
-  MODULE FUNCTION source_in_level_set(interface_nb,TYPE, rr, m, t)RESULT(vv)
+  MODULE FUNCTION source_in_level_set(interface_nb,TYPE_VEC, rr, m, t)RESULT(vv)
     IMPLICIT NONE
-    INTEGER     ,                        INTENT(IN)   :: TYPE
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m, interface_nb
     REAL(KIND=8),                        INTENT(IN)   :: t
@@ -167,15 +168,15 @@ CONTAINS
     CALL error_petsc('source_in_level_set: should not be called for this test')
     RETURN
     !===Dummy variables to avoid warning
-    nd=TYPE; nd=SIZE(rr,1); nd=m; nd=interface_nb; rd=t
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; nd=interface_nb; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION source_in_level_set
 
   !===Velocity for boundary conditions in Navier-Stokes.
   !===Can be used also to initialize velocity in: init_velocity_pressure_temperature
-  MODULE FUNCTION vv_exact(TYPE,rr,m,t) RESULT(vv)
+  MODULE FUNCTION vv_exact(TYPE_VEC,rr,m,t) RESULT(vv)
     IMPLICIT NONE
-    INTEGER     ,                        INTENT(IN)   :: TYPE
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER,                             INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: t
@@ -184,7 +185,7 @@ CONTAINS
     vv = 0.d0
     RETURN
     !===Dummy variables to avoid warning
-    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=t
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION vv_exact
 
@@ -208,9 +209,9 @@ CONTAINS
   !===Use this routine for outflow BCs only.
   !===CAUTION: Do not enfore BCs on pressure where normal component
   !            of velocity is prescribed.
-  MODULE FUNCTION pp_exact(TYPE,rr,m,t) RESULT (vv)
+  MODULE FUNCTION pp_exact(TYPE_VEC,rr,m,t) RESULT (vv)
     IMPLICIT NONE
-    INTEGER     ,                        INTENT(IN)   :: TYPE
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: t
@@ -219,14 +220,14 @@ CONTAINS
     vv = 0.d0
     RETURN
     !===Dummy variables to avoid warning
-    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=t
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION pp_exact
 
   !===Temperature for boundary conditions in temperature equation.
-  MODULE FUNCTION temperature_exact(TYPE,rr,m,t) RESULT (vv)
+  MODULE FUNCTION temperature_exact(TYPE_VEC,rr,m,t) RESULT (vv)
     IMPLICIT NONE
-    INTEGER     ,                        INTENT(IN)   :: TYPE
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: t
@@ -236,14 +237,14 @@ CONTAINS
     CALL error_petsc('temperature_exact: should not be called for this test')
     RETURN
     !===Dummy variables to avoid warning
-    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=t
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION temperature_exact
 
   !===Concentration for boundary conditions in concentration equation.
-  MODULE FUNCTION concentration_exact(TYPE,rr,m,t) RESULT (vv)
+  MODULE FUNCTION concentration_exact(TYPE_VEC,rr,m,t) RESULT (vv)
     IMPLICIT NONE
-    INTEGER     ,                        INTENT(IN)   :: TYPE
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: t
@@ -252,13 +253,13 @@ CONTAINS
     vv = 0.d0
     RETURN
      !===Dummy variables to avoid warning
-    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=t
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=t
     !===Dummy variables to avoid warning
  END FUNCTION concentration_exact
 
-  MODULE FUNCTION level_set_exact(interface_nb,TYPE,rr,m,t)  RESULT (vv)
+  MODULE FUNCTION level_set_exact(interface_nb,TYPE_VEC,rr,m,t)  RESULT (vv)
     IMPLICIT NONE
-    INTEGER     ,                        INTENT(IN)   :: TYPE
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m, interface_nb
     REAL(KIND=8),                        INTENT(IN)   :: t
@@ -268,7 +269,7 @@ CONTAINS
     CALL error_petsc('level_set_exact: should not be called for this test')
     RETURN
     !===Dummy variables to avoid warning
-    nd=TYPE; nd=SIZE(rr,1); nd=m; nd=interface_nb; rd=t
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; nd=interface_nb; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION level_set_exact
 
@@ -296,10 +297,10 @@ CONTAINS
   !===Used only if Maxwell domain for H is larger than
   !===domain for Navier-Stokes velocity, or if there is
   !===no Navier-Stokes domain (i.e. mxw or mxx mode)
-  MODULE FUNCTION extension_velocity(TYPE, H_mesh, mode, t, n_start) RESULT(vv)
+  MODULE FUNCTION extension_velocity(TYPE_VEC, H_mesh, mode, t, n_start) RESULT(vv)
     IMPLICIT NONE
     TYPE(mesh_type),                     INTENT(IN)   :: H_mesh
-    INTEGER     ,                        INTENT(IN)   :: TYPE, n_start
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC, n_start
     INTEGER,                             INTENT(IN)   :: mode
     REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(H_Mesh%np)                :: vv
@@ -307,14 +308,14 @@ CONTAINS
     vv = 0.d0
     RETURN
     !===Dummy variables to avoid warning
-    nd=H_mesh%np; nd=TYPE; nd=n_start; nd=mode; rd=t
+    nd=H_mesh%np; nd=TYPE_VEC; nd=n_start; nd=mode; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION extension_velocity
 
-  MODULE FUNCTION extension_temperature(TYPE, H_mesh, mode, t, n_start) RESULT(vv)
+  MODULE FUNCTION extension_temperature(TYPE_VEC, H_mesh, mode, t, n_start) RESULT(vv)
     IMPLICIT NONE
     TYPE(mesh_type),                     INTENT(IN)   :: H_mesh
-    INTEGER     ,                        INTENT(IN)   :: TYPE, n_start
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC, n_start
     INTEGER,                             INTENT(IN)   :: mode
     REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(H_Mesh%np)                :: vv
@@ -322,14 +323,14 @@ CONTAINS
     vv = 0.d0
     RETURN
     !===Dummy variables to avoid warning
-    nd=H_mesh%np; nd=TYPE; nd=n_start; nd=mode; rd=t
+    nd=H_mesh%np; nd=TYPE_VEC; nd=n_start; nd=mode; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION extension_temperature
 
-  MODULE FUNCTION extension_concentration(TYPE, vv_mesh, mode, t, n_start) RESULT(vv)
+  MODULE FUNCTION extension_concentration(TYPE_VEC, vv_mesh, mode, t, n_start) RESULT(vv)
     IMPLICIT NONE
     TYPE(mesh_type),                     INTENT(IN)   :: vv_mesh
-    INTEGER     ,                        INTENT(IN)   :: TYPE, n_start
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC, n_start
     INTEGER,                             INTENT(IN)   :: mode
     REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(vv_mesh%np)                :: vv
@@ -337,7 +338,7 @@ CONTAINS
     vv = 0.d0
     RETURN
     !===Dummy variables to avoid warning
-    nd=vv_mesh%np; nd=TYPE; nd=n_start; nd=mode; rd=t
+    nd=vv_mesh%np; nd=TYPE_VEC; nd=n_start; nd=mode; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION extension_concentration
 
@@ -378,10 +379,10 @@ CONTAINS
   END FUNCTION H_B_quasi_static
 
 
-  MODULE FUNCTION Hexact(H_mesh, TYPE, rr, m, mu_H_field, t) RESULT(vv)
+  MODULE FUNCTION Hexact(H_mesh, TYPE_VEC, rr, m, mu_H_field, t) RESULT(vv)
     IMPLICIT NONE
     TYPE(mesh_type),                     INTENT(IN)   :: H_mesh
-    INTEGER     ,                        INTENT(IN)   :: TYPE
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: t
@@ -397,31 +398,31 @@ CONTAINS
     k = k_adim/rmax
     CALL bessel_J(4,k*rr(1,:),J)
 
-    IF (m==2 .AND. TYPE==1) THEN
+    IF (m==2 .AND. TYPE_VEC==1) THEN
        DO n = 1, SIZE(rr,2)
           vv(n) =  0.5d0*(A_plus*J(m+2,n)+A_minus*J(m,n))*EXP(k*rr(2,n))
        ENDDO
     END IF
-    IF (m==2 .AND. TYPE==4) THEN
+    IF (m==2 .AND. TYPE_VEC==4) THEN
        DO n = 1, SIZE(rr,2)
           vv(n) =  0.5d0*(A_plus*J(m+2,n)-A_minus*J(m,n))*EXP(k*rr(2,n))
        ENDDO
     END IF
-    IF (m==2 .AND. TYPE==5) THEN
+    IF (m==2 .AND. TYPE_VEC==5) THEN
        DO n = 1, SIZE(rr,2)
           vv(n) =  0.5d0*(A_minus-A_plus)*J(m+1,n)*EXP(k*rr(2,n))
        ENDDO
     END IF
     !===Dummy variables to avoid warning
-    nd=H_mesh%np; nd=TYPE; nd=SIZE(rr,1); nd=m; rd=t; nd=SIZE(mu_H_field)
+    nd=H_mesh%np; nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=t; nd=SIZE(mu_H_field)
     !===Dummy variables to avoid warning
     RETURN
   END FUNCTION Hexact
 
   !===Scalar potential for boundary conditions in the Maxwell equations.
-  MODULE FUNCTION Phiexact(TYPE, rr, m, mu_phi,t) RESULT(vv)
+  MODULE FUNCTION Phiexact(TYPE_VEC, rr, m, mu_phi,t) RESULT(vv)
     IMPLICIT NONE
-    INTEGER     ,                        INTENT(IN)   :: TYPE
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: mu_phi, t
@@ -430,14 +431,14 @@ CONTAINS
     vv = 0.d0
     RETURN
     !===Dummy variables to avoid warning
-    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=mu_phi; rd=t
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=mu_phi; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION Phiexact
 
   !===Current in Ohm's law. Curl(H) = sigma(E + uxB) + current
-  MODULE FUNCTION Jexact_gauss(TYPE, rr, m, mu_phi, sigma, mu_H, t, mesh_id, opt_B_ext) RESULT(vv)
+  MODULE FUNCTION Jexact_gauss(TYPE_VEC, rr, m, mu_phi, sigma, mu_H, t, mesh_id, opt_B_ext) RESULT(vv)
     IMPLICIT NONE
-    INTEGER     ,                        INTENT(IN)   :: TYPE
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:),          INTENT(IN)   :: rr
     INTEGER     ,                        INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: mu_phi, sigma, mu_H, t
@@ -448,15 +449,15 @@ CONTAINS
     vv = 0.d0
     RETURN
     !===Dummy variables to avoid warning
-    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=mu_phi; rd=sigma; rd=mu_H; rd=t; nd=mesh_id
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=mu_phi; rd=sigma; rd=mu_H; rd=t; nd=mesh_id
     IF (PRESENT(opt_B_ext)) nd=SIZE(opt_B_ext)
     !===Dummy variables to avoid warning
   END FUNCTION Jexact_gauss
 
   !===Electric field for Neumann BC (cf. doc)
-  MODULE FUNCTION Eexact_gauss(TYPE, rr, m, mu_phi, sigma, mu_H, t) RESULT(vv)
+  MODULE FUNCTION Eexact_gauss(TYPE_VEC, rr, m, mu_phi, sigma, mu_H, t) RESULT(vv)
     IMPLICIT NONE
-    INTEGER,                             INTENT(IN)   :: TYPE
+    INTEGER,                             INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:),          INTENT(IN)   :: rr
     INTEGER,                             INTENT(IN)   :: m
     REAL(KIND=8),                        INTENT(IN)   :: mu_phi, sigma, mu_H, t
@@ -465,13 +466,13 @@ CONTAINS
     vv = 0.d0
     RETURN
     !===Dummy variables to avoid warning
-    nd=TYPE; nd=SIZE(rr,1); nd=m; rd=mu_phi; rd=sigma; rd=mu_H; rd=t
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=mu_phi; rd=sigma; rd=mu_H; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION Eexact_gauss
 
   !===Initialization of magnetic field and scalar potential (if present)
   MODULE SUBROUTINE init_maxwell(H_mesh, phi_mesh, time, dt, mu_H_field, mu_phi, &
-       list_mode, Hn1, Hn, phin1, phin)
+       list_mode, mag_field)
     IMPLICIT NONE
     TYPE(mesh_type)                            :: H_mesh, phi_mesh
     REAL(KIND=8),                   INTENT(OUT):: time
@@ -479,17 +480,16 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:),     INTENT(IN) :: mu_H_field
     REAL(KIND=8),                   INTENT(IN) :: mu_phi
     INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: Hn, Hn1
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: phin, phin1
+    TYPE(mag_field_type),           INTENT(OUT):: mag_field
     INTEGER                                    :: i, k
-
+    CALL mag_field%allocate_induction_fields
     time = -dt
     DO k=1,6
        DO i=1, SIZE(list_mode)
-          Hn1(:,k,i) = Hexact(H_mesh,k, H_mesh%rr, list_mode(i), mu_H_field, time)
+          mag_field%Hn1(:,k,i) = Hexact(H_mesh,k, H_mesh%rr, list_mode(i), mu_H_field, time)
           IF (inputs%nb_dom_phi>0) THEN
              IF (k<3) THEN
-                phin1(:,k,i) = Phiexact(k, phi_mesh%rr, list_mode(i) , mu_phi, time)
+                mag_field%phin1(:,k,i) = Phiexact(k, phi_mesh%rr, list_mode(i) , mu_phi, time)
              ENDIF
           ENDIF
        ENDDO
@@ -498,14 +498,15 @@ CONTAINS
     time = time + dt
     DO k=1,6
        DO i=1, SIZE(list_mode)
-          Hn(:,k,i) = Hexact(H_mesh,k, H_mesh%rr, list_mode(i), mu_H_field, time)
+          mag_field%Hn(:,k,i) = Hexact(H_mesh,k, H_mesh%rr, list_mode(i), mu_H_field, time)
           IF (inputs%nb_dom_phi>0) THEN
              IF (k<3) THEN
-                phin(:,k,i) = Phiexact(k, phi_mesh%rr, list_mode(i), mu_phi, time)
+                mag_field%phin(:,k,i) = Phiexact(k, phi_mesh%rr, list_mode(i), mu_phi, time)
              ENDIF
           ENDIF
        ENDDO
     ENDDO
+    CALL mag_field%set_time(time)
   END SUBROUTINE init_maxwell
 
   !===Analytical permeability (if needed)

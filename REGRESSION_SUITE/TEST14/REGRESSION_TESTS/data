@@ -17,30 +17,19 @@
 ===Restart on magnetic field (true/false)
 .f.
 ===Time step and number of time iterations
-1.d-2, 1
+1.d-2, 1000
 ===Number of refinements
 0
-
-============================================
-              ARPACK
-============================================
-===Do we use Arpack?
+===Compute spectrum with LightKrylov? (true/false)
 .t.
-===Number of eigenvalues to compute
-5
-===Maximum number of Arpack iterations
-3000
-===Tolerance for Arpack
-1.d-3
-===Which eigenvalues ('LM', 'SM', 'SR', 'LR' 'LI', 'SI')
-'LR'
-
-============================================
-              Visualization
-============================================
-===Create 2D vtu files for Arpack? (true/false)
+===How many LK eigenvalues?
+3
+===How many simultaneous vectors for Krylov-Schur?
+50
+===Absolute tolerance for LK eigenvalues?
+1.d-8
+===Compute vtu 3D of LK eigenvectors?
 .t.
-
 ============================================
               H-MAXWELL
 ============================================
@@ -87,6 +76,17 @@ MUMPS
 ===Verbose timing? (true/false)
 .f.
 
+
+============================================
+              Eigenvalues with LightKrylov (plus residual)
+============================================
+(4.67917694944608529E-003,5.19064023003176156E-006)    1.9503048650592104E-011
+(4.67917694944608529E-003,-5.19064023003176156E-006)   1.3418656086443394E-009
+(-4.99454573533623658E-002,0.0000000000000000)         1.3418656086443394E-009
+
+============================================
+              Old Values using Arpack
+============================================
 ============================================
 Quick test with VKS_MND_form_10.FEM, dt=1.d-2, tol=1.d-3, 5 eigenvalues
 ===Reference results

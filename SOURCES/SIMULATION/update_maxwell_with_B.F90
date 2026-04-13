@@ -17,10 +17,17 @@ CONTAINS
   !------------------------------------------------------------------------------
   !------------------------------------------------------------------------------
 
+  !SUBROUTINE maxwell_decouple_with_B(comm_one_d, H_mesh, pmag_mesh, phi_mesh, interface_H_phi, &
+  !     interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, vel, stab_in, sigma_in, &
+  !     R_fourier, index_fourier, mu_H_field, mu_phi, time, dt_in, Rem, list_mode, &
+  !     H_phi_per, LA_H, LA_pmag, LA_phi, LA_mhd, one_over_sigma_ns_in, jj_v_to_H)
   SUBROUTINE maxwell_decouple_with_B(comm_one_d, H_mesh, pmag_mesh, phi_mesh, interface_H_phi, &
-       interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, vel, stab_in, sigma_in, &
+       interface_H_mu, mag_field, vel, stab_in, sigma_in, &
        R_fourier, index_fourier, mu_H_field, mu_phi, time, dt_in, Rem, list_mode, &
        H_phi_per, LA_H, LA_pmag, LA_phi, LA_mhd, one_over_sigma_ns_in, jj_v_to_H)
+
+    USE def_type_field
+
     USE def_type_mesh
     USE chaine_caractere
     USE solver_petsc
@@ -45,9 +52,10 @@ CONTAINS
     TYPE(interface_type),           INTENT(IN)     :: interface_H_phi, interface_H_mu
     INTEGER,      DIMENSION(:),     INTENT(IN)     :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)  :: vel
-    REAL(KIND=8), DIMENSION(H_mesh%np,6,SIZE(list_mode)), INTENT(INOUT)  :: Hn, Hn1
-    REAL(KIND=8), DIMENSION(H_mesh%np,6,SIZE(list_mode)), INTENT(INOUT)  :: Bn, Bn1
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)  :: phin, phin1
+    TYPE(mag_field_type),                INTENT(INOUT)  :: mag_field
+    ! REAL(KIND=8), DIMENSION(H_mesh%np,6,SIZE(list_mode)), INTENT(INOUT)  :: Hn, Hn1
+   ! REAL(KIND=8), DIMENSION(H_mesh%np,6,SIZE(list_mode)), INTENT(INOUT)  :: Bn, Bn1
+   ! REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)  :: phin, phin1
     REAL(KIND=8), DIMENSION(3),     INTENT(IN)     :: stab_in
     REAL(KIND=8),                   INTENT(IN)     :: R_fourier
     INTEGER,                        INTENT(IN)     :: index_fourier
@@ -88,16 +96,16 @@ CONTAINS
     REAL(KIND=8), ALLOCATABLE , DIMENSION(:,:),    SAVE  :: sigma_nj_m
     REAL(KIND=8), DIMENSION(H_mesh%gauss%l_G*H_mesh%me,6,SIZE(list_mode))  :: sigma_curl_gauss
     REAL(KIND=8), DIMENSION(H_mesh%gauss%l_G*H_mesh%me,6,SIZE(list_mode))  :: J_over_sigma_gauss
-    REAL(KIND=8), DIMENSION(SIZE(Hn,1),6,SIZE(Hn,3))                       :: H_ns
-    REAL(KIND=8), DIMENSION(SIZE(Hn,1),2,SIZE(Hn,3))                       :: one_over_sigma_tot
+    REAL(KIND=8), DIMENSION(SIZE(mag_field%Hn,1),6,SIZE(mag_field%Hn,3))                       :: H_ns
+    REAL(KIND=8), DIMENSION(SIZE(mag_field%Hn,1),2,SIZE(mag_field%Hn,3))                       :: one_over_sigma_tot
     LOGICAL, ALLOCATABLE, DIMENSION(:)                   :: Dir_pmag
     REAL(KIND=8), DIMENSION(H_mesh%np,6)                 :: rhs_H
     REAL(KIND=8), DIMENSION(phi_mesh%np,2)               :: rhs_phi
     !FAKE FAKE FAKE
     !DCQ H_pert = (- 1/mu)B*
-    REAL(KIND=8), DIMENSION(SIZE(Hn,1),6,SIZE(Hn,3))     :: H_pert
+    REAL(KIND=8), DIMENSION(SIZE(mag_field%Hn,1),6,SIZE(mag_field%Hn,3))     :: H_pert
     !FAKE FAKE FAKE
-    REAL(KIND=8), DIMENSION(SIZE(Hn,1),6,SIZE(Hn,3))     :: NL, B_ext
+    REAL(KIND=8), DIMENSION(SIZE(mag_field%Hn,1),6,SIZE(mag_field%Hn,3))     :: NL, B_ext
     REAL(KIND=8), DIMENSION(3)                           :: temps_par
     INTEGER,          POINTER, DIMENSION(:)              :: H_ifrom, pmag_ifrom, phi_ifrom, H_p_phi_ifrom
     REAL(KIND=8), DIMENSION(phi_mesh%np, 2)              :: phin_p1
@@ -179,19 +187,10 @@ CONTAINS
        !------------------------------------------------------------------------------
 
        !-------------RESCALING DE STAB------------------------------------------------
-       !MARCH, 2010
+        !MARCH, 2010
        !JLG+CN+LC Dec 14 2016, we redo the normalization
-       !stab = stab_in
-       !LC 2017/01/27
-       !stab=stab_in/Rem
-       !End LC 2017/01/27
        IF (inputs%type_pb=='mhd') THEN
-       !   ! FL, 31/03/11
-       !   stab = stab_in*(1/sigma_min+1.d0)
-       !   ! FL, 31/03/11
-           ! VB 11/06/2025
            stab = stab_in*(1/Rem+1.d0)
-           ! VB 11/06/2025
        !   ! Velocity assume to be used as reference scale
           !LC 2016/02/29
           IF (inputs%if_level_set.AND.inputs%variation_sigma_fluid) THEN
@@ -202,25 +201,9 @@ CONTAINS
           nr_vel = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, vel)
        
                  IF (nr_vel .LE. 1.d-10) THEN
-                    ! FL, 31/03/11
-                    !stab = stab_in*(1/MINVAL(sigma))
-                    
-                    ! VB 11/06/2025
-                    !stab = stab_in*(1/sigma_min)
                     stab = stab_in*(1/Rem)
-                    ! VB 11/06/2025
-
-                    ! FL, 31/03/11
-                    !WRITE(*,*) 'case 1, stab = ',stab
                  ELSE
-                    ! FL, 31/03/11
-                    !stab = stab_in*(1/MINVAL(sigma)+1.d0)
-                    ! VB 11/06/2025
-                    !stab = stab_in*(1/sigma_min+1.d0)
                     stab = stab_in*(1/Rem+1.d0)
-                    ! VB 11/06/2025
-                    ! FL, 31/03/11
-                    !WRITE(*,*) 'case 2, stab = ',stab
                  ENDIF
                  ! Velocity could be zero in case of Ohmic decay
        END IF
@@ -235,7 +218,7 @@ CONTAINS
        !------------SIGMA IF LEVEL SET------------------------------------------------
        ALLOCATE(sigma_nj_m(H_mesh%gauss%n_w,H_mesh%me))
        IF (inputs%if_level_set.AND.inputs%variation_sigma_fluid) THEN
-          ALLOCATE(sigma_ns_bar(SIZE(Hn,1)))
+          ALLOCATE(sigma_ns_bar(SIZE(mag_field%Hn,1)))
           sigma_ns_bar = sigma_bar_in_fourier_space(H_mesh)*Rem
 
           !===check if j=H_mesh%jj(nj,m) is in ns domain or not and define sigma in consequence
@@ -254,7 +237,7 @@ CONTAINS
              sigma_nj_m(:,m) = sigma(m)
           END DO
        END IF
-       ALLOCATE(sigma_np(SIZE(Hn,1)))
+       ALLOCATE(sigma_np(SIZE(mag_field%Hn,1)))
        sigma_np = 0.d0
        DO m = 1, H_mesh%me
           DO nj = 1, H_mesh%gauss%n_w
@@ -532,14 +515,14 @@ CONTAINS
              m_max_pad = 3*SIZE(list_mode)*nb_procs/2
              bloc_size = SIZE(B_ext,1)/nb_procs+1
              CALL FFT_PAR_VAR_ETA_PROD_T_DCL(comm_one_d(2), mu_in_real_space, &
-                  H_mesh, Hn, Bn, nb_procs, bloc_size, m_max_pad, time,temps_par)
+                  H_mesh, mag_field%Hn, mag_field%Bn, nb_procs, bloc_size, m_max_pad, time,temps_par)
              CALL FFT_PAR_VAR_ETA_PROD_T_DCL(comm_one_d(2), mu_in_real_space, &
-                  H_mesh, Hn1, Bn1, nb_procs, bloc_size, m_max_pad, time,temps_par)
+                  H_mesh, mag_field%Hn1, mag_field%Bn1, nb_procs, bloc_size, m_max_pad, time,temps_par)
           ELSE
              DO i = 1, m_max_c
                 DO k = 1, 6
-                   Bn(:,k,i)  =  mu_H_field*Hn(:,k,i)
-                   Bn1(:,k,i) =  mu_H_field*Hn1(:,k,i)
+                   mag_field%Bn(:,k,i)  =  mu_H_field*mag_field%Hn(:,k,i)
+                   mag_field%Bn1(:,k,i) =  mu_H_field*mag_field%Hn1(:,k,i)
                 END DO
              END DO
           END IF
@@ -557,7 +540,7 @@ CONTAINS
           B_ext(:,:,i) = H_B_quasi_static('B', H_mesh%rr, mode)
        END DO
     ELSE !===Real nonlinear MHD
-       B_ext = 2*Bn - Bn1
+       B_ext = 2*mag_field%Bn - mag_field%Bn1
     END IF
 
     IF (nr_vel .LE. 1.d-10) THEN
@@ -582,7 +565,7 @@ CONTAINS
              j = H_mesh%jj(nj,m)
              !Check if node is in Navier-Stokes domain(s)
              IF (jj_v_to_H(j) /= -1) THEN
-                H_ns(j,:,:)      = 2*Hn(j,:,:)- Hn1(j,:,:)
+                H_ns(j,:,:)      = 2*mag_field%Hn(j,:,:)- mag_field%Hn1(j,:,:)
                 one_over_sigma_tot(j,:,:) = one_over_sigma_ns_in(jj_v_to_H(j),:,:)/Rem
              ELSE
                 DO i = 1, SIZE(list_mode)
@@ -668,10 +651,10 @@ CONTAINS
        !-------------SOURCES TERMS----------------------------------------------------
        tps = user_time()
        DO k = 1, 6
-          rhs_H (:,k) = (4*Bn(:,k,i)-Bn1(:,k,i))/(2*dt)
+          rhs_H (:,k) = (4*mag_field%Bn(:,k,i)-mag_field%Bn1(:,k,i))/(2*dt)
        END DO
        DO k = 1, 2
-          rhs_phi (:,k) = mu_phi*(4*phin(:,k,i)-phin1(:,k,i))/(2*dt)
+          rhs_phi (:,k) = mu_phi*(4*mag_field%phin(:,k,i)-mag_field%phin1(:,k,i))/(2*dt)
        END DO
        !-------------Integration by parts of the scalar potential------------------
        CALL courant_int_by_parts(H_mesh,phi_mesh,interface_H_phi,sigma,mu_phi,mu_H_field,time,mode, &
@@ -814,7 +797,7 @@ CONTAINS
 
        tps = user_time()
        IF (H_mesh%me /=0) THEN
-          Hn1(:,:,i) = Hn(:,:,i)
+          mag_field%Hn1(:,:,i) = mag_field%Hn(:,:,i)
 
 !!$          Hn(:,1,i)   = Hn_p1(:,1)
 !!$          Hn(:,4,i)   = Hn_p1(:,4)
@@ -824,24 +807,24 @@ CONTAINS
 !!$          Hn(:,3,i)   = Hn_p1(:,3)
 !!$          Hn(:,6,i)   = Hn_p1(:,6)
 
-          Bn1(:,:,i) = Bn(:,:,i)
+          mag_field%Bn1(:,:,i) = mag_field%Bn(:,:,i)
 
-          Bn(:,1,i)   = Hn_p1(:,1)
-          Bn(:,4,i)   = Hn_p1(:,4)
-          Bn(:,5,i)   = Hn_p1(:,5)
+          mag_field%Bn(:,1,i)   = Hn_p1(:,1)
+          mag_field%Bn(:,4,i)   = Hn_p1(:,4)
+          mag_field%Bn(:,5,i)   = Hn_p1(:,5)
 
-          Bn(:,2,i)   = Hn_p1(:,2)
-          Bn(:,3,i)   = Hn_p1(:,3)
-          Bn(:,6,i)   = Hn_p1(:,6)
+          mag_field%Bn(:,2,i)   = Hn_p1(:,2)
+          mag_field%Bn(:,3,i)   = Hn_p1(:,3)
+          mag_field%Bn(:,6,i)   = Hn_p1(:,6)
 
        END IF
 
        IF (phi_mesh%me /= 0) THEN
-          phin1(:,:,i) = phin(:,:,i)
+          mag_field%phin1(:,:,i) = mag_field%phin(:,:,i)
 
-          phin(:,1,i) = phin_p1(:,1)
+          mag_field%phin(:,1,i) = phin_p1(:,1)
 
-          phin(:,2,i) = phin_p1(:,2)
+          mag_field%phin(:,2,i) = phin_p1(:,2)
        END IF
        tps = user_time() - tps; tps_cumul=tps_cumul+tps
        !WRITE(*,*) ' Tps update', tps
@@ -852,13 +835,13 @@ CONTAINS
     IF (H_mesh%me /=0) THEN
        IF (inputs%if_permeability_variable_in_theta) THEN
           m_max_pad = 3*SIZE(list_mode)*nb_procs/2
-          bloc_size = SIZE(Bn,1)/nb_procs+1
+          bloc_size = SIZE(mag_field%Bn,1)/nb_procs+1
           CALL FFT_PAR_VAR_ETA_PROD_T_DCL(comm_one_d(2), one_over_mu, &
-               H_mesh, Bn, Hn, nb_procs, bloc_size, m_max_pad, time,temps_par)
+               H_mesh, mag_field%Bn, mag_field%Hn, nb_procs, bloc_size, m_max_pad, time,temps_par)
        ELSE
           DO i = 1, m_max_c
              DO k = 1, 6
-                Hn(:,k,i)  =  Bn(:,k,i)/mu_H_field
+                mag_field%Hn(:,k,i)  =  mag_field%Bn(:,k,i)/mu_H_field
              END DO
           END DO
        END IF
@@ -866,8 +849,8 @@ CONTAINS
 
     !===Verbose divergence of velocity
     IF (inputs%verbose_divergence) THEN
-       norm = norm_SF(comm_one_d, 'L2',  H_mesh, list_mode, Bn)
-       talk_to_me%div_B_L2  = norm_SF(comm_one_d, 'div', H_mesh, list_mode, Bn)/norm
+       norm = norm_SF(comm_one_d, 'L2',  H_mesh, list_mode, mag_field%Bn)
+       talk_to_me%div_B_L2  = norm_SF(comm_one_d, 'div', H_mesh, list_mode, mag_field%Bn)/norm
        talk_to_me%time=time
     END IF
 
