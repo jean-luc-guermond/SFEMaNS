@@ -19,6 +19,7 @@ MODULE eigenvalue_problem
         USE LightKrylov_Logger
         USE stdlib_logger, only: information_level, warning_level, debug_level, error_level, all_level, success
         USE stdlib_io_npy, only: save_npy
+#endif
 
         IMPLICIT NONE
         INTEGER, DIMENSION(:), INTENT(IN)               :: list_mode
@@ -27,10 +28,13 @@ MODULE eigenvalue_problem
         TYPE(mag_field_type), DIMENSION(:), ALLOCATABLE, INTENT(OUT) :: X
         INTEGER                                         :: info, it
         CHARACTER(LEN=3)                                :: what
+#ifdef USE_LIGHTKRYLOV
         TYPE(exptA_linop)                               :: exptA
+#endif
         TYPE(mesh_type), POINTER                        :: H_mesh, phi_mesh
         MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
 
+#ifdef USE_LIGHTKRYLOV
         ALLOCATE(X(inputs%LK%nev))
         CALL logger_setup(nio=0, log_level=information_level, log_stdout=.TRUE., log_timestamp=.false.)
         CALL zero_basis(X)
