@@ -1,0 +1,47 @@
+Test 1: Navier-Stokes
+Test 2: Navier-Stokes periodic
+Test 3: Maxwell with vacuum P2-P2
+Test 4: Maxwell with vacuum periodic P1-P2
+Test 5: Maxwell with vacuum P1-P2
+Test 6: Maxwell variable permeability with vacuum P1-P2
+Test 7: Maxwell with vacuum P2-P2
+Test 8: Navier-Stokes with Temperature
+Test 9: Navier-Stokes with Temperature periodic
+Test 10: Maxwell P2
+Test 11: MHD with Temperature and precession
+Test 12: Maxwell P1 Neumann bdy
+Test 13: MHD periodic and Neumann bdy
+Test 14: ARPACK/LIGHT_KRYLOV for Maxwell and eigen values problem
+Test 15: Navier-Stokes with Temperature and LES
+Test 16: Navier-Stokes Neumann bdy with precession
+Test 17: Maxwell Equations with vacuum and variable magnetic permeability in (r,z)
+Test 18: Maxwell Equations with variable magnetic permeability in (r,z) with jumps
+Test 19: Navier-Stokes with variable density
+Test 20: restart of test 19 (Navier-Stokes with variable density)
+Test 21: MHD with variable density and electrical conductivity
+Test 22: Maxwell Equations with vaccum and variable magnetic permeability in (r,theta,z)
+Test 23: Maxwell Equations with variable magnetic permeability in (r, theta, z) with jumps
+Test 24: Navier-Stokes with penalty for non axisymetric domain
+Test 25: Navier-Stokes with variable density and viscosity
+Test 26: Maxwell Equations with variable magnetic permeability in z and smooth jump.
+Test 27: Maxwell Equations with vacuum and variable magnetic permeability in (r,theta,z,t)
+Test 28: Hydrodynamic Simulation of the VKS Experiment
+Test 29: MHD Simulation of the VKS Experiment
+Test 30: Navier-Stokes with Temperature, temperature computed in a solid and a fluid region
+Test 31: Navier-Stokes with Temperature, temperature computed in a solid and a fluid region, periodic manufactured solution and non null pressure
+Test 32: Navier-Stokes with Temperature, temperature computed in a solid and a fluid region, periodic manufactured solution and non null pressure, restart from test 31 with interpolation
+Test 33: Ferrohydrodynamic
+Test 34: Ferrohydrodynamic periodic
+Test 35: Robin boundary conditions for Temperature
+Test 36: Viscosity function of temperature
+Test 37: Ferrohydrodynamic by using the Helmholtz force model
+Test 38: Ferrohydrodynamic with the complete temperature equation
+Test 39: Navier-Stokes with discontinuous density
+Test 40: Navier-Stokes nonaxisymetric with variable density and viscosity
+Test 41: Navier-Stokes and Temperature with variable fluid properties
+Test 42: MHS
+Test 43: Liquid Metal Batterie (cake setup) with concentration and Maxwell
+Test 44: restart test 44 (6 processors vs 2 for test 43)
+Test 45: Navier-Stokes and Temperature with variable fluid properties periodic
+Test 46: Eigenvalue problem with LIGHT_KRYLOV
+Test 47: MHD with temperature and concentration
