@@ -71,6 +71,8 @@ CONTAINS
     REAL(KIND=8), DIMENSION(temp_mesh%np, 2)                   :: tempn_p1
     REAL(KIND=8), DIMENSION(temp_mesh%gauss%l_G*temp_mesh%me,2, SIZE(list_mode)) :: ff_conv, pyromag_term
     REAL(KIND=8), DIMENSION(temp_mesh%gauss%l_G*temp_mesh%me,6, SIZE(list_mode)) :: kgradT
+    REAL(KIND=8), DIMENSION(temp_mesh%gauss%l_Gs*temp_mesh%mes,6, SIZE(list_mode)) :: Tgradc_bdy
+    REAL(KIND=8), DIMENSION(temp_mesh%gauss%l_Gs*temp_mesh%mes,6, SIZE(list_mode)) :: Tgradc_bdy_n
     REAL(KIND=8), DIMENSION(temp_mesh%np,2, SIZE(list_mode)) :: heat_density_m1, heat_density, heat_density_p1
     REAL(KIND=8), DIMENSION(temp_mesh%np,2, SIZE(list_mode)) :: heat_diffusivity
     REAL(KIND=8) :: stab_bar
@@ -234,6 +236,8 @@ CONTAINS
     !===Extension heat_diffusivity_ns and heat_density_ns to whole temperature domain
     IF (inputs%if_level_set.AND.inputs%variation_temp_param_fluid) THEN
        heat_diffusivity = 0.d0
+       heat_density_m1  = 0.d0
+       heat_density     = 0.d0
        heat_density_p1  = 0.d0
        DO m = 1, temp_mesh%me
           DO nj = 1, temp_mesh%gauss%n_w
@@ -242,13 +246,17 @@ CONTAINS
              !Check if node is in Navier-Stokes domain(s)
              IF (jj_v_to_temp(j) /= -1) THEN
                 heat_diffusivity(j,:,:) = heat_diffusivity_ns(jj_v_to_temp(j),:,:)
-                heat_density_p1(j,:,:)     = heat_density_ns_p1(jj_v_to_temp(j),:,:)
+                heat_density_m1(j,:,:)  = heat_density_ns_m1(jj_v_to_temp(j),:,:)
+                heat_density(j,:,:)     = heat_density_ns(jj_v_to_temp(j),:,:)
+                heat_density_p1(j,:,:)  = heat_density_ns_p1(jj_v_to_temp(j),:,:)
              ELSE
                 DO i = 1, SIZE(list_mode)
                    mode = list_mode(i)
                    IF (mode==0) THEN
                       heat_diffusivity(j,1,i) = temp_diffusivity(m)
-                      heat_density_p1(j,1,i)     = vol_heat_capacity(m)
+                      heat_density_m1(j,1,i)  = vol_heat_capacity(m)
+                      heat_density(j,1,i)     = vol_heat_capacity(m)
+                      heat_density_p1(j,1,i)  = vol_heat_capacity(m)
                    END IF
                 END DO
              END IF
@@ -282,6 +290,12 @@ CONTAINS
     END IF
     tps = user_time() - tps; tps_cumul=tps_cumul+tps
     !WRITE(*,*) ' Time FFT in temperature equation', tps
+
+    !===Compute T*Grad(c*rho) on boudnary to enforce Neumann BC weakly
+    CALL smb_kgradc_gauss_bdy_fft_par(comm_one_d(2), temp_mesh, list_mode, 2.d0*tempn-tempn_m1, &
+         heat_density_p1, kappa_bar, Tgradc_bdy)
+    CALL smb_kgradc_gauss_bdy_fft_par(comm_one_d(2), temp_mesh, list_mode, tempn, &
+         heat_density, kappa_bar, Tgradc_bdy_n)
 
     !===Compute radius at Gauss points
     index = 0
@@ -325,6 +339,10 @@ CONTAINS
           CALL qs_00_gauss_surface(temp_mesh, temp_1_LA, temp_list_robin_sides, convection_coeff, &
                exterior_temperature, cb_1)
        END IF
+
+       !===RHS Neumann BCs from diffusion stabilization
+       CALL qs_00_gauss_surface_Neumann(temp_mesh, temp_1_LA, temp_list_robin_sides, &
+            temp_list_dirichlet_sides, Tgradc_bdy(:,:,i)-Tgradc_bdy_n(:,:,i), cb_1, cb_2)
 
        !===RHS periodicity
        IF (temp_per%n_bord/=0) THEN
@@ -876,5 +894,85 @@ CONTAINS
     !write(*,*) ' Change Format Time   ', temps(3)
 
   END SUBROUTINE smb_kgradT_gauss_fft_par
+
+  SUBROUTINE smb_kgradc_gauss_bdy_fft_par(communicator, mesh, list_mode, k_in, c_in, stab, V_out)
+    !=================================
+    USE associate_gauss
+    USE fft_parallele
+    USE chaine_caractere
+    USE boundary
+#include "petsc/finclude/petsc.h"
+    USE petsc
+    IMPLICIT NONE
+    TYPE(mesh_type), TARGET                     :: mesh
+    INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: k_in, c_in
+    REAL(KIND=8), DIMENSION(:),     INTENT(IN)  :: stab
+    REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT) :: V_out
+    REAL(KIND=8), DIMENSION(mesh%gauss%l_Gs*mesh%mes,6,SIZE(list_mode)) :: Gradc
+    REAL(KIND=8), DIMENSION(mesh%gauss%l_Gs*mesh%mes,2,SIZE(list_mode)) :: k_gauss
+    INTEGER,      DIMENSION(mesh%gauss%n_w)                  :: j_loc
+    INTEGER,      DIMENSION(mesh%gauss%n_ws)                 :: js_loc
+    REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dws_loc
+    INTEGER                                                  :: m, ms, ls, i, mode, index
+    INTEGER,      DIMENSION(:,:), POINTER       :: jj
+    INTEGER,                      POINTER       :: me
+    REAL(KIND=8)                                :: ray, tps, stab_loc
+    REAL(KIND=8), DIMENSION(3)                  :: temps
+    INTEGER                                     :: code, m_max_pad, bloc_size, nb_procs
+    MPI_Comm       :: communicator
+
+    CALL gauss(mesh)
+    jj => mesh%jj
+    me => mesh%me
+
+    tps = user_time()
+    DO i = 1, SIZE(list_mode)
+       mode = list_mode(i)
+       index = 0
+       DO ms = 1, mesh%mes
+          m = mesh%neighs(ms)
+          j_loc = jj(:,m)
+          js_loc = mesh%jjs(:,ms)
+          stab_loc = stab(m)
+
+          DO ls = 1, l_Gs
+             index = index + 1
+             dws_loc = mesh%gauss%dw_s(:,:,ls,ms)
+
+             !===Compute radius at Gauss points
+             ray = SUM(mesh%rr(1,js_loc)*mesh%gauss%wws(:,ls))
+
+             !------------k_in at Gauss points
+             k_gauss(index,1,i) = stab_loc*SUM(k_in(js_loc,1,i)*wws(:,ls))
+             k_gauss(index,2,i) = stab_loc*SUM(k_in(js_loc,2,i)*wws(:,ls))
+
+             !------------c_in gradient at Gauss points
+             Gradc(index,1,i) = SUM(c_in(j_loc,1,i)*dws_loc(1,:))
+             Gradc(index,2,i) = SUM(c_in(j_loc,2,i)*dws_loc(1,:))
+             Gradc(index,3,i) =  mode/ray*SUM(c_in(js_loc,2,i)*wws(:,ls))
+             Gradc(index,4,i) = -mode/ray*SUM(c_in(js_loc,1,i)*wws(:,ls))
+             Gradc(index,5,i) = SUM(c_in(j_loc,1,i)*dws_loc(2,:))
+             Gradc(index,6,i) = SUM(c_in(j_loc,2,i)*dws_loc(2,:))
+          ENDDO
+       ENDDO
+    END DO
+
+    !tps = user_time() - tps
+    !WRITE(*,*) ' Time in big loop', tps
+    !tps = user_time()
+    temps = 0
+
+    CALL MPI_COMM_SIZE(communicator, nb_procs, code)
+    bloc_size = SIZE(Gradc,1)/nb_procs+1
+    m_max_pad = 3*SIZE(list_mode)*nb_procs/2
+    CALL FFT_SCALAR_VECT_DCL(communicator, Gradc, k_gauss, V_out, 1, nb_procs, bloc_size, m_max_pad, temps)
+    tps = user_time() - tps
+    !WRITE(*,*) ' Time in FFT_PAR_PROD_VECT', tps
+    !write(*,*) ' Communication time   ', temps(1)
+    !write(*,*) ' Computation time   ', temps(2)
+    !write(*,*) ' Change Format Time   ', temps(3)
+
+  END SUBROUTINE smb_kgradc_gauss_bdy_fft_par
 
 END MODULE subroutine_temperature_with_e

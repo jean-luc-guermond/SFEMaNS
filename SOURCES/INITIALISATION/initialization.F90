@@ -1284,7 +1284,13 @@ CONTAINS
        DO n = 1, inputs%nb_refinements !===Create refined mesh
           CALL refinement_iso_grid_distributed(dummy_mesh_loc)
        END DO
-       CALL create_iso_grid_distributed(dummy_mesh_loc, temp_mesh, 2)
+       !===LC June 5, 2026, p3 mesh
+       IF (if_momentum) THEN
+          CALL create_iso_grid_distributed(dummy_mesh_loc, temp_mesh, inputs%type_fe_velocity)
+       ELSE
+          CALL create_iso_grid_distributed(dummy_mesh_loc, temp_mesh, 2)
+       END IF
+       !===LC June 5, 2026, p3 mesh
        CALL free_mesh(dummy_mesh_loc)
 
        ALLOCATE(comm_one_d_temp(2))
@@ -1673,10 +1679,14 @@ CONTAINS
        CALL clean_mesh(temp_mesh)
 
        !===Start Gauss points generation============================================
-       !===JLG July 20, 2019, p3 mesh
+       !===LC June 5, 2026, p3 mesh
        temp_mesh%edge_stab = .FALSE.
-       CALL create_gauss_points_2d(temp_mesh, 2)
-       !===JLG July 20, 2019, p3 mesh
+       IF (if_momentum) THEN
+          CALL create_gauss_points_2d(temp_mesh, inputs%type_fe_velocity)
+       ELSE
+          CALL create_gauss_points_2d(temp_mesh, 2)
+       END IF
+       !===LC June 5, 2026, p3 mesh
 
 
        !===Create temperature_diffusivity_field=====================================
@@ -1872,7 +1882,7 @@ CONTAINS
              bloc_size = pp_mesh%gauss%l_G * (bloc_size / pp_mesh%gauss%l_G) + pp_mesh%gauss%l_G
              m_max_pad = 3 * SIZE(list_mode) * nb_procs / 2
              ALLOCATE(visc_entro_level(2 * m_max_pad - 1, bloc_size))
-             ALLOCATE(visc_LES_level(inputs%nb_fluid-1, vv_mesh%gauss%l_G*vv_mesh%dom_me, 6, m_max_c))
+             ALLOCATE(visc_LES_level(inputs%nb_fluid-1, pp_mesh%gauss%l_G*pp_mesh%dom_me, 6, m_max_c))
           END IF
        END IF
     END IF
@@ -1889,6 +1899,7 @@ CONTAINS
 !       ALLOCATE(phin (phi_mesh%np, 2, m_max_c))
 !    END IF
 !VB 26/01/2026
+
     !===Allocate arrays for temperature=============================================
     IF (if_energy) THEN
        ALLOCATE(tempn_m1   (temp_mesh%np, 2, m_max_c))
