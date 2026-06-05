@@ -468,6 +468,9 @@ CONTAINS
 
     vv = 0.d0
     RETURN
+    !===Dummy variables to avoid warning
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION template_vv_exact
 
   !===Solid velocity imposed when using penalty technique
@@ -480,6 +483,9 @@ CONTAINS
 
     vv = 0.d0
     RETURN
+    !===Dummy variables to avoid warning
+    nd=SIZE(rr,1); rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION template_imposed_velocity_by_penalty
 
   !===Pressure for boundary conditions in Navier-Stokes.
@@ -578,8 +584,6 @@ CONTAINS
     INTEGER,                             INTENT(IN)   :: mode
     REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(H_mesh%np)                :: vv
-    INTEGER                                           :: k
-    REAL(KIND=8)                                      :: r,z
     vv = 0.d0
     RETURN
     !===Dummy variables to avoid warning
@@ -890,7 +894,10 @@ CONTAINS
     REAL(KIND = 8), INTENT(IN) :: theta
     REAL(KIND = 8) :: vv
 
-    vv = 0.d0
+    vv = 0.d0*theta
     RETURN
+    !===Dummy variables to avoid warning
+    nd=interface_index
+    !===Dummy variables to avoid warning
   END FUNCTION template_curved_boundary_radius
 END MODULE boundary_generic_module

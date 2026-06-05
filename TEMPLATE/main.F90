@@ -143,14 +143,15 @@ PROGRAM mhd_prog
          CALL regression_LK(lambda)
       END IF
 #else
+      ALLOCATE(lambda(0), residuals(0), X(0))
       IF (inputs%if_regression) THEN
          ! tests always pass if LightKrylov is not loaded
          WRITE(*,*) "passing LightKrylov by default", "1234567891"
          CALL PetscFinalize(ierr)
          CALL EXIT(123)
       ELSE
-         CALL error_petsc("BUG in main.F90: LK eigvals set to True, but&
-          SFEMaNS was compiled without linking LightKrylov")
+         CALL error_petsc("BUG in main.F90: LK eigvals set to True, but "&
+          "SFEMaNS was compiled without linking LightKrylov")
       END IF
 #endif
 

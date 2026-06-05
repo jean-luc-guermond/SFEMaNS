@@ -122,9 +122,11 @@ CONTAINS
     INTEGER,                             INTENT(IN)  :: n_ws
     REAL(KIND=8), DIMENSION(n_ws, n_ws), INTENT(OUT) :: d
     INTEGER :: j
-    REAL(KIND=8) ::  one = 1.d0,  two = 2.d0
-    REAL(KIND=8) :: df1, df2, x
+    REAL(KIND=8) :: one = 1.d0, two = 2.d0
+    REAL(KIND=8) :: f1, f2, df1, df2, x
     REAL(KIND=8), DIMENSION(n_ws) :: xx
+    f1(x) = (one - x)/two
+    f2(x) = (x + one)/two
     df1(x) = -one/two
     df2(x) = one/two
     xx(1) = -1.d0

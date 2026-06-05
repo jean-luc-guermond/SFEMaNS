@@ -675,7 +675,10 @@ CONTAINS
     REAL(KIND = 8), INTENT(IN) :: theta
     REAL(KIND = 8) :: vv
 
-    vv = 0.d0
+    vv = 0.d0*theta
+    !===Dummy variables to avoid warning
+    nd = interface
+    !===Dummy variables to avoid warning
     RETURN
   END FUNCTION curved_boundary_radius
 

@@ -49,7 +49,7 @@ PROGRAM prog_write_ns
   REAL(KIND=8)                                    :: time
   INTEGER                                         :: it
   !===Timing======================================================================
-  REAL(KIND=8)                                    :: tps, tploc, tploc_max=0.d0
+!  REAL(KIND=8)                                    :: tps, tploc, tploc_max=0.d0
   !===Declare PETSC===============================================================
   PetscErrorCode :: ierr
   PetscMPIInt    :: rank
@@ -83,6 +83,11 @@ PROGRAM prog_write_ns
 
   CALL error_petsc("Finished writing NS restart file. Stop here for testing purposes.")
   
+  !2026/06/05: adding dummy call to avoid warning
+  it = 0
+  CALL my_post_processing(it)
+  !2026/06/05: adding dummy call to avoid warning
+
   CONTAINS 
   !===End of code=================================================================
 

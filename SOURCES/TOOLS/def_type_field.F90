@@ -14,9 +14,8 @@ MODULE def_type_field
 #include "petsc/finclude/petsc.h"
    USE petsc
    USE petscmpi
-    IMPLICIT NONE
-    CHARACTER(len=*), PARAMETER, PRIVATE :: this_module = 'def_type_field'
-    REAL(KIND=8),                PRIVATE :: code
+   IMPLICIT NONE
+   CHARACTER(len=*), PARAMETER, PRIVATE :: this_module = 'def_type_field'
     
    PUBLIC             :: build_mag_field_params, build_pointers_mag_field, build_global_pointers_mag_field
    
@@ -176,15 +175,12 @@ MODULE def_type_field
 
    REAL(KIND=8) function dot(self, vec) result(alpha)
       USE tn_axi
-      CLASS(mag_field_type),      intent(in)          :: self
+      CLASS(mag_field_type),      intent(in)         :: self
 #ifdef USE_LIGHTKRYLOV
-      CLASS(abstract_vector_rdp), intent(in)          :: vec
+      CLASS(abstract_vector_rdp), intent(in)         :: vec
 #else
-      CLASS(mag_field_type),      intent(in)          :: vec
+      CLASS(mag_field_type),      intent(in)         :: vec
 #endif
-      REAL(KIND=8)                                   :: alpha_loc, factor_mode, H_r_dr_dth_dz           
-      INTEGER                                        :: i, index, m, l, type_vec
-      INTEGER, DIMENSION(H_mesh%gauss%n_w) :: j_loc
 #ifdef USE_LIGHTKRYLOV
       SELECT TYPE(vec)
       type is(mag_field_type)

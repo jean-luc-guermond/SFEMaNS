@@ -54,12 +54,9 @@ CONTAINS
     INTEGER,          POINTER, DIMENSION(:)  :: cc_1_ifrom
     INTEGER                                  :: i, n
     INTEGER                                  :: code, mode
-    INTEGER                                  :: bloc_size, m_max_pad
     !allocations des variables locales
-    REAL(KIND=8), DIMENSION(cc_mesh%np)                      :: ff
     REAL(KIND=8), DIMENSION(cc_mesh%np,2,SIZE(list_mode))    :: cext
     REAL(KIND=8), DIMENSION(cc_mesh%np,2,SIZE(list_mode))    :: cext_reg
-    REAL(KIND=8), DIMENSION(cc_mesh%gauss%l_G*cc_mesh%dom_me, 2, SIZE(list_mode)) :: ff_comp
     REAL(KIND=8), DIMENSION(cc_mesh%gauss%l_G*cc_mesh%dom_me, 2, SIZE(list_mode)) :: ff_phi_1mphi
     REAL(KIND=8) :: tps, tps_tot, tps_cumul
     !Communicators for Petsc, in space and Fourier------------------------------

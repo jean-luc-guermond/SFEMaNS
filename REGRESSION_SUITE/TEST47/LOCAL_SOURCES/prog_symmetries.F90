@@ -22,11 +22,6 @@ PROGRAM prog_write_ns
   !===Navier-Stokes fields========================================================
   TYPE(mesh_type), POINTER                        :: pp_mesh, vv_mesh
   REAL(KIND=8), POINTER, DIMENSION(:,:,:)         :: un, pn
-  REAL(KIND=8), DIMENSION(:), ALLOCATABLE         :: ek, ek_sym, ek_anti
-  REAL(KIND=8), DIMENSION(:), ALLOCATABLE         :: em, em_sym, em_anti
-  REAL(KIND=8)                                    :: norm
-  REAL(KIND=8) :: ur_th_rpi_s, ut_th_rpi_s, uz_th_rpi_s, ur_th_rpi_a, ut_th_rpi_a, uz_th_rpi_a
-  REAL(KIND=8) :: hr_th_rpi_s, ht_th_rpi_s, hz_th_rpi_s, hr_th_rpi_a, ht_th_rpi_a, hz_th_rpi_a
   REAL(KIND=8), PARAMETER :: PI = ACOS(-1.d0), tor_over_pol = 0.73d0,  alpha = 0.5d0
 !   REAL(KIND=8), PARAMETER :: heigth_conc = 1.6d0, heigth_vel = 1.6d0, heigth_temp = 2.0d0, heigth_mag = 2.4d0
   LOGICAL :: test_loc, test_glob=.TRUE., test_glob_comm
@@ -60,9 +55,6 @@ PROGRAM prog_write_ns
   INTEGER,      POINTER,      DIMENSION(:)        :: list_mode
   !===Time iterations=============================================================
   REAL(KIND=8)                                    :: time
-  INTEGER                                         :: i
-  !===Timing======================================================================
-  REAL(KIND=8)                                    :: tps, tploc, tploc_max=0.d0
   !===Declare PETSC===============================================================
   PetscErrorCode :: ierr
   PetscMPIInt    :: rank

@@ -44,11 +44,6 @@ MODULE exponential_propagator
        !===Fourier modes===============================================================
        INTEGER                                         :: m_max_c
        INTEGER,      POINTER,      DIMENSION(:)        :: list_mode
-       !===Time iterations=============================================================
-       REAL(KIND=8)                                    :: time
-       INTEGER                                         :: it
-       !===Timing======================================================================
-       REAL(KIND=8)                                    :: tps, tploc, tploc_max=0.d0
        !===Declare PETSC===============================================================
        PetscErrorCode :: ierr
        PetscMPIInt    :: rank

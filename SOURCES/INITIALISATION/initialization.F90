@@ -67,8 +67,7 @@ MODULE initialization
 
 
   !Fields for Maxwell---------------------------------------------------------
-  TYPE(mag_field_type), TARGET                             :: mag_field 
-  REAL(KIND=8), PRIVATE                                    :: alpha 
+  TYPE(mag_field_type), TARGET                        :: mag_field 
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:)     :: sigma_field, mu_H_field
   TYPE(mesh_type), TARGET                             :: H_mesh, phi_mesh, pmag_mesh
   TYPE(petsc_csr_LA)                                  :: LA_H, LA_pmag, LA_phi, LA_mhd

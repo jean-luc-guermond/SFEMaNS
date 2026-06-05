@@ -128,6 +128,10 @@ CONTAINS
 
     vv = 0.d0
     RETURN
+    !===Dummy variables to avoid warning
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=mode; nd=i; rd=time; rd=Re; cd2=ty
+    nd=SIZE(density,1); nd=SIZE(tempn,1); nd=SIZE(concn,1)
+    !===Dummy variables to avoid warning
   END FUNCTION source_in_NS_momentum
 
   !===Extra source in temperature equation. Always called.
@@ -141,6 +145,9 @@ CONTAINS
 
     vv = 0.d0
     RETURN
+    !===Dummy variables to avoid warning
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION source_in_temperature
 
   !===Extra source in level set equation. Always called.
@@ -154,6 +161,9 @@ CONTAINS
 
     vv = 0.d0
     RETURN
+    !===Dummy variables to avoid warning
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; nd=interface_nb; rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION source_in_level_set
 
   !===Velocity for boundary conditions in Navier-Stokes.
@@ -195,6 +205,9 @@ CONTAINS
     END IF
 
     RETURN
+    !===Dummy variables to avoid warning
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION vv_exact
 
 !  MODULE FUNCTION vv_exact_rot_axez(type,rr,m,t) RESULT(vv)
@@ -223,6 +236,9 @@ CONTAINS
 
     vv = 0.d0
     RETURN
+    !===Dummy variables to avoid warning
+    nd=SIZE(rr,1); rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION imposed_velocity_by_penalty
 
   !===Pressure for boundary conditions in Navier-Stokes.
@@ -243,6 +259,9 @@ CONTAINS
            vv(:) = rr(1,:)**2/2.d0
     ENDIF
     RETURN
+    !===Dummy variables to avoid warning
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION pp_exact
 
   !===Temperature for boundary conditions in temperature equation.
@@ -275,6 +294,9 @@ CONTAINS
     END IF
 
     RETURN
+    !===Dummy variables to avoid warning
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION temperature_exact
 
   !===Concentration for boundary conditions in concentration equation.
@@ -307,7 +329,10 @@ CONTAINS
     END IF
 
     RETURN
- END FUNCTION concentration_exact
+    !===Dummy variables to avoid warning
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=t
+    !===Dummy variables to avoid warning
+  END FUNCTION concentration_exact
 
   !===Can be used to initialize level set in the subroutine init_level_set
   MODULE FUNCTION level_set_exact(interface_nb,TYPE_VEC,rr,m,t)  RESULT (vv)
@@ -320,6 +345,9 @@ CONTAINS
 
     vv = 0.d0
     RETURN
+    !===Dummy variables to avoid warning
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; nd=interface_nb; rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION level_set_exact
 
   !===Penalty coefficient (if needed)
@@ -337,6 +365,9 @@ CONTAINS
 
     vv = 1.d0
     RETURN
+    !===Dummy variables to avoid warning
+    nd=mesh%np; nd=SIZE(rr_gauss,1); nd=SIZE(angles); nd=nb_angles; nd=nb; nd=ne; rd=time
+    !===Dummy variables to avoid warning
   END FUNCTION penal_in_real_space
 
   !===Extension of the velocity field in the solid.
@@ -352,13 +383,12 @@ CONTAINS
     INTEGER,                             INTENT(IN)   :: mode
     REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(H_mesh%np)                :: vv
-! VB 04/02/2025
-    INTEGER                                           :: k
-    REAL(KIND=8)                                      :: r,z
 
     vv = 0.d0
-
     RETURN
+    !===Dummy variables to avoid warning
+    nd=H_mesh%np; nd=TYPE_VEC; nd=n_start; nd=mode; rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION extension_velocity
 
   MODULE FUNCTION extension_temperature(TYPE_VEC, H_mesh, mode, t, n_start) RESULT(vv)
@@ -371,6 +401,9 @@ CONTAINS
 
     vv = 0.d0
     RETURN
+    !===Dummy variables to avoid warning
+    nd=H_mesh%np; nd=TYPE_VEC; nd=n_start; nd=mode; rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION extension_temperature
 
   MODULE FUNCTION extension_concentration(TYPE_VEC, vv_mesh, mode, t, n_start) RESULT(vv)
@@ -383,6 +416,9 @@ CONTAINS
 
     vv = 0.d0
     RETURN
+    !===Dummy variables to avoid warning
+    nd=vv_mesh%np; nd=TYPE_VEC; nd=n_start; nd=mode; rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION extension_concentration
 
   !===============================================================================
@@ -395,10 +431,9 @@ CONTAINS
     TYPE(mesh_type),                       INTENT(IN) :: H_mesh
     INTEGER,                               INTENT(IN) :: m
     REAL(KIND=8), DIMENSION(H_mesh%np,6)              :: vv
-    INTEGER :: k
-    REAL(Kind=8) :: rr, zz
-    REAL(KIND=8) :: eps=1.d-7, radius_in=1.d0, omega=1.d0
-
+    !INTEGER :: k
+    !REAL(KIND=8) :: rr, zz
+    !REAL(KIND=8) :: eps=1.d-7, radius_in=1.d0, omega=1.d0
 
     vv = 0.d0
     ! DO k=1, H_mesh%np
@@ -410,6 +445,9 @@ CONTAINS
     ! END DO
 
     RETURN
+    !===Dummy variables to avoid warning
+    nd=H_mesh%np; nd=m
+    !===Dummy variables to avoid warning
   END FUNCTION Vexact
 
   MODULE FUNCTION H_B_quasi_static(char_h_b, rr, m) RESULT(vv)
@@ -425,6 +463,9 @@ CONTAINS
        CALL error_petsc('H_B_quasi_static should not be called')
     END IF
     RETURN
+    !===Dummy variables to avoid warning
+    cd1=char_h_b; nd=SIZE(rr,1); nd=m
+    !===Dummy variables to avoid warning
   END FUNCTION H_B_quasi_static
 
   !===Magnetic field for boundary conditions in the Maxwell equations.
@@ -469,6 +510,9 @@ CONTAINS
     END IF
 
     RETURN
+    !===Dummy variables to avoid warning
+    nd=H_mesh%np; nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=t; nd=SIZE(mu_H_field)
+    !===Dummy variables to avoid warning
   END FUNCTION Hexact
 
   !===Scalar potential for boundary conditions in the Maxwell equations.
@@ -501,6 +545,9 @@ CONTAINS
     END IF
 
     RETURN
+    !===Dummy variables to avoid warning
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=mu_phi; rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION Phiexact
 
   !===Current in Ohm's law. Curl(H) = sigma(E + uxB) + current
@@ -516,6 +563,10 @@ CONTAINS
 
     vv = 0.d0
     RETURN
+    !===Dummy variables to avoid warning
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=mu_phi; rd=sigma; rd=mu_H; rd=t; nd=mesh_id
+    IF (PRESENT(opt_B_ext)) nd=SIZE(opt_B_ext)
+    !===Dummy variables to avoid warning
   END FUNCTION Jexact_gauss
 
   !===Electric field for Neumann BC (cf. doc)
@@ -529,6 +580,9 @@ CONTAINS
 
     vv = 0.d0
     RETURN
+    !===Dummy variables to avoid warning
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=mu_phi; rd=sigma; rd=mu_H; rd=t
+    !===Dummy variables to avoid warning
   END FUNCTION Eexact_gauss
 
   !===Initialization of magnetic field and scalar potential (if present)
@@ -543,8 +597,6 @@ CONTAINS
     INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
     TYPE(mag_field_type),           INTENT(OUT):: mag_field
     INTEGER                                    :: i, k
-    REAL(KIND=8), DIMENSION(H_mesh%np)         :: x
-    REAL(KIND=8)                               :: ampl = 1.d-6
 
     CALL mag_field%zero()
 
@@ -566,7 +618,6 @@ CONTAINS
     IF (.NOT. ALLOCATED(mag_field%time))  ALLOCATE(mag_field%time)
     mag_field%time = time
 
-
     RETURN
   END SUBROUTINE init_maxwell
 
@@ -584,6 +635,11 @@ CONTAINS
 
     vv = 1.d0
     RETURN
+    !===Dummy variables to avoid warning
+    nd=H_mesh%np; nd=nb; nd=ne
+    IF (PRESENT(pts)) nd=SIZE(pts,1)
+    IF (PRESENT(pts_ids)) nd=SIZE(pts_ids)
+    !===Dummy variables to avoid warning
   END FUNCTION mu_bar_in_fourier_space
 
   !===Analytical mu_in_fourier_space (if needed)
@@ -598,6 +654,9 @@ CONTAINS
 
     vv = 0.d0
     RETURN
+    !===Dummy variables to avoid warning
+    nd=SIZE(pt,1); nd=SIZE(pt_id)
+    !===Dummy variables to avoid warning
   END FUNCTION grad_mu_bar_in_fourier_space
 
   !===Analytical permeability, mu in real space (if needed)
@@ -612,6 +671,9 @@ CONTAINS
 
     vv = 1.d0
     RETURN
+    !===Dummy variables to avoid warning
+    nd=H_mesh%np; nd=SIZE(angles); rd=time
+    !===Dummy variables to avoid warning
   END FUNCTION mu_in_real_space
 
   !=== Only used for multiphase flow with variable electrical conductivity
@@ -671,6 +733,9 @@ CONTAINS
 
     vv = 0.d0
     RETURN
+    !===Dummy variables to avoid warning
+    nd=mesh%np; nd=SIZE(rr,1); nd=SIZE(list_mode)
+    !===Dummy variables to avoid warning
   END FUNCTION rot_H_jump_interface
 
   MODULE FUNCTION Derivative_of_potential_from_rhoLi(delta_rhoLi_phys) RESULT(vv)
@@ -691,15 +756,18 @@ CONTAINS
     RETURN
   END FUNCTION molar_fraction_from_concentration
 
-   !===Needed for curved boundaries
-   !===Should return the distance to center of the boundary for angle theta and fail if theta out of range
-   MODULE FUNCTION curved_boundary_radius(interface, theta) RESULT(vv)
-      INTEGER, INTENT(IN) :: interface
-      REAL(KIND = 8), INTENT(IN) :: theta
-      REAL(KIND = 8) :: vv
+  !===Needed for curved boundaries
+  !===Should return the distance to center of the boundary for angle theta and fail if theta out of range
+  MODULE FUNCTION curved_boundary_radius(interface, theta) RESULT(vv)
+    INTEGER, INTENT(IN) :: interface
+    REAL(KIND = 8), INTENT(IN) :: theta
+    REAL(KIND = 8) :: vv
 
-      vv = 0.d0
-      RETURN
-   END FUNCTION curved_boundary_radius
+    vv = 0.d0*theta
+    RETURN
+    !===Dummy variables to avoid warning
+    nd = interface
+    !===Dummy variables to avoid warning
+  END FUNCTION curved_boundary_radius
 
 END SUBMODULE BOUNDARY_GENERIC

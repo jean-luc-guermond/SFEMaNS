@@ -102,8 +102,8 @@ CONTAINS
 
       TYPE(mesh_type)               :: mesh_loc
       INTEGER, DIMENSION(:)         ::  ltg_LA
-     INTEGER, DIMENSION(mesh_loc%np)      :: i_d
-      INTEGER             :: i, j, m, dom, n_w
+      INTEGER, DIMENSION(mesh_loc%np) :: i_d
+      INTEGER             :: i, j, m, n_w
       REAL(KIND=8)        :: xx, zz, eps
 
       INTEGER    :: code, nb_procs, rank
@@ -249,14 +249,10 @@ CONTAINS
     USE my_util
     IMPLICIT NONE
 
-    TYPE(mesh_type)                             :: mesh
     TYPE(symmetric_tools), POINTER              :: abstract_sym_tool
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: vv_in
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT) :: vv_out
     CHARACTER(len=*), INTENT(IN)                :: if_u_h_T_c != 'u' (velocity) 'h', 'T' (temp), 'c' (conc)
-    INTEGER,          POINTER, DIMENSION(:)     :: ifrom
-    INTEGER                                     :: n, i, j
-    INTEGER, ALLOCATABLE, DIMENSION(:)          :: ix
 
     IF (if_u_h_T_c=='u') THEN
        abstract_sym_tool => vv_sym_tool
@@ -370,7 +366,7 @@ CONTAINS
 
     INTEGER,      DIMENSION(:,:), POINTER                  :: jj
     INTEGER,                      POINTER                  :: me
-    INTEGER      :: i, mode
+    INTEGER      :: i
     INTEGER      :: m_max_c
     MPI_Comm       :: communicator
 
@@ -532,7 +528,7 @@ CONTAINS
 
   END SUBROUTINE val_ener_north_south
 
-  SUBROUTINE champ_total_anti_sym(communicator, mesh, list_mode, eps_sa, v_in, v_out, if_u_h_T_c)
+  SUBROUTINE champ_total_anti_sym(mesh, list_mode, eps_sa, v_in, v_out, if_u_h_T_c)
     !type_sym = 1 pour un champ pair
     !type_sym = -1 pour un champ impair
 
@@ -555,8 +551,6 @@ CONTAINS
     INTEGER,                      POINTER                  :: me
     INTEGER      :: i
     INTEGER      :: m_max_c
-    MPI_Comm       :: communicator
-
 
     CALL gauss(mesh)
     jj => mesh%jj

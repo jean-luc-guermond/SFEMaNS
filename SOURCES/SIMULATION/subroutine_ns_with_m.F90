@@ -1166,7 +1166,6 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(IN)  :: temperature
     REAL(KIND=8), DIMENSION(:,:,:),   INTENT(OUT) :: V_out
     REAL(KIND=8), DIMENSION(mesh_P2%np,2,SIZE(list_mode)) :: grav_density
-    REAL(KIND=8)                                :: tps
     REAL(KIND=8), DIMENSION(3)                  :: temps
     INTEGER                                     :: code, m_max_pad, bloc_size, nb_procs
     !MPI_Comm       :: communicator

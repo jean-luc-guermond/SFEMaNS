@@ -56,6 +56,12 @@ MODULE eigenvalue_problem
             END IF
         END DO
 #else
+        !2026/06/05: LC added dummy variables to avoid warning
+        ALLOCATE(lambda(0), residuals(0), X(0))
+        info=H_mesh%np; info=phi_mesh%np; it=SIZE(comm_one_d)
+        it=SIZE(list_mode);
+        what = "old"
+        !2026/06/05: LC added dummy variables to avoid warning
         CALL error_petsc("LightKrylov not compiled with SFEMaNS, check CMakeLists.txt/variable.cmake")
 #endif
 

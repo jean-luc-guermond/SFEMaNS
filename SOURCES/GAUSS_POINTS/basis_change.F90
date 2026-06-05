@@ -135,7 +135,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:), POINTER :: aij 
     INTEGER,      DIMENSION(nw_p3) :: Cart_FE
     REAL(KIND=8), DIMENSION(nw_p3) :: xx,  xxp
-    REAL(KIND=8) :: f1, f2, f3, x, h, delta, one = 1.d0, two=2.d0
+    REAL(KIND=8) :: f1, f2, f3, x, delta, one = 1.d0, two=2.d0
     INTEGER :: j
 
     f1(x) = (x - one)*x/two

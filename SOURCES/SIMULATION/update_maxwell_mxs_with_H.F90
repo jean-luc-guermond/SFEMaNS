@@ -538,6 +538,7 @@ CONTAINS
     ENDIF
 
     !SB-CN_LC 2022/01/25
+    i = SIZE(one_over_sigma_ns_in,2) ! 2026/06/05: added by LC to avoid warning
 !!$    IF (inputs%if_level_set.AND.inputs%variation_sigma_fluid) THEN
 !!$       H_ns = 0.d0
 !!$       one_over_sigma_tot = 0.d0
@@ -673,15 +674,15 @@ CONTAINS
 
        !SB-CN_LC 2022/01/25
        IF (inputs%if_coupling_H_x) THEN
-          CALL jump_rot_H_consistant_rhoLi(H_mesh, jj_v_to_H, interface_H_mu, stab_jump_h, sigma, &
+          CALL jump_rot_H_consistant_rhoLi(H_mesh, jj_v_to_H, interface_H_mu, sigma, &
                minus_grad_times_der_pot_rhoLi(:,:,i), LA_H, vb_1, vb_2,sigma_np)
        ELSE IF (inputs%if_coupling_analytical) THEN
           ff = rot_H_jump_interface(H_mesh,H_mesh%rr,list_mode)
-          CALL jump_rot_H_consistant(H_mesh, jj_v_to_H, interface_H_mu, stab_jump_h, sigma, &
+          CALL jump_rot_H_consistant(H_mesh, jj_v_to_H, interface_H_mu, sigma, &
                ff(:,:,i), LA_H, vb_1, vb_2,sigma_np)
        ELSE
           ff = 0.d0
-          CALL jump_rot_H_consistant(H_mesh, jj_v_to_H, interface_H_mu, stab_jump_h, sigma, &
+          CALL jump_rot_H_consistant(H_mesh, jj_v_to_H, interface_H_mu, sigma, &
                ff(:,:,i), LA_H, vb_1, vb_2,sigma_np)
        END IF
        !SB-CN_LC 2022/01/25
@@ -3694,6 +3695,7 @@ CONTAINS
 !!$    INTEGER     , DIMENSION(:),   ALLOCATABLE   :: idxn, jdxn
     REAL(KIND=8), DIMENSION(6*H_mesh%gauss%n_w,6*H_mesh%gauss%n_w)   :: mat_loc1, mat_loc2
     INTEGER     , DIMENSION(6*H_mesh%gauss%n_w) :: idxn, jdxn
+    REAL(KIND=8) :: dummy
 !!$ FL +CN 22/03/2013
     TYPE(petsc_csr_LA)                          :: LA_H
     INTEGER                                     :: ix, jx
@@ -4236,6 +4238,7 @@ CONTAINS
 
        !    END DO ! end loop on ms
 
+       dummy = stab_jump !2026/06/05 added by LC to avoid warning
        !    DO ms = 1, interface_H_mu%mes
 
        !       ms2 = interface_H_mu%mesh2(ms)
@@ -4688,7 +4691,7 @@ CONTAINS
 
   END SUBROUTINE courant_mu
 
-  SUBROUTINE jump_rot_H_consistant(H_mesh, jj_v_to_H, interface_H_mu, stab_jump, sigma, NL, &
+  SUBROUTINE jump_rot_H_consistant(H_mesh, jj_v_to_H, interface_H_mu, sigma, NL, &
        LA_H, vb_1, vb_2, sigma_np)
     USE def_type_mesh
     USE associate_gauss
@@ -4700,7 +4703,6 @@ CONTAINS
     TYPE(mesh_type),                       INTENT(IN)   :: H_mesh
     INTEGER,      DIMENSION(:), INTENT(IN)              :: jj_v_to_H
     TYPE(interface_type),                  INTENT(IN)   :: interface_H_mu
-    REAL(KIND=8),                          INTENT(IN)   :: stab_jump
     REAL(KIND=8), DIMENSION(:),    INTENT(IN)   :: sigma
     REAL(KIND=8), DIMENSION(:,:),          INTENT(IN)   :: NL
     REAL(KIND=8), DIMENSION(:), INTENT(IN)              :: sigma_np
@@ -4831,7 +4833,7 @@ CONTAINS
 
   END SUBROUTINE jump_rot_H_consistant
 
-  SUBROUTINE jump_rot_H_consistant_rhoLi(H_mesh, jj_v_to_H, interface_H_mu, stab_jump, sigma, &
+  SUBROUTINE jump_rot_H_consistant_rhoLi(H_mesh, jj_v_to_H, interface_H_mu, sigma, &
        function_of_rhoLi, LA_H, vb_1, vb_2, sigma_np)
     USE def_type_mesh
     USE associate_gauss
@@ -4843,7 +4845,6 @@ CONTAINS
     TYPE(mesh_type),                       INTENT(IN)   :: H_mesh
     INTEGER,      DIMENSION(:),            INTENT(IN)   :: jj_v_to_H
     TYPE(interface_type),                  INTENT(IN)   :: interface_H_mu
-    REAL(KIND=8),                          INTENT(IN)   :: stab_jump
     REAL(KIND=8), DIMENSION(:),            INTENT(IN)   :: sigma
     REAL(KIND=8), DIMENSION(:,:),          INTENT(IN)   :: function_of_rhoLi
     REAL(KIND=8), DIMENSION(:),            INTENT(IN)   :: sigma_np
@@ -5121,6 +5122,7 @@ CONTAINS
 
     src_H = 0.d0
 
+    k = SIZE(nl,2) !2026/06/05: added by LC to avoid warning
     !IF (SIZE(Dirichlet_bdy_H_sides)==0) THEN
     !   IF (ASSOCIATED(nl)) DEALLOCATE(nl)
     !   RETURN
@@ -5172,6 +5174,8 @@ CONTAINS
 !!$                  + hm1*Hlocxn(k,ls)
 !!$          ENDDO
           IF (inputs%if_level_set.AND.inputs%variation_sigma_fluid) THEN
+             k = SIZE(sigma_curl_bdy,2) ! 2026/06/05: added by LC to avoid warning
+             k = SIZE(J_over_sigma_bdy,2) ! 2026/06/05: added by LC to avoid warning
              DO k = 1, 6
                 !SB-CN-LC 2022/01/25
 !!$                JsolH_anal(k) = J_over_sigma_bdy(index,k) &

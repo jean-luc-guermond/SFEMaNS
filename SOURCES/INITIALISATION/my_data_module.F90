@@ -376,20 +376,18 @@ CONTAINS
 
   END SUBROUTINE init
 
-  SUBROUTINE init_LK_data(self, data_fichier, in_unit)
+  SUBROUTINE init_LK_data(self, in_unit)
     IMPLICIT NONE
     CLASS(LK_data),       INTENT(INOUT) :: self
-    CHARACTER(len = 200), INTENT(IN)    :: data_fichier
     INTEGER,              INTENT(IN)    :: in_unit 
-    CALL self%read(data_fichier, in_unit)
+    CALL self%read(in_unit)
   END SUBROUTINE init_LK_data 
   
-  SUBROUTINE read_LK_data(self, data_fichier, in_unit)
+  SUBROUTINE read_LK_data(self, in_unit)
     USE chaine_caractere
     USE my_util
     IMPLICIT NONE
     CLASS(LK_data),       INTENT(INOUT) :: self
-    CHARACTER(len = 200), INTENT(IN)    :: data_fichier
     INTEGER,              INTENT(IN)    :: in_unit 
     LOGICAL                             :: test
     
@@ -1701,7 +1699,7 @@ CONTAINS
 
     
     !===Data for LightKrylov (eigenvalue problems)==========!
-    CALL inputs%LK%init(data_fichier, in_unit)
+    CALL inputs%LK%init(in_unit)
 
     !===Data for arpack (eigenvalue problems)==========!
     !==========Frequency parameters====================!

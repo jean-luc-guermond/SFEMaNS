@@ -1,10 +1,7 @@
 MODULE COMM_LK_SFEM
 
         IMPLICIT NONE
-
         PUBLIC             :: LK_2_SFEM, SFEM_2_LK
-                
-        LOGICAL, PRIVATE   :: bool_true=.TRUE.
 
     CONTAINS
 

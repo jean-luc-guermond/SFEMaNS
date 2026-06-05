@@ -93,10 +93,6 @@ CONTAINS
       REAL(KIND = 8), DIMENSION(:, :, :), POINTER :: concn_out, concn_m1_out
       REAL(KIND = 8), DIMENSION(:, :, :, :), POINTER :: level_setn_out, level_setn_m1_out
 
-!VB
-      REAL(KIND = 8) :: norm_Hn
-!VB
-
       CHARACTER(len = 3) :: type_pb, tit_m, tit_s, tit
       CHARACTER(len = 4) :: tit_part
       CHARACTER(len = 200) :: mesh_part_name
