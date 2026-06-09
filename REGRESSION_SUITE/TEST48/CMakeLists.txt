@@ -50,7 +50,7 @@ list(REMOVE_ITEM local_sources ${SFEMaNS_DIR}/TEMPLATE/condlim.F90)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../EXECUTABLE)
 
 # Add executable
-set(exe "testXX.exe")
+set(exe "test48.exe")
 add_executable(${exe} ${local_sources})
 
 # Include and link library
@@ -67,7 +67,7 @@ target_include_directories(${exe} PUBLIC ${SFEMaNS_DIR}/LIBS)
 
 set(passRegex "1234567891")
 
-set (nm "testXX")
+set (nm "test48")
 add_test(NAME ${nm}
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../REGRESSION_TESTS
   COMMAND /bin/bash/ job.sh ${RUN_PRE_PROC} ${PROC_CALL} ${exe} ${RUN_POST_PROC})

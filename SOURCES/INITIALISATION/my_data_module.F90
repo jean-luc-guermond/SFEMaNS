@@ -56,6 +56,8 @@ MODULE my_data_module
      LOGICAL :: if_navier_stokes_with_taylor
      INTEGER :: taylor_order
      REAL(KIND = 8) :: taylor_lambda
+     LOGICAL :: if_navier_stokes_consistent_pressure_form
+     LOGICAL :: if_navier_stokes_bdf2
      INTEGER :: type_fe_velocity
      INTEGER :: nb_dom_ns
      INTEGER, DIMENSION(:), POINTER :: list_dom_ns
@@ -185,6 +187,8 @@ MODULE my_data_module
      TYPE(LK_data) :: LK
      !===Data for stress bc==========================================================
      REAL(KIND = 8) :: stab_bdy_ns
+     !===Data for weak Dirichlet bc==================================================
+     REAL(KIND = 8) :: stab_bdy_ns_Dirichlet
      !===Data for postprocessing=====================================================
      INTEGER :: number_of_planes_in_real_space
      LOGICAL :: check_numerical_stability
@@ -286,6 +290,8 @@ CONTAINS
     a%if_anemo_T = .FALSE.
     a%if_anemo_h = .FALSE.
     a%if_navier_stokes_with_taylor = .FALSE.
+    a%if_navier_stokes_consistent_pressure_form = .FALSE.
+    a%if_navier_stokes_bdf2 = .FALSE.
     a%if_coupling_H_x = .FALSE.
     a%if_coupling_analytical = .FALSE.
     !===Done in sfemansinitialize. Do not touch a%test_de_convergence
@@ -345,6 +351,7 @@ CONTAINS
     a%norm_ref = 0.d0
     a%arpack_tolerance = 0.d0
     a%stab_bdy_ns = 0.d0
+    a%stab_bdy_ns_Dirichlet = 0.d0
     a%h_min_distance = 0.d0
     a%multiplier_for_h_min_distance = 0.d0
     a%taylor_lambda = 1.d0
@@ -654,6 +661,19 @@ CONTAINS
              inputs%if_navier_stokes_with_taylor = .FALSE.
              inputs%taylor_order = -1
           END IF
+
+          CALL find_string(21, '===Do we use consistent pressure method to solve momentum (true/false)?', test)
+          IF (test) THEN
+             READ(21, *) inputs%if_navier_stokes_consistent_pressure_form
+          ELSE
+             inputs%if_navier_stokes_consistent_pressure_form = .FALSE.
+          END IF
+          CALL find_string(21, '===Do we solve Navier-Stokes with second order method (true/false)?', test)
+          IF (test) THEN
+             READ(21, *) inputs%if_navier_stokes_bdf2
+          ELSE
+             inputs%if_navier_stokes_bdf2 = .TRUE.
+          END IF
        END IF
 
        CALL read_until(21, '===Number of subdomains in Navier-Stokes mesh')
@@ -691,6 +711,12 @@ CONTAINS
              CALL read_until(21, '===List of boundary pieces for full Dirichlet BCs on velocity')
              READ(21, *) inputs%vv_list_dirichlet_sides(k)%DIL
           END DO
+          CALL find_string(21, '===stab_bdy_ns_Dirichlet', test)
+          IF (test) THEN
+             READ (21, *) inputs%stab_bdy_ns_Dirichlet
+          ELSE
+             inputs%stab_bdy_ns_Dirichlet = 1.d0
+          END IF
        ELSE
           DO k = 1, 3
              ALLOCATE(inputs%vv_list_dirichlet_sides(k)%DIL(0))

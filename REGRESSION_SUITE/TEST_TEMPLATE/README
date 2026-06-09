@@ -1,15 +1,14 @@
-To create a new TEST_XX in SFEMaNS follows the following steps:
+To create a new TESTXX in SFEMaNS follows the following steps:
 
 Remark 1: $SFEMaNS_DIR should be define in your shell environment (in file .bashrc or other)
 Remark 2: In the following, XX should be replaced by the number of your test
-Remark 3: If you create a test that use restart, follow what is done for TEST_19_20
+Remark 3: If you create a test that use restart, follow what is done for TEST19_20
+Remark 4: If test involve user variable defined in data, follow what id one for TEST43_44 (via a read_user_data.F90 in LOCAL_SOURCES)
 
 ===Step1
 cd $SFEMaNS_DIR/REGRESSION_SUITE/
 cp -rf TEST_TEMPLATE TESTXX
 cd TESTXX
-cp ../../TEMPLATE/main.F90 LOCAL_SOURCES
-cp ../../TEMPLATE/read_user_data.F90 LOCAL_SOURCES
 
 ===Step2
 Open CMakeLists.txt and replace XX by number of new test (two instantiations)

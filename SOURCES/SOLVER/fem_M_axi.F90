@@ -1524,6 +1524,509 @@ CONTAINS
 
   END SUBROUTINE qs_diff_mass_vect_3x3_divpenal_art_comp
 
+  SUBROUTINE qs_diff_mass_vect_3x3_consistent_pre(type_op, LA, mesh, visco, mass, stab, &
+       i_mode, mode, matrix)
+    !========================================================================
+    ! Assembling matrices for vector parabolic type problem.
+    ! Return two matrices with size 3np * 3np for components
+    ! (V1,V4,V5), (V2,V3,V6)
+    ! Compute operator mass - visco(lap-eps1*1/r^2) and eps2*2m*visco/r^2
+    ! eps1 et eps2 are parameters that defined the type of operator
+    ! operator type: 1 for components 1, 4 and 5 (ur_cos, uth_sin, uz_cos)
+    !                2 for components 2, 3 and 6 (ur_sin, uth_cos, uz_sin)
+    !------------------------------------------------------------------------
+    USE my_util
+    USE input_data
+    IMPLICIT NONE
+
+    INTEGER     ,                 INTENT(IN)    :: type_op, mode, i_mode
+    REAL(KIND=8),                 INTENT(IN)    :: visco, mass, stab
+    TYPE(petsc_csr_la)                          :: LA
+    TYPE(mesh_type), TARGET                     :: mesh
+
+    INTEGER :: k, l, m, ni, nj, i, j, np, ki, kj, k_max, ls, ms, n_w, n_ws
+    REAL(KIND=8) :: xij, viscolm, div_penal
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w,mesh%gauss%l_G) :: wwprod
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w) :: aij, bij, cij
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%n_w) :: dij, eij, fij
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,mesh%gauss%n_ws) :: aij_s, bij_s, cij_s
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,mesh%gauss%n_ws) :: dij_s, eij_s, fij_s
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,mesh%gauss%n_ws) :: gij_s, hij_s, iij_s
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,mesh%gauss%n_w)  :: aij_srz, bij_srz, cij_srz
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,mesh%gauss%n_w)  :: dij_srz, eij_srz, fij_srz
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,mesh%gauss%n_w)  :: gij_srz, hij_srz, iij_srz
+
+    REAL(KIND=8) :: ray, eps1, eps2, z, hm1, y, x, stab_normal_bdy, stab_tangent_bdy
+    REAL(KIND=8) :: n1, n2, x_curl, x_div
+    REAL(KIND=8), DIMENSION(3*mesh%gauss%n_w,3*mesh%gauss%n_w)   :: mat_loc
+    INTEGER,      DIMENSION(3*mesh%gauss%n_w)                    :: idxn, jdxn
+    REAL(KIND=8), DIMENSION(3*mesh%gauss%n_ws,3*mesh%gauss%n_ws) :: mat_loc_s
+    REAL(KIND=8), DIMENSION(3*mesh%gauss%n_ws,3*mesh%gauss%n_w)  :: mat_loc_srz
+    INTEGER,      DIMENSION(3*mesh%gauss%n_ws)                   :: idxn_s, jdxn_s
+    INTEGER,      DIMENSION(3*mesh%gauss%n_w)                    :: jdxn_srz
+    INTEGER                                                      :: ix, jx, iglob, jglob
+    INTEGER,      DIMENSION(mesh%gauss%n_w)                      :: jj_loc
+    REAL(KIND=8) :: viscomode, hm
+  
+    !=====DEUX INSERTIONS VALEURS A FAIRE....
+    !#include "petsc/finclude/petsc.h"
+    Mat                                         :: matrix
+    PetscErrorCode                              :: ierr
+
+    CALL MatZeroEntries (matrix, ierr)
+    CALL MatSetOption (matrix, MAT_ROW_ORIENTED, PETSC_FALSE, ierr)
+
+    np   = SIZE(mesh%rr,2)
+    n_w  = mesh%gauss%n_w
+    n_ws = mesh%gauss%n_ws
+
+    IF (type_op == 1) THEN
+       eps1 = 1.d0
+       eps2 = 1.d0
+       k_max = 2
+    ELSEIF (type_op == 2) THEN
+       eps1 = 1.d0
+       eps2 = -1.d0
+       k_max = 2
+    ELSE
+       eps1 = 0.d0
+       eps2 = 0.d0
+       k_max = 1
+       CALL error_petsc('problem in qs_diff_mass_vect_3x3_consistent_pre with type_op')
+    ENDIF
+
+
+    DO l = 1, mesh%gauss%l_G
+       DO ni = 1, mesh%gauss%n_w
+          DO nj = 1, mesh%gauss%n_w
+             wwprod(ni,nj,l) = mesh%gauss%ww(ni,l)*mesh%gauss%ww(nj,l)
+          END DO
+       END DO
+    END DO
+
+    !===Compute and Assemble volume terms
+    DO m = 1, mesh%me
+       jj_loc = mesh%jj(:,m)
+
+       !===Computing and Assembling mass*u.v + stab_LES*(grad u).(grad v)
+       aij = 0.d0
+       bij = 0.d0
+       cij = 0.d0
+       DO l = 1, mesh%gauss%l_G
+
+          !Compute radius of Gauss point
+          ray = 0
+          DO ni = 1, mesh%gauss%n_w;  i = mesh%jj(ni,m)
+             ray = ray + mesh%rr(1,i)*mesh%gauss%ww(ni,l)
+          END DO
+
+          ! Add the constant LES stabilization
+          viscolm  = (stab*mesh%hloc(m))*mesh%gauss%rj(l,m)
+          !hm=0.5d0/inputs%m_max
+          !hm=mesh%hm(i_mode) !(JLG April 7 2017)
+          hm=MIN(mesh%hm(i_mode),mesh%hloc(m))!WRONG choice
+          viscomode = (stab*hm)*mesh%gauss%rj(l,m)
+
+          DO nj = 1, mesh%gauss%n_w; j = mesh%jj(nj, m)
+
+             DO ni = 1, mesh%gauss%n_w;  i = mesh%jj(ni, m)
+
+                !grad(u).grad(v) in r and z
+                xij = 0.d0
+                DO k = 1, mesh%gauss%k_d
+                   xij =  xij + mesh%gauss%dw(k,nj,l,m) * mesh%gauss%dw(k,ni,l,m)
+                END DO
+
+                !diagonal blocks
+                z = ray * viscolm* xij    &
+                     + mass*ray*wwprod(ni,nj,l)*mesh%gauss%rj(l,m) &
+                     + viscomode*mode**2*wwprod(ni,nj,l)/ray
+                cij(ni,nj) =  cij(ni,nj) + z
+                aij(ni,nj) =  aij(ni,nj) + z + viscomode*eps1*wwprod(ni,nj,l)/ray
+                !coupling blocks
+                bij(ni,nj) = bij(ni,nj) + eps2*viscomode*2*mode*wwprod(ni,nj,l)/ray
+             ENDDO
+          ENDDO
+
+       ENDDO
+
+       !++++++++++++++++
+       mat_loc = 0.d0
+       DO ki= 1, 3
+          DO ni = 1, n_w
+             i = jj_loc(ni)
+             iglob = LA%loc_to_glob(ki,i)
+             ix = (ki-1)*n_w+ni
+             idxn(ix) = iglob-1
+             DO kj = 1, 3
+                DO nj = 1, n_w
+                   j = jj_loc(nj)
+                   jglob = LA%loc_to_glob(kj,j)
+                   jx = (kj-1)*n_w+nj
+                   jdxn(jx) = jglob-1
+                   IF ((ki .LT. 3) .AND. (kj .LT. 3)) THEN
+                      IF (ki==kj) THEN
+                         mat_loc(ix,jx) = mat_loc(ix,jx) + aij(ni,nj)
+                      ELSE
+                         mat_loc(ix,jx) = mat_loc(ix,jx) + bij(ni,nj)
+                      END IF
+                   ELSE ! ki=3 OR kj=3
+                      IF (ki==kj) THEN
+                         mat_loc(ix,jx) = mat_loc(ix,jx) + cij(ni,nj)
+                      END IF
+                   END IF
+                END DO
+             END DO
+          END DO
+       END DO
+       CALL MatSetValues(matrix, 3*n_w, idxn, 3*n_w, jdxn, mat_loc, ADD_VALUES, ierr)
+       !===End Computing and Assembling mass*u.v + stab_LES*(grad u).(grad v)
+
+       !===Computing and Assembling visco*(curl(u).curl(v)) + (visco+div_stab)*div(u).div(v)
+       aij = 0.d0
+       bij = 0.d0
+       cij = 0.d0
+       dij = 0.d0
+       eij = 0.d0
+       fij = 0.d0
+       DO l = 1, mesh%gauss%l_G
+
+          !Compute radius of Gauss point
+          ray = 0.d0
+          DO ni = 1, mesh%gauss%n_w;  i = mesh%jj(ni,m)
+             ray = ray + mesh%rr(1,i)*mesh%gauss%ww(ni,l)
+          END DO
+
+          viscolm  = visco*mesh%gauss%rj(l,m)*ray
+          div_penal = (visco+inputs%div_stab_in_ns)*mesh%gauss%rj(l,m)*ray
+
+          DO nj = 1, mesh%gauss%n_w; j = mesh%jj(nj, m)
+             DO ni = 1, mesh%gauss%n_w;  i = mesh%jj(ni, m)
+                aij(ni,nj) = aij(ni,nj) &
+                     + viscolm*(mesh%gauss%dw(2,ni,l,m)*mesh%gauss%dw(2,nj,l,m) &
+                         + (mode/ray)**2*wwprod(ni,nj,l)) &
+                     + div_penal*(mesh%gauss%dw(1,ni,l,m) + mesh%gauss%ww(ni,l)/ray)*(mesh%gauss%dw(1,nj,l,m) &
+                     + mesh%gauss%ww(nj,l)/ray)
+                bij(ni,nj) = bij(ni,nj) &
+                     + viscolm*(eps2*mode*mesh%gauss%ww(ni,l)*mesh%gauss%dw(1,nj,l,m)/ray+eps2*mode*wwprod(ni,nj,l)/ray**2) &
+                     + div_penal*(mesh%gauss%dw(1,ni,l,m) + mesh%gauss%ww(ni,l)/ray)*(eps2*(mode/ray)*mesh%gauss%ww(nj,l))
+                cij(ni,nj) = cij(ni,nj) &
+                     - viscolm*(mesh%gauss%dw(2,ni,l,m)*mesh%gauss%dw(1,nj,l,m)) &
+                     + div_penal*(mesh%gauss%dw(1,ni,l,m) + mesh%gauss%ww(ni,l)/ray)*mesh%gauss%dw(2,nj,l,m)
+                dij(ni,nj) = dij(ni,nj) &
+                     + viscolm*(mesh%gauss%dw(1,ni,l,m)*mesh%gauss%dw(1,nj,l,m) &
+                         + mesh%gauss%dw(2,ni,l,m)*mesh%gauss%dw(2,nj,l,m)) &
+                     + viscolm*(mesh%gauss%dw(1,ni,l,m)*mesh%gauss%ww(nj,l)/ray &
+                         + wwprod(ni,nj,l)/ray**2 &
+                         + mesh%gauss%dw(1,nj,l,m)*mesh%gauss%ww(ni,l)/ray) &
+                     + div_penal*wwprod(ni,nj,l)*(mode/ray)**2
+                eij(ni,nj) = eij(ni,nj) &
+                     + viscolm*(eps2*mode*mesh%gauss%dw(2,ni,l,m)*mesh%gauss%ww(nj,l)/ray) &
+                     + div_penal*eps2*(mode/ray)*mesh%gauss%ww(ni,l)*mesh%gauss%dw(2,nj,l,m)
+                fij(ni,nj) = fij(ni,nj) &
+                     + viscolm*(mesh%gauss%dw(1,ni,l,m)*mesh%gauss%dw(1,nj,l,m) &
+                         + (mode/ray)**2*wwprod(ni,nj,l)) &
+                     + div_penal*(mesh%gauss%dw(2,ni,l,m)*mesh%gauss%dw(2,nj,l,m))
+             END DO
+          END DO
+       END DO
+
+       !++++++++++++++++
+       mat_loc = 0.d0
+       idxn = 0
+       jdxn = 0
+       DO ni = 1, n_w
+          DO ki = 1, 3
+             i = jj_loc(ni)
+             iglob = LA%loc_to_glob(ki,i)
+             ix = (ki-1)*n_w + ni
+             idxn(ix) = iglob-1
+          END DO
+       END DO
+       jdxn = idxn
+
+       DO ni = 1, n_w
+          DO nj = 1, n_w
+             !=== Line i 1 (Vr)
+             ix = ni
+             !=== Column j 1 (Vr)
+             jx = nj
+             mat_loc(ix,jx) = mat_loc(ix,jx) + aij(ni,nj)
+             !=== Column j 2 (Vt)
+             jx = nj+n_w
+             mat_loc(ix,jx) = mat_loc(ix,jx) + bij(ni,nj)
+             !=== Column j 3 (Vz)
+             jx = nj+2*n_w
+             mat_loc(ix,jx) = mat_loc(ix,jx) + cij(ni,nj)
+
+             !=== Line i 2 (Vt)
+             ix = ni+n_w
+             !=== Column j 1 (Vr)
+             jx = nj
+             mat_loc(ix,jx) = mat_loc(ix,jx) + bij(nj,ni)
+             !=== Column j 2 (Vt)
+             jx = nj+n_w
+             mat_loc(ix,jx) = mat_loc(ix,jx) + dij(ni,nj)
+             !=== Column j 3 (Vz)
+             jx = nj+2*n_w
+             mat_loc(ix,jx) = mat_loc(ix,jx) + eij(ni,nj)
+
+             !=== Line i 3 (Vz)
+             ix = ni+2*n_w
+             !=== Column j 1 (Vr)
+             jx = nj
+             mat_loc(ix,jx) = mat_loc(ix,jx) + cij(nj,ni)
+             !=== Column j 2 (Vt)
+             jx = nj+n_w
+             mat_loc(ix,jx) = mat_loc(ix,jx) + eij(nj,ni)
+             !=== Column j 3 (Vz)
+             jx = nj+2*n_w
+             mat_loc(ix,jx) = mat_loc(ix,jx) + fij(ni,nj)
+          END DO
+       END DO
+       CALL MatSetValues(matrix, 3*n_w, idxn, 3*n_w, jdxn, mat_loc, ADD_VALUES, ierr)
+       !===End Computing and Assembling visco*(curl(u).curl(v)) + (visco+div_stab)*div(u).div(v)
+
+    ENDDO!end loop on mesh%me
+    !===End Compute and Assemble volume terms
+
+    !===Compute boundary terms
+    ! Define stab_normal (always enforced) and stab_tangent
+    stab_normal_bdy  = 1.d0 ! 1.d0 + visco
+    stab_tangent_bdy = 1.d0 !visco
+
+    IF (SIZE(inputs%vv_list_dirichlet_sides(1)%DIL) > 0) THEN
+       DO ms = 1, mesh%dom_mes
+          IF (MINVAL(ABS(mesh%sides(ms) - inputs%vv_list_dirichlet_sides(1)%DIL))>0) CYCLE
+
+          aij_s = 0.d0
+          bij_s = 0.d0
+          cij_s = 0.d0
+          dij_s = 0.d0
+          eij_s = 0.d0
+          fij_s = 0.d0
+          DO ls = 1, mesh%gauss%l_Gs
+             !Compute radius of Gauss point
+             ray = SUM(mesh%rr(1,mesh%jjs(:,ms))*mesh%gauss%wws(:,ls))
+
+             IF (ray.LT.1.d-10) CYCLE
+
+             hm1 = inputs%stab_bdy_ns_Dirichlet/SUM(mesh%gauss%rjs(:,ms))
+             x = stab_normal_bdy*hm1*mesh%gauss%rjs(ls,ms)*ray
+             z = stab_tangent_bdy*hm1*mesh%gauss%rjs(ls,ms)*ray
+
+             DO ni = 1, mesh%gauss%n_ws
+                DO nj = 1, mesh%gauss%n_ws
+                   y = mesh%gauss%wws(ni,ls)*mesh%gauss%wws(nj,ls)
+                   ! for normal component: (u.n) (v.n)
+                   aij_s(ni,nj) = aij_s(ni,nj) + x*y*mesh%gauss%rnorms(1,ls,ms)**2
+                   bij_s(ni,nj) = bij_s(ni,nj) + x*y*mesh%gauss%rnorms(1,ls,ms)*mesh%gauss%rnorms(2,ls,ms)
+                   cij_s(ni,nj) = cij_s(ni,nj) + x*y*mesh%gauss%rnorms(2,ls,ms)**2
+                   ! for tangent component: (uxn).(vxn)
+                   dij_s(ni,nj) = dij_s(ni,nj) + z*y*mesh%gauss%rnorms(1,ls,ms)**2
+                   eij_s(ni,nj) = eij_s(ni,nj) - z*y*mesh%gauss%rnorms(1,ls,ms)*mesh%gauss%rnorms(2,ls,ms)
+                   fij_s(ni,nj) = fij_s(ni,nj) + z*y*mesh%gauss%rnorms(2,ls,ms)**2
+                END DO
+             END DO
+          END DO
+
+          !++++++++++++++++
+          !=== In the following loops, ki=1 for Vr, ki=2 for Vt, and ki=3 for Vz
+          mat_loc_s = 0.d0
+          idxn_s    = 0
+          jdxn_s    = 0
+          DO ki = 1, 3
+             DO ni = 1, n_ws
+                i = mesh%jjs(ni,ms)
+                iglob = LA%loc_to_glob(ki,i)
+                ix = (ki-1)*n_ws+ni
+                idxn_s(ix) = iglob-1
+                DO kj = 1, 3
+                   DO nj = 1, n_ws
+                      j = mesh%jjs(nj,ms)
+                      jglob = LA%loc_to_glob(kj,j)
+                      jx = (kj-1)*n_ws+nj
+                      jdxn_s(jx) = jglob-1
+                      IF ((ki == 1) .AND. (kj == 1)) THEN
+                         mat_loc_s(ix,jx) = mat_loc_s(ix,jx) + aij_s(ni,nj) + fij_s(ni,nj)
+                      ELSE IF ((ki == 1) .AND. (kj==2)) THEN
+                         CYCLE
+                         !mat_loc_s(ix,jx) = mat_loc_s(ix,jx) 
+                      ELSE IF ((ki == 1) .AND. (kj==3)) THEN
+                         mat_loc_s(ix,jx) = mat_loc_s(ix,jx) + bij_s(ni,nj) + eij_s(ni,nj)
+                      ELSE IF ((ki == 2) .AND. (kj==1)) THEN
+                         CYCLE
+                         !mat_loc_s(ix,jx) = mat_loc_s(ix,jx)
+                      ELSE IF ((ki == 2) .AND. (kj==2)) THEN
+                         mat_loc_s(ix,jx) = mat_loc_s(ix,jx) + dij_s(ni,nj) + fij_s(ni,nj)
+                      ELSE IF ((ki == 2) .AND. (kj==3)) THEN
+                         CYCLE
+                         !mat_loc_s(ix,jx) = mat_loc_s(ix,jx)
+                      ELSE IF ((ki == 3) .AND. (kj==1)) THEN
+                         mat_loc_s(ix,jx) = mat_loc_s(ix,jx) + bij_s(nj,ni) + eij_s(nj,ni)
+                      ELSE IF ((ki == 3) .AND. (kj==2)) THEN
+                         CYCLE
+                         !mat_loc_s(ix,jx) = mat_loc_s(ix,jx)
+                      ELSE !ki=3 and kj=3
+                         mat_loc_s(ix,jx) = mat_loc_s(ix,jx) + cij_s(ni,nj) + dij_s(ni,nj)
+                      END IF
+                   END DO
+                END DO
+             END DO
+          END DO
+          CALL MatSetValues(matrix, 3*n_ws, idxn_s, 3*n_ws, jdxn_s, mat_loc_s, ADD_VALUES, ierr)
+       END DO
+    END IF
+
+    DO ms = 1, mesh%dom_mes
+!       !Skip Dirichlet sides
+!       IF (SIZE(inputs%vv_list_dirichlet_sides(1)%DIL) > 0) THEN
+!          IF (MINVAL(ABS(mesh%sides(ms) - inputs%vv_list_dirichlet_sides(1)%DIL))<1) CYCLE
+!       END IF
+
+       aij_s = 0.d0; aij_srz = 0.d0
+       bij_s = 0.d0; bij_srz = 0.d0
+       cij_s = 0.d0; cij_srz = 0.d0
+       dij_s = 0.d0; dij_srz = 0.d0
+       eij_s = 0.d0; eij_srz = 0.d0
+       fij_s = 0.d0; fij_srz = 0.d0
+       gij_s = 0.d0; gij_srz = 0.d0
+       hij_s = 0.d0; hij_srz = 0.d0
+       iij_s = 0.d0; iij_srz = 0.d0
+
+       DO ls = 1, mesh%gauss%l_Gs
+          !Compute radius of Gauss point
+          ray = SUM(mesh%rr(1,mesh%jjs(:,ms))*mesh%gauss%wws(:,ls))
+
+          IF (ray.LT.1.d-10) CYCLE
+
+          x_curl = visco*mesh%gauss%rjs(ls,ms)*ray
+          x_div  = (visco+inputs%div_stab_in_ns)*mesh%gauss%rjs(ls,ms)*ray
+          n1  = mesh%gauss%rnorms(1,ls,ms)
+          n2  = mesh%gauss%rnorms(2,ls,ms)
+
+          !Compute rest integral by part diffusion: (curl u).(vxn) - (div u)(v.n)
+          DO ni = 1, mesh%gauss%n_ws
+
+             !term without r-z derivative
+             DO nj = 1, mesh%gauss%n_ws
+                y = mesh%gauss%wws(ni,ls)*mesh%gauss%wws(nj,ls)
+                aij_s(ni,nj) = aij_s(ni,nj) - n1*x_div*y/ray
+                bij_s(ni,nj) = bij_s(ni,nj) - n1*x_div*eps2*mode*y/ray
+                cij_s(ni,nj) = 0.d0 !no contribution
+                dij_s(ni,nj) = dij_s(ni,nj) + n1*x_curl*(-eps2)*mode*y/ray
+                eij_s(ni,nj) = eij_s(ni,nj) - n1*x_curl*y/ray
+                fij_s(ni,nj) = fij_s(ni,nj) + n2*x_curl*(-eps2)*mode*y/ray
+                gij_s(ni,nj) = gij_s(ni,nj) - n2*x_div*y/ray
+                hij_s(ni,nj) = hij_s(ni,nj) - n2*x_div*eps2*mode*y/ray
+                iij_s(ni,nj) = 0.d0 !no contribution
+             END DO
+
+             !term with r-z derivative
+             DO nj = 1, mesh%gauss%n_w
+                aij_srz(ni,nj) = aij_srz(ni,nj) &
+                             - n2*x_curl*mesh%gauss%wws(ni,ls)*mesh%gauss%dw_s(2,nj,ls,ms) &
+                             - n1*x_div*mesh%gauss%wws(ni,ls)*mesh%gauss%dw_s(1,nj,ls,ms)
+                bij_srz(ni,nj) = 0.d0 !no contribution
+                cij_srz(ni,nj) = cij_srz(ni,nj) &
+                             + n2*x_curl*mesh%gauss%wws(ni,ls)*mesh%gauss%dw_s(1,nj,ls,ms) &
+                             - n1*x_div*mesh%gauss%wws(ni,ls)*mesh%gauss%dw_s(2,nj,ls,ms)
+                dij_srz(ni,nj) = 0.d0 !no contribution
+                eij_srz(ni,nj) = eij_srz(ni,nj) &
+                             - x_curl*mesh%gauss%wws(ni,ls)*(n2*mesh%gauss%dw_s(2,nj,ls,ms) &
+                                  + n1*mesh%gauss%dw_s(1,nj,ls,ms))
+                fij_srz(ni,nj) = 0.d0 !no contribution
+                gij_srz(ni,nj) = gij_srz(ni,nj) &
+                             + n1*x_curl*mesh%gauss%wws(ni,ls)*mesh%gauss%dw_s(2,nj,ls,ms) &
+                             - n2*x_div*mesh%gauss%wws(ni,ls)*mesh%gauss%dw_s(1,nj,ls,ms)
+                hij_srz(ni,nj) = 0.d0 !no contribution
+                iij_srz(ni,nj) = iij_srz(ni,nj) &
+                             - n1*x_curl*mesh%gauss%wws(ni,ls)*mesh%gauss%dw_s(1,nj,ls,ms) &
+                             - n2*x_div*mesh%gauss%wws(ni,ls)*mesh%gauss%dw_s(2,nj,ls,ms)
+             END DO
+          END DO
+       END DO
+
+       !++++++++++++++++
+       !=== In the following loops, ki=1 for Vr, ki=2 for Vt, and ki=3 for Vz
+       mat_loc_s   = 0.d0
+       mat_loc_srz = 0.d0
+       idxn_s   = 0
+       jdxn_s   = 0
+       jdxn_srz = 0
+       DO ki = 1, 3
+          DO ni = 1, n_ws
+             i = mesh%jjs(ni,ms)
+             iglob = LA%loc_to_glob(ki,i)
+             ix = (ki-1)*n_ws+ni
+             idxn_s(ix) = iglob-1
+             DO kj = 1, 3
+                !Terms without r-z derivative
+                DO nj = 1, n_ws
+                   j = mesh%jjs(nj,ms)
+                   jglob = LA%loc_to_glob(kj,j)
+                   jx = (kj-1)*n_ws+nj
+                   jdxn_s(jx) = jglob-1
+                   IF ((ki == 1) .AND. (kj == 1)) THEN
+                      mat_loc_s(ix,jx) = mat_loc_s(ix,jx) + aij_s(ni,nj)
+                   ELSE IF ((ki == 1) .AND. (kj==2)) THEN
+                      mat_loc_s(ix,jx) = mat_loc_s(ix,jx) + bij_s(ni,nj)
+                   ELSE IF ((ki == 1) .AND. (kj==3)) THEN
+                      mat_loc_s(ix,jx) = mat_loc_s(ix,jx) + cij_s(ni,nj)
+                   ELSE IF ((ki == 2) .AND. (kj==1)) THEN
+                      mat_loc_s(ix,jx) = mat_loc_s(ix,jx) + dij_s(ni,nj)
+                   ELSE IF ((ki == 2) .AND. (kj==2)) THEN
+                      mat_loc_s(ix,jx) = mat_loc_s(ix,jx) + eij_s(ni,nj)
+                   ELSE IF ((ki == 2) .AND. (kj==3)) THEN
+                      mat_loc_s(ix,jx) = mat_loc_s(ix,jx) + fij_s(ni,nj)
+                   ELSE IF ((ki == 3) .AND. (kj==1)) THEN
+                      mat_loc_s(ix,jx) = mat_loc_s(ix,jx) + gij_s(ni,nj)
+                   ELSE IF ((ki == 3) .AND. (kj==2)) THEN
+                      mat_loc_s(ix,jx) = mat_loc_s(ix,jx) + hij_s(ni,nj)
+                   ELSE !ki=3 and kj=3
+                      mat_loc_s(ix,jx) = mat_loc_s(ix,jx) + iij_s(ni,nj)
+                   END IF
+                END DO
+                !Terms with r-z derivative
+                DO nj = 1, n_w
+                   m = mesh%neighs(ms)
+                   j = mesh%jj(nj,m)
+                   jglob = LA%loc_to_glob(kj,j)
+                   jx = (kj-1)*n_w+nj
+                   jdxn_srz(jx) = jglob-1
+                   IF ((ki == 1) .AND. (kj == 1)) THEN
+                      mat_loc_srz(ix,jx) = mat_loc_srz(ix,jx) + aij_srz(ni,nj)
+                   ELSE IF ((ki == 1) .AND. (kj==2)) THEN
+                      mat_loc_srz(ix,jx) = mat_loc_srz(ix,jx) + bij_srz(ni,nj)
+                   ELSE IF ((ki == 1) .AND. (kj==3)) THEN
+                      mat_loc_srz(ix,jx) = mat_loc_srz(ix,jx) + cij_srz(ni,nj)
+                   ELSE IF ((ki == 2) .AND. (kj==1)) THEN
+                      mat_loc_srz(ix,jx) = mat_loc_srz(ix,jx) + dij_srz(ni,nj)
+                   ELSE IF ((ki == 2) .AND. (kj==2)) THEN
+                      mat_loc_srz(ix,jx) = mat_loc_srz(ix,jx) + eij_srz(ni,nj)
+                   ELSE IF ((ki == 2) .AND. (kj==3)) THEN
+                      mat_loc_srz(ix,jx) = mat_loc_srz(ix,jx) + fij_srz(ni,nj)
+                   ELSE IF ((ki == 3) .AND. (kj==1)) THEN
+                      mat_loc_srz(ix,jx) = mat_loc_srz(ix,jx) + gij_srz(ni,nj)
+                   ELSE IF ((ki == 3) .AND. (kj==2)) THEN
+                      mat_loc_srz(ix,jx) = mat_loc_srz(ix,jx) + hij_srz(ni,nj)
+                   ELSE !ki=3 and kj=3
+                      mat_loc_srz(ix,jx) = mat_loc_srz(ix,jx) + iij_srz(ni,nj)
+                   END IF
+                END DO
+             END DO
+          END DO
+       END DO
+       CALL MatSetValues(matrix, 3*n_ws, idxn_s, 3*n_ws, jdxn_s, mat_loc_s, ADD_VALUES, ierr)
+       CALL MatSetValues(matrix, 3*n_ws, idxn_s, 3*n_w, jdxn_srz, mat_loc_srz, ADD_VALUES, ierr)
+    END DO
+    !===End Compute boundary terms
+
+    CALL MatAssemblyBegin(matrix,MAT_FINAL_ASSEMBLY,ierr)
+    CALL MatAssemblyEnd(matrix,MAT_FINAL_ASSEMBLY,ierr)
+
+  END SUBROUTINE qs_diff_mass_vect_3x3_consistent_pre
+
   SUBROUTINE qs_00_M (mesh, alpha, LA, matrix)
     !=================================================
     IMPLICIT NONE

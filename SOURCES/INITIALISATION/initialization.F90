@@ -262,6 +262,7 @@ CONTAINS
     USE update_navier_stokes
     USE update_maxwell
     USE update_taylor_navier_stokes
+    USE update_ns_consistent_pressure
     USE input_data
     IMPLICIT NONE
     REAL(KIND=8), INTENT(IN)                                  :: time_in
@@ -366,6 +367,10 @@ CONTAINS
           CALL navier_stokes_taylor(comm_one_d_ns, time, vv_3_LA, pp_1_LA, &
                list_mode, pp_mesh, vv_mesh, pn, der_pn, un, der_un, vvz_per, &
                pp_per, density, tempn, concn)
+       ELSE IF (inputs%if_navier_stokes_consistent_pressure_form) THEN
+          CALL ns_consistent_pressure_with_u(comm_one_d_ns, time, vv_3_LA, pp_1_LA, vvz_per, pp_per, &
+               inputs%dt, inputs%Re, list_mode, pp_mesh, vv_mesh, incpn_m1, incpn, &
+               pn_m1, pn, un_m1, un, H_to_NS, B_to_NS, density, tempn, concn, visc_LES)
        ELSE
           CALL navier_stokes_decouple(comm_one_d_ns, time, vv_3_LA, pp_1_LA, &
                list_mode, pp_mesh, vv_mesh, incpn_m1, incpn, &
