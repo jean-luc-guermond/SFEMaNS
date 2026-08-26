@@ -39,7 +39,8 @@ module interface_boundary
 END module interface_boundary
 
 module point_to_boundary_generic
-  USE boundary_generic_module, ONLY : init_velocity_pressure_generic => init_velocity_pressure, &
+  USE boundary_generic_module, ONLY : my_assign_boundary, &
+       init_velocity_pressure_generic => init_velocity_pressure, &
        init_temperature_generic => init_temperature, &
        init_concentration_generic => init_concentration, &
        init_level_set_generic =>  init_level_set, &
@@ -47,7 +48,8 @@ module point_to_boundary_generic
        source_in_temperature_generic =>  source_in_temperature, &
        source_in_level_set_generic =>  source_in_level_set, &
        vv_exact_generic =>  vv_exact, &
-       base_flow_generic =>  base_flow, &
+       base_flow_generic => template_base_flow, &
+      !  base_flow_generic =>  base_flow, &
        imposed_velocity_by_penalty_generic =>  imposed_velocity_by_penalty, &
        pp_exact_generic =>  pp_exact, &
        temperature_exact_generic =>  temperature_exact, &

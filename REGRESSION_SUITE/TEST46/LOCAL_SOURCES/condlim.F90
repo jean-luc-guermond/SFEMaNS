@@ -10,6 +10,12 @@ SUBMODULE (boundary_generic_module) boundary_generic
 !VB 12/02/2026
 
 CONTAINS
+
+   MODULE SUBROUTINE my_assign_boundary
+
+      IMPLICIT NONE
+
+   END SUBROUTINE my_assign_boundary
   !===============================================================================
   !                       Boundary conditions for Navier-Stokes
   !===============================================================================

@@ -781,7 +781,7 @@ CONTAINS
 
     !===Assign correct user functions in boundary module
     call assign_boundary
-
+    call my_assign_boundary
     !===Read data file==============================================================
     data_fichier = TRIM(ADJUSTL('data'))
     CALL read_my_data(data_fichier)

@@ -1,6 +1,6 @@
 module boundary
-  use interface_boundary
-  use point_to_boundary_generic
+   use interface_boundary
+   use point_to_boundary_generic
 
 CONTAINS
   SUBROUTINE assign_boundary

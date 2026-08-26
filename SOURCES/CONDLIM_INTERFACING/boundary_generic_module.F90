@@ -5,7 +5,24 @@ MODULE boundary_generic_module
   USE input_data
   USE bessel
   IMPLICIT NONE
+
+  ABSTRACT INTERFACE
+    FUNCTION interface_base_flow(TYPE_VEC,rr,m,t) RESULT(vv)
+      INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
+      REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
+      INTEGER,                             INTENT(IN)   :: m
+      REAL(KIND=8),                        INTENT(IN)   :: t
+      REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
+    END FUNCTION interface_base_flow
+  END INTERFACE
+
+  ! PROCEDURE(interface_base_flow), POINTER :: base_flow => template_base_flow
+
   INTERFACE
+      MODULE SUBROUTINE my_assign_boundary
+          IMPLICIT NONE
+      END SUBROUTINE my_assign_boundary
+
      MODULE SUBROUTINE init_velocity_pressure(mesh_f, mesh_c, time, &
           dt, list_mode, un_m1, un, pn_m1, pn, phin_m1, phin)
        USE def_type_mesh
@@ -85,13 +102,13 @@ MODULE boundary_generic_module
        REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
      END FUNCTION vv_exact
 
-     MODULE FUNCTION base_flow(TYPE_VEC,rr,m,t) RESULT(vv)
-       INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
-       REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
-       INTEGER,                             INTENT(IN)   :: m
-       REAL(KIND=8),                        INTENT(IN)   :: t
-       REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
-     END FUNCTION base_flow
+    !  MODULE FUNCTION base_flow(TYPE_VEC,rr,m,t) RESULT(vv)
+    !    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
+    !    REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
+    !    INTEGER,                             INTENT(IN)   :: m
+    !    REAL(KIND=8),                        INTENT(IN)   :: t
+    !    REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
+    !  END FUNCTION base_flow
 
      MODULE FUNCTION imposed_velocity_by_penalty(rr,t) RESULT(vv)
        REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
@@ -480,6 +497,23 @@ CONTAINS
     nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=t
     !===Dummy variables to avoid warning
   END FUNCTION template_vv_exact
+
+  !===Base flow when solving linear Navier-Stokes, if "===Solve Linear Navier-Stokes? (with u)" set to .F.
+  !===If set to True, SFEMaNS will read suite_jacob_ns (which can be generated through Newton method)
+  FUNCTION template_base_flow(TYPE_VEC,rr,m,t) RESULT(vv)
+    IMPLICIT NONE
+    INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
+    REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
+    INTEGER,                             INTENT(IN)   :: m
+    REAL(KIND=8),                        INTENT(IN)   :: t
+    REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
+
+    vv = 0.d0
+    RETURN
+    !===Dummy variables to avoid warning
+    nd=TYPE_VEC; nd=SIZE(rr,1); nd=m; rd=t
+    !===Dummy variables to avoid warning
+  END FUNCTION template_base_flow
 
   !===Solid velocity imposed when using penalty technique
   !===Defined in Fourier space on mode 0 only.

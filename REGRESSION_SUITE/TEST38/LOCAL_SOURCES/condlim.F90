@@ -16,6 +16,12 @@ SUBMODULE (boundary_generic_module) boundary_generic
   CHARACTER(LEN=1)  :: cd1
   !===Dummy variables to avoid warning
 CONTAINS
+
+   MODULE SUBROUTINE my_assign_boundary
+
+      IMPLICIT NONE
+
+   END SUBROUTINE my_assign_boundary
   !===============================================================================
   !                       Boundary conditions for Navier-Stokes
   !===============================================================================

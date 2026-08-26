@@ -12,6 +12,12 @@ SUBMODULE (boundary_generic_module) boundary_generic
   ! REAL(KIND=8), PARAMETER :: heigth_conc = 1.6d0, heigth_vel = 1.6d0, heigth_temp = 2.0d0, heigth_mag = 2.4d0
   REAL(KIND=8), PARAMETER :: heigth_conc=1.2d0, heigth_vel=1.2d0, heigth_temp=1.6d0, heigth_mag=2.0d0, heigth_phi=2.4d0
 CONTAINS
+
+   MODULE SUBROUTINE my_assign_boundary
+
+      IMPLICIT NONE
+
+   END SUBROUTINE my_assign_boundary
   !===============================================================================
   !                       Boundary conditions for Navier-Stokes
   !===============================================================================
