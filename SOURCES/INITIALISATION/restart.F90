@@ -8,7 +8,7 @@ CONTAINS
 
   SUBROUTINE write_restart_ns(communicator, vv_mesh, pp_mesh, time, list_mode, &
        un, un_m1, pn, pn_m1, incpn, incpn_m1, filename, it, freq_restart, &
-       opt_level_set, opt_level_set_m1, opt_max_vel, opt_mono, opt_dt)
+       opt_level_set, opt_level_set_m1, opt_max_vel, opt_mono, opt_dt, opt_name)
 
     USE def_type_mesh
     USE chaine_caractere
@@ -29,6 +29,8 @@ CONTAINS
     CHARACTER(len=3)                  :: tit, tit_S
     LOGICAL                           :: mono=.FALSE.
     LOGICAL                           :: skip
+    CHARACTER(len=*), OPTIONAL, INTENT(IN) :: opt_name
+    CHARACTER(len=:), ALLOCATABLE          :: suite_name
     CHARACTER(len=250)                :: out_name
 
     CALL MPI_COMM_SIZE(communicator(1),nb_procs_S,code)
@@ -51,10 +53,16 @@ CONTAINS
        mono = opt_mono
     END IF
 
-    IF (mono) THEN
-       out_name = 'suite_ns_I'//tit//'.'//filename
+    IF (PRESENT(opt_name)) THEN
+       suite_name = opt_name
     ELSE
-       out_name = 'suite_ns_S'//tit_S//'_I'//tit//'.'//filename
+       suite_name = "suite_ns"
+    END IF
+
+    IF (mono) THEN
+       out_name = suite_name // '_I'//tit//'.'//filename
+    ELSE
+       out_name = suite_name // '_S'//tit_S//'_I'//tit//'.'//filename
     END IF
 
     skip = (mono .AND. rang_S /= 0)
@@ -106,7 +114,7 @@ CONTAINS
   SUBROUTINE read_restart_ns(communicator, time, list_mode, &
        un, un_m1, pn, pn_m1, incpn, incpn_m1, filename, val_init, interpol, &
        opt_level_set, opt_level_set_m1, opt_max_vel, opt_mono &
-       , opt_it, opt_dt) !===HF may 2020
+       , opt_it, opt_dt, opt_name) !===HF may 2020
 
     USE def_type_mesh
     USE chaine_caractere
@@ -136,6 +144,10 @@ CONTAINS
     CHARACTER(len=3)  :: tit
     LOGICAL           :: mono=.FALSE.
     CHARACTER(len=250):: in_name
+    CHARACTER(len=*), OPTIONAL, INTENT(IN) :: opt_name
+    CHARACTER(len=:), ALLOCATABLE          :: suite_name
+
+
     CALL MPI_COMM_RANK(communicator(2),rang_F,code)
     CALL MPI_COMM_SIZE(communicator(2),nb_procs_F,code)
     CALL MPI_COMM_RANK(communicator(1),rang_S,code)
@@ -163,21 +175,28 @@ CONTAINS
        tit_S(l:l) = '0'
     END DO
 
+
+    IF (PRESENT(opt_name)) THEN
+       suite_name = opt_name
+    ELSE
+       suite_name = "suite_ns"
+    END IF
+
     IF (PRESENT(opt_mono)) THEN
        mono = opt_mono
     END IF
 
     IF (mono) THEN
        IF (PRESENT(opt_it)) THEN
-          in_name = 'suite_ns_I'//tit//'.'//filename
+          in_name = suite_name // '_I'//tit//'.'//filename
        ELSE
-          in_name = 'suite_ns.'//filename
+          in_name = suite_name // '.'//filename
        END IF
     ELSE
        IF (PRESENT(opt_it)) THEN
-          in_name = 'suite_ns_S'//tit_S//'_I'//tit//'.'//filename
+          in_name = suite_name // '_S'//tit_S//'_I'//tit//'.'//filename
        ELSE
-          in_name = 'suite_ns_S'//tit_S//'.'//filename
+          in_name = suite_name // '_S'//tit_S//'.'//filename
        END IF
     END IF
 

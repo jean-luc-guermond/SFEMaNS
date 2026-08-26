@@ -85,6 +85,14 @@ MODULE boundary_generic_module
        REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
      END FUNCTION vv_exact
 
+     MODULE FUNCTION base_flow(TYPE_VEC,rr,m,t) RESULT(vv)
+       INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
+       REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
+       INTEGER,                             INTENT(IN)   :: m
+       REAL(KIND=8),                        INTENT(IN)   :: t
+       REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
+     END FUNCTION base_flow
+
      MODULE FUNCTION imposed_velocity_by_penalty(rr,t) RESULT(vv)
        REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
        REAL(KIND=8),                        INTENT(IN)   :: t

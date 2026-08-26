@@ -43,6 +43,8 @@ MODULE my_data_module
      LOGICAL :: if_compute_momentum_pseudo_force
      REAL(KIND = 8) :: div_stab_in_ns
      !===Data for Navier-Stokes======================================================
+     LOGICAL :: if_linear_navier_stokes_with_u
+     LOGICAL :: if_read_start_linear_navier_stokes_with_u
      LOGICAL :: if_navier_stokes_with_u
      LOGICAL :: if_navier_stokes_art_comp
      REAL(KIND = 8) :: penal_coeff_art_comp
@@ -251,6 +253,8 @@ CONTAINS
     a%if_ns_penalty = .FALSE.
     a%if_impose_vel_in_solids = .FALSE.
     a%if_compute_momentum_pseudo_force = .FALSE.
+    a%if_linear_navier_stokes_with_u = .FALSE.
+    a%if_read_start_linear_navier_stokes_with_u = .FALSE.
     a%if_navier_stokes_with_u = .FALSE.
     a%if_navier_stokes_art_comp = .FALSE.
     a%if_tensor_sym = .FALSE.
@@ -604,6 +608,22 @@ CONTAINS
              inputs%penal_coeff_art_comp = 1.d0
           END IF
        END IF
+
+       !==========Linear Navier Stokes? ===============!
+       CALL find_string(21, '===Solve Linear Navier-Stokes? (with u)', test)
+       IF (test) THEN
+          READ(21, *) inputs%if_linear_navier_stokes_with_u
+       ELSE
+          inputs%if_linear_navier_stokes_with_u = .FALSE.
+       END IF
+       IF (inputs%if_linear_navier_stokes_with_u) THEN
+          CALL find_string(21, '===Do we read base flow from suite_jacob_ns?', test)
+          IF (test) THEN
+            READ(21, *) inputs%if_read_start_linear_navier_stokes_with_u
+          ELSE
+            inputs%if_read_start_linear_navier_stokes_with_u = .FALSE.
+          ENDIF
+       ENDIF
 
        !==========Navier Stokes with u or m===============!
        CALL find_string(21, '===Solve Navier-Stokes with u (true) or m (false)?', test)

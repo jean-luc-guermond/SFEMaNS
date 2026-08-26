@@ -8,6 +8,7 @@ module interface_boundary
   PROCEDURE(sub_source_in_temperature), POINTER :: source_in_temperature
   PROCEDURE(sub_source_in_level_set), POINTER :: source_in_level_set
   PROCEDURE(sub_vv_exact), POINTER :: vv_exact
+  PROCEDURE(sub_base_flow), POINTER :: base_flow
   PROCEDURE(sub_imposed_velocity_by_penalty), POINTER :: imposed_velocity_by_penalty
   PROCEDURE(sub_pp_exact), POINTER :: pp_exact
   PROCEDURE(sub_temperature_exact), POINTER :: temperature_exact
@@ -46,6 +47,7 @@ module point_to_boundary_generic
        source_in_temperature_generic =>  source_in_temperature, &
        source_in_level_set_generic =>  source_in_level_set, &
        vv_exact_generic =>  vv_exact, &
+       base_flow_generic =>  base_flow, &
        imposed_velocity_by_penalty_generic =>  imposed_velocity_by_penalty, &
        pp_exact_generic =>  pp_exact, &
        temperature_exact_generic =>  temperature_exact, &

@@ -23,6 +23,7 @@ CONTAINS
        source_in_temperature =>  source_in_temperature_generic
        source_in_level_set =>  source_in_level_set_generic
        vv_exact =>  vv_exact_generic
+       base_flow =>  base_flow_generic
        imposed_velocity_by_penalty =>  imposed_velocity_by_penalty_generic
        pp_exact =>  pp_exact_generic
        temperature_exact=>  temperature_exact_generic
