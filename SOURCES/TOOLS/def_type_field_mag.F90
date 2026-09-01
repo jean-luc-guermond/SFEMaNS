@@ -1,8 +1,6 @@
 MODULE def_type_field
 
    USE def_type_mesh
-   ! LightKrylov for linear algebra.
-   !USE LightKrylov, ONLY: abstract_vector_rdp
 
 #ifdef USE_LIGHTKRYLOV
    USE LightKrylov
@@ -38,6 +36,7 @@ MODULE def_type_field
    !=======    Procedures for SFEMaNS
         PROCEDURE, PUBLIC, PASS(self) :: init_mag_field, allocate_induction_fields
         PROCEDURE, PUBLIC, PASS(self) :: set_time
+        PROCEDURE, PUBLIC, PASS(self) :: copy_to
    !======     Procedures for LightKrylov
         PROCEDURE, PUBLIC, PASS(self) :: zero 
         PROCEDURE, PUBLIC, PASS(self) :: dot 
@@ -131,6 +130,25 @@ MODULE def_type_field
           IF (.NOT. ALLOCATED(self%time)) ALLOCATE(self%time)
           self%time = time
       END SUBROUTINE set_time
+
+      SUBROUTINE copy_to(self, vec)
+          IMPLICIT NONE
+          CLASS(mag_field_type),     INTENT(IN)     :: self
+          CLASS(mag_field_type),     INTENT(INOUT)  :: vec
+
+            CALL vec%allocate_induction_fields
+           
+            vec%Hn = self%Hn
+            vec%Bn = self%Bn
+            vec%phin = self%phin
+            vec%Hn1 = self%Hn1
+            vec%Bn1 = self%Bn1
+            vec%phin1 = self%phin1
+            IF (.NOT. ALLOCATED(vec%time)) ALLOCATE(vec%time)
+            vec%time = self%time
+            vec%initialized = .TRUE.
+
+      END SUBROUTINE copy_to
 !==========================================
 !==========================================
 !========    Procedures for LightKrylov ===

@@ -18,7 +18,8 @@ PROGRAM prog_write_ns
   IMPLICIT NONE
   !===Navier-Stokes fields========================================================
   TYPE(mesh_type), POINTER                        :: pp_mesh, vv_mesh
-  REAL(KIND=8), POINTER, DIMENSION(:,:,:)         :: un, pn
+  REAL(KIND=8), POINTER, DIMENSION(:,:,:)         :: un, pn, incpn
+  REAL(KIND=8), POINTER, DIMENSION(:,:,:)         :: un_m1, pn_m1, incpn_m1
   TYPE(dyn_real_array_three), POINTER, DIMENSION(:):: der_un
   !===Maxwell fields==============================================================
   TYPE(mesh_type), POINTER                        :: H_mesh, phi_mesh
@@ -68,7 +69,7 @@ PROGRAM prog_write_ns
   !===Initialize SFEMANS (mandatory)==============================================
   CALL initial(vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, conc_mesh,&
        interface_H_phi, interface_H_mu, list_mode, &
-       un, pn, mag_field, vel, &
+       un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_field, vel, &
        vol_heat_capacity_field, temperature_diffusivity_field, &
        concentration_diffusivity_field,mu_H_field, sigma_field, time, m_max_c, &
        comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc,temperature, &

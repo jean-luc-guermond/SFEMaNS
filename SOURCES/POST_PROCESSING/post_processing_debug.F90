@@ -147,7 +147,7 @@ CONTAINS
          error = ABS(ref_eigval - lambda(it))
          norm = norm + ABS(ref_eigval)
          error_cum = error_cum + error
-         WRITE(22,*) error
+         WRITE(22,*) lambda(it)
       END DO
       IF (isnan(error_cum)) THEN
          error_out = 1 !===Test Failed

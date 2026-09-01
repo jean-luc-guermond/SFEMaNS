@@ -9,6 +9,7 @@
 MODULE initialization
   USE def_type_mesh
   USE def_type_field
+  USE def_type_field_vel
   USE symmetric_field
   USE input_data
   USE my_util
@@ -35,7 +36,7 @@ MODULE initialization
   ! (noeuds,type,mode) composante du champ de vitesse a deux instants sur vv_mesh
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:)  :: pn, pn_m1
   TYPE(dyn_real_array_three), ALLOCATABLE, DIMENSION(:):: der_pn
-  REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:,:)          :: incpn, incpn_m1
+  REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:)          :: incpn, incpn_m1
   !---------------------------------------------------------------------------
 
   !Fields for level sets in Navier-Stokes-------------------------------------
@@ -143,7 +144,7 @@ CONTAINS
 
   SUBROUTINE build_pointers(vv_mesh_out, pp_mesh_out, H_mesh_out, phi_mesh_out, temp_mesh_out, &
        conc_mesh_out, interface_H_phi_out, interface_H_mu_out, list_mode_out, &
-       un_out, pn_out, mag_field_out, v_to_Max_out, &
+       un_out, pn_out, incpn_out, un_m1_out, pn_m1_out, incpn_m1_out, mag_field_out, v_to_Max_out, &
        vol_heat_capacity_field_out, temperature_diffusivity_field_out, concentration_diffusivity_field_out, &
        mu_H_field_out, sigma_field_out, &
        time_out, m_max_c_out, comm_one_d_out, comm_one_d_ns_out, comm_one_d_temp_out, comm_one_d_conc_out, &
@@ -157,7 +158,9 @@ CONTAINS
     TYPE(dyn_real_array_three), POINTER, DIMENSION(:):: der_un_out
     TYPE(interface_type), POINTER             :: interface_H_mu_out, interface_H_phi_out
     INTEGER,      POINTER,  DIMENSION(:)      :: list_mode_out
-    REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: un_out, pn_out, v_to_Max_out, tempn_out, density_out
+    REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: un_out, pn_out, incpn_out
+    REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: un_m1_out, pn_m1_out, incpn_m1_out
+    REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: v_to_Max_out, tempn_out, density_out
     TYPE(mag_field_type), POINTER             :: mag_field_out
     REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: concn_out
     REAL(KIND=8), POINTER,  DIMENSION(:)      :: concentration_diffusivity_field_out
@@ -180,6 +183,11 @@ CONTAINS
     interface_H_phi_out => interface_H_phi
     list_mode_out => list_mode
     un_out => un
+    pn_out => pn
+    incpn_out => incpn
+    un_m1_out => un_m1
+    pn_m1_out => pn_m1
+    incpn_m1_out => incpn_m1
     der_un_out => der_un
     pn_out => pn
     tempn_out => tempn
@@ -207,7 +215,7 @@ CONTAINS
 
   SUBROUTINE initial(vv_mesh_out, pp_mesh_out, H_mesh_out, phi_mesh_out, temp_mesh_out, &
        conc_mesh_out, interface_H_phi_out, interface_H_mu_out, list_mode_out, &
-       un_out, pn_out, mag_field_out, v_to_Max_out, &
+       un_out, pn_out, incpn_out, un_m1_out, pn_m1_out, incpn_m1_out, mag_field_out, v_to_Max_out, &
        vol_heat_capacity_field_out, temperature_diffusivity_field_out, concentration_diffusivity_field_out, &
        mu_H_field_out, sigma_field_out, &
        time_out, m_max_c_out, comm_one_d_out, comm_one_d_ns_out, comm_one_d_temp_out, comm_one_d_conc_out, &
@@ -223,7 +231,9 @@ CONTAINS
     TYPE(dyn_real_array_three), POINTER, DIMENSION(:):: der_un_out
     TYPE(interface_type), POINTER             :: interface_H_mu_out, interface_H_phi_out
     INTEGER,      POINTER,  DIMENSION(:)      :: list_mode_out
-    REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: un_out, pn_out, v_to_Max_out, tempn_out, density_out
+    REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: un_out, pn_out, incpn_out
+    REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: un_m1_out, pn_m1_out, incpn_m1_out
+    REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: v_to_Max_out, tempn_out, density_out
     TYPE(mag_field_type), POINTER             :: mag_field_out
     REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: concn_out
     REAL(KIND=8), POINTER,  DIMENSION(:)      :: concentration_diffusivity_field_out
@@ -244,7 +254,7 @@ CONTAINS
 
     CALL build_pointers(vv_mesh_out, pp_mesh_out, H_mesh_out, phi_mesh_out, temp_mesh_out, &
        conc_mesh_out, interface_H_phi_out, interface_H_mu_out, list_mode_out, &
-       un_out, pn_out, mag_field_out, v_to_Max_out, &
+       un_out, pn_out, incpn_out, un_m1_out, pn_m1_out, incpn_m1_out, mag_field_out, v_to_Max_out, &
        vol_heat_capacity_field_out, temperature_diffusivity_field_out, concentration_diffusivity_field_out, &
        mu_H_field_out, sigma_field_out, &
        time_out, m_max_c_out, comm_one_d_out, comm_one_d_ns_out, comm_one_d_temp_out, comm_one_d_conc_out, &
@@ -731,6 +741,7 @@ CONTAINS
     USE update_taylor_navier_stokes
 #include "petsc/finclude/petsc.h"
     USE petsc
+    USE COMM_LK_SFEM
     IMPLICIT NONE
     TYPE(mesh_type)                    :: p1_mesh_glob, p1_c0_mesh_glob, p1_c0_mesh_glob_temp
     TYPE(mesh_type)                    :: p1_c0_mesh_glob_conc, dummy_mesh_loc
@@ -853,6 +864,9 @@ CONTAINS
          .OR. inputs%type_pb=='fhd' .OR. inputs%type_pb=='mhs'
     if_energy = inputs%if_temperature
     if_concentration = inputs%if_concentration
+
+    !===VB 01/09/2026
+    CALL init_LK
 
     !===JLG july 20, 2019, p3 mesh
     IF (inputs%if_navier_stokes_with_taylor) THEN
@@ -2014,6 +2028,7 @@ CONTAINS
     !===Initialize Navier-Stokes====================================================
     time_u = 0.d0
     IF (if_momentum .OR. inputs%type_pb=='mxx') THEN
+       CALL build_pointers_vel_field(vv_mesh, pp_mesh, list_mode, comm_one_d_ns, if_momentum)
        IF (vv_mesh%me/=0) THEN
           IF (inputs%irestart_u) THEN
              IF(inputs%if_navier_stokes_with_taylor) THEN

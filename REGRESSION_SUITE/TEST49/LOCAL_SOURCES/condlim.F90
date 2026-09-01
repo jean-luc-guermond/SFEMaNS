@@ -243,7 +243,7 @@ CONTAINS
 
   MODULE FUNCTION vv_exact(TYPE_VEC,rr,m,t) RESULT(vv)
     USE user_data
-    USE interface_boundary
+    USE interface_boundary, ONLY: base_flow
     IMPLICIT NONE
     INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr

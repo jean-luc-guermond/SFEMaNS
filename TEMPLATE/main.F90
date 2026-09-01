@@ -28,15 +28,18 @@ PROGRAM mhd_prog
   IMPLICIT NONE
   !===EXPONENTIAL_PROPAGATOR=====================================================
   TYPE(exptA_linop)                               :: exptA
-  TYPE(mag_field_type)                            :: vec_in
-  TYPE(mag_field_type)                            :: vec_out
-  TYPE(mag_field_type), DIMENSION(:), ALLOCATABLE :: X
+  TYPE(LK_field_type)                            :: vec_in
+!   TYPE(mag_field_type)                            :: vec_in
+  TYPE(LK_field_type)                            :: vec_out
+!   TYPE(mag_field_type)                            :: vec_out
+  TYPE(LK_field_type), DIMENSION(:), ALLOCATABLE :: X
+!   TYPE(mag_field_type), DIMENSION(:), ALLOCATABLE :: X
   COMPLEX(KIND=8), DIMENSION(:), ALLOCATABLE      :: lambda
   REAL(KIND=8), DIMENSION(:), ALLOCATABLE         :: residuals
   LOGICAL                                         :: if_induction, test_induction
   !===Navier-Stokes fields========================================================
   TYPE(mesh_type), POINTER                        :: pp_mesh, vv_mesh
-  REAL(KIND=8), POINTER, DIMENSION(:,:,:)         :: un, pn
+  REAL(KIND=8), POINTER, DIMENSION(:,:,:)         :: un, pn, incpn, un_m1, pn_m1, incpn_m1
   TYPE(dyn_real_array_three), POINTER, DIMENSION(:):: der_un
   !===Maxwell fields==============================================================
   TYPE(mesh_type), POINTER                        :: H_mesh, phi_mesh
@@ -84,7 +87,7 @@ PROGRAM mhd_prog
   !===Initialize SFEMANS (mandatory)==============================================
   CALL initial(vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, conc_mesh,&
        interface_H_phi, interface_H_mu, list_mode, &
-       un, pn, mag_field, vel, &
+       un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_field, vel, &
        vol_heat_capacity_field, temperature_diffusivity_field, &
        concentration_diffusivity_field,mu_H_field, sigma_field, time, m_max_c, &
        comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc,temperature, &
@@ -189,12 +192,12 @@ PROGRAM mhd_prog
       !====== Time integration through iteration of exptA
       tps = user_time()
       DO it=1,inputs%LK%nb_exptA    
-          tploc = user_time()
-          CALL SFEM_2_LK(vec_in, mag_field)
-          CALL exptA%matvec(vec_in, vec_out)
-          CALL LK_2_SFEM(mag_field, vec_out)
-          tploc = user_time() - tploc
-          IF (it >1) tploc_max = tploc_max + tploc
+         tploc = user_time()
+         CALL vec_in%SFEM_2_LK(un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_field)
+         CALL exptA%matvec(vec_in, vec_out)
+         CALL vec_out%LK_2_SFEM(un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_field)
+         tploc = user_time() - tploc
+         IF (it >1) tploc_max = tploc_max + tploc
       END DO
    END IF
 

@@ -13,6 +13,7 @@ MODULE eigenvalue_problem
 #include "petsc/finclude/petsc.h"
         USE petsc
         USE fourier_to_real_for_vtu
+        USE COMM_LK_SFEM
 #ifdef USE_LIGHTKRYLOV
         USE LightKrylov
         USE LightKrylov_Constants
@@ -25,7 +26,7 @@ MODULE eigenvalue_problem
         INTEGER, DIMENSION(:), INTENT(IN)               :: list_mode
         COMPLEX(KIND=8), DIMENSION(:), ALLOCATABLE,      INTENT(OUT) :: lambda
         REAL(KIND=8), DIMENSION(:), ALLOCATABLE,         INTENT(OUT) :: residuals
-        TYPE(mag_field_type), DIMENSION(:), ALLOCATABLE, INTENT(OUT) :: X
+        TYPE(LK_field_type), DIMENSION(:), ALLOCATABLE, INTENT(OUT) :: X
         INTEGER                                         :: info, it
         CHARACTER(LEN=3)                                :: what
 #ifdef USE_LIGHTKRYLOV
@@ -46,22 +47,22 @@ MODULE eigenvalue_problem
         
         CALL save_eigenspectrum(lambda, residuals, "./eigenspectrum.npy")
 
-        what = 'new'
-        DO it=1, inputs%LK%nev
-            CALL write_restart_maxwell(comm_one_d, H_mesh, phi_mesh, &
-                0.d0, list_mode, X(it), inputs%file_name, it, 1)
-            IF (inputs%LK%if_vtu_3d) THEN
-                CALL vtu_3d(comm_one_d, X(it)%Hn, 'H_mesh', 'Hn', 'Hn', what, opt_it=it)
-                what = 'old'
-            END IF
-        END DO
+        ! what = 'new'
+        ! DO it=1, inputs%LK%nev
+        !     CALL write_restart_maxwell(comm_one_d, H_mesh, phi_mesh, &
+        !         0.d0, list_mode, X(it), inputs%file_name, it, 1)
+        !     IF (inputs%LK%if_vtu_3d) THEN
+        !         CALL vtu_3d(comm_one_d, X(it)%Hn, 'H_mesh', 'Hn', 'Hn', what, opt_it=it)
+        !         what = 'old'
+        !     END IF
+        ! END DO
 #else
-        !2026/06/05: LC added dummy variables to avoid warning
-        ALLOCATE(lambda(0), residuals(0), X(0))
-        info=H_mesh%np; info=phi_mesh%np; it=SIZE(comm_one_d)
-        it=SIZE(list_mode);
-        what = "old"
-        !2026/06/05: LC added dummy variables to avoid warning
+        ! !2026/06/05: LC added dummy variables to avoid warning
+        ! ALLOCATE(lambda(0), residuals(0), X(0))
+        ! info=H_mesh%np; info=phi_mesh%np; it=SIZE(comm_one_d)
+        ! it=SIZE(list_mode);
+        ! what = "old"
+        ! !2026/06/05: LC added dummy variables to avoid warning
         CALL error_petsc("LightKrylov not compiled with SFEMaNS, check CMakeLists.txt/variable.cmake")
 #endif
 

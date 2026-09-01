@@ -6,9 +6,8 @@ MODULE exponential_propagator
    USE def_type_field
 #include "petsc/finclude/petsc.h"
    USE petsc
-   USE COMM_LK_SFEM
-   USE def_type_field
-
+   ! USE COMM_LK_SFEM
+   USE my_util
  
   IMPLICIT NONE
 
@@ -17,7 +16,11 @@ MODULE exponential_propagator
 
        !===Navier-Stokes fields========================================================
        TYPE(mesh_type), POINTER                        :: pp_mesh, vv_mesh
-       REAL(KIND=8), POINTER, DIMENSION(:,:,:)         :: un, pn
+       REAL(KIND=8), POINTER, DIMENSION(:,:,:)         :: un, pn, incpn, un_m1, pn_m1, incpn_m1
+       INTEGER, DIMENSION(:), ALLOCATABLE :: put_seed
+       REAL(KIND=8), DIMENSION(:), ALLOCATABLE :: bc_flow, incompressibility_flow
+       INTEGER :: j, i
+       REAL(KIND=8), PARAMETER :: pi=ACOS(-1.d0), H=4.d0
        TYPE(dyn_real_array_three), POINTER, DIMENSION(:):: der_un
        !===Maxwell fields==============================================================
        TYPE(mesh_type), POINTER                        :: H_mesh, phi_mesh
@@ -93,8 +96,8 @@ MODULE exponential_propagator
        CLASS(abstract_vector_rdp),      INTENT(IN)    :: vec_in
        CLASS(abstract_vector_rdp),     INTENT(OUT)    :: vec_out
 #else
-       TYPE(mag_field_type),      INTENT(IN)    :: vec_in
-       TYPE(mag_field_type),     INTENT(OUT)    :: vec_out
+       TYPE(LK_field_type),      INTENT(IN)    :: vec_in
+       TYPE(LK_field_type),     INTENT(OUT)    :: vec_out
 #endif
        !===Time iterations=============================================================
        REAL(KIND=8)                                    :: time
@@ -108,11 +111,10 @@ MODULE exponential_propagator
        CALL MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
      
       !===User reads his/her own data=================================================
-     
        !===Initialize SFEMANS (mandatory)==============================================
        CALL build_pointers(vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, conc_mesh,&
             interface_H_phi, interface_H_mu, list_mode, &
-            un, pn, mag_field, vel, &
+            un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_field, vel, &
             vol_heat_capacity_field, temperature_diffusivity_field, &
             concentration_diffusivity_field,mu_H_field, sigma_field, time, m_max_c, &
             comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc,temperature, &
@@ -120,13 +122,67 @@ MODULE exponential_propagator
             der_un, visc_LES, visc_LES_level)
 #ifdef USE_LIGHTKRYLOV
    SELECT TYPE(vec_in)
-       TYPE is(mag_field_type)
+       TYPE is(LK_field_type)
            SELECT TYPE(vec_out)
-            TYPE is(mag_field_type)
+            TYPE is(LK_field_type)
 #endif
-               CALL mag_field%zero()
-               CALL LK_2_SFEM(mag_field, vec_in)
-               time = mag_field%time
+               CALL vec_in%LK_2_SFEM(un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_field)
+              
+!===================================
+!===================================
+!==== TESTTTTTTTTTTTT   ============
+!===================================
+!===================================
+
+!====== RANDOM INITIAL CONDITION
+               ! ALLOCATE(put_seed(SIZE(un,1)*SIZE(un,2)*SIZE(un,3)))
+               ! put_seed = 1
+               ! CALL RANDOM_SEED(put=put_seed)
+               ! DEALLOCATE(put_seed)
+               ! CALL RANDOM_NUMBER(un)
+               ! ! DO it=1, 6
+               !    ! if (it /= 3 .AND. it /= 5) un(:, it, :) = 0.d0
+               ! ! ENDDO
+               ! ! un(:, 1, 1) = vv_mesh%rr(2, :)/vv_mesh%rr(1, :)
+               ! un(:, 2, 1) = 0.d0
+               ! un(:, 4, 1) = 0.d0
+               ! un(:, 6, 1) = 0.d0
+!====== RANDOM INITIAL CONDITION
+!====== GIVEN INITIAL CONDITION
+               ! ASSOCIATE(Rf => vv_mesh%rr(1,:), Zf => vv_mesh%rr(2,:))
+               ! ALLOCATE(bc_flow(vv_mesh%np), incompressibility_flow(vv_mesh%np))
+               ! bc_flow = (1.d0 - Rf)*(2.d0 - Rf)
+               ! un = 0.d0
+               ! DO i=1, SIZE(list_mode)
+                  ! DO j = 1, 6
+                        ! IF (j==1) THEN
+                           ! un   (:,j,i) = bc_flow**2 * H/(2.d0*pi)*SIN(2.d0*pi*Zf / H)
+                        ! ELSEIF (j==3) THEN
+                           ! un   (:,j,i) = bc_flow
+                        ! ELSEIF (j==5) THEN
+                           ! incompressibility_flow = bc_flow * ((1.d0 - Rf)*(2.d0 - Rf)/Rf + 2.d0*(2.d0*Rf-3.d0))
+                           ! un   (:,j,i) = incompressibility_flow * COS(2.d0*pi*Zf / H)
+                        ! ENDIF
+                  ! END DO
+               ! END DO
+               ! DEALLOCATE(bc_flow, incompressibility_flow)
+               ! END ASSOCIATE
+!====== GIVEN INITIAL CONDITION
+
+!                un_m1 = un
+! write(*,*) 'max n', MAXVAL(ABS(un)), MAXVAL(ABS(pn)), MAXVAL(ABS(incpn))
+! write(*,*) 'min n', MINVAL(ABS(un)), MINVAL(ABS(pn)), MINVAL(ABS(incpn))
+! write(*,*) 'max n1', MAXVAL(ABS(un_m1)), MAXVAL(ABS(pn_m1)), MAXVAL(ABS(incpn_m1))
+! write(*,*) 'min n1', MINVAL(ABS(un_m1)), MINVAL(ABS(pn_m1)), MINVAL(ABS(incpn_m1))
+               ! CALL mag_field%zero()
+               ! time = mag_field%time
+
+!===================================
+!===================================
+!==== TESTTTTTTTTTTTT   ============
+!===================================
+!===================================
+
                !===============================================================================
                !                        TIME INTEGRATION                                      !
                !===============================================================================
@@ -139,7 +195,6 @@ MODULE exponential_propagator
                   tploc =  user_time()
                   time = time + inputs%dt
                   CALL run_SFEMaNS(time, it)
-                  
                   ! !===My postprocessing
                   ! IF (.NOT.inputs%test_de_convergence) THEN
                   !    CALL my_post_processing(it)
@@ -158,12 +213,12 @@ MODULE exponential_propagator
                ENDDO
 
                mag_field%time = time 
-               CALL SFEM_2_LK(vec_out, mag_field)
+               CALL vec_out%SFEM_2_LK(un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_field)
              
                !===Timing======================================================================
                tps = user_time() - tps
                CALL write_verbose(rank,opt_tps=tps,opt_tploc_max=tploc_max)
-             
+
                !===End of code=================================================================
 #ifdef USE_LIGHTKRYLOV
             CLASS DEFAULT
