@@ -30,9 +30,7 @@ MODULE def_type_field_mag
    TYPE,                               PUBLIC ::  mag_field_type
 #endif
         REAL(KIND=8), ALLOCATABLE, DIMENSION(:, :, :)   :: B, H
-        ! REAL(KIND=8), ALLOCATABLE, DIMENSION(:, :, :)   :: Bn, Bn1, Hn, Hn1
         REAL(KIND=8), ALLOCATABLE, DIMENSION(:, :, :)   :: phi
-        ! REAL(KIND=8), ALLOCATABLE, DIMENSION(:, :, :)   :: phin, phin1
         REAL(KIND=8), ALLOCATABLE                       :: time 
         LOGICAL                                         :: initialized = .FALSE. 
         TYPE(mesh_type),        POINTER                 :: H_mesh, phi_mesh

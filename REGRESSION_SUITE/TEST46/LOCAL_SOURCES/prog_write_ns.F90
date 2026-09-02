@@ -57,8 +57,6 @@ PROGRAM prog_write_ns
   MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d, comm_one_d_ns, comm_one_d_temp
   MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d_conc
 
-  WRITE(*,*) "HERE WE ARE IN prog_write_ns.F90"
-
   !===Start PETSC and MPI (mandatory)=============================================
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
   CALL MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
@@ -75,8 +73,6 @@ PROGRAM prog_write_ns
        comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc,temperature, &
        concentration, level_set, density, &
        der_un, visc_LES, visc_LES_level)
-
-  WRITE(*,*) "HERE WE ARE AFTER initial"
 
 
   CALL write_restart_ns(comm_one_d_ns, vv_mesh, pp_mesh, time, list_mode, &
