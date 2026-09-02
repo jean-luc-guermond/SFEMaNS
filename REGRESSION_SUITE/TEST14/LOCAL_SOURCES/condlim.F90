@@ -5,7 +5,7 @@ SUBMODULE (boundary_generic_module) boundary_generic
   USE bessel
   USE user_data
 
-  USE def_type_field
+  USE def_type_field_mag
 
   REAL(KIND=8) :: pi=ACOS(-1.d0)
 
@@ -491,7 +491,7 @@ CONTAINS
 
   !===Initialization of magnetic field and scalar potential (if present)
   MODULE SUBROUTINE init_maxwell(H_mesh, phi_mesh, time, dt, mu_H_field, mu_phi, &
-       list_mode, mag_field)
+       list_mode, mag_n, mag_n1)
     IMPLICIT NONE
     TYPE(mesh_type)                            :: H_mesh, phi_mesh
     REAL(KIND=8),                   INTENT(OUT):: time
@@ -501,9 +501,9 @@ CONTAINS
     INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
     INTEGER                                    :: i, n0
     REAL(KIND=8)                               :: Ri, Ro, A
-    TYPE(mag_field_type),           INTENT(OUT):: mag_field
+    TYPE(mag_field_type),           INTENT(OUT):: mag_n, mag_n1
     
-    CALL mag_field%zero()
+    CALL mag_n1%allocate_induction_fields; CALL mag_n%allocate_induction_fields
 
     time  = 0.d0
     n0 = 1
@@ -527,42 +527,42 @@ CONTAINS
 !    A = 1.d0
 
 
-    IF (.NOT. ALLOCATED(mag_field%time))  ALLOCATE(mag_field%time)
-    mag_field%time = time
+    CALL mag_n1%set_time(time)
+    CALL mag_n%set_time(time)
 
     IF (H_mesh%me /= 0) THEN
        DO i = 1, SIZE(list_mode)
           IF (list_mode(i) == 1) THEN
  !======== UNCOMMENT FOR TESTING
-!$$!             mag_field%Hn1(:,1,i) = A*SIN(n0*H_mesh%rr(2,:))*(Ri-H_mesh%rr(1,:))**2 &
-!$$!             !mag_field%Hn1(:,1,i) = A*(Ri-H_mesh%rr(1,:))**2 &
+!$$!             mag_n1%H(:,1,i) = A*SIN(n0*H_mesh%rr(2,:))*(Ri-H_mesh%rr(1,:))**2 &
+!$$!             !mag_n1%H(:,1,i) = A*(Ri-H_mesh%rr(1,:))**2 &
 !$$!                  * (Ro-H_mesh%rr(1,:))**2
-!$$!             mag_field%Hn(:,1,i)  = A*SIN(n0*H_mesh%rr(2,:))*(Ri-H_mesh%rr(1,:))**2 &
-!$$!             !mag_field%Hn(:,1,i)  = A*(Ri-H_mesh%rr(1,:))**2 &
+!$$!             mag_n%H(:,1,i)  = A*SIN(n0*H_mesh%rr(2,:))*(Ri-H_mesh%rr(1,:))**2 &
+!$$!             !mag_n%H(:,1,i)  = A*(Ri-H_mesh%rr(1,:))**2 &
 !$$!                  * (Ro-H_mesh%rr(1,:))**2
-!$$!             mag_field%Hn1(:,4,i) = -A*SIN(n0*H_mesh%rr(2,:))*(H_mesh%rr(1,:)-Ri)&
-!$$!             !mag_field%Hn1(:,4,i) = -A*(H_mesh%rr(1,:)-Ri)&
+!$$!             mag_n1%H(:,4,i) = -A*SIN(n0*H_mesh%rr(2,:))*(H_mesh%rr(1,:)-Ri)&
+!$$!             !mag_n1%H(:,4,i) = -A*(H_mesh%rr(1,:)-Ri)&
 !$$!                  *(H_mesh%rr(1,:)-Ro)*((H_mesh%rr(1,:)-Ri)*(H_mesh%rr(1,:)-Ro)+&
 !$$!                  2.d0*H_mesh%rr(1,:)*(2.d0*H_mesh%rr(1,:)-Ro-Ri))
-!$$!             mag_field%Hn(:,4,i) = -A*SIN(n0*H_mesh%rr(2,:))*(H_mesh%rr(1,:)-Ri)&
-!$$!             !mag_field%Hn(:,4,i) = -A*(H_mesh%rr(1,:)-Ri)&
+!$$!             mag_n%H(:,4,i) = -A*SIN(n0*H_mesh%rr(2,:))*(H_mesh%rr(1,:)-Ri)&
+!$$!             !mag_n%H(:,4,i) = -A*(H_mesh%rr(1,:)-Ri)&
 !$$!                  *(H_mesh%rr(1,:)-Ro)*((H_mesh%rr(1,:)-Ri)*(H_mesh%rr(1,:)-Ro)+&
 !$$!                  2.d0*H_mesh%rr(1,:)*(2.d0*H_mesh%rr(1,:)-Ro-Ri))
-             mag_field%Hn1(:,1,i) = A*(SIN(n0*H_mesh%rr(2,:))/H_mesh%rr(1,:))*(Ri-H_mesh%rr(1,:))**2 &
+             mag_n1%H(:,1,i) = A*(SIN(n0*H_mesh%rr(2,:))/H_mesh%rr(1,:))*(Ri-H_mesh%rr(1,:))**2 &
                   * (Ro-H_mesh%rr(1,:))**2
-             mag_field%Hn(:,1,i)  = A*(SIN(n0*H_mesh%rr(2,:))/H_mesh%rr(1,:))*(Ri-H_mesh%rr(1,:))**2 &
+             mag_n%H(:,1,i)  = A*(SIN(n0*H_mesh%rr(2,:))/H_mesh%rr(1,:))*(Ri-H_mesh%rr(1,:))**2 &
                   * (Ro-H_mesh%rr(1,:))**2
-             mag_field%Hn1(:,4,i) = -2*A*SIN(n0*H_mesh%rr(2,:))*(H_mesh%rr(1,:)-Ri)&
+             mag_n1%H(:,4,i) = -2*A*SIN(n0*H_mesh%rr(2,:))*(H_mesh%rr(1,:)-Ri)&
                   *(H_mesh%rr(1,:)-Ro)*(2.d0*H_mesh%rr(1,:)-Ro-Ri)
-             mag_field%Hn(:,4,i)  = -2*A*SIN(n0*H_mesh%rr(2,:))*(H_mesh%rr(1,:)-Ri)&
+             mag_n%H(:,4,i)  = -2*A*SIN(n0*H_mesh%rr(2,:))*(H_mesh%rr(1,:)-Ri)&
                   *(H_mesh%rr(1,:)-Ro)*(2.d0*H_mesh%rr(1,:)-Ro-Ri)
           END IF
        END DO
     END IF
     DO i = 1, SIZE(H_mesh%rr(1, :))
         IF (H_mesh%rr(1, i) == 0) THEN
-            mag_field%Hn1(i, 1, :) = 0.d0
-            mag_field%Hn(i, 1, :) = 0.d0
+            mag_n1%H(i, 1, :) = 0.d0
+            mag_n%H(i, 1, :) = 0.d0
         END IF
     END DO
     RETURN

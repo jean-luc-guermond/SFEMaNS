@@ -97,7 +97,6 @@ CONTAINS
     KSP, DIMENSION(:), POINTER, SAVE :: vel_ksp, press_ksp
     KSP,                        SAVE :: mass_ksp, mass_ksp0
     !------------------------------END OF DECLARATION--------------------------------------
-
     IF (once) THEN
        once = .FALSE.
        CALL MPI_COMM_RANK(PETSC_COMM_WORLD,my_petscworld_rank,code)

@@ -1858,8 +1858,7 @@ CONTAINS
     N_r_pad  = 2*m_max_pad-1
 
     IF (m_max_c==0) THEN
-       WRITE(*,*) ' BUG in FFT_PAR_VAR_ETA_PROD_T_DCL '
-       STOP
+       CALL error_petsc(' BUG in FFT_PAR_VAR_ETA_PROD_T_DCL: m_max_c = 0??')
     END IF
 
     pi = ACOS(-1.d0)

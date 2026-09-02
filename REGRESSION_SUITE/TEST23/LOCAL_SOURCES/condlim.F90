@@ -6,7 +6,7 @@ SUBMODULE (boundary_generic_module) boundary_generic
   USE user_data
   USE test_23
 !VB 06/02/2026
-  USE def_type_field
+  USE def_type_field_mag
 !VB 06/02/2026
   !===Dummy variables to avoid warning
   REAL(KIND=8) :: rd
@@ -546,7 +546,7 @@ CONTAINS
 
   !===Initialization of magnetic field and scalar potential (if present)
   MODULE SUBROUTINE init_maxwell(H_mesh, phi_mesh, time, dt, mu_H_field, mu_phi, &
-       list_mode, mag_field)
+       list_mode, mag_n, mag_n1)
        !list_mode, Hn1, Hn, phin1, phin)
     IMPLICIT NONE
     TYPE(mesh_type)                            :: H_mesh, phi_mesh
@@ -557,17 +557,17 @@ CONTAINS
     INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
 !    REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: Hn, Hn1
 !    REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: phin, phin1
-    TYPE(mag_field_type),           INTENT(OUT):: mag_field
+    TYPE(mag_field_type),           INTENT(OUT):: mag_n, mag_n1
 
-    CALL mag_field%allocate_induction_fields()
+    CALL mag_n1%allocate_induction_fields; CALL mag_n%allocate_induction_fields
 
     time = -dt
-    mag_field%Hn1 = 0.d0
-    mag_field%phin1 = 0.d0
+    mag_n1%H = 0.d0
+    mag_n1%phi = 0.d0
     time=0.d0
-    CALL mag_field%set_time(time)
-    mag_field%Hn = 0.d0
-    mag_field%phin = 0.d0
+    CALL mag_n1%set_time(time-dt); CALL mag_n%set_time(time)
+    mag_n%H = 0.d0
+    mag_n%phi = 0.d0
     RETURN
     !===Dummy variables to avoid warning
     nd=H_mesh%np; nd=phi_mesh%np; rd=mu_H_field(1); rd=mu_phi; nd=SIZE(list_mode)

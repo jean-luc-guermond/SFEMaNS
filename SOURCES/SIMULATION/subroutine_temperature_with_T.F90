@@ -247,7 +247,7 @@ CONTAINS
   SUBROUTINE smb_ugradc_gauss_fft_par(communicator,mesh,list_mode,heat_capa_in,V_in,c_in,c_out)
     !=================================
     USE associate_gauss
-    USE fft_parallele
+    USE fft_parallele, ONLY: FFT_PAR_DOT_PROD_DCL, FFT_PAR_PROD_DCL
     USE chaine_caractere
     USE boundary
 #include "petsc/finclude/petsc.h"

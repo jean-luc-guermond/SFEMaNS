@@ -7,7 +7,6 @@ MODULE eigenvalue_problem
         USE input_data
         USE exponential_propagator
         USE def_type_mesh
-        USE def_type_field
         USE restart
         USE my_util
 #include "petsc/finclude/petsc.h"
@@ -45,24 +44,15 @@ MODULE eigenvalue_problem
 
         lambda = log(lambda)/(inputs%dt*inputs%nb_iteration)
         
-        CALL save_eigenspectrum(lambda, residuals, "./eigenspectrum.npy")
+        CALL post_pro_eigs_LK(X, lambda, residuals)
 
-        ! what = 'new'
-        ! DO it=1, inputs%LK%nev
-        !     CALL write_restart_maxwell(comm_one_d, H_mesh, phi_mesh, &
-        !         0.d0, list_mode, X(it), inputs%file_name, it, 1)
-        !     IF (inputs%LK%if_vtu_3d) THEN
-        !         CALL vtu_3d(comm_one_d, X(it)%Hn, 'H_mesh', 'Hn', 'Hn', what, opt_it=it)
-        !         what = 'old'
-        !     END IF
-        ! END DO
 #else
-        ! !2026/06/05: LC added dummy variables to avoid warning
-        ! ALLOCATE(lambda(0), residuals(0), X(0))
-        ! info=H_mesh%np; info=phi_mesh%np; it=SIZE(comm_one_d)
-        ! it=SIZE(list_mode);
-        ! what = "old"
-        ! !2026/06/05: LC added dummy variables to avoid warning
+        !2026/06/05: LC added dummy variables to avoid warning
+        ALLOCATE(lambda(0), residuals(0), X(0))
+        info=H_mesh%np; info=phi_mesh%np; it=SIZE(comm_one_d)
+        it=SIZE(list_mode);
+        what = "old"
+        !2026/06/05: LC added dummy variables to avoid warning
         CALL error_petsc("LightKrylov not compiled with SFEMaNS, check CMakeLists.txt/variable.cmake")
 #endif
 

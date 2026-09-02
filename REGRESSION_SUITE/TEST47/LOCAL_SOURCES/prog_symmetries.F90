@@ -13,7 +13,7 @@ PROGRAM prog_write_ns
 #include "petsc/finclude/petsc.h"
   USE petsc
   USE restart
-  USE def_type_field 
+  USE def_type_field_mag
   USE user_data_module
   USE symmetric_field
   USE tn_axi
@@ -33,7 +33,7 @@ PROGRAM prog_write_ns
   TYPE(mesh_type), POINTER                        :: H_mesh, phi_mesh
   TYPE(interface_type), POINTER                   :: interface_H_mu, interface_H_phi
   REAL(KIND=8), POINTER,      DIMENSION(:,:,:)    :: vel
-  TYPE(mag_field_type), POINTER                   :: mag_field
+  TYPE(mag_field_type), POINTER                   :: mag_n, mag_n1
   REAL(KIND=8), POINTER,      DIMENSION(:)        :: sigma_field, mu_H_field
   !===Temperature field===========================================================
   TYPE(mesh_type), POINTER                        :: temp_mesh
@@ -72,7 +72,7 @@ PROGRAM prog_write_ns
   !===Initialize SFEMANS (mandatory)==============================================
   CALL initial(vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, conc_mesh,&
        interface_H_phi, interface_H_mu, list_mode, &
-       un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_field, vel, &
+       un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_n, mag_n1, vel, &
        vol_heat_capacity_field, temperature_diffusivity_field, &
        concentration_diffusivity_field,mu_H_field, sigma_field, time, m_max_c, &
        comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc,temperature, &
@@ -91,7 +91,7 @@ PROGRAM prog_write_ns
 
 !=== TESTING MAGNETIC FIELD SYMMETRIES 
 
-   CALL test_symmetry_u_H_temp_conc(heigth_mag, comm_one_d(1), H_mesh, mag_field%Hn, 'h', test_loc)
+   CALL test_symmetry_u_H_temp_conc(heigth_mag, comm_one_d(1), H_mesh, mag_n%H, 'h', test_loc)
    test_glob = test_glob .AND. test_loc
    IF (.NOT. test_loc) THEN
       WRITE(*,*) "ctest RPI/CENTRO SYM: FAILURE in magnetic field modes ", list_mode
@@ -121,7 +121,7 @@ PROGRAM prog_write_ns
 
 !=== TESTING CONCENTRATION FIELD SYMMETRIES 
 
-   CALL test_symmetry_phi(heigth_phi, heigth_mag, comm_one_d(1), phi_mesh, mag_field%phin, test_loc)
+   CALL test_symmetry_phi(heigth_phi, heigth_mag, comm_one_d(1), phi_mesh, mag_n%phi, test_loc)
    test_glob = test_glob .AND. test_loc
    IF (.NOT. test_loc) THEN
       WRITE(*,*) "ctest RPI/CENTRO SYM: FAILURE in phi field modes ", list_mode
@@ -387,7 +387,7 @@ PROGRAM prog_write_ns
        IF (inputs%type_pb=='nst' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd') THEN
           norm = norm_SF(comm_one_d_ns, 'L2', vv_mesh, list_mode, un)
        ELSE
-          norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, mag_field%Hn)
+          norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, mag_n%H)
        END IF
        IF (norm>1.d8 .OR. isnan(norm)) THEN
           CALL error_petsc('From my_post_processing: numerical unstability')
@@ -455,13 +455,13 @@ PROGRAM prog_write_ns
        END IF ! end nst or mhd or fhd
 
        IF (inputs%type_pb/='nst') THEN
-          err = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, mag_field%Hn)
+          err = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, mag_n%H)
           IF (rank == 0) THEN
              !===L2 norm of magnetic field
              WRITE(41,*) time, err
           END IF
-          err = norm_SF(comm_one_d, 'div', H_mesh, list_mode, mag_field%Bn)
-          norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, mag_field%Bn)
+          err = norm_SF(comm_one_d, 'div', H_mesh, list_mode, mag_n%B)
+          norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, mag_n%B)
           IF (rank == 0) THEN
              !===L2 norm of div(Bn)
              WRITE(51,*) time, err, err/norm
@@ -469,7 +469,7 @@ PROGRAM prog_write_ns
              WRITE(*,*) 'norm L2 of magnetic field', time, norm
           END IF
           DO i=1,SIZE(list_mode)
-             norm = norm_S(comm_one_d, 'L2', H_mesh, list_mode(i:i), mag_field%Hn(:,:,i:i))
+             norm = norm_S(comm_one_d, 'L2', H_mesh, list_mode(i:i), mag_n%H(:,:,i:i))
              IF (rank_S == 0) THEN
                 !===L2 norm of Fourier mode list_mode(i) of magnetic field Hn
                 WRITE(200+list_mode(i),*) time, norm

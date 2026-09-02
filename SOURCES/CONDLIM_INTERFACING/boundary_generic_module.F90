@@ -1,7 +1,7 @@
 MODULE boundary_generic_module
   USE my_util
   USE def_type_mesh
-  USE def_type_field
+  USE def_type_field_mag
   USE input_data
   USE bessel
   IMPLICIT NONE
@@ -240,8 +240,8 @@ MODULE boundary_generic_module
      END FUNCTION Eexact_gauss
 
      MODULE SUBROUTINE init_maxwell(H_mesh, phi_mesh, time, dt, mu_H_field, mu_phi, &
-          list_mode, mag_field)
-       USE def_type_field
+          list_mode, mag_n, mag_n1)
+       USE def_type_field_mag
        USE def_type_mesh
        TYPE(mesh_type)                            :: H_mesh, phi_mesh
        REAL(KIND=8),                   INTENT(OUT):: time
@@ -249,7 +249,7 @@ MODULE boundary_generic_module
        REAL(KIND=8), DIMENSION(:),     INTENT(IN) :: mu_H_field
        REAL(KIND=8),                   INTENT(IN) :: mu_phi
        INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
-       TYPE(mag_field_type),           INTENT(OUT):: mag_field
+       TYPE(mag_field_type),           INTENT(OUT):: mag_n, mag_n1
      END SUBROUTINE init_maxwell
 
      MODULE FUNCTION mu_bar_in_fourier_space(H_mesh,nb,ne,pts,pts_ids) RESULT(vv)
@@ -767,7 +767,7 @@ CONTAINS
 
   !===Initialization of magnetic field and scalar potential (if present)
   SUBROUTINE template_init_maxwell(H_mesh, phi_mesh, time, dt, mu_H_field, mu_phi, &
-       list_mode, mag_field)
+       list_mode, mag_n, mag_n1)
     IMPLICIT NONE
     TYPE(mesh_type)                            :: H_mesh, phi_mesh
     REAL(KIND=8),                   INTENT(OUT):: time
@@ -775,33 +775,35 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:),     INTENT(IN) :: mu_H_field
     REAL(KIND=8),                   INTENT(IN) :: mu_phi
     INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
-    TYPE(mag_field_type),           INTENT(OUT):: mag_field
+    TYPE(mag_field_type),           INTENT(OUT):: mag_n, mag_n1
     INTEGER                                    :: i, k
-    CALL mag_field%allocate_induction_fields()
+    CALL mag_n%allocate_induction_fields()
+    CALL mag_n1%allocate_induction_fields()
     time = -dt
     DO k=1,6
        DO i=1, SIZE(list_mode)
-          mag_field%Hn1(:,k,i) = Hexact(H_mesh,k, H_mesh%rr, list_mode(i), mu_H_field, time)
+          mag_n1%H(:,k,i) = Hexact(H_mesh,k, H_mesh%rr, list_mode(i), mu_H_field, time)
           IF (inputs%nb_dom_phi>0) THEN
              IF (k<3) THEN
-                mag_field%phin1(:,k,i) = Phiexact(k, phi_mesh%rr, list_mode(i) , mu_phi, time)
+                mag_n1%phi(:,k,i) = Phiexact(k, phi_mesh%rr, list_mode(i) , mu_phi, time)
              ENDIF
           END  IF
        ENDDO
     ENDDO
+    CALL mag_n1%set_time(time)
 
     time = time + dt
     DO k=1,6
        DO i=1, SIZE(list_mode)
-          mag_field%Hn(:,k,i) = Hexact(H_mesh,k, H_mesh%rr, list_mode(i), mu_H_field, time)
+          mag_n%H(:,k,i) = Hexact(H_mesh,k, H_mesh%rr, list_mode(i), mu_H_field, time)
           IF (inputs%nb_dom_phi>0) THEN
              IF (k<3) THEN
-                mag_field%phin(:,k,i) = Phiexact(k, phi_mesh%rr, list_mode(i), mu_phi, time)
+                mag_n%phi(:,k,i) = Phiexact(k, phi_mesh%rr, list_mode(i), mu_phi, time)
              ENDIF
           END  IF
        ENDDO
     ENDDO
-    CALL mag_field%set_time(time)
+    CALL mag_n%set_time(time)
   END SUBROUTINE template_init_maxwell
 
   !===Analytical permeability (if needed)

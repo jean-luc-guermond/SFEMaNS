@@ -11,7 +11,8 @@ MODULE my_data_module
      INTEGER     :: nev      = 1
      INTEGER     :: kdim     = 4
      REAL(KIND=8)::abs_tol   = 1.d-7
-     LOGICAL     :: if_vtu_3d = .FALSE.
+     LOGICAL     :: if_vtu_3d     = .FALSE.
+     LOGICAL     :: if_write_eigs = .TRUE.
    CONTAINS
      PROCEDURE, PUBLIC :: init => init_LK_data   
      PROCEDURE, PUBLIC :: read => read_LK_data   
@@ -438,6 +439,13 @@ CONTAINS
        READ (in_unit, *) self%if_vtu_3d
     ELSE
        self%if_vtu_3d = .FALSE.
+    END IF
+
+    CALL find_string(in_unit, "===Write restart suites of LK eigenvectors?", test)
+    IF (test) THEN
+       READ (in_unit, *) self%if_write_eigs
+    ELSE
+       self%if_write_eigs = .FALSE.
     END IF
 
   END SUBROUTINE read_LK_data 

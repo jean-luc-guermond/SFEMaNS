@@ -1,7 +1,8 @@
 # Variables for personal laptop
 set(SFEMaNS_DIR "/home/botez/SFEMaNS")
 #set(debug_bounds "$ENV(FFLAGS) -O2 -g -traceback -heap-arrays")
-set(debug_bounds "-Wall -fbounds-check -fimplicit-none -O0 -ffree-line-length-none")
+set(debug_bounds "-g -Wall -fbounds-check -O0 -check all -warn all -traceback")
+#set(debug_bounds "-Wall -fbounds-check -fimplicit-none -O0 -ffree-line-length-none")
 set(release_bounds "-O3 -ffree-line-length-none")
 
 #set(debug_bounds "-Wall -fimplicit-none -fbounds-check")

@@ -3,7 +3,7 @@ MODULE exponential_propagator
    USE LightKrylov, only: abstract_exptA_linop_rdp, abstract_vector_rdp
 #endif
    USE def_type_mesh
-   USE def_type_field
+   USE def_type_field_mag
 #include "petsc/finclude/petsc.h"
    USE petsc
    ! USE COMM_LK_SFEM
@@ -26,7 +26,7 @@ MODULE exponential_propagator
        TYPE(mesh_type), POINTER                        :: H_mesh, phi_mesh
        TYPE(interface_type), POINTER                   :: interface_H_mu, interface_H_phi
        REAL(KIND=8), POINTER,      DIMENSION(:,:,:)    :: vel
-       TYPE(mag_field_type), POINTER                   :: mag_field
+       TYPE(mag_field_type), POINTER                   :: mag_n, mag_n1
        REAL(KIND=8), POINTER,      DIMENSION(:)        :: sigma_field, mu_H_field
        !===Temperature field===========================================================
        TYPE(mesh_type), POINTER                        :: temp_mesh
@@ -114,7 +114,7 @@ MODULE exponential_propagator
        !===Initialize SFEMANS (mandatory)==============================================
        CALL build_pointers(vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, conc_mesh,&
             interface_H_phi, interface_H_mu, list_mode, &
-            un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_field, vel, &
+            un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_n, mag_n1, vel, &
             vol_heat_capacity_field, temperature_diffusivity_field, &
             concentration_diffusivity_field,mu_H_field, sigma_field, time, m_max_c, &
             comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc,temperature, &
@@ -126,63 +126,8 @@ MODULE exponential_propagator
            SELECT TYPE(vec_out)
             TYPE is(LK_field_type)
 #endif
-               CALL vec_in%LK_2_SFEM(un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_field)
+               CALL vec_in%LK_2_SFEM(un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_n, mag_n1)
               
-!===================================
-!===================================
-!==== TESTTTTTTTTTTTT   ============
-!===================================
-!===================================
-
-!====== RANDOM INITIAL CONDITION
-               ! ALLOCATE(put_seed(SIZE(un,1)*SIZE(un,2)*SIZE(un,3)))
-               ! put_seed = 1
-               ! CALL RANDOM_SEED(put=put_seed)
-               ! DEALLOCATE(put_seed)
-               ! CALL RANDOM_NUMBER(un)
-               ! ! DO it=1, 6
-               !    ! if (it /= 3 .AND. it /= 5) un(:, it, :) = 0.d0
-               ! ! ENDDO
-               ! ! un(:, 1, 1) = vv_mesh%rr(2, :)/vv_mesh%rr(1, :)
-               ! un(:, 2, 1) = 0.d0
-               ! un(:, 4, 1) = 0.d0
-               ! un(:, 6, 1) = 0.d0
-!====== RANDOM INITIAL CONDITION
-!====== GIVEN INITIAL CONDITION
-               ! ASSOCIATE(Rf => vv_mesh%rr(1,:), Zf => vv_mesh%rr(2,:))
-               ! ALLOCATE(bc_flow(vv_mesh%np), incompressibility_flow(vv_mesh%np))
-               ! bc_flow = (1.d0 - Rf)*(2.d0 - Rf)
-               ! un = 0.d0
-               ! DO i=1, SIZE(list_mode)
-                  ! DO j = 1, 6
-                        ! IF (j==1) THEN
-                           ! un   (:,j,i) = bc_flow**2 * H/(2.d0*pi)*SIN(2.d0*pi*Zf / H)
-                        ! ELSEIF (j==3) THEN
-                           ! un   (:,j,i) = bc_flow
-                        ! ELSEIF (j==5) THEN
-                           ! incompressibility_flow = bc_flow * ((1.d0 - Rf)*(2.d0 - Rf)/Rf + 2.d0*(2.d0*Rf-3.d0))
-                           ! un   (:,j,i) = incompressibility_flow * COS(2.d0*pi*Zf / H)
-                        ! ENDIF
-                  ! END DO
-               ! END DO
-               ! DEALLOCATE(bc_flow, incompressibility_flow)
-               ! END ASSOCIATE
-!====== GIVEN INITIAL CONDITION
-
-!                un_m1 = un
-! write(*,*) 'max n', MAXVAL(ABS(un)), MAXVAL(ABS(pn)), MAXVAL(ABS(incpn))
-! write(*,*) 'min n', MINVAL(ABS(un)), MINVAL(ABS(pn)), MINVAL(ABS(incpn))
-! write(*,*) 'max n1', MAXVAL(ABS(un_m1)), MAXVAL(ABS(pn_m1)), MAXVAL(ABS(incpn_m1))
-! write(*,*) 'min n1', MINVAL(ABS(un_m1)), MINVAL(ABS(pn_m1)), MINVAL(ABS(incpn_m1))
-               ! CALL mag_field%zero()
-               ! time = mag_field%time
-
-!===================================
-!===================================
-!==== TESTTTTTTTTTTTT   ============
-!===================================
-!===================================
-
                !===============================================================================
                !                        TIME INTEGRATION                                      !
                !===============================================================================
@@ -212,8 +157,9 @@ MODULE exponential_propagator
                   IF (it>1) tploc_max = tploc_max + tploc
                ENDDO
 
-               mag_field%time = time 
-               CALL vec_out%SFEM_2_LK(un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_field)
+               mag_n1%time = time - inputs%dt 
+               mag_n%time = time 
+               CALL vec_out%SFEM_2_LK(un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_n, mag_n1)
              
                !===Timing======================================================================
                tps = user_time() - tps

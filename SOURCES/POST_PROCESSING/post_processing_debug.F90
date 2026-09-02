@@ -6,7 +6,7 @@ MODULE post_processing_debug
 CONTAINS
   !---------------------------------------------------------------------------
   SUBROUTINE regression(conc_mesh, vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
-       un, pn, mag_field, tempn, level_setn, concn, mu_H_field, &
+       un, pn, mag_n, mag_n1, tempn, level_setn, concn, mu_H_field, &
        time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc)
     USE boundary
     USE def_type_mesh
@@ -18,7 +18,7 @@ CONTAINS
     USE sub_plot
 #include "petsc/finclude/petsc.h"
     USE petsc
-    USE def_type_field
+    USE def_type_field_mag
     IMPLICIT NONE
     TYPE(mesh_type), POINTER                    :: conc_mesh
     TYPE(mesh_type), POINTER                    :: pp_mesh, vv_mesh
@@ -26,7 +26,7 @@ CONTAINS
     TYPE(mesh_type), POINTER                    :: H_mesh, phi_mesh
     INTEGER,      POINTER,  DIMENSION(:)        :: list_mode
     REAL(KIND=8), POINTER,  DIMENSION(:,:,:)    :: concn, un, pn, tempn
-    TYPE(mag_field_type), POINTER               :: mag_field
+    TYPE(mag_field_type), POINTER               :: mag_n, mag_n1
     REAL(KIND=8), POINTER,  DIMENSION(:,:,:,:)  :: level_setn
     REAL(KIND=8), POINTER,  DIMENSION(:)        :: mu_H_field
     REAL(KIND=8)                                :: time
@@ -92,7 +92,7 @@ CONTAINS
 
     IF (H_mesh%np/=0) THEN
        !error=norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn)
-       error=norm_SF(comm_one_d, 'L2', H_mesh, list_mode, mag_field%Hn)
+       error=norm_SF(comm_one_d, 'L2', H_mesh, list_mode, mag_n%H)
        WRITE(22,*) error
        READ(21,*) error_ref
        error_cumul = error_cumul + ABS(error-error_ref)
@@ -100,7 +100,7 @@ CONTAINS
     END IF
 
     IF (phi_mesh%np/=0) THEN
-       error=norm_SF(comm_one_d, 'L2', phi_mesh, list_mode, mag_field%phin)
+       error=norm_SF(comm_one_d, 'L2', phi_mesh, list_mode, mag_n%phi)
        WRITE(22,*) error
        READ(21,*) error_ref
        error_cumul = error_cumul + ABS(error-error_ref)
@@ -125,7 +125,7 @@ CONTAINS
     CALL EXIT(error_out)
 
     !===Dummy variables to avoid warning when post_proc_test call commented
-    nd=SIZE(mag_field%Bn,1); nd=m_max_c; nd=SIZE(mu_H_field); nd=FLOOR(time)
+    nd=SIZE(mag_n%B,1); nd=m_max_c; nd=SIZE(mu_H_field); nd=FLOOR(time)
     !===Dummy variables to avoid warning when post_proc_test call commented
   END SUBROUTINE regression
 

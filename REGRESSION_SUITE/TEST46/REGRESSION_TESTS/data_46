@@ -25,7 +25,7 @@
 ===How many simultaneous vectors for Krylov-Schur?
 30
 ===Absolute tolerance for LK eigenvalues?
-1.d-8
+4.d-9
 ===Compute vtu 3D of LK eigenvectors?
 .t.
 ============================================

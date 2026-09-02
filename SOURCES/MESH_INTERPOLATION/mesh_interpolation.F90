@@ -4,7 +4,7 @@ MODULE mesh_interpolation
    PRIVATE
 CONTAINS
    SUBROUTINE mesh_interpol
-      USE def_type_field
+      USE def_type_field_mag
       USE chaine_caractere
       USE def_type_mesh
       USE my_util
@@ -71,8 +71,8 @@ CONTAINS
            l_t_g_vv, l_t_g_pp, l_t_g_H, l_t_g_phi, l_t_g_temp, l_t_g_conc
       INTEGER, DIMENSION(:), ALLOCATABLE :: list_dom_H_ref, H_in_to_new_ref, list_dom_temp_ref, temp_in_to_new_ref
 
-      TYPE(mag_field_type),               TARGET :: mag_field
-      TYPE(mag_field_type),               TARGET :: mag_field_glob
+      TYPE(mag_field_type),               TARGET :: mag_n, mag_n1
+      TYPE(mag_field_type),               TARGET :: mag_n_glob, mag_n1_glob
       REAL(KIND = 8), DIMENSION(:, :, :), ALLOCATABLE, TARGET :: un, un_m1, pn, pn_m1
       REAL(KIND = 8), DIMENSION(:, :, :), ALLOCATABLE, TARGET :: incpn, incpn_m1, tempn, tempn_m1
       REAL(KIND = 8), DIMENSION(:, :, :), ALLOCATABLE, TARGET :: concn, concn_m1
@@ -82,8 +82,8 @@ CONTAINS
       REAL(KIND = 8), DIMENSION(:, :, :), ALLOCATABLE, TARGET :: concn_glob, concn_m1_glob
       REAL(KIND = 8), DIMENSION(:, :, :, :), ALLOCATABLE, TARGET :: level_setn_glob, level_setn_m1_glob
 
-      TYPE(mag_field_type),               POINTER :: mag_field_in
-      TYPE(mag_field_type),               POINTER :: mag_field_out
+      TYPE(mag_field_type),               POINTER :: mag_n_in, mag_n1_in
+      TYPE(mag_field_type),               POINTER :: mag_n_out, mag_n1_out
       REAL(KIND = 8), DIMENSION(:, :, :), POINTER :: un_in, un_m1_in, pn_in, pn_m1_in
       REAL(KIND = 8), DIMENSION(:, :, :), POINTER :: incpn_in, incpn_m1_in, tempn_in, tempn_m1_in
       REAL(KIND = 8), DIMENSION(:, :, :), POINTER :: concn_in, concn_m1_in
@@ -939,23 +939,26 @@ CONTAINS
       END IF
 
 
-       CALL build_pointers_mag_field(H_mesh, phi_mesh, list_mode, comm_one_d, if_induction)
-       CALL mag_field%allocate_induction_fields()
-      !  CALL mag_field%zero
-       CALL build_global_pointers_mag_field(H_mesh_glob, phi_mesh_glob)
-       CALL mag_field_glob%allocate_induction_fields(.TRUE.)
-      !  CALL mag_field_glob%zero
+      IF (if_induction) THEN
+         CALL build_pointers_mag_field(H_mesh, phi_mesh, list_mode, comm_one_d, if_induction)
+         CALL mag_n%allocate_induction_fields()
+         CALL mag_n1%allocate_induction_fields()
+   
+         CALL build_global_pointers_mag_field(H_mesh_glob, phi_mesh_glob)
+         CALL mag_n_glob%allocate_induction_fields(.TRUE.)
+         CALL mag_n1_glob%allocate_induction_fields(.TRUE.)
+      ENDIF
 
       !===Pointers
       IF (is_in) THEN
          mono_in = .FALSE.
          mono_out = .TRUE.
          IF (if_induction) THEN
-            mag_field_in => mag_field
+            mag_n_in => mag_n; mag_n1_in => mag_n1
             H_mesh_in => H_mesh
             phi_mesh_in => phi_mesh
 
-            mag_field_out => mag_field_glob
+            mag_n_out => mag_n_glob; mag_n1_out => mag_n1_glob
             H_mesh_out => H_mesh_glob
             phi_mesh_out => phi_mesh_glob
          END IF
@@ -1004,11 +1007,11 @@ CONTAINS
          mono_in = .TRUE.
          mono_out = .FALSE.
          IF (if_induction) THEN
-            mag_field_in => mag_field_glob
+            mag_n_in => mag_n_glob; mag_n1_in => mag_n1_glob
             H_mesh_in => H_mesh_glob
             phi_mesh_in => phi_mesh_glob
 
-            mag_field_out => mag_field
+            mag_n_out => mag_n; mag_n1_out => mag_n1
             H_mesh_out => H_mesh
             phi_mesh_out => phi_mesh
          END IF
@@ -1060,8 +1063,12 @@ CONTAINS
          IF (inter_mesh) THEN
             ALLOCATE(controle_H(H_mesh_out%np), controle_phi(phi_mesh_out%np))
             DO m = index_start, index_start + nb_fic - 1
-               CALL mag_field%zero()            
-               CALL mag_field_glob%zero()            
+               CALL mag_n%zero(); CALL mag_n1%zero()            
+               CALL mag_n_glob%zero(); CALL mag_n1_glob%zero()    
+               ASSOCIATE(Hn_in => mag_n_in%H, Bn_in => mag_n_in%B, phin_in => mag_n_in%phi,&
+                        Hn1_in => mag_n1_in%H, Bn1_in => mag_n1_in%B, phin1_in => mag_n1_in%phi,&
+                        Hn_out => mag_n_out%H, Bn_out => mag_n_out%B, phin_out => mag_n_out%phi,&
+                        Hn1_out => mag_n1_out%H, Bn1_out => mag_n1_out%B, phin1_out => mag_n1_out%phi)        
                WRITE(tit, '(i3)') m
                lblank = eval_blank(3, tit)
                DO l = 1, lblank - 1
@@ -1073,24 +1080,25 @@ CONTAINS
                END IF
                CALL MPI_Barrier(MPI_Comm_WORLD, code)
                CALL read_restart_maxwell(comm_one_d, H_mesh_in, phi_mesh_in, time_h, list_mode, &
-                    mag_field_in, old_filename, interpol = .FALSE., opt_mono = mono_in)
+                    mag_n_in, mag_n1_in, old_filename, interpol = .FALSE., opt_mono = mono_in)
 
                !===Controle_H and controle_phi are initialized to zero in interp_mesh
-               CALL interp_mesh(H_mesh_in, H_mesh_out, mag_field_in%Hn, mag_field_out%Hn, controle_H, type_fe_H)
-               CALL interp_mesh(H_mesh_in, H_mesh_out, mag_field_in%Hn1, mag_field_out%Hn1, controle_H, type_fe_H)
-               CALL interp_mesh(H_mesh_in, H_mesh_out, mag_field_in%Bn, mag_field_out%Bn, controle_H, type_fe_H)
-               CALL interp_mesh(H_mesh_in, H_mesh_out, mag_field_in%Bn1, mag_field_out%Bn1, controle_H, type_fe_H)
-               CALL interp_mesh(phi_mesh_in, phi_mesh_out, mag_field_in%phin, mag_field_out%phin, controle_phi, type_fe_phi)
-               CALL interp_mesh(phi_mesh_in, phi_mesh_out, mag_field_in%phin1, mag_field_out%phin1, controle_phi, type_fe_phi)
+               CALL interp_mesh(H_mesh_in, H_mesh_out, Hn_in, Hn_out, controle_H, type_fe_H)
+               CALL interp_mesh(H_mesh_in, H_mesh_out, Hn1_in, Hn1_out, controle_H, type_fe_H)
+               CALL interp_mesh(H_mesh_in, H_mesh_out, Bn_in, Bn_out, controle_H, type_fe_H)
+               CALL interp_mesh(H_mesh_in, H_mesh_out, Bn1_in, Bn1_out, controle_H, type_fe_H)
+               CALL interp_mesh(phi_mesh_in, phi_mesh_out, phin_in, phin_out, controle_phi, type_fe_phi)
+               CALL interp_mesh(phi_mesh_in, phi_mesh_out, phin1_in, phin1_out, controle_phi, type_fe_phi)
 
                IF (MIN(MINVAL(controle_H), MINVAL(controle_phi)) == 0) THEN
                   CALL error_Petsc('certains points non trouve H/phi 2')
                END IF
 
                CALL write_restart_maxwell(comm_one_d, H_mesh_out, phi_mesh_out, time_h, list_mode, &
-                    mag_field_out, new_filename, m, 1, opt_mono = mono_out)
+                    mag_n_out, mag_n1_out, new_filename, m, 1, opt_mono = mono_out)
 
                CALL MPI_COMM_RANK(comm_one_d(1), rank_S, ierr)
+               END ASSOCIATE
             END DO
             DEALLOCATE(controle_H, controle_phi)
          ELSE
@@ -1101,8 +1109,12 @@ CONTAINS
             CALL loc_to_glob(phi_mesh, phi_mesh_glob, l_t_g_phi)
             DO m = index_start, index_start + nb_fic - 1
  
-               CALL mag_field%zero()
-               CALL mag_field_glob%zero()
+               CALL mag_n%zero(); CALL mag_n1%zero()
+               CALL mag_n_glob%zero(); CALL mag_n1_glob%zero()
+               ASSOCIATE(Hn_in => mag_n_in%H, Bn_in => mag_n_in%B, phin_in => mag_n_in%phi,&
+                        Hn1_in => mag_n1_in%H, Bn1_in => mag_n1_in%B, phin1_in => mag_n1_in%phi,&
+                        Hn_out => mag_n_out%H, Bn_out => mag_n_out%B, phin_out => mag_n_out%phi,&
+                        Hn1_out => mag_n1_out%H, Bn1_out => mag_n1_out%B, phin1_out => mag_n1_out%phi)
                WRITE(tit, '(i3)') m
                lblank = eval_blank(3, tit)
                DO l = 1, lblank - 1
@@ -1124,25 +1136,26 @@ CONTAINS
                   CALL MPI_Barrier(MPI_Comm_WORLD, code)
                END IF
                CALL read_restart_maxwell(comm_one_d, H_mesh_in, phi_mesh_in, time_h, list_mode,&
-                    mag_field_in, old_filename, interpol = .FALSE., opt_mono = mono_in)
+                    mag_n_in, mag_n1_in, old_filename, interpol = .FALSE., opt_mono = mono_in)
 
-               CALL inter_mesh_loc_to_glob(H_mesh_in, H_mesh_out, mag_field_in%Hn,  &
-               mag_field_out%Hn, l_t_g_H, is_in, comm_one_d(1))
-               CALL inter_mesh_loc_to_glob(H_mesh_in, H_mesh_out, mag_field_in%Hn1, &
-                       mag_field_out%Hn1, l_t_g_H, is_in, comm_one_d(1))
-               CALL inter_mesh_loc_to_glob(H_mesh_in, H_mesh_out, mag_field_in%Bn, & 
-                       mag_field_out%Bn, l_t_g_H, is_in, comm_one_d(1))
-               CALL inter_mesh_loc_to_glob(H_mesh_in, H_mesh_out, mag_field_in%Bn1, & 
-                       mag_field_out%Bn1, l_t_g_H, is_in, comm_one_d(1))
-               CALL inter_mesh_loc_to_glob(phi_mesh_in, phi_mesh_out, mag_field_in%phin, &
-                       mag_field_out%phin, l_t_g_phi, is_in, comm_one_d(1))
-               CALL inter_mesh_loc_to_glob(phi_mesh_in, phi_mesh_out, mag_field_in%phin1, &
-                       mag_field_out%phin1, l_t_g_phi, is_in, comm_one_d(1))
+               CALL inter_mesh_loc_to_glob(H_mesh_in, H_mesh_out, Hn_in,  &
+               Hn_out, l_t_g_H, is_in, comm_one_d(1))
+               CALL inter_mesh_loc_to_glob(H_mesh_in, H_mesh_out, Hn1_in, &
+                       Hn1_out, l_t_g_H, is_in, comm_one_d(1))
+               CALL inter_mesh_loc_to_glob(H_mesh_in, H_mesh_out, Bn_in, & 
+                       Bn_out, l_t_g_H, is_in, comm_one_d(1))
+               CALL inter_mesh_loc_to_glob(H_mesh_in, H_mesh_out, Bn1_in, & 
+                       Bn1_out, l_t_g_H, is_in, comm_one_d(1))
+               CALL inter_mesh_loc_to_glob(phi_mesh_in, phi_mesh_out, phin_in, &
+                       phin_out, l_t_g_phi, is_in, comm_one_d(1))
+               CALL inter_mesh_loc_to_glob(phi_mesh_in, phi_mesh_out, phin1_in, &
+                       phin1_out, l_t_g_phi, is_in, comm_one_d(1))
 
-               CALL write_restart_maxwell(comm_one_d, H_mesh_out, phi_mesh_out, time_h, list_mode, mag_field_out, &
+               CALL write_restart_maxwell(comm_one_d, H_mesh_out, phi_mesh_out, time_h, list_mode, mag_n_out, mag_n1_out, &
                     new_filename, m, 1, opt_mono = mono_out)
 
                CALL MPI_COMM_RANK(comm_one_d(1), rank_S, ierr)
+               END ASSOCIATE
             END DO
 
          END IF
@@ -1161,17 +1174,17 @@ CONTAINS
                   DO l = 1, lblank - 1
                      tit_m(l:l) = '0'
                   END DO
-                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, mag_field%Hn(:, 1, i), &
+                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, mag_n%H(:, 1, i), &
                        'H_r_cos_m=' // tit_m // '_' // tit_s // '_999.plt')
-                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, mag_field%Hn(:, 2, i), &
+                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, mag_n%H(:, 2, i), &
                        'H_r_sin_m=' // tit_m // '_' // tit_s // '_999.plt')
-                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, mag_field%Hn(:, 3, i), &
+                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, mag_n%H(:, 3, i), &
                        'H_t_cos_m=' // tit_m // '_' // tit_s // '_999.plt')
-                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, mag_field%Hn(:, 4, i), &
+                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, mag_n%H(:, 4, i), &
                        'H_t_sin_m=' // tit_m // '_' // tit_s // '_999.plt')
-                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, mag_field%Hn(:, 5, i), &
+                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, mag_n%H(:, 5, i), &
                        'H_z_cos_m=' // tit_m // '_' // tit_s // '_999.plt')
-                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, mag_field%Hn(:, 6, i), &
+                  CALL plot_scalar_field(H_mesh%jj, H_mesh%rr, mag_n%H(:, 6, i), &
                        'H_z_sin_m=' // tit_m // '_' // tit_s // '_999.plt')
 
                END DO
@@ -1183,17 +1196,17 @@ CONTAINS
                      DO l = 1, lblank - 1
                         tit_m(l:l) = '0'
                      END DO
-                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, mag_field_glob%Hn(:, 1, i), &
+                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, mag_n_glob%H(:, 1, i), &
                           'gH_r_cos_m=' // tit_m // '_999.plt')
-                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, mag_field_glob%Hn(:, 2, i), &
+                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, mag_n_glob%H(:, 2, i), &
                           'gH_r_sin_m=' // tit_m // '_999.plt')
-                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, mag_field_glob%Hn(:, 3, i), &
+                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, mag_n_glob%H(:, 3, i), &
                           'gH_t_cos_m=' // tit_m // '_999.plt')
-                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, mag_field_glob%Hn(:, 4, i), &
+                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, mag_n_glob%H(:, 4, i), &
                           'gH_t_sin_m=' // tit_m // '_999.plt')
-                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, mag_field_glob%Hn(:, 5, i), &
+                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, mag_n_glob%H(:, 5, i), &
                           'gH_z_cos_m=' // tit_m // '_999.plt')
-                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, mag_field_glob%Hn(:, 6, i), &
+                     CALL plot_scalar_field(H_mesh_glob%jj, H_mesh_glob%rr, mag_n_glob%H(:, 6, i), &
                           'gH_z_sin_m=' // tit_m // '_999.plt')
                   END DO
                END IF

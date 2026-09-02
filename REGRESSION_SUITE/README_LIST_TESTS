@@ -11,7 +11,7 @@ Test 10: Maxwell P2
 Test 11: MHD with Temperature and precession
 Test 12: Maxwell P1 Neumann bdy
 Test 13: MHD periodic and Neumann bdy
-Test 14: ARPACK/LIGHT_KRYLOV for Maxwell and eigen values problem
+Test 14: ARPACK/LIGHT_KRYLOV for Maxwell and eigen values problem (MND dynamo)
 Test 15: Navier-Stokes with Temperature and LES
 Test 16: Navier-Stokes Neumann bdy with precession
 Test 17: Maxwell Equations with vacuum and variable magnetic permeability in (r,z)
@@ -43,5 +43,8 @@ Test 42: MHS
 Test 43: Liquid Metal Batterie (cake setup) with concentration and Maxwell
 Test 44: restart test 44 (6 processors vs 2 for test 43)
 Test 45: Navier-Stokes and Temperature with variable fluid properties periodic
-Test 46: Eigenvalue problem with LIGHT_KRYLOV
-Test 47: MHD with temperature and concentration
+Test 46: Eigenvalue problem with LIGHT_KRYLOV (Ponomarenko dynamo)
+Test 47: MHD with temperature and concentration => test symmetrization is correct
+Test 48: Navier-Stokes with temperature and consistent pressure
+Test 49: Linearized Navier-Stokes around base flow (periodic Taylor-Couette); Solved with DNS
+Test 50: Linearized Navier-Stokes around base flow (periodic Taylor-Couette); Solved with LightKrylov

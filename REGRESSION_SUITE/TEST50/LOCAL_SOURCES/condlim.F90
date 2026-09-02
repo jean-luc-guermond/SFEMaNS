@@ -1,5 +1,5 @@
 SUBMODULE (boundary_generic_module) boundary_generic
-  USE def_type_field
+  USE def_type_field_mag
   USE my_util
   USE def_type_mesh
   USE input_data
@@ -550,7 +550,7 @@ CONTAINS
 
   !===Initialization of magnetic field and scalar potential (if present)
   MODULE SUBROUTINE init_maxwell(H_mesh, phi_mesh, time, dt, mu_H_field, mu_phi, &
-       list_mode, mag_field)
+       list_mode, mag_n, mag_n1)
       !  list_mode, magn, magn1)
     IMPLICIT NONE
     TYPE(mesh_type)                            :: H_mesh, phi_mesh     
@@ -559,13 +559,13 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:),     INTENT(IN) :: mu_H_field
     REAL(KIND=8),                   INTENT(IN) :: mu_phi
     INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode    
-    TYPE(mag_field_type), INTENT(OUT)          :: mag_field
+    TYPE(mag_field_type), INTENT(OUT)          :: mag_n, mag_n1
     ! TYPE(mag_field_type), INTENT(OUT)        :: magn, magn1
     INTEGER                                    :: i, k, mode, m_max_c
     REAL(KIND=8), DIMENSION(H_mesh%np)         :: x
     REAL(KIND=8)                               :: ampl = 1.d-6
 
-    CALL mag_field%allocate_induction_fields()
+    CALL mag_n1%allocate_induction_fields; CALL mag_n%allocate_induction_fields
     time = 0.d0
     m_max_c = SIZE(list_mode)
 
@@ -575,14 +575,14 @@ CONTAINS
     DO k=1,6
        DO i=1, m_max_c
           mode = list_mode(i)
-          mag_field%Hn(:,k,i) = Hexact_init(H_mesh, k, H_mesh%rr, mode, mu_H_field, time)
+          mag_n%H(:,k,i) = Hexact_init(H_mesh, k, H_mesh%rr, mode, mu_H_field, time)
           IF (k<3) THEN
-             mag_field%phin(:,k,i) = Phiexact(k, phi_mesh%rr, mode, mu_phi, time)
+             mag_n%phi(:,k,i) = Phiexact(k, phi_mesh%rr, mode, mu_phi, time)
           ENDIF
           IF (k==3 .AND. list_mode(i)==0) THEN
              CALL RANDOM_SEED
              CALL RANDOM_NUMBER(x)
-             mag_field%Hn(:,k,i) = ampl*(x - 0.5d0)
+             mag_n%H(:,k,i) = ampl*(x - 0.5d0)
           END IF
 !          IF (list_mode(i)==1) THEN
 !             CALL RANDOM_SEED
@@ -596,8 +596,8 @@ CONTAINS
 !          END IF
        ENDDO
     ENDDO
-    mag_field%Hn1 = mag_field%Hn
-    mag_field%phin1 = mag_field%phin
+    mag_n1%H = mag_n%H
+    mag_n1%phi = mag_n%phi
     RETURN
   END SUBROUTINE init_maxwell
 

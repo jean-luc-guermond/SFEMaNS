@@ -2,7 +2,7 @@ MESSAGE(STATUS "This is CMake ${CMAKE_VERSION}")
 MESSAGE(STATUS "")
 
 # Cmake minimum version
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.27)
 
 # Project name and version
 project(sfemans_lib)

@@ -5,7 +5,7 @@ SUBMODULE (boundary_generic_module) boundary_generic
   USE bessel
   USE user_data
 ! VB 06/02/2026
-  USE def_type_field
+  USE def_type_field_mag
 ! VB 06/02/2026
   REAL(KIND=8) :: test11_Ri=7/13d0, test11_Ro=20/13d0, test11_Rossby=1.d-4
   REAL(KIND=8) :: pi=ACOS(-1.d0)
@@ -495,7 +495,7 @@ CONTAINS
 
   !===Initialization of magnetic field and scalar potential (if present)
   MODULE SUBROUTINE init_maxwell(H_mesh, phi_mesh, time, dt, mu_H_field, mu_phi, &
-       list_mode, mag_field)
+       list_mode, mag_n, mag_n1)
        !list_mode, Hn1, Hn, phin1, phin)
     IMPLICIT NONE
     TYPE(mesh_type)                            :: H_mesh, phi_mesh
@@ -509,10 +509,10 @@ CONTAINS
     INTEGER                                    :: i, n
     REAL(KIND=8)                               :: rho, normalization
     REAL(KIND=8), DIMENSION(SIZE(H_mesh%rr,2)) :: Brho, Btheta, Bphi, theta
-    TYPE(mag_field_type),           INTENT(OUT):: mag_field
-    CALL mag_field%allocate_induction_fields()
+    TYPE(mag_field_type),           INTENT(OUT):: mag_n, mag_n1
+    CALL mag_n1%allocate_induction_fields; CALL mag_n%allocate_induction_fields
 
-    mag_field%Hn  = 0.d0
+    mag_n%H  = 0.d0
     DO i = 1, SIZE(list_mode)
        IF (list_mode(i) /= 0) CYCLE
        normalization = 2*SQRT(test11_Rossby)
@@ -525,15 +525,15 @@ CONTAINS
           Btheta(n)= SIN(theta(n))*(-15d0/(SQRT(2d0)*4d0))*((rho-test11_Ri)*(rho-test11_Ro)*(3*rho-4))/rho
           Bphi(n)  = SIN(2*theta(n))*(15d0/(SQRT(2d0)*8d0))*SIN(Pi*(rho-test11_Ri))
        END DO
-       mag_field%Hn(:,1,i) = normalization*(Brho*SIN(theta) + Btheta*COS(theta))
-       mag_field%Hn(:,3,i) = normalization*Bphi
-       mag_field%Hn(:,5,i) = normalization*(Brho*COS(theta) - Btheta*SIN(theta))
+       mag_n%H(:,1,i) = normalization*(Brho*SIN(theta) + Btheta*COS(theta))
+       mag_n%H(:,3,i) = normalization*Bphi
+       mag_n%H(:,5,i) = normalization*(Brho*COS(theta) - Btheta*SIN(theta))
     END DO
-    mag_field%Hn1 = mag_field%Hn
+    mag_n1%H = mag_n%H
     time = 0.d0
-    CALL mag_field%set_time(time)
-    mag_field%phin = 0.d0
-    mag_field%phin1= 0.d0
+    CALL mag_n1%set_time(time-dt); CALL mag_n%set_time(time)
+    mag_n%phi = 0.d0
+    mag_n1%phi= 0.d0
     RETURN
 
     !===Dummy variables to avoid warning

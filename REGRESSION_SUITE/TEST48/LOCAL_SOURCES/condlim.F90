@@ -596,7 +596,7 @@ CONTAINS
 
   !===Initialization of magnetic field and scalar potential (if present)
   MODULE SUBROUTINE init_maxwell(H_mesh, phi_mesh, time, dt, mu_H_field, mu_phi, &
-       list_mode, mag_field)
+       list_mode, mag_n, mag_n1)
     IMPLICIT NONE
     TYPE(mesh_type)                            :: H_mesh, phi_mesh
     REAL(KIND=8),                   INTENT(OUT):: time
@@ -604,16 +604,16 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:),     INTENT(IN) :: mu_H_field
     REAL(KIND=8),                   INTENT(IN) :: mu_phi
     INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
-    TYPE(mag_field_type), INTENT(OUT) :: mag_field
+    TYPE(mag_field_type), INTENT(OUT) :: mag_n, mag_n1
     INTEGER                                    :: i, k
 
     time = -dt
     DO k=1,6
        DO i=1, SIZE(list_mode)
-          mag_field%Hn1(:,k,i) = Hexact(H_mesh,k, H_mesh%rr, list_mode(i), mu_H_field, time)
+          mag_n1%H(:,k,i) = Hexact(H_mesh,k, H_mesh%rr, list_mode(i), mu_H_field, time)
           IF (inputs%nb_dom_phi>0) THEN
              IF (k<3) THEN
-                mag_field%phin1(:,k,i) = Phiexact(k, phi_mesh%rr, list_mode(i) , mu_phi, time)
+                mag_n1%phi(:,k,i) = Phiexact(k, phi_mesh%rr, list_mode(i) , mu_phi, time)
              ENDIF
           ENDIF
        ENDDO
@@ -622,10 +622,10 @@ CONTAINS
     time = time + dt
     DO k=1,6
        DO i=1, SIZE(list_mode)
-          mag_field%Hn(:,k,i) = Hexact(H_mesh,k, H_mesh%rr, list_mode(i), mu_H_field, time)
+          mag_n%H(:,k,i) = Hexact(H_mesh,k, H_mesh%rr, list_mode(i), mu_H_field, time)
           IF (inputs%nb_dom_phi>0) THEN
              IF (k<3) THEN
-                mag_field%phin(:,k,i) = Phiexact(k, phi_mesh%rr, list_mode(i), mu_phi, time)
+                mag_n%phi(:,k,i) = Phiexact(k, phi_mesh%rr, list_mode(i), mu_phi, time)
              ENDIF
           ENDIF
        ENDDO

@@ -14,7 +14,7 @@ PROGRAM mhd_prog
   USE petsc
 
   USE COMM_LK_SFEM
-  USE def_type_field
+  USE def_type_field_mag
   USE exponential_propagator
   USE eigenvalue_problem, ONLY: compute_spectrum
 #ifdef USE_LIGHTKRYLOV 
@@ -29,11 +29,8 @@ PROGRAM mhd_prog
   !===EXPONENTIAL_PROPAGATOR=====================================================
   TYPE(exptA_linop)                               :: exptA
   TYPE(LK_field_type)                            :: vec_in
-!   TYPE(mag_field_type)                            :: vec_in
   TYPE(LK_field_type)                            :: vec_out
-!   TYPE(mag_field_type)                            :: vec_out
   TYPE(LK_field_type), DIMENSION(:), ALLOCATABLE :: X
-!   TYPE(mag_field_type), DIMENSION(:), ALLOCATABLE :: X
   COMPLEX(KIND=8), DIMENSION(:), ALLOCATABLE      :: lambda
   REAL(KIND=8), DIMENSION(:), ALLOCATABLE         :: residuals
   LOGICAL                                         :: if_induction, test_induction
@@ -45,7 +42,7 @@ PROGRAM mhd_prog
   TYPE(mesh_type), POINTER                        :: H_mesh, phi_mesh
   TYPE(interface_type), POINTER                   :: interface_H_mu, interface_H_phi
   REAL(KIND=8), POINTER,      DIMENSION(:,:,:)    :: vel
-  TYPE(mag_field_type), POINTER                   :: mag_field
+  TYPE(mag_field_type), POINTER                   :: mag_n, mag_n1
   REAL(KIND=8), POINTER,      DIMENSION(:)        :: sigma_field, mu_H_field
   !===Temperature field===========================================================
   TYPE(mesh_type), POINTER                        :: temp_mesh
@@ -87,7 +84,7 @@ PROGRAM mhd_prog
   !===Initialize SFEMANS (mandatory)==============================================
   CALL initial(vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, conc_mesh,&
        interface_H_phi, interface_H_mu, list_mode, &
-       un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_field, vel, &
+       un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_n, mag_n1, vel, &
        vol_heat_capacity_field, temperature_diffusivity_field, &
        concentration_diffusivity_field,mu_H_field, sigma_field, time, m_max_c, &
        comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc,temperature, &
@@ -193,9 +190,9 @@ PROGRAM mhd_prog
       tps = user_time()
       DO it=1,inputs%LK%nb_exptA    
          tploc = user_time()
-         CALL vec_in%SFEM_2_LK(un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_field)
+         CALL vec_in%SFEM_2_LK(un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_n, mag_n1)
          CALL exptA%matvec(vec_in, vec_out)
-         CALL vec_out%LK_2_SFEM(un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_field)
+         CALL vec_out%LK_2_SFEM(un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_n, mag_n1)
          tploc = user_time() - tploc
          IF (it >1) tploc_max = tploc_max + tploc
       END DO
@@ -211,7 +208,7 @@ PROGRAM mhd_prog
    !===Postprocessing to check convergence=========================================
    IF (inputs%if_regression) THEN
       CALL regression(conc_mesh, vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
-            un, pn, mag_field, temperature, level_set, concentration, mu_H_field, &
+            un, pn, mag_n, mag_n1, temperature, level_set, concentration, mu_H_field, &
             time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc)
       CALL error_Petsc('End of convergence test')  
    END IF
@@ -248,6 +245,9 @@ PROGRAM mhd_prog
     CHARACTER(LEN=200) :: header
     CHARACTER(LEN=3)   :: name_of_field
 
+    ASSOCIATE(Hn => mag_n%H, Bn => mag_n%B, phin => mag_n%phi, &
+              Hn1 => mag_n1%H, Bn1 => mag_n1%B, phin1 => mag_n1%phi)
+
     !===Check ranks
     IF (vv_mesh%me /=0) THEN
        CALL MPI_Comm_rank(comm_one_d_ns(1), rank_ns_S, ierr)
@@ -264,7 +264,7 @@ PROGRAM mhd_prog
        IF (inputs%type_pb=='nst' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd') THEN
           norm = norm_SF(comm_one_d_ns, 'L2', vv_mesh, list_mode, un)
        ELSE
-          norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, mag_field%Hn)
+          norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn)
        END IF
        IF (norm>1.d8 .OR. isnan(norm)) THEN
           CALL error_petsc('From my_post_processing: numerical unstability')
@@ -332,13 +332,13 @@ PROGRAM mhd_prog
        END IF ! end nst or mhd or fhd
 
        IF (inputs%type_pb/='nst') THEN
-          err = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, mag_field%Hn)
+          err = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn)
           IF (rank == 0) THEN
              !===L2 norm of magnetic field
              WRITE(41,*) time, err
           END IF
-          err = norm_SF(comm_one_d, 'div', H_mesh, list_mode, mag_field%Bn)
-          norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, mag_field%Bn)
+          err = norm_SF(comm_one_d, 'div', H_mesh, list_mode, Bn)
+          norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Bn)
           IF (rank == 0) THEN
              !===L2 norm of div(Bn)
              WRITE(51,*) time, err, err/norm
@@ -346,7 +346,7 @@ PROGRAM mhd_prog
              WRITE(*,*) 'norm L2 of magnetic field', time, norm
           END IF
           DO i=1,SIZE(list_mode)
-             norm = norm_S(comm_one_d, 'L2', H_mesh, list_mode(i:i), mag_field%Hn(:,:,i:i))
+             norm = norm_S(comm_one_d, 'L2', H_mesh, list_mode(i:i), Hn(:,:,i:i))
              IF (rank_S == 0) THEN
                 !===L2 norm of Fourier mode list_mode(i) of magnetic field Hn
                 WRITE(200+list_mode(i),*) time, norm
@@ -493,6 +493,8 @@ PROGRAM mhd_prog
        !===End Generation of 2D plots for each Fourier mode (uncomment if wanted)
 
     END IF ! end freq_plot
+
+    END ASSOCIATE
 
   END SUBROUTINE my_post_processing
 

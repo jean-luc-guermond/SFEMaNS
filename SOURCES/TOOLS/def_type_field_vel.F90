@@ -11,13 +11,12 @@ MODULE def_type_field_vel
    TYPE(mesh_type), PRIVATE,               POINTER          :: vv_mesh, pp_mesh, vv_mesh_glob, pp_mesh_glob 
    MPI_Comm,        PRIVATE, DIMENSION(:), POINTER          :: communicator_ns
    INTEGER,         PRIVATE, DIMENSION(:), POINTER          :: list_mode
-   LOGICAL,         PRIVATE                                 :: if_momentum_glob 
    
    TYPE,                               PUBLIC ::  vel_field_type
         REAL(KIND=8), ALLOCATABLE, DIMENSION(:, :, :)   :: u
         REAL(KIND=8), ALLOCATABLE, DIMENSION(:, :, :)   :: p, incp
         REAL(KIND=8), ALLOCATABLE                       :: time 
-        INTEGER, DIMENSION(:), ALLOCATABLE              :: list_mode
+        INTEGER, DIMENSION(:), POINTER                  :: list_mode
         TYPE(mesh_type), POINTER                        :: vv_mesh, pp_mesh
         LOGICAL                                         :: initialized = .FALSE. 
         MPI_Comm, DIMENSION(:), POINTER                 :: comm_one_d_ns
@@ -75,7 +74,6 @@ MODULE def_type_field_vel
             pp_mesh           => pp_mesh_in
             communicator_ns   => communicator_in 
             list_mode         => list_mode_in
-            if_momentum_glob = if_momentum_in
 
         END SUBROUTINE build_pointers_vel_field
 
@@ -87,27 +85,22 @@ MODULE def_type_field_vel
             CLASS(vel_field_type),       INTENT(INOUT)           :: self
             LOGICAL, OPTIONAL,           INTENT(IN)              :: if_glob
             LOGICAL                                              :: if_glob_local, test
-
-
             if_glob_local = .FALSE.
             IF (PRESENT(if_glob)) if_glob_local = if_glob
             test = (ALLOCATED(self%u) .AND. ALLOCATED(self%p) .AND. ALLOCATED(self%incp))
             IF (.NOT. test) THEN
                 self%comm_one_d_ns  => communicator_ns
-                self%list_mode  = list_mode
                 IF (if_glob_local) THEN
-                    self%vv_mesh   => vv_mesh_glob
+                    self%vv_mesh => vv_mesh_glob
                     self%pp_mesh => pp_mesh_glob
-                    ALLOCATE(self%u    (vv_mesh_glob%np, 6, SIZE(list_mode))) 
-                    ALLOCATE(self%p    (pp_mesh_glob%np, 2, SIZE(list_mode)))
-                    ALLOCATE(self%incp (pp_mesh_glob%np, 2, SIZE(list_mode)))
                 ELSE
-                    self%vv_mesh   => vv_mesh
+                    self%vv_mesh => vv_mesh
                     self%pp_mesh => pp_mesh
-                    ALLOCATE(self%u      (vv_mesh%np, 6, SIZE(list_mode))) 
-                    ALLOCATE(self%p      (pp_mesh%np, 2, SIZE(list_mode)))
-                    ALLOCATE(self%incp   (pp_mesh%np, 2, SIZE(list_mode)))
                 END IF
+                self%list_mode => list_mode
+                ALLOCATE(self%u    (self%vv_mesh%np, 6, SIZE(self%list_mode))) 
+                ALLOCATE(self%p    (self%pp_mesh%np, 2, SIZE(self%list_mode)))
+                ALLOCATE(self%incp (self%pp_mesh%np, 2, SIZE(self%list_mode)))
             END IF
         END SUBROUTINE allocate_velocity_fields
 
@@ -126,6 +119,7 @@ MODULE def_type_field_vel
             IMPLICIT NONE
             CLASS(vel_field_type), INTENT(IN)  :: self
             CLASS(vel_field_type), INTENT(OUT) :: vec
+            CALL vec%init_vel_field
             vec%u    = self%u
             vec%p    = self%p
             vec%incp = self%incp
@@ -162,9 +156,10 @@ MODULE def_type_field_vel
           ALLOCATE(self%time)
           self%time = 0.d0
       END IF
-      self%u(:, :, :)  = 0.d0
-      self%p(:, :, :) = 0.d0
+      self%u(:, :, :)     = 0.d0
+      self%p(:, :, :)     = 0.d0
       self%incp(:, :, :)  = 0.d0
+
    END SUBROUTINE  zero_vel
 
     REAL(KIND=8) FUNCTION dot_vel(self, vec) RESULT(alpha)
@@ -176,7 +171,7 @@ MODULE def_type_field_vel
         INTEGER                                         :: i, index, m, l, type_vec
 
         alpha = 0.d0
-        alpha = alpha + dot_product_SF(communicator_ns, vv_mesh, list_mode, self%u, vec%u)
+        alpha = alpha + dot_product_SF(self%comm_one_d_ns, self%vv_mesh, self%list_mode, self%u, vec%u)
 
     END function dot_vel
 
@@ -204,13 +199,14 @@ MODULE def_type_field_vel
         REAL(KIND=8) :: alpha
         INTEGER      :: k, i
 
+        ! CALL self%allocate_velocity_fields()
         IF (PRESENT(ifnorm)) THEN
             normalize = ifnorm
         ELSE
             normalize = .TRUE.
         END IF
         CALL self%init_vel_field()
-        ALLOCATE(x(vv_mesh%np))
+        ALLOCATE(x(self%vv_mesh%np))
         DO k=1,6
             DO i=1, SIZE(self%u, 3)
                 IF (MOD(k,2)==0 .AND. list_mode(i)==0) THEN

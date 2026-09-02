@@ -6,7 +6,7 @@ SUBMODULE (boundary_generic_module) boundary_generic
   USE user_data
 
 !VB 11/02/2026
-  USE def_type_field
+  USE def_type_field_mag
 !VB 11/02/2026
 
   REAL(KIND=8),  PARAMETER   :: pi = 3.14159265358979323846d0
@@ -566,7 +566,7 @@ CONTAINS
 
   !===Initialization of magnetic field and scalar potential (if present)
   MODULE SUBROUTINE init_maxwell(H_mesh, phi_mesh, time, dt, mu_H_field, mu_phi, &
-       list_mode, mag_field)
+       list_mode, mag_n, mag_n1)
        !list_mode, Hn1, Hn, phin1, phin)
     IMPLICIT NONE
     TYPE(mesh_type)                            :: H_mesh, phi_mesh
@@ -578,8 +578,8 @@ CONTAINS
 !    REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: Hn, Hn1
  !   REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT):: phin, phin1
     INTEGER                                    :: i, k, mode, m_max_c
-    TYPE(mag_field_type),           INTENT(OUT):: mag_field
-    CALL mag_field%allocate_induction_fields()
+    TYPE(mag_field_type),           INTENT(OUT):: mag_n, mag_n1
+    CALL mag_n1%allocate_induction_fields; CALL mag_n%allocate_induction_fields
 
     time = 0.d0
     !Hn1  = 0.d0
@@ -592,9 +592,9 @@ CONTAINS
     DO k=1,6
        DO i=1, m_max_c
           mode = list_mode(i)
-          mag_field%Hn1(:,k,i) = Hexact_init(k, H_mesh%rr, mode, mu_H_field, time)
+          mag_n1%H(:,k,i) = Hexact_init(k, H_mesh%rr, mode, mu_H_field, time)
           IF (k<3) THEN
-             mag_field%phin1(:,k,i) = Phiexact(k, phi_mesh%rr, mode, mu_phi, time)
+             mag_n1%phi(:,k,i) = Phiexact(k, phi_mesh%rr, mode, mu_phi, time)
           ENDIF
        ENDDO
     ENDDO
@@ -602,13 +602,13 @@ CONTAINS
     DO k=1,6
        DO i=1, m_max_c
           mode = list_mode(i)
-          mag_field%Hn(:,k,i) = Hexact_init(k, H_mesh%rr, mode, mu_H_field, time)
+          mag_n%H(:,k,i) = Hexact_init(k, H_mesh%rr, mode, mu_H_field, time)
           IF (k<3) THEN
-             mag_field%phin(:,k,i) = Phiexact(k, phi_mesh%rr, mode, mu_phi, time)
+             mag_n%phi(:,k,i) = Phiexact(k, phi_mesh%rr, mode, mu_phi, time)
           ENDIF
        ENDDO
     ENDDO
-    CALL mag_field%set_time(time)
+    CALL mag_n1%set_time(time-dt); CALL mag_n%set_time(time)
   END SUBROUTINE init_maxwell
 
   !===Analytical permeability (if needed)

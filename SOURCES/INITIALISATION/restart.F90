@@ -978,10 +978,10 @@ CONTAINS
 
   END SUBROUTINE read_restart_ns_taylor
 
-  SUBROUTINE write_restart_maxwell(communicator, H_mesh, phi_mesh, time, list_mode, mag_field, &
-       filename, it, freq_restart, opt_mono, opt_dt)
+  SUBROUTINE write_restart_maxwell(communicator, H_mesh, phi_mesh, time, list_mode, mag_n, mag_n1, &
+       filename, it, freq_restart, opt_mono, opt_dt, opt_name)
 
-    USE def_type_field
+    USE def_type_field_mag
 
     USE def_type_mesh
     USE chaine_caractere
@@ -990,8 +990,8 @@ CONTAINS
     INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator
     REAL(KIND=8),                                   INTENT(IN) :: time
     INTEGER,      DIMENSION(:),                     INTENT(IN) :: list_mode
-    TYPE(mag_field_type),                                INTENT(IN) :: mag_field
-    CHARACTER(len=200),                              INTENT(IN) :: filename
+    TYPE(mag_field_type),                           INTENT(IN) :: mag_n, mag_n1
+    CHARACTER(len=200),                             INTENT(IN) :: filename
     INTEGER,                                        INTENT(IN) :: it, freq_restart
     LOGICAL, OPTIONAL,                              INTENT(IN) :: opt_mono
     REAL(KIND=8),                     OPTIONAL,     INTENT(IN) :: opt_dt
@@ -1002,6 +1002,8 @@ CONTAINS
     CHARACTER(len=250)                :: out_name
     LOGICAL                           :: mono=.FALSE.
     LOGICAL                           :: skip
+    CHARACTER(len=:), ALLOCATABLE :: suite_name
+    CHARACTER(len=*), OPTIONAL, INTENT(IN) :: opt_name
 
     CALL MPI_COMM_SIZE(communicator(1),nb_procs_S,code)
     CALL MPI_COMM_SIZE(communicator(2),nb_procs_F,code)
@@ -1019,14 +1021,20 @@ CONTAINS
        tit_S(l:l) = '0'
     END DO
 
+    IF (PRESENT(opt_name)) THEN
+       suite_name = opt_name
+    ELSE
+       suite_name = "suite_maxwell"
+    END IF
+
     IF (PRESENT(opt_mono)) THEN
        mono = opt_mono
     END IF
 
     IF (mono) THEN
-       out_name = 'suite_maxwell_I'//tit//'.'//filename
+       out_name = suite_name // '_I'//tit//'.'//filename
     ELSE
-       out_name = 'suite_maxwell_S'//tit_S//'_I'//tit//'.'//filename
+       out_name = suite_name // '_S'//tit_S//'_I'//tit//'.'//filename
     END IF
     skip = (mono .AND. rang_S /= 0)
 
@@ -1052,13 +1060,15 @@ CONTAINS
              OPEN(UNIT = 10, FILE = out_name, POSITION='append', &
                   FORM = 'unformatted', STATUS = 'unknown')
           END IF
+          ASSOCIATE(Hn => mag_n%H, Bn => mag_n%B, phin => mag_n%phi, &
+                    Hn1 => mag_n1%H, Bn1 => mag_n1%B, phin1 => mag_n1%phi)
           DO i= 1, SIZE(list_mode)
              WRITE(10) list_mode(i)
              IF (H_mesh%me /=0) THEN
-                WRITE(10) mag_field%Hn(:,:,i)
-                WRITE(10) mag_field%Hn1(:,:,i)
-                WRITE(10) mag_field%Bn(:,:,i)
-                WRITE(10) mag_field%Bn1(:,:,i)
+                WRITE(10) Hn(:,:,i)
+                WRITE(10) Hn1(:,:,i)
+                WRITE(10) Bn(:,:,i)
+                WRITE(10) Bn1(:,:,i)
              ELSE
                 WRITE(10) 1
                 WRITE(10) 1
@@ -1066,13 +1076,14 @@ CONTAINS
                 WRITE(10) 1
              END IF
              IF (phi_mesh%me /=0) THEN
-                WRITE(10) mag_field%phin(:,:,i)
-                WRITE(10) mag_field%phin1(:,:,i)
+                WRITE(10) phin(:,:,i)
+                WRITE(10) phin1(:,:,i)
              ELSE
                 WRITE(10) 1
                 WRITE(10) 1
              END IF
           END DO
+          END ASSOCIATE
           CLOSE(10)
        END IF
        CALL MPI_BARRIER(communicator(2),code)
@@ -1080,218 +1091,237 @@ CONTAINS
 
   END SUBROUTINE write_restart_maxwell
 
-  SUBROUTINE read_restart_maxwell(communicator, H_mesh, phi_mesh, time, list_mode, mag_field, &
-       filename, val_init, interpol, opt_mono, &
-       opt_it, opt_dt)
+   SUBROUTINE read_restart_maxwell(communicator, H_mesh, phi_mesh, time, list_mode, mag_n, mag_n1, &
+         filename, val_init, interpol, opt_mono, &
+         opt_it, opt_dt, opt_name)
 
-    USE def_type_field
+      USE def_type_field_mag
 
-    USE def_type_mesh
-    USE chaine_caractere
-    USE my_util
-    IMPLICIT NONE
-    TYPE(mesh_type), TARGET                                    :: H_mesh,phi_mesh
-    INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator
-    REAL(KIND=8),                                   INTENT(OUT):: time
-    INTEGER,      DIMENSION(:)                                 :: list_mode
-    TYPE(mag_field_type),                           INTENT(INOUT):: mag_field
-   !  TYPE(mag_field_type),                           INTENT(OUT):: mag_field
-    CHARACTER(len=200),                             INTENT(IN) :: filename
-    REAL(KIND=8), OPTIONAL,                         INTENT(IN) :: val_init
-    LOGICAL     , OPTIONAL,                         INTENT(IN) :: interpol
-    LOGICAL     , OPTIONAL,                         INTENT(IN) :: opt_mono
-    INTEGER     , OPTIONAL,                         INTENT(IN) :: opt_it
-    REAL(KIND=8),                     OPTIONAL,     INTENT(IN) :: opt_dt
-    REAL(KIND=8)                                               :: dt_read, dt_ratio
+      USE def_type_mesh
+      USE chaine_caractere
+      USE my_util
+      IMPLICIT NONE
+      TYPE(mesh_type), TARGET                                    :: H_mesh,phi_mesh
+      INTEGER,      DIMENSION(:),                     INTENT(IN) :: communicator
+      REAL(KIND=8),                                   INTENT(OUT):: time
+      INTEGER,      DIMENSION(:)                                 :: list_mode
+      TYPE(mag_field_type),                           INTENT(INOUT):: mag_n, mag_n1
+      CHARACTER(len=200),                             INTENT(IN) :: filename
+      REAL(KIND=8), OPTIONAL,                         INTENT(IN) :: val_init
+      LOGICAL     , OPTIONAL,                         INTENT(IN) :: interpol
+      LOGICAL     , OPTIONAL,                         INTENT(IN) :: opt_mono
+      INTEGER     , OPTIONAL,                         INTENT(IN) :: opt_it
+      REAL(KIND=8),                     OPTIONAL,     INTENT(IN) :: opt_dt
+      REAL(KIND=8)                                               :: dt_read, dt_ratio
 
-    INTEGER     :: code, n, i, mode, j, rang_S, rang_F, nb_procs_F, nb_procs_S, rank
-    INTEGER     :: m_max_cr, nb_procs_r, nb_procs_Sr
-    INTEGER     :: m_max_c, nb_mode_r, mode_cherche
-    LOGICAL     :: trouve, okay
-    INTEGER     :: nph, npp
-    INTEGER           :: l, lblank
-    CHARACTER(len=3)  :: tit_S
-    CHARACTER(len=3)  :: tit
-    CHARACTER(len=250):: in_name
-    LOGICAL           :: mono=.FALSE.
+      INTEGER     :: code, n, i, mode, j, rang_S, rang_F, nb_procs_F, nb_procs_S, rank
+      INTEGER     :: m_max_cr, nb_procs_r, nb_procs_Sr
+      INTEGER     :: m_max_c, nb_mode_r, mode_cherche
+      LOGICAL     :: trouve, okay
+      INTEGER     :: nph, npp
+      INTEGER           :: l, lblank
+      CHARACTER(len=3)  :: tit_S
+      CHARACTER(len=3)  :: tit
+      CHARACTER(len=250):: in_name
+      LOGICAL           :: mono=.FALSE.
+      CHARACTER(len=:), ALLOCATABLE :: suite_name
+      CHARACTER(len=*), INTENT(IN), OPTIONAL :: opt_name
 
-    CALL MPI_COMM_RANK(communicator(2),rang_F,code)
-    CALL MPI_COMM_SIZE(communicator(2),nb_procs_F,code)
-    CALL MPI_COMM_RANK(communicator(1),rang_S,code)
-    CALL MPI_COMM_SIZE(communicator(1),nb_procs_S,code)
-    CALL MPI_COMM_RANK(MPI_COMM_WORLD,rank,code)
-     
-    CALL mag_field%zero()
+      CALL MPI_COMM_RANK(communicator(2),rang_F,code)
+      CALL MPI_COMM_SIZE(communicator(2),nb_procs_F,code)
+      CALL MPI_COMM_RANK(communicator(1),rang_S,code)
+      CALL MPI_COMM_SIZE(communicator(1),nb_procs_S,code)
+      CALL MPI_COMM_RANK(MPI_COMM_WORLD,rank,code)
+      
+      CALL mag_n%zero()
+      CALL mag_n1%zero()
 
-    IF (PRESENT(opt_it)) THEN
-       WRITE(tit,'(i3)') opt_it
-       lblank = eval_blank(3,tit)
-       DO l = 1, lblank - 1
-          tit(l:l) = '0'
-       END DO
-    END IF
+      IF (PRESENT(opt_it)) THEN
+         WRITE(tit,'(i3)') opt_it
+         lblank = eval_blank(3,tit)
+         DO l = 1, lblank - 1
+            tit(l:l) = '0'
+         END DO
+      END IF
 
-    WRITE(tit_S,'(i3)') rang_S
-    lblank = eval_blank(3,tit_S)
-    DO l = 1, lblank - 1
-       tit_S(l:l) = '0'
-    END DO
-    IF (PRESENT(opt_mono)) THEN
-       mono = opt_mono
-    END IF
+      WRITE(tit_S,'(i3)') rang_S
+      lblank = eval_blank(3,tit_S)
+      DO l = 1, lblank - 1
+         tit_S(l:l) = '0'
+      END DO
+      IF (PRESENT(opt_mono)) THEN
+         mono = opt_mono
+      END IF
 
-    IF (mono) THEN
-       IF (PRESENT(opt_it)) THEN
-          in_name = 'suite_maxwell_I'//tit//'.'//filename
-       ELSE
-          in_name = 'suite_maxwell.'//filename
-       END IF
-    ELSE
-       IF (PRESENT(opt_it)) THEN
-          in_name = 'suite_maxwell_S'//tit_S//'_I'//tit//'.'//filename
-       ELSE
-          in_name = 'suite_maxwell_S'//tit_S//'.'//filename
-       END IF
-    END IF
+      IF (PRESENT(opt_name)) THEN
+         suite_name = opt_name
+      ELSE
+         suite_name = 'suite_maxwell'
+      ENDIF
 
-    IF (PRESENT(opt_it)) THEN
-       WRITE(*,*) 'restart Maxwell for it', opt_it
-    ELSE
-       WRITE(*,*) 'restart Maxwell'
-    END IF
+      IF (mono) THEN
+         IF (PRESENT(opt_it)) THEN
+            in_name = suite_name // '_I'//tit//'.'//filename
+         ELSE
+            in_name = suite_name // '.'//filename
+         END IF
+      ELSE
+         IF (PRESENT(opt_it)) THEN
+            in_name = suite_name // '_S'//tit_S//'_I'//tit//'.'//filename
+         ELSE
+            in_name = suite_name // '_S'//tit_S//'.'//filename
+         END IF
+      END IF
 
-    OPEN(UNIT = 10, FILE = in_name, FORM = 'unformatted', STATUS = 'unknown')
-    IF (PRESENT(opt_dt)) THEN
-       IF (mono) THEN
-          READ(10) time, nph, npp, nb_procs_r, m_max_cr, dt_read
-       ELSE
-          READ(10) time, nb_procs_Sr, nb_procs_r, m_max_cr, dt_read
-       END IF
-    ELSE
-       IF (mono) THEN
-          READ(10) time, nph, npp, nb_procs_r, m_max_cr
-       ELSE
-          READ(10) time, nb_procs_Sr, nb_procs_r, m_max_cr
-       END IF
-    END IF
+      IF (PRESENT(opt_it)) THEN
+         WRITE(*,*) 'restart Maxwell for it', opt_it
+      ELSE
+         WRITE(*,*) 'restart Maxwell'
+      END IF
 
-    IF ((nb_procs_Sr /= nb_procs_S) .AND. (.NOT. mono)) THEN
-       CALL error_petsc('BUG in read_restart: nb_procs_Sr /= nb_procs_S')
-       !STOP
-    END IF
+      OPEN(UNIT = 10, FILE = in_name, FORM = 'unformatted', STATUS = 'unknown')
+      IF (PRESENT(opt_dt)) THEN
+         IF (mono) THEN
+            READ(10) time, nph, npp, nb_procs_r, m_max_cr, dt_read
+         ELSE
+            READ(10) time, nb_procs_Sr, nb_procs_r, m_max_cr, dt_read
+         END IF
+      ELSE
+         IF (mono) THEN
+            READ(10) time, nph, npp, nb_procs_r, m_max_cr
+         ELSE
+            READ(10) time, nb_procs_Sr, nb_procs_r, m_max_cr
+         END IF
+      END IF
 
-    CLOSE(10)
+      IF ((nb_procs_Sr /= nb_procs_S) .AND. (.NOT. mono)) THEN
+         CALL error_petsc('BUG in read_restart: nb_procs_Sr /= nb_procs_S')
+         !STOP
+      END IF
 
-    IF (rang_F == 0) THEN
-       WRITE(*,*) 'File name ', trim(adjustl(in_name))
-       WRITE(*,*) 'Time = ', time
-       WRITE(*,*) 'Number of processors from restart file = ',nb_procs_r
-       WRITE(*,*) 'Number of modes per processor from restart file = ',m_max_cr
-    ENDIF
+      CLOSE(10)
 
-    m_max_c   = SIZE(list_mode)      !number of modes per processor for simulation
-    nb_mode_r = nb_procs_r*m_max_cr  !total number of modes present in the suite file
+      IF (rang_F == 0) THEN
+         WRITE(*,*) 'File name ', trim(adjustl(in_name))
+         WRITE(*,*) 'Time = ', time
+         WRITE(*,*) 'Number of processors from restart file = ',nb_procs_r
+         WRITE(*,*) 'Number of modes per processor from restart file = ',m_max_cr
+      ENDIF
 
-    !June 7 2007, JLG
-    IF (nb_procs_F*m_max_c /= nb_mode_r) THEN
-       WRITE(*,*) 'Warning in read_restart_maxwell: nb_procs_F*m_max_c /= nb_mode_r'
-       !STOP
-    END IF
+      m_max_c   = SIZE(list_mode)      !number of modes per processor for simulation
+      nb_mode_r = nb_procs_r*m_max_cr  !total number of modes present in the suite file
 
-    okay = .FALSE.
-    IF (PRESENT(interpol)) THEN
-       IF (interpol) THEN
-          okay =.TRUE.
-       END IF
-    END IF
-    !June 7 2007, JLG
+      !June 7 2007, JLG
+      IF (nb_procs_F*m_max_c /= nb_mode_r) THEN
+         WRITE(*,*) 'Warning in read_restart_maxwell: nb_procs_F*m_max_c /= nb_mode_r'
+         !STOP
+      END IF
 
-    IF (rank==0) THEN
-       WRITE(*,*) 'Reading Maxwell modes ...'
-    END IF
-    DO i=1, m_max_c !loop for all modes managed by processor
-       !open file
-       OPEN(UNIT = 10, FILE = in_name, FORM = 'unformatted', STATUS = 'unknown')
-       !skip first line (only contains data on mesh)
-       READ(10)
-       mode_cherche = list_mode(i)
-       !look for correct mode
-       trouve = .FALSE.
-       DO j=1, nb_mode_r !loop for all modes written in suite file
-          !read mode
-          READ(10) mode
-          !June 7 2007, JLG
-          IF (okay) THEN
-             IF (j/=rang_F*m_max_c+i) THEN
-                DO n=1, 6
-                   READ(10)
-                ENDDO
-                CYCLE
-             ELSE
-                list_mode(i) = mode
-                mode_cherche = mode
-             END IF
-          END IF
-          !June 7 2007, JLG
-          IF (mode == mode_cherche) THEN !we found mode_cherche
-             IF (H_mesh%me /=0) THEN
-                READ(10) mag_field%Hn(:,:,i)
-                READ(10) mag_field%Hn1(:,:,i)
-                READ(10) mag_field%Bn(:,:,i)
-                READ(10) mag_field%Bn1(:,:,i)
-             ELSE
-                READ(10)
-                READ(10)
-                READ(10)
-                READ(10)
-             END IF
-             IF (phi_mesh%me /=0) THEN
-                READ(10) mag_field%phin(:,:,i)
-                READ(10) mag_field%phin1(:,:,i)
-             ELSE
-                READ(10)
-                READ(10)
-             END IF
-             WRITE(*,*) 'mode maxwell',mode_cherche,' trouve '
-             trouve = .TRUE.
-             EXIT !because we found the good mode
-          ELSE !go to next mode so skip 6 lines
-             DO n=1, 6
-                READ(10)
-             ENDDO
-          ENDIF
-       ENDDO
-       IF (.NOT.trouve) THEN !mode_cherche not found
-          IF (PRESENT(val_init)) THEN
-             mag_field%Hn(:,:,i)   = val_init ; mag_field%Hn1(:,:,i)   = val_init
-             mag_field%Bn(:,:,i)   = val_init ; mag_field%Bn1(:,:,i)   = val_init
-             mag_field%phin(:,:,i) = val_init ; mag_field%phin1(:,:,i) = val_init
-             WRITE(*,*) 'mode maxwell',mode_cherche,' non trouve'
-          ELSE
-             mag_field%Hn(:,:,i)   = 0.d0 ; mag_field%Hn1(:,:,i)   = 0.d0
-             mag_field%Bn(:,:,i)   = 0.d0 ; mag_field%Bn1(:,:,i)   = 0.d0
-             mag_field%phin(:,:,i) = 0.d0 ; mag_field%phin1(:,:,i) = 0.d0
-             WRITE(*,*) 'mode maxwell',mode_cherche,' non trouve'
-          ENDIF
-       ENDIF
-       CLOSE(10) !close file
-    ENDDO
-    !
-    IF (PRESENT(opt_dt)) THEN
-       IF (ABS((opt_dt - dt_read)/opt_dt).GT.1d-4) THEN
-          dt_ratio = opt_dt/dt_read
-          IF (rank==0) THEN
-             WRITE(*,*) 'In Maxwell restart, suite_time_step different from inputs%dt ...'
-             WRITE(*,*) ' opt_dt, dt_read =', opt_dt, dt_read
-          END IF
-          mag_field%Hn1 = dt_ratio * mag_field%Hn1 +(1.d0 - dt_ratio)* mag_field%Hn
-          mag_field%Bn1 = dt_ratio * mag_field%Bn1 +(1.d0 - dt_ratio)* mag_field%Bn
-          mag_field%phin1 = dt_ratio * mag_field%phin1 +(1.d0 - dt_ratio)* mag_field%phin
-       END IF
-    END IF
-    IF (.NOT. ALLOCATED(mag_field%time)) ALLOCATE(mag_field%time)
-    mag_field%time = time
-  END SUBROUTINE read_restart_maxwell
+      okay = .FALSE.
+      IF (PRESENT(interpol)) THEN
+         IF (interpol) THEN
+            okay =.TRUE.
+         END IF
+      END IF
+      !June 7 2007, JLG
+
+      IF (rank==0) THEN
+         WRITE(*,*) 'Reading Maxwell modes ...'
+      END IF
+      
+      ASSOCIATE(Hn => mag_n%H, Bn => mag_n%B, phin => mag_n%phi, &
+         Hn1 => mag_n1%H, Bn1 => mag_n1%B, phin1 => mag_n1%phi)
+      DO i=1, m_max_c !loop for all modes managed by processor
+         !open file
+         OPEN(UNIT = 10, FILE = in_name, FORM = 'unformatted', STATUS = 'unknown')
+         !skip first line (only contains data on mesh)
+         READ(10)
+         mode_cherche = list_mode(i)
+         !look for correct mode
+         trouve = .FALSE.
+         DO j=1, nb_mode_r !loop for all modes written in suite file
+            !read mode
+            READ(10) mode
+            !June 7 2007, JLG
+            IF (okay) THEN
+               IF (j/=rang_F*m_max_c+i) THEN
+                  DO n=1, 6
+                     READ(10)
+                  ENDDO
+                  CYCLE
+               ELSE
+                  list_mode(i) = mode
+                  mode_cherche = mode
+               END IF
+            END IF
+            !June 7 2007, JLG
+            IF (mode == mode_cherche) THEN !we found mode_cherche
+               IF (H_mesh%me /=0) THEN
+                  READ(10) Hn(:,:,i)
+                  READ(10) Hn1(:,:,i)
+                  READ(10) Bn(:,:,i)
+                  READ(10) Bn1(:,:,i)
+               ELSE
+                  READ(10)
+                  READ(10)
+                  READ(10)
+                  READ(10)
+               END IF
+               IF (phi_mesh%me /=0) THEN
+                  READ(10) phin(:,:,i)
+                  READ(10) phin1(:,:,i)
+               ELSE
+                  READ(10)
+                  READ(10)
+               END IF
+               WRITE(*,*) 'mode maxwell',mode_cherche,' trouve '
+               trouve = .TRUE.
+               EXIT !because we found the good mode
+            ELSE !go to next mode so skip 6 lines
+               DO n=1, 6
+                  READ(10)
+               ENDDO
+            ENDIF
+         ENDDO
+         IF (.NOT.trouve) THEN !mode_cherche not found
+            IF (PRESENT(val_init)) THEN
+               Hn(:,:,i)   = val_init ; Hn1(:,:,i)   = val_init
+               Bn(:,:,i)   = val_init ; Bn1(:,:,i)   = val_init
+               phin(:,:,i) = val_init ; phin1(:,:,i) = val_init
+               WRITE(*,*) 'mode maxwell',mode_cherche,' non trouve'
+            ELSE
+               Hn(:,:,i)   = 0.d0 ; Hn1(:,:,i)   = 0.d0
+               Bn(:,:,i)   = 0.d0 ; Bn1(:,:,i)   = 0.d0
+               phin(:,:,i) = 0.d0 ; phin1(:,:,i) = 0.d0
+               WRITE(*,*) 'mode maxwell',mode_cherche,' non trouve'
+            ENDIF
+         ENDIF
+         CLOSE(10) !close file
+      ENDDO
+      !
+      IF (PRESENT(opt_dt)) THEN
+         IF (ABS((opt_dt - dt_read)/opt_dt).GT.1d-4) THEN
+            dt_ratio = opt_dt/dt_read
+            IF (rank==0) THEN
+               WRITE(*,*) 'In Maxwell restart, suite_time_step different from inputs%dt ...'
+               WRITE(*,*) ' opt_dt, dt_read =', opt_dt, dt_read
+            END IF
+            Hn1 = dt_ratio * Hn1 +(1.d0 - dt_ratio)* Hn
+            Bn1 = dt_ratio * Bn1 +(1.d0 - dt_ratio)* Bn
+            phin1 = dt_ratio * phin1 +(1.d0 - dt_ratio)* phin
+         END IF
+      END IF
+      END ASSOCIATE
+      
+      CALL mag_n%set_time(time)
+      IF (PRESENT(opt_dt)) THEN
+         CALL mag_n1%set_time(time-opt_dt)
+      ELSE
+         CALL mag_n1%set_time(time)
+      ENDIF
+         ! IF (.NOT. ALLOCATED(mag_field%time)) ALLOCATE(mag_field%time)
+      ! mag_field%time = time
+   END SUBROUTINE read_restart_maxwell
 
   SUBROUTINE write_restart_temp(communicator, temp_mesh, time, list_mode, &
        tempn, tempn_m1, filename, it, freq_restart, opt_mono)

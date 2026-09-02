@@ -216,16 +216,16 @@ MODULE abstract_interface
      END FUNCTION sub_Eexact_gauss
 
      SUBROUTINE sub_init_maxwell(H_mesh, phi_mesh, time, dt, mu_H_field, mu_phi, &
-          list_mode, mag_field)
+          list_mode, mag_n, mag_n1)
        USE def_type_mesh
-       USE def_type_field
+       USE def_type_field_mag
        TYPE(mesh_type)                            :: H_mesh, phi_mesh
        REAL(KIND=8),                   INTENT(OUT):: time
        REAL(KIND=8),                   INTENT(IN) :: dt
        REAL(KIND=8), DIMENSION(:),     INTENT(IN) :: mu_H_field
        REAL(KIND=8),                   INTENT(IN) :: mu_phi
        INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
-       TYPE(mag_field_type),           INTENT(OUT):: mag_field
+       TYPE(mag_field_type),           INTENT(OUT):: mag_n, mag_n1
      END SUBROUTINE sub_init_maxwell
 
      FUNCTION sub_mu_bar_in_fourier_space(H_mesh,nb,ne,pts,pts_ids) RESULT(vv)
