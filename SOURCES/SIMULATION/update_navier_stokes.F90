@@ -12,7 +12,6 @@ CONTAINS
     USE def_type_mesh
     USE prep_periodic
     USE input_data
-    USE subroutine_linear_ns_with_u
     USE subroutine_ns_with_u
     USE subroutine_ns_with_m
     USE subroutine_ns_with_m_art_comp
@@ -49,11 +48,7 @@ CONTAINS
           CALL error_petsc('Artificial compressibility with velocity not programmed yet')
        END IF
     ELSE !Projection-correction scheme for Navier-Stokes equations
-       IF (inputs%if_linear_navier_stokes_with_u) THEN
-          CALL BDF2_linear_ns_stress_bc_with_u(comm_one_d_ns,time,vv_3_LA, pp_1_LA, vvz_per, pp_per, &
-               inputs%dt, inputs%Re, list_mode, pp_mesh, vv_mesh, incpn_m1, incpn, &
-               pn_m1, pn, un_m1, un, Hn_p2, Bn_p2, density, tempn, concn, visc_LES)
-       ELSEIF (inputs%if_navier_stokes_with_u) THEN
+       IF (inputs%if_navier_stokes_with_u) THEN
           CALL BDF2_ns_stress_bc_with_u(comm_one_d_ns,time,vv_3_LA, pp_1_LA, vvz_per, pp_per, &
                inputs%dt, inputs%Re, list_mode, pp_mesh, vv_mesh, incpn_m1, incpn, &
                pn_m1, pn, un_m1, un, Hn_p2, Bn_p2, density, tempn, concn, visc_LES)

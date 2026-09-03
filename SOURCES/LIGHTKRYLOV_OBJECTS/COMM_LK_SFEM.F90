@@ -1,3 +1,7 @@
+!> Important module for LightKrylov (LK) calculations inside SFEMaNS
+!! Commented parts => attempts at using only state at time t, without the one at t - dt (necessary for BDF2)
+!! a post-processing subroutine is provided as well
+
 MODULE COMM_LK_SFEM
     USE def_type_field_vel
     USE def_type_field_mag
@@ -15,6 +19,8 @@ MODULE COMM_LK_SFEM
 #else
     TYPE, PUBLIC :: LK_FIELD_TYPE
 #endif
+        ! TYPE(mag_field_type) :: mag
+        ! TYPE(mag_field_type) :: vel
         TYPE(mag_field_type) :: mag_n, mag_n1
         TYPE(vel_field_type) :: vel_n, vel_n1
         LOGICAL :: if_vel, if_mag
@@ -80,6 +86,11 @@ CONTAINS
                         vn%list_mode, vn%u, vn1%u, vn%p, vn1%p, &
                         vn%incp, vn1%incp, inputs%file_name, it, 1, opt_name="suite_eigs_ns")
                     END ASSOCIATE
+                    ! ASSOCIATE(vn => X(it)%vel)
+                    ! CALL write_restart_ns(vn%comm_one_d_ns, vn%vv_mesh, vn%pp_mesh, 0.d0, &
+                        ! vn%list_mode, vn%u, vn%u, vn%p, vn%p, &
+                        ! vn%incp, vn%incp, inputs%file_name, it, 1, opt_name="suite_eigs_ns")
+                    ! END ASSOCIATE
                 ENDIF
 
                 IF (if_induction) THEN
@@ -87,6 +98,10 @@ CONTAINS
                     CALL write_restart_maxwell(mag_n%comm_one_d, mag_n%H_mesh, mag_n%phi_mesh, &
                             0.d0, mag_n%list_mode, mag_n, mag_n1, inputs%file_name, it, 1, opt_name="suite_eigs_maxwell")
                     END ASSOCIATE
+                    ! ASSOCIATE(mag => X(it)%mag)
+                    ! CALL write_restart_maxwell(mag%comm_one_d, mag%H_mesh, mag%phi_mesh, &
+                            ! 0.d0, mag%list_mode, mag, mag, inputs%file_name, it, 1, opt_name="suite_eigs_maxwell")
+                    ! END ASSOCIATE
                 ENDIF
             END DO
         ENDIF
@@ -99,6 +114,10 @@ CONTAINS
                     CALL vtu_3d(mag_n%comm_one_d, mag_n%H, 'H_mesh', 'Hn_eig', 'Hn_eig', what, opt_it=it)
                     what = 'old'
                     END ASSOCIATE
+                    ! ASSOCIATE(mag => X(it)%mag)
+                    ! CALL vtu_3d(mag%comm_one_d, mag%H, 'H_mesh', 'Hn_eig', 'Hn_eig', what, opt_it=it)
+                    ! what = 'old'
+                    ! END ASSOCIATE
                 ENDDO
             ENDIF
 
@@ -106,6 +125,7 @@ CONTAINS
             IF (if_momentum) THEN
                 DO it=1, inputs%LK%nev
                     ASSOCIATE(vn => X(it)%vel_n, vn1 => X(it)%vel_n1)
+                    ! ASSOCIATE(vn => X(it)%vel)
                     CALL vtu_3d(vn%comm_one_d_ns, vn%u, 'vv_mesh', 'vn_eig', 'vn_eig', what, opt_it=it)
                     what = 'old'
                     END ASSOCIATE
@@ -138,10 +158,12 @@ CONTAINS
         CLASS(LK_field_type), INTENT(INOUT) :: self
         
         IF (if_induction) THEN
+            ! CALL self%mag%zero
             CALL self%mag_n%zero
             CALL self%mag_n1%zero
         ENDIF
         IF (if_momentum) THEN
+            ! CALL self%vel%zero
             CALL self%vel_n%zero
             CALL self%vel_n1%zero
         ENDIF
@@ -164,10 +186,12 @@ CONTAINS
 #endif
             alpha = 0.d0
             IF (if_induction) THEN
+                ! alpha = alpha + self%mag%dot(vec%mag)
                 alpha = alpha + self%mag_n%dot(vec%mag_n)
                 alpha = alpha + self%mag_n1%dot(vec%mag_n1)
             ENDIF
             IF (if_momentum) THEN
+                ! alpha = alpha + self%vel%dot(vec%vel)
                 alpha = alpha + self%vel_n%dot(vec%vel_n)
                 alpha = alpha + self%vel_n1%dot(vec%vel_n1)
             ENDIF
@@ -194,10 +218,12 @@ CONTAINS
         TYPE is(LK_field_type)
 #endif
             IF (if_induction) THEN
+                ! CALL self%mag%axpby(alpha, vec%mag, beta)
                 CALL self%mag_n%axpby(alpha, vec%mag_n, beta)
                 CALL self%mag_n1%axpby(alpha, vec%mag_n1, beta)
             ENDIF
             IF (if_momentum) THEN
+                ! CALL self%vel%axpby(alpha, vec%vel, beta)
                 CALL self%vel_n%axpby(alpha, vec%vel_n, beta)
                 CALL self%vel_n1%axpby(alpha, vec%vel_n1, beta)
             ENDIF
@@ -214,10 +240,12 @@ CONTAINS
         LOGICAL, OPTIONAL,     INTENT(IN)      :: ifnorm
 
         IF (if_induction) THEN
+            ! CALL self%mag%rand(ifnorm)
             CALL self%mag_n%rand(ifnorm)
             CALL self%mag_n%copy_to(self%mag_n1)
         ENDIF
         IF (if_momentum) THEN
+            ! CALL self%vel%rand(ifnorm)
             CALL self%vel_n%rand(ifnorm)
             CALL self%vel_n%copy_to(self%vel_n1)
         ENDIF
@@ -229,10 +257,12 @@ CONTAINS
         REAL(KIND=8),          INTENT(IN)          :: alpha
         
         IF (if_induction) THEN
+            ! CALL self%mag%scal(alpha)
             CALL self%mag_n%scal(alpha)
             CALL self%mag_n1%scal(alpha)
         ENDIF
         IF (if_momentum) THEN
+            ! CALL self%vel%scal(alpha)
             CALL self%vel_n%scal(alpha)
             CALL self%vel_n1%scal(alpha)
         ENDIF
@@ -242,7 +272,9 @@ CONTAINS
         IMPLICIT NONE
         CLASS(LK_field_type), INTENT(IN) :: self
         N = 0
+        ! IF (if_induction) N = N + self%mag%get_size()
         IF (if_induction) N = N + self%mag_n%get_size() + self%mag_n1%get_size()
+        ! IF (if_momentum) N = N + self%vel%get_size()
         IF (if_momentum) N = N + self%vel_n%get_size() + self%vel_n1%get_size()
     END FUNCTION get_size_LK
 
@@ -261,11 +293,21 @@ CONTAINS
         REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT) :: un, pn, incpn, un_m1, pn_m1, incpn_m1
 
         IF (if_induction) THEN
+            ! CALL self%mag%copy_to(mag_n)
+            ! CALL self%mag%copy_to(mag_n1)
             CALL self%mag_n%copy_to(mag_n)
             CALL self%mag_n1%copy_to(mag_n1)
         ENDIF
 
         IF (if_momentum) THEN
+            ! un = self%vel%u
+            ! pn = self%vel%p
+            ! incpn = self%vel%incp
+
+            ! un_m1 = self%vel%u
+            ! pn_m1 = self%vel%p
+            ! incpn_m1 = self%vel%incp
+
             un = self%vel_n%u
             pn = self%vel_n%p
             incpn = self%vel_n%incp
@@ -287,21 +329,27 @@ CONTAINS
         REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN) :: un, pn, incpn, un_m1, pn_m1, incpn_m1
             
         IF (if_induction) THEN
+            ! CALL mag_n%copy_to(self%mag)
             CALL mag_n%copy_to(self%mag_n)
             CALL mag_n1%copy_to(self%mag_n1)
         ENDIF
 
         IF (if_momentum) THEN
-            IF (.NOT. ALLOCATED(self%vel_n%time))  ALLOCATE(self%vel_n%time)
-            self%vel_n%time = 0.d0!mag_field%time
+            ! CALL self%vel%set_time(0.d0)
+            ! CALL self%vel%allocate_velocity_fields()
+            ! self%vel%u = un
+            ! self%vel%p = pn
+            ! self%vel%incp = incpn
+            ! self%vel%initialized = .TRUE.
+
+            CALL self%vel_n%set_time(0.d0)
             CALL self%vel_n%allocate_velocity_fields()
             self%vel_n%u = un
             self%vel_n%p = pn
             self%vel_n%incp = incpn
             self%vel_n%initialized = .TRUE.
 
-            IF (.NOT. ALLOCATED(self%vel_n1%time))  ALLOCATE(self%vel_n1%time)
-            self%vel_n1%time = 0.d0!mag_field%time
+            CALL self%vel_n1%set_time(0.d0)
             CALL self%vel_n1%allocate_velocity_fields()
             self%vel_n1%u = un_m1
             self%vel_n1%p = pn_m1

@@ -49,7 +49,6 @@ module point_to_boundary_generic
        source_in_level_set_generic =>  source_in_level_set, &
        vv_exact_generic =>  vv_exact, &
        base_flow_generic => template_base_flow, &
-      !  base_flow_generic =>  base_flow, &
        imposed_velocity_by_penalty_generic =>  imposed_velocity_by_penalty, &
        pp_exact_generic =>  pp_exact, &
        temperature_exact_generic =>  temperature_exact, &

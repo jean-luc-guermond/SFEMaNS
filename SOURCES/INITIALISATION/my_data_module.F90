@@ -617,6 +617,13 @@ CONTAINS
           END IF
        END IF
 
+       !==========Navier Stokes with u or m===============!
+       CALL find_string(21, '===Solve Navier-Stokes with u (true) or m (false)?', test)
+       IF (test) THEN
+          READ(21, *) inputs%if_navier_stokes_with_u
+       ELSE
+          inputs%if_navier_stokes_with_u = .TRUE.
+       END IF
        !==========Linear Navier Stokes? ===============!
        CALL find_string(21, '===Solve Linear Navier-Stokes? (with u)', test)
        IF (test) THEN
@@ -625,6 +632,10 @@ CONTAINS
           inputs%if_linear_navier_stokes_with_u = .FALSE.
        END IF
        IF (inputs%if_linear_navier_stokes_with_u) THEN
+          IF (.NOT. inputs%if_navier_stokes_with_u) THEN
+             CALL error_petsc("BUG in my_data_module: '===Solve Linear Navier-Stokes? (with u)' set to .T., &
+             &make sure to set '===Solve Navier-Stokes with u (true) or m (false)?' to .T. as well")
+          END IF
           CALL find_string(21, '===Do we read base flow from suite_jacob_ns?', test)
           IF (test) THEN
             READ(21, *) inputs%if_read_start_linear_navier_stokes_with_u
@@ -632,14 +643,6 @@ CONTAINS
             inputs%if_read_start_linear_navier_stokes_with_u = .FALSE.
           ENDIF
        ENDIF
-
-       !==========Navier Stokes with u or m===============!
-       CALL find_string(21, '===Solve Navier-Stokes with u (true) or m (false)?', test)
-       IF (test) THEN
-          READ(21, *) inputs%if_navier_stokes_with_u
-       ELSE
-          inputs%if_navier_stokes_with_u = .TRUE.
-       END IF
        !==========Finite element type for velocity========!
        CALL find_string(21, '===Type of finite element for velocity field', test)
        IF (test) THEN

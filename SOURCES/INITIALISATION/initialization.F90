@@ -293,7 +293,6 @@ CONTAINS
 
     ASSOCIATE(Hn => mag_n%H, Bn => mag_n%B, phin => mag_n%phi, &
               Hn1 => mag_n1%H, Bn1 => mag_n1%B, phin1 => mag_n1%phi)
-write(*,*) 'flag I'
     IF (if_mass) THEN
        IF (inputs%variation_temp_param_fluid) THEN
           CALL reconstruct_variable(comm_one_d_ns, list_mode, pp_mesh, vv_mesh, level_set_m1, &

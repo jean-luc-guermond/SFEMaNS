@@ -7,6 +7,9 @@ MODULE subroutine_ns_with_u
 #include "petsc/finclude/petsc.h"
   USE petsc
   USE subroutine_ns_with_m
+!=== VB 03/09/2026 (intended for linearized Navier-Stokes)
+  REAL(KIND=8), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: V_base_flow
+!=== VB 03/09/2026
   PUBLIC :: moy, BDF2_ns_stress_bc_with_u
   PRIVATE
 CONTAINS
@@ -35,6 +38,7 @@ CONTAINS
     USE verbose
     USE entropy_viscosity
     USE my_util
+    USE restart
     IMPLICIT NONE
     REAL(KIND=8)                                   :: time, dt, Re
     INTEGER,      DIMENSION(:),     INTENT(IN)     :: list_mode
@@ -73,6 +77,9 @@ CONTAINS
     REAL(KIND=8), DIMENSION(pp_mesh%np, 2)   :: pn_p1, phi
     REAL(KIND=8), DIMENSION(vv_mesh%np, 6)   :: un_p1
     REAL(KIND=8), DIMENSION(vv_mesh%np, 6, SIZE(list_mode))   :: un_m2
+!=== VB 03/09/2026: conveniance vectors
+    REAL(KIND=8), DIMENSION(:,:,:), ALLOCATABLE :: dummy_u, dummy_p
+!=== VB 03/09/2026: conveniance vectors
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: rotv_v, rotb_b, rotb_b_aux
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: mag_force
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: rhs_gauss
@@ -100,6 +107,25 @@ CONTAINS
     IF (once) THEN
        once = .FALSE.
        CALL MPI_COMM_RANK(PETSC_COMM_WORLD,my_petscworld_rank,code)
+!=== VB read base flow NS
+       IF (inputs%if_linear_navier_stokes_with_u) THEN
+         ALLOCATE(V_base_flow(vv_mesh%np, 6, SIZE(list_mode)))
+         IF (inputs%if_read_start_linear_navier_stokes_with_u) THEN
+            ALLOCATE(dummy_u(vv_mesh%np, 6, SIZE(list_mode)))
+            ALLOCATE(dummy_p(pp_mesh%np, 6, SIZE(list_mode)))
+            CALL read_restart_ns(comm_one_d, tps, list_mode, V_base_flow, dummy_u, &
+                              dummy_p, dummy_p, dummy_p, dummy_p, inputs%file_name, opt_name="suite_jacob_ns")
+            DEALLOCATE(dummy_u, dummy_p)
+         ELSE
+            DO k = 1, 6
+               DO i=1, SIZE(list_mode)
+                  m = list_mode(i)
+                  V_base_flow(:, k, i) = base_flow(k, vv_mesh%rr, m)
+               ENDDO
+            ENDDO
+         ENDIF
+       ENDIF
+!=== VB read base flow NS
 
        !===CREATE PETSC VECTORS AND GHOSTS
        CALL create_my_ghost(vv_mesh,vv_3_LA,vv_3_ifrom)
@@ -520,14 +546,15 @@ CONTAINS
 
     TYPE(mesh_type),                INTENT(IN)  :: mesh
     INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)  :: V_in
+    REAL(KIND=8), DIMENSION(:,:,:), TARGET, INTENT(IN)  :: V_in
+    REAL(KIND=8), DIMENSION(:,:,:), POINTER :: V_rot, V_raw
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT) :: V_out
     LOGICAL,                        INTENT(IN)  :: precession_in
-    REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%me,6,SIZE(list_mode)) :: RotV, W, Om
+    REAL(KIND=8), DIMENSION(mesh%gauss%l_G*mesh%me,6,SIZE(list_mode)) :: RotV, W, Om, V_temp
     INTEGER,      DIMENSION(mesh%gauss%n_w)                  :: j_loc
     REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc
-    INTEGER                                                  ::  m, l , i, mode, index, k
-    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)   :: Vs, Omega_s
+    INTEGER                                                  ::  m, l , i, mode, index, k, a
+    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)   :: Vs_raw, Vs_rot, Omega_s
     REAL(KIND=8)   :: ray
     REAL(KIND=8)   :: tps, PI
     REAL(KIND=8), DIMENSION(3)                        :: temps
@@ -535,6 +562,7 @@ CONTAINS
     LOGICAL, SAVE :: once=.TRUE.
     !===FOR FFT_PAR_CROSS_PROD_DCL
     INTEGER       :: nb_procs, bloc_size, m_max_pad, code
+    INTEGER, PARAMETER :: barU_curl_barU=1, barU_curl_u=2, U_curl_barU=3
     MPI_Comm       :: communicator
 
     IF (once) THEN
@@ -555,81 +583,112 @@ CONTAINS
     ENDIF ! fin du once
 
     tps = user_time()
-    DO i = 1, SIZE(list_mode)
-       mode = list_mode(i)
-       index = 0
-       DO m = 1, mesh%me
-          j_loc = mesh%jj(:,m)
-          DO k = 1, 6
-             Vs(:,k) = V_in(j_loc,k,i)
-             Omega_s(:,k) = Omega(mesh%jj(:,m),k,i)
-          END DO
-
-          DO l = 1, mesh%gauss%l_G
-             index = index + 1
-             dw_loc = mesh%gauss%dw(:,:,l,m)
-
-             !===Compute radius of Gauss point
-             ray = SUM(mesh%rr(1,j_loc)*mesh%gauss%ww(:,l))
-
-             !-----------------vitesse sur les points de Gauss---------------------------
-             W(index,1,i) = SUM(Vs(:,1)*mesh%gauss%ww(:,l))
-             W(index,3,i) = SUM(Vs(:,3)*mesh%gauss%ww(:,l))
-             W(index,5,i) = SUM(Vs(:,5)*mesh%gauss%ww(:,l))
-
-             W(index,2,i) = SUM(Vs(:,2)*mesh%gauss%ww(:,l))
-             W(index,4,i) = SUM(Vs(:,4)*mesh%gauss%ww(:,l))
-             W(index,6,i) = SUM(Vs(:,6)*mesh%gauss%ww(:,l))
-             !-----------------vecteur rotation sur les points de Gauss---------------------------
-             Om(index,1,i) = SUM(Omega_s(:,1)*mesh%gauss%ww(:,l))
-             Om(index,3,i) = SUM(Omega_s(:,3)*mesh%gauss%ww(:,l))
-             Om(index,5,i) = SUM(Omega_s(:,5)*mesh%gauss%ww(:,l))
-
-             Om(index,2,i) = SUM(Omega_s(:,2)*mesh%gauss%ww(:,l))
-             Om(index,4,i) = SUM(Omega_s(:,4)*mesh%gauss%ww(:,l))
-             Om(index,6,i) = SUM(Omega_s(:,6)*mesh%gauss%ww(:,l))
-             !-----------------rotational sur les points de Gauss---------------------------
-             !coeff sur les cosinus
-             RotV(index,1,i) = mode/ray*W(index,6,i) &
-                  -SUM(Vs(:,3)*dw_loc(2,:))
-             RotV(index,4,i) =          SUM(Vs(:,2)*dw_loc(2,:)) &
-                  -SUM(Vs(:,6)*dw_loc(1,:))
-             RotV(index,5,i) =    1/ray*W(index,3,i) &
-                  +SUM(Vs(:,3)*dw_loc(1,:)) &
-                  -mode/ray*W(index,2,i)
-             !coeff sur les sinus
-             RotV(index,2,i) =-mode/ray*W(index,5,i) &
-                  -SUM(Vs(:,4)*dw_loc(2,:))
-             RotV(index,3,i) =         SUM(Vs(:,1)*dw_loc(2,:)) &
-                  -SUM(Vs(:,5)*dw_loc(1,:))
-             RotV(index,6,i) =    1/ray*W(index,4,i) &
-                  +SUM(Vs(:,4)*dw_loc(1,:))&
-                  +mode/ray*W(index,1,i)
-          ENDDO
-       ENDDO
+    V_out = 0.d0
+    DO a= 1, 3
+      !==============================================
+      !=== VB 03/09/2026: Three case accounting  ====
+      !=== for either linearized or full NS      ====
+      !==============================================
+        SELECT CASE(a)
+      !=== Two terms for linearized NS
+        CASE(barU_curl_u)
+           IF (.NOT. inputs%if_linear_navier_stokes_with_u) CYCLE
+           V_rot => V_in
+           V_raw => V_base_flow
+        CASE(U_curl_barU)
+           IF (.NOT. inputs%if_linear_navier_stokes_with_u) CYCLE
+           V_raw => V_in
+           V_rot => V_base_flow
+      !=== One term for non-linear NS
+        CASE(barU_curl_barU)
+           IF (inputs%if_linear_navier_stokes_with_u) CYCLE
+           V_raw => V_in
+           V_rot => V_in
+        CASE DEFAULT
+           CALL error_petsc("BUG in subroutine_ns_with_velocity/smb_cross_prod_gauss_sft_par => wrong case")
+        END SELECT
+        DO i = 1, SIZE(list_mode)
+           mode = list_mode(i)
+           index = 0
+           DO m = 1, mesh%me
+              j_loc = mesh%jj(:,m)
+              DO k = 1, 6
+                 Vs_raw(:,k) = V_raw(j_loc,k,i)
+                 Vs_rot(:,k) = V_rot(j_loc,k,i)
+                 Omega_s(:,k) = Omega(mesh%jj(:,m),k,i)
+              END DO
+    
+              DO l = 1, mesh%gauss%l_G
+                 index = index + 1
+                 dw_loc = mesh%gauss%dw(:,:,l,m)
+    
+                 !===Compute radius of Gauss point
+                 ray = SUM(mesh%rr(1,j_loc)*mesh%gauss%ww(:,l))
+    
+                 !-----------------vitesse sur les points de Gauss---------------------------
+                 W(index,1,i) = SUM(Vs_raw(:,1)*mesh%gauss%ww(:,l))
+                 W(index,3,i) = SUM(Vs_raw(:,3)*mesh%gauss%ww(:,l))
+                 W(index,5,i) = SUM(Vs_raw(:,5)*mesh%gauss%ww(:,l))
+    
+                 W(index,2,i) = SUM(Vs_raw(:,2)*mesh%gauss%ww(:,l))
+                 W(index,4,i) = SUM(Vs_raw(:,4)*mesh%gauss%ww(:,l))
+                 W(index,6,i) = SUM(Vs_raw(:,6)*mesh%gauss%ww(:,l))
+                 !-----------------vecteur rotation sur les points de Gauss---------------------------
+                 Om(index,1,i) = SUM(Omega_s(:,1)*mesh%gauss%ww(:,l))
+                 Om(index,3,i) = SUM(Omega_s(:,3)*mesh%gauss%ww(:,l))
+                 Om(index,5,i) = SUM(Omega_s(:,5)*mesh%gauss%ww(:,l))
+    
+                 Om(index,2,i) = SUM(Omega_s(:,2)*mesh%gauss%ww(:,l))
+                 Om(index,4,i) = SUM(Omega_s(:,4)*mesh%gauss%ww(:,l))
+                 Om(index,6,i) = SUM(Omega_s(:,6)*mesh%gauss%ww(:,l))
+                 !-----------------rotational sur les points de Gauss---------------------------
+                 !coeff sur les cosinus
+                 RotV(index,1,i) = mode/ray*SUM(Vs_rot(:,6)*mesh%gauss%ww(:,l)) &
+                      -SUM(Vs_rot(:,3)*dw_loc(2,:))
+                 RotV(index,4,i) =          SUM(Vs_rot(:,2)*dw_loc(2,:)) &
+                      -SUM(Vs_rot(:,6)*dw_loc(1,:))
+                 RotV(index,5,i) =    1/ray*SUM(Vs_rot(:,3)*mesh%gauss%ww(:,l)) &
+                      +SUM(Vs_rot(:,3)*dw_loc(1,:)) &
+                      -mode/ray*SUM(Vs_rot(:,2)*mesh%gauss%ww(:,l))
+                 !coeff sur les sinus
+                 RotV(index,2,i) =-mode/ray*SUM(Vs_rot(:,5)*mesh%gauss%ww(:,l)) &
+                      -SUM(Vs_rot(:,4)*dw_loc(2,:))
+                 RotV(index,3,i) =         SUM(Vs_rot(:,1)*dw_loc(2,:)) &
+                      -SUM(Vs_rot(:,5)*dw_loc(1,:))
+                 RotV(index,6,i) =    1/ray*SUM(Vs_rot(:,4)*mesh%gauss%ww(:,l)) &
+                      +SUM(Vs_rot(:,4)*dw_loc(1,:))&
+                      +mode/ray*SUM(Vs_rot(:,1)*mesh%gauss%ww(:,l))
+              ENDDO
+           ENDDO
+        END DO
+    
+        !JLG, FL, July 23 2010, There was a Bug here
+        IF (.NOT.precession_in) THEN
+           Om=0.d0
+        END IF
+        !
+        ! cas PRECESSION 28/07/09
+        !take care to the -F= 2 Om x U term in LHS
+        RotV = RotV + 2.d0 * Om
+        temps = 0
+    
+    
+        CALL MPI_COMM_SIZE(communicator, nb_procs, code)
+        bloc_size = SIZE(RotV,1)/nb_procs+1
+        m_max_pad = 3*SIZE(list_mode)*nb_procs/2
+        CALL FFT_PAR_CROSS_PROD_DCL(communicator, RotV, W, V_temp, nb_procs, bloc_size, m_max_pad, temps)
+        V_out = V_out + V_temp
     END DO
-
-    !JLG, FL, July 23 2010, There was a Bug here
-    IF (.NOT.precession_in) THEN
-       Om=0.d0
-    END IF
-    !
-    ! cas PRECESSION 28/07/09
-    !take care to the -F= 2 Om x U term in LHS
-    RotV = RotV + 2.d0 * Om
-    temps = 0
-
-
-    CALL MPI_COMM_SIZE(communicator, nb_procs, code)
-    bloc_size = SIZE(RotV,1)/nb_procs+1
-    m_max_pad = 3*SIZE(list_mode)*nb_procs/2
-    CALL FFT_PAR_CROSS_PROD_DCL(communicator, RotV, W, V_out, nb_procs, bloc_size, m_max_pad, temps)
     tps = user_time() - tps
 
   END SUBROUTINE smb_cross_prod_gauss_sft_par
 
   SUBROUTINE smb_CurlH_cross_B_gauss_sft_par(communicator,mesh,list_mode,V_in,W_in,V_out)
     !=================================
+    !> Case not quasi-static:
+    !! V_in = 2*Hn - Hn_m1
+    !! W_in = 2*Bn - Bn_m1
+    !! computation of curl(V_in) x W_in
     USE fft_parallele
     USE chaine_caractere
     USE input_data

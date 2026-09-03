@@ -254,19 +254,17 @@ CONTAINS
     IF (inputs%if_linear_navier_stokes_with_u) THEN
       vv = 0.d0    
     ELSE
-      vv = base_flow(TYPE_VEC,rr,m,t)
+      vv = base_flow(TYPE_VEC,rr,m)
     END IF
     RETURN
   END FUNCTION vv_exact
 
-  ! MODULE FUNCTION base_flow(TYPE_VEC,rr,m,t) RESULT(vv)
-  FUNCTION my_base_flow(TYPE_VEC,rr,m,t) RESULT(vv)
+  FUNCTION my_base_flow(TYPE_VEC,rr,m) RESULT(vv)
     USE user_data
     IMPLICIT NONE
     INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
     REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
     INTEGER,                             INTENT(IN)   :: m
-    REAL(KIND=8),                        INTENT(IN)   :: t
     REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
     REAL(KIND=8)                                      :: r,z,radius_ratio, omega_ratio, AA, BB
     INTEGER                                           :: n

@@ -99,7 +99,7 @@ target_include_directories(${exe} PUBLIC ${SFEMaNS_DIR}/LIBS)
 
 set(passRegex "1234567891")
 
-set (nm "test46")
+set (nm "test46_LK")
 add_test(NAME ${nm}
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../REGRESSION_TESTS
   COMMAND /bin/bash/ job.sh ${RUN_PRE_PROC} ${PROC_CALL} ${exe} ${RUN_POST_PROC})

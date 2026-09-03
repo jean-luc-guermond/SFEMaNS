@@ -78,11 +78,10 @@ MODULE abstract_interface
        REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
      END FUNCTION sub_vv_exact
 
-     FUNCTION sub_base_flow(TYPE_VEC,rr,m,t) RESULT(vv)
+     FUNCTION sub_base_flow(TYPE_VEC,rr,m) RESULT(vv)
        INTEGER     ,                        INTENT(IN)   :: TYPE_VEC
        REAL(KIND=8), DIMENSION(:,:),        INTENT(IN)   :: rr
        INTEGER,                             INTENT(IN)   :: m
-       REAL(KIND=8),                        INTENT(IN)   :: t
        REAL(KIND=8), DIMENSION(SIZE(rr,2))               :: vv
      END FUNCTION sub_base_flow
 
