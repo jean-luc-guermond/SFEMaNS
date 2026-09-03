@@ -4,19 +4,19 @@ MODULE exponential_propagator
 #endif
    USE def_type_mesh
    USE def_type_field_mag
+   USE def_type_field_vel
 #include "petsc/finclude/petsc.h"
    USE petsc
-   ! USE COMM_LK_SFEM
    USE my_util
  
-  IMPLICIT NONE
+IMPLICIT NONE
 
    CHARACTER(len=*), PARAMETER, PRIVATE :: this_module = 'exponential_propagator'
       PRIVATE 
 
        !===Navier-Stokes fields========================================================
        TYPE(mesh_type), POINTER                        :: pp_mesh, vv_mesh
-       REAL(KIND=8), POINTER, DIMENSION(:,:,:)         :: un, pn, incpn, un_m1, pn_m1, incpn_m1
+       TYPE(vel_field_type), POINTER                   :: vel_n, vel_n1
        INTEGER, DIMENSION(:), ALLOCATABLE :: put_seed
        REAL(KIND=8), DIMENSION(:), ALLOCATABLE :: bc_flow, incompressibility_flow
        INTEGER :: j, i
@@ -105,14 +105,13 @@ MODULE exponential_propagator
       REAL(KIND=8)                                    :: tps, tploc, tploc_max=0.d0
        
       !===Start PETSC and MPI (mandatory)=============================================
-      !  CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
       CALL MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
      
       !===User reads his/her own data=================================================
       !===Initialize SFEMANS (mandatory)==============================================
       CALL build_pointers(vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, conc_mesh,&
          interface_H_phi, interface_H_mu, list_mode, &
-         un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_n, mag_n1, vel, &
+         vel_n, vel_n1, mag_n, mag_n1, vel, &
          vol_heat_capacity_field, temperature_diffusivity_field, &
          concentration_diffusivity_field,mu_H_field, sigma_field, time, m_max_c, &
          comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc,temperature, &
@@ -124,7 +123,7 @@ MODULE exponential_propagator
             SELECT TYPE(vec_out)
             TYPE is(LK_field_type)
 #endif
-               CALL vec_in%LK_2_SFEM(un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_n, mag_n1)
+               CALL vec_in%LK_2_SFEM(vel_n, vel_n1, mag_n, mag_n1)
               
                !===============================================================================
                !                        TIME INTEGRATION                                      !
@@ -157,7 +156,7 @@ MODULE exponential_propagator
 
                mag_n1%time = time - inputs%dt 
                mag_n%time = time 
-               CALL vec_out%SFEM_2_LK(un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_n, mag_n1)
+               CALL vec_out%SFEM_2_LK(vel_n, vel_n1, mag_n, mag_n1)
              
                !===Timing======================================================================
                tps = user_time() - tps

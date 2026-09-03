@@ -284,13 +284,14 @@ CONTAINS
 !======================================= 
 !=======================================
 
-    SUBROUTINE LK_2_SFEM(self, un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_n, mag_n1)
+    SUBROUTINE LK_2_SFEM(self, vel_n, vel_n1, mag_n, mag_n1)
         USE def_type_field_mag
+        USE def_type_field_vel
         IMPLICIT NONE
 
         CLASS(LK_field_type), INTENT(IN)       :: self
         TYPE(mag_field_type), INTENT(OUT)      :: mag_n, mag_n1
-        REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT) :: un, pn, incpn, un_m1, pn_m1, incpn_m1
+        TYPE(vel_field_type), INTENT(OUT)      :: vel_n, vel_n1
 
         IF (if_induction) THEN
             ! CALL self%mag%copy_to(mag_n)
@@ -300,33 +301,23 @@ CONTAINS
         ENDIF
 
         IF (if_momentum) THEN
-            ! un = self%vel%u
-            ! pn = self%vel%p
-            ! incpn = self%vel%incp
-
-            ! un_m1 = self%vel%u
-            ! pn_m1 = self%vel%p
-            ! incpn_m1 = self%vel%incp
-
-            un = self%vel_n%u
-            pn = self%vel_n%p
-            incpn = self%vel_n%incp
-
-            un_m1 = self%vel_n1%u
-            pn_m1 = self%vel_n1%p
-            incpn_m1 = self%vel_n1%incp
+            ! CALL self%vel%copy_to(vel_n)
+            ! CALL self%vel%copy_to(vel_n1)
+            CALL self%vel_n%copy_to(vel_n)
+            CALL self%vel_n1%copy_to(vel_n1)
         ENDIF
 
     END SUBROUTINE LK_2_SFEM
 
 
-    SUBROUTINE SFEM_2_LK(self, un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_n, mag_n1)
+    SUBROUTINE SFEM_2_LK(self, vel_n, vel_n1, mag_n, mag_n1)
         USE def_type_field_mag
+        USE def_type_field_vel
         IMPLICIT NONE
 
-        TYPE(mag_field_type), INTENT(IN)   :: mag_n, mag_n1
+        TYPE(mag_field_type), INTENT(IN)  :: mag_n, mag_n1
+        TYPE(vel_field_type), INTENT(IN)  :: vel_n, vel_n1
         CLASS(LK_field_type), INTENT(OUT)  :: self
-        REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN) :: un, pn, incpn, un_m1, pn_m1, incpn_m1
             
         IF (if_induction) THEN
             ! CALL mag_n%copy_to(self%mag)
@@ -335,26 +326,9 @@ CONTAINS
         ENDIF
 
         IF (if_momentum) THEN
-            ! CALL self%vel%set_time(0.d0)
-            ! CALL self%vel%allocate_velocity_fields()
-            ! self%vel%u = un
-            ! self%vel%p = pn
-            ! self%vel%incp = incpn
-            ! self%vel%initialized = .TRUE.
-
-            CALL self%vel_n%set_time(0.d0)
-            CALL self%vel_n%allocate_velocity_fields()
-            self%vel_n%u = un
-            self%vel_n%p = pn
-            self%vel_n%incp = incpn
-            self%vel_n%initialized = .TRUE.
-
-            CALL self%vel_n1%set_time(0.d0)
-            CALL self%vel_n1%allocate_velocity_fields()
-            self%vel_n1%u = un_m1
-            self%vel_n1%p = pn_m1
-            self%vel_n1%incp = incpn_m1
-            self%vel_n1%initialized = .TRUE.
+            ! CALL vel_n%copy_to(self%vel)
+            CALL vel_n%copy_to(self%vel_n)
+            CALL vel_n1%copy_to(self%vel_n1)
         ENDIF
 
     END SUBROUTINE SFEM_2_LK

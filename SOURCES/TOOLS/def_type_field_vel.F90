@@ -74,14 +74,13 @@ CONTAINS
 
     END SUBROUTINE build_vel_field_params
         
-    SUBROUTINE build_pointers_vel_field(vv_mesh_in, pp_mesh_in, list_mode_in, communicator_in, if_momentum_in)
+    SUBROUTINE build_pointers_vel_field(vv_mesh_in, pp_mesh_in, list_mode_in, communicator_in)
         USE def_type_mesh
 
         IMPLICIT NONE
         TYPE(mesh_type), TARGET       ,INTENT(IN)            :: vv_mesh_in, pp_mesh_in
         MPI_Comm, TARGET, DIMENSION(:),INTENT(IN)            :: communicator_in
         INTEGER, TARGET, DIMENSION(:), INTENT(IN)            :: list_mode_in
-        LOGICAL,                       INTENT(IN)            :: if_momentum_in
         vv_mesh           => vv_mesh_in
         pp_mesh           => pp_mesh_in
         communicator_ns   => communicator_in 

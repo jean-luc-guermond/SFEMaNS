@@ -30,13 +30,14 @@ MODULE initialization
   TYPE(mesh_type), TARGET                              :: pp_mesh, vv_mesh
   TYPE(petsc_csr_LA)                                   :: vv_1_LA, pp_1_LA
   TYPE(petsc_csr_LA)                                   :: vv_3_LA   ! for stress bc
-  REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:)  :: un, un_m1
+!   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:)  :: un, un_m1
+  TYPE(vel_field_type), TARGET                         :: vel_n, vel_n1
   ! CN-HF 16/01/2020
   TYPE(dyn_real_array_three), TARGET, ALLOCATABLE, DIMENSION(:)   :: der_un
   ! (noeuds,type,mode) composante du champ de vitesse a deux instants sur vv_mesh
-  REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:)  :: pn, pn_m1
+!   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:)  :: pn, pn_m1
   TYPE(dyn_real_array_three), ALLOCATABLE, DIMENSION(:):: der_pn
-  REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:)          :: incpn, incpn_m1
+!   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:)          :: incpn, incpn_m1
   !---------------------------------------------------------------------------
 
   !Fields for level sets in Navier-Stokes-------------------------------------
@@ -134,17 +135,10 @@ CONTAINS
   !---------------------------------------------------------------------------
 
   !---------------------------------------------------------------------------
-!  SUBROUTINE initial(vv_mesh_out, pp_mesh_out, H_mesh_out, phi_mesh_out, temp_mesh_out, &
-!       conc_mesh_out, interface_H_phi_out, interface_H_mu_out, list_mode_out, &
-!       un_out, pn_out, Hn_out, Bn_out, phin_out, v_to_Max_out, &
-!       vol_heat_capacity_field_out, temperature_diffusivity_field_out, concentration_diffusivity_field_out, &
-!       mu_H_field_out, sigma_field_out, &
-!       time_out, m_max_c_out, comm_one_d_out, comm_one_d_ns_out, comm_one_d_temp_out, comm_one_d_conc_out, &
-!       tempn_out, concn_out, level_set_out, density_out, der_un_out, visc_LES_out, visc_LES_level_out)
 
   SUBROUTINE build_pointers(vv_mesh_out, pp_mesh_out, H_mesh_out, phi_mesh_out, temp_mesh_out, &
        conc_mesh_out, interface_H_phi_out, interface_H_mu_out, list_mode_out, &
-       un_out, pn_out, incpn_out, un_m1_out, pn_m1_out, incpn_m1_out, mag_n_out, mag_n1_out, v_to_Max_out, &
+       vel_n_out, vel_n1_out, mag_n_out, mag_n1_out, v_to_Max_out, &
        vol_heat_capacity_field_out, temperature_diffusivity_field_out, concentration_diffusivity_field_out, &
        mu_H_field_out, sigma_field_out, &
        time_out, m_max_c_out, comm_one_d_out, comm_one_d_ns_out, comm_one_d_temp_out, comm_one_d_conc_out, &
@@ -158,8 +152,7 @@ CONTAINS
     TYPE(dyn_real_array_three), POINTER, DIMENSION(:):: der_un_out
     TYPE(interface_type), POINTER             :: interface_H_mu_out, interface_H_phi_out
     INTEGER,      POINTER,  DIMENSION(:)      :: list_mode_out
-    REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: un_out, pn_out, incpn_out
-    REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: un_m1_out, pn_m1_out, incpn_m1_out
+    TYPE(vel_field_type), POINTER             :: vel_n_out, vel_n1_out
     REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: v_to_Max_out, tempn_out, density_out
     TYPE(mag_field_type), POINTER             :: mag_n_out, mag_n1_out
     REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: concn_out
@@ -182,14 +175,9 @@ CONTAINS
     interface_H_mu_out => interface_H_mu
     interface_H_phi_out => interface_H_phi
     list_mode_out => list_mode
-    un_out => un
-    pn_out => pn
-    incpn_out => incpn
-    un_m1_out => un_m1
-    pn_m1_out => pn_m1
-    incpn_m1_out => incpn_m1
+    vel_n_out => vel_n
+    vel_n1_out => vel_n1
     der_un_out => der_un
-    pn_out => pn
     tempn_out => tempn
     level_set_out => level_set
     density_out => density
@@ -216,7 +204,7 @@ CONTAINS
 
   SUBROUTINE initial(vv_mesh_out, pp_mesh_out, H_mesh_out, phi_mesh_out, temp_mesh_out, &
        conc_mesh_out, interface_H_phi_out, interface_H_mu_out, list_mode_out, &
-       un_out, pn_out, incpn_out, un_m1_out, pn_m1_out, incpn_m1_out, mag_n_out, mag_n1_out, v_to_Max_out, &
+       vel_n_out, vel_n1_out, mag_n_out, mag_n1_out, v_to_Max_out, &
        vol_heat_capacity_field_out, temperature_diffusivity_field_out, concentration_diffusivity_field_out, &
        mu_H_field_out, sigma_field_out, &
        time_out, m_max_c_out, comm_one_d_out, comm_one_d_ns_out, comm_one_d_temp_out, comm_one_d_conc_out, &
@@ -232,8 +220,7 @@ CONTAINS
     TYPE(dyn_real_array_three), POINTER, DIMENSION(:):: der_un_out
     TYPE(interface_type), POINTER             :: interface_H_mu_out, interface_H_phi_out
     INTEGER,      POINTER,  DIMENSION(:)      :: list_mode_out
-    REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: un_out, pn_out, incpn_out
-    REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: un_m1_out, pn_m1_out, incpn_m1_out
+    TYPE(vel_field_type), POINTER             :: vel_n_out, vel_n1_out
     REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: v_to_Max_out, tempn_out, density_out
     TYPE(mag_field_type), POINTER             :: mag_n_out, mag_n1_out
     REAL(KIND=8), POINTER,  DIMENSION(:,:,:)  :: concn_out
@@ -255,7 +242,7 @@ CONTAINS
 
     CALL build_pointers(vv_mesh_out, pp_mesh_out, H_mesh_out, phi_mesh_out, temp_mesh_out, &
        conc_mesh_out, interface_H_phi_out, interface_H_mu_out, list_mode_out, &
-       un_out, pn_out, incpn_out, un_m1_out, pn_m1_out, incpn_m1_out, mag_n_out, mag_n1_out, v_to_Max_out, &
+       vel_n_out, vel_n1_out, mag_n_out, mag_n1_out, v_to_Max_out, &
        vol_heat_capacity_field_out, temperature_diffusivity_field_out, concentration_diffusivity_field_out, &
        mu_H_field_out, sigma_field_out, &
        time_out, m_max_c_out, comm_one_d_out, comm_one_d_ns_out, comm_one_d_temp_out, comm_one_d_conc_out, &
@@ -292,7 +279,9 @@ CONTAINS
     time = time_in
 
     ASSOCIATE(Hn => mag_n%H, Bn => mag_n%B, phin => mag_n%phi, &
-              Hn1 => mag_n1%H, Bn1 => mag_n1%B, phin1 => mag_n1%phi)
+              Hn1 => mag_n1%H, Bn1 => mag_n1%B, phin1 => mag_n1%phi, &
+              un => vel_n%u, pn => vel_n%p, incpn => vel_n%incp, &
+              un_m1 => vel_n1%u, pn_m1 => vel_n1%p, incpn_m1 => vel_n1%incp)
     IF (if_mass) THEN
        IF (inputs%variation_temp_param_fluid) THEN
           CALL reconstruct_variable(comm_one_d_ns, list_mode, pp_mesh, vv_mesh, level_set_m1, &
@@ -456,18 +445,18 @@ CONTAINS
           mag_n1%phi(:,:,select_mode_mxw) = 0.d0
        END IF
        IF (vv_mesh%me /=0 .AND. SIZE(select_mode_ns)>0) THEN
-          un(:,:,select_mode_ns) = 0.d0
-          pn(:,:,select_mode_ns) = 0.d0
+          vel_n%u(:,:,select_mode_ns) = 0.d0
+          vel_n%p(:,:,select_mode_ns) = 0.d0
           IF(inputs%if_navier_stokes_with_taylor) THEN
              DO kp = 1, inputs%taylor_order-1
                 der_un(kp)%DRT(:,:,select_mode_ns) = 0.d0
                 der_pn(kp)%DRT(:,:,select_mode_ns) = 0.d0
              END DO
           ELSE
-             incpn(:,:,select_mode_ns) = 0.d0
-             un_m1(:,:,select_mode_ns) = 0.d0
-             pn_m1(:,:,select_mode_ns) = 0.d0
-             incpn_m1(:,:,select_mode_ns) = 0.d0
+             vel_n%incp(:,:,select_mode_ns) = 0.d0
+             vel_n1%u(:,:,select_mode_ns) = 0.d0
+             vel_n1%p(:,:,select_mode_ns) = 0.d0
+             vel_n1%incp(:,:,select_mode_ns) = 0.d0
           END IF
        END IF
     END IF
@@ -649,14 +638,16 @@ CONTAINS
 
     IF (if_momentum) THEN
        IF (pp_mesh%me /= 0) THEN
+          ASSOCIATE(un    => vel_n%u,  pn     => vel_n%p, incpn    => vel_n%incp, &
+                    un_m1 => vel_n1%u, pn_m1 => vel_n1%p, incpn_m1 => vel_n1%incp)
           IF(inputs%if_navier_stokes_with_taylor) THEN
              CALL write_restart_ns_taylor(comm_one_d_ns, vv_mesh, pp_mesh, time, &
                   list_mode, un, der_un, pn, der_pn, inputs%file_name, it, freq_restart)
           ELSE
              IF (.NOT. if_mass) THEN
                 CALL write_restart_ns(comm_one_d_ns, vv_mesh, pp_mesh, time, &
-                     list_mode, un, un_m1, pn, pn_m1, &
-                     incpn, incpn_m1, inputs%file_name, it, freq_restart)
+                     list_mode, un, un_m1, pn, pn_m1, incpn, incpn_m1, &
+                     inputs%file_name, it, freq_restart)
                 IF (inputs%LES) THEN
                    CALL write_restart_LES(comm_one_d_ns, vv_mesh, pp_mesh, time, &
                         list_mode, inputs%file_name, it, freq_restart, &
@@ -664,8 +655,8 @@ CONTAINS
                 END IF
              ELSE
                 CALL write_restart_ns(comm_one_d_ns, vv_mesh, pp_mesh, time, &
-                     list_mode, un, un_m1, pn, pn_m1, &
-                     incpn, incpn_m1, inputs%file_name, it, freq_restart, &
+                     list_mode, un, un_m1, pn, pn_m1, incpn, incpn_m1, &
+                     inputs%file_name, it, freq_restart, &
                      opt_level_set=level_set, opt_level_set_m1=level_set_m1, opt_max_vel=max_vel)
 
                 !Remark: LES is true when if_mass=.TRUE.
@@ -696,6 +687,7 @@ CONTAINS
                 END IF
              END IF
           END IF
+          END ASSOCIATE
        END IF
     END IF
 
@@ -1862,6 +1854,7 @@ CONTAINS
 
     !===Allocate arrays for Navier-Stokes===========================================
     IF (if_momentum .OR. inputs%type_pb=='mxx') THEN
+       CALL build_pointers_vel_field(vv_mesh, pp_mesh, list_mode, comm_one_d_ns)
        IF(inputs%if_navier_stokes_with_taylor) THEN
           ALLOCATE(der_un(inputs%taylor_order - 1))
           ALLOCATE(der_pn(inputs%taylor_order - 1))
@@ -1870,16 +1863,18 @@ CONTAINS
              ALLOCATE(der_pn(kp)%DRT(pp_mesh%np, 2, m_max_c))
           END DO
        ELSE
-          ALLOCATE(un_m1      (vv_mesh%np, 6, m_max_c))
-          ALLOCATE(pn_m1      (pp_mesh%np, 2, m_max_c))
-          ALLOCATE(incpn_m1   (pp_mesh%np, 2, m_max_c))
-          ALLOCATE(incpn      (pp_mesh%np, 2, m_max_c))
+         !  ALLOCATE(un_m1      (vv_mesh%np, 6, m_max_c))
+         !  ALLOCATE(pn_m1      (pp_mesh%np, 2, m_max_c))
+         !  ALLOCATE(incpn_m1   (pp_mesh%np, 2, m_max_c))
+         !  ALLOCATE(incpn      (pp_mesh%np, 2, m_max_c))
+          CALL vel_n1%allocate_velocity_fields
           ALLOCATE(density_m2 (vv_mesh%np, 2, m_max_c))
           ALLOCATE(density_m1 (vv_mesh%np, 2, m_max_c))
           ALLOCATE(density    (vv_mesh%np, 2, m_max_c))
        END IF
-       ALLOCATE(un         (vv_mesh%np, 6, m_max_c))
-       ALLOCATE(pn         (pp_mesh%np, 2, m_max_c))
+      !  ALLOCATE(un         (vv_mesh%np, 6, m_max_c))
+      !  ALLOCATE(pn         (pp_mesh%np, 2, m_max_c))
+       CALL vel_n%allocate_velocity_fields
        IF (inputs%LES) THEN
           ALLOCATE(visc_LES(3, vv_mesh%gauss%l_G*vv_mesh%dom_me, 6, m_max_c))
        END IF
@@ -2030,8 +2025,9 @@ CONTAINS
     !===Initialize Navier-Stokes====================================================
     time_u = 0.d0
     IF (if_momentum .OR. inputs%type_pb=='mxx') THEN
-       CALL build_pointers_vel_field(vv_mesh, pp_mesh, list_mode, comm_one_d_ns, if_momentum)
        IF (vv_mesh%me/=0) THEN
+          ASSOCIATE(un    => vel_n%u,  pn     => vel_n%p, incpn    => vel_n%incp, &
+                    un_m1 => vel_n1%u, pn_m1 => vel_n1%p, incpn_m1 => vel_n1%incp)
           IF (inputs%irestart_u) THEN
              IF(inputs%if_navier_stokes_with_taylor) THEN
                 CALL read_restart_ns_taylor(comm_one_d_ns, time_u, list_mode, un, der_un, pn, der_pn, inputs%file_name)
@@ -2095,6 +2091,7 @@ CONTAINS
                 END IF
              END IF
           END IF
+          END ASSOCIATE
           IF (if_mass) THEN
              CALL reconstruct_variable(comm_one_d_ns, list_mode, pp_mesh, vv_mesh, level_set_m1, &
                   inputs%density_fluid, density_m1)
@@ -2107,25 +2104,25 @@ CONTAINS
           DO i = 1, m_max_c
              IF (list_mode(i) == 0) THEN
                 DO k = 1, 3
-                   un(:, 2 * k, i) = 0.d0
+                   vel_n%u(:, 2 * k, i) = 0.d0
                    IF(inputs%if_navier_stokes_with_taylor) THEN
                       DO kp = 1, inputs%taylor_order - 1
                          der_un(kp)%DRT(:, 2 * k, i) = 0.d0
                       END DO
                    ELSE
-                      un_m1(:, 2 * k, i) = 0.d0
+                      vel_n1%u(:, 2 * k, i) = 0.d0
                    END IF
                 END DO
-                pn(:, 2, i) = 0.d0
+                vel_n%p(:, 2, i) = 0.d0
+                vel_n%incp(:, 2, i) = 0.d0
                 IF(inputs%if_navier_stokes_with_taylor) THEN
                    DO kp = 1, inputs%taylor_order - 1
                       der_pn(kp)%DRT(:, 2, i) = 0.d0
                    END DO
                 ELSE
-                   incpn(:, 2, i) = 0.d0
                    density(:, 2, i) = 0.d0
-                   pn_m1(:, 2, i) = 0.d0
-                   incpn_m1(:, 2, i) = 0.d0
+                   vel_n1%p(:, 2, i) = 0.d0
+                   vel_n1%incp(:, 2, i) = 0.d0
                    density_m1(:, 2, i) = 0.d0
                 END IF
                 IF (if_mass) THEN
@@ -2162,7 +2159,7 @@ CONTAINS
        IF (vv_mesh%me /=0) THEN
           DO j = 1, SIZE(jj_v_to_H)
              IF (jj_v_to_H(j) == -1) CYCLE
-             v_to_Max(j,:,:) = un(jj_v_to_H(j), :,:)
+             v_to_Max(j,:,:) = vel_n%u(jj_v_to_H(j), :,:)
           END DO
        END IF
 
@@ -2175,16 +2172,16 @@ CONTAINS
           DEALLOCATE(der_un)
           DEALLOCATE(der_pn)
        ELSE
-          DEALLOCATE(un_m1)
-          DEALLOCATE(pn_m1)
-          DEALLOCATE(incpn_m1)
-          DEALLOCATE(incpn)
+          DEALLOCATE(vel_n1%u)
+          DEALLOCATE(vel_n1%p)
+          DEALLOCATE(vel_n1%incp)
           DEALLOCATE(density_m2)
           DEALLOCATE(density_m1)
           DEALLOCATE(density)
        END IF
-       DEALLOCATE(un)
-       DEALLOCATE(pn)
+       DEALLOCATE(vel_n%u)
+       DEALLOCATE(vel_n%p)
+       DEALLOCATE(vel_n%incp)
        IF (if_mass) THEN
           IF (ALLOCATED(level_set)) DEALLOCATE(level_set, level_set_m1)
           IF (ALLOCATED(visc_LES_level)) DEALLOCATE(visc_LES_level)
@@ -2585,16 +2582,16 @@ CONTAINS
        IF (pp_mesh%me /= 0) THEN !because of mxx pb_type
 
           IF (inputs%if_snapshot_u) CALL write_snapshot(comm_one_d_ns, vv_mesh, list_mode, &
-               un, 'u', it, freq_snapshot)
+               vel_n%u, 'u', it, freq_snapshot)
 
           IF (inputs%if_snapshot_un_m1) CALL write_snapshot(comm_one_d_ns, vv_mesh, list_mode, &
-               un_m1, 'un_m1', it, freq_snapshot)
+               vel_n1%u, 'un_m1', it, freq_snapshot)
           
           IF (inputs%if_snapshot_p) CALL write_snapshot(comm_one_d_ns, pp_mesh, list_mode, &
-               pn, 'p', it, freq_snapshot)
+               vel_n%p, 'p', it, freq_snapshot)
 
           IF (inputs%if_snapshot_pn_m1) CALL write_snapshot(comm_one_d_ns, pp_mesh, list_mode, &
-               pn_m1, 'pn_m1', it, freq_snapshot)
+               vel_n1%p, 'pn_m1', it, freq_snapshot)
 
 
           !IF (inputs%if_ns_penalty) THEN

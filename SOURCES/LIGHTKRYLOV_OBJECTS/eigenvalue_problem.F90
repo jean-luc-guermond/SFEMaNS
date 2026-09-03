@@ -3,7 +3,7 @@ MODULE eigenvalue_problem
 
    CONTAINS
 
-    SUBROUTINE compute_spectrum(comm_one_d, H_mesh, phi_mesh, lambda, residuals, X, list_mode)
+    SUBROUTINE compute_spectrum(lambda, residuals, X, list_mode)
         USE input_data
         USE exponential_propagator
         USE def_type_mesh

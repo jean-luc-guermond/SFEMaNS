@@ -15,6 +15,7 @@ PROGRAM mhd_prog
 
   USE COMM_LK_SFEM
   USE def_type_field_mag
+  USE def_type_field_vel
   USE exponential_propagator
   USE eigenvalue_problem, ONLY: compute_spectrum
 #ifdef USE_LIGHTKRYLOV 
@@ -36,7 +37,7 @@ PROGRAM mhd_prog
   LOGICAL                                         :: if_induction, test_induction
   !===Navier-Stokes fields========================================================
   TYPE(mesh_type), POINTER                        :: pp_mesh, vv_mesh
-  REAL(KIND=8), POINTER, DIMENSION(:,:,:)         :: un, pn, incpn, un_m1, pn_m1, incpn_m1
+  TYPE(vel_field_type), POINTER                   :: vel_n, vel_n1
   TYPE(dyn_real_array_three), POINTER, DIMENSION(:):: der_un
   !===Maxwell fields==============================================================
   TYPE(mesh_type), POINTER                        :: H_mesh, phi_mesh
@@ -84,7 +85,7 @@ PROGRAM mhd_prog
   !===Initialize SFEMANS (mandatory)==============================================
   CALL initial(vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, conc_mesh,&
        interface_H_phi, interface_H_mu, list_mode, &
-       un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_n, mag_n1, vel, &
+       vel_n, vel_n1, mag_n, mag_n1, vel, &
        vol_heat_capacity_field, temperature_diffusivity_field, &
        concentration_diffusivity_field,mu_H_field, sigma_field, time, m_max_c, &
        comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc,temperature, &
@@ -106,30 +107,6 @@ PROGRAM mhd_prog
      CALL error_petsc('End post_processing')
   END IF
 
-  !===============================================================================
-  !                        EIGENVALUE PROBLEMS/ARPACK                            !
-  !===============================================================================
-  !IF (inputs%if_arpack) THEN
-  !   !ATTENTION: m_max_c should be equal to 1, meaning each processors is dealing with 1 Fourier mode
-  !   CALL solver_arpack_mhd(comm_one_d,H_mesh,phi_mesh,&
-  !        inputs%dt,list_mode,mu_H_field)
-  !   !===Postprocessing to check convergence
-  !   IF (inputs%test_de_convergence) THEN
-  !      CALL post_proc_test(vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
-  !           un, pn, Hn, Bn, phin, temperature, level_set, mu_H_field, &
-  !           time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp)
-  !      CALL error_Petsc('End of convergence test')
-  !      !IF (rank==0) WRITE(*,*) 'End of convergence test'
-  !      !RETURN
-  !   END IF
-  !   !=== Put your postprocessing here
-  !
-  !   !===End of code for ARPACK problem
-  !   CALL error_Petsc('END OF ARPACK, EXITING PRGM')
-  !IF (rank==0) WRITE(*,*) 'END OF ARPACK, EXITING PRGM'
-  !   !RETURN
-  !END IF
-
   tps = user_time()
 
    !=================================================
@@ -137,7 +114,7 @@ PROGRAM mhd_prog
    !=================================================
    IF (inputs%LK%eigs) THEN
 #ifdef USE_LIGHTKRYLOV      
-      CALL compute_spectrum(comm_one_d, H_mesh, phi_mesh, lambda, residuals, X, list_mode)
+      CALL compute_spectrum(lambda, residuals, X, list_mode)
 
       IF (inputs%if_regression) THEN
          CALL regression_LK(lambda)
@@ -190,9 +167,9 @@ PROGRAM mhd_prog
       tps = user_time()
       DO it=1,inputs%LK%nb_exptA    
          tploc = user_time()
-         CALL vec_in%SFEM_2_LK(un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_n, mag_n1)
+         CALL vec_in%SFEM_2_LK(vel_n, vel_n1, mag_n, mag_n1)
          CALL exptA%matvec(vec_in, vec_out)
-         CALL vec_out%LK_2_SFEM(un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_n, mag_n1)
+         CALL vec_out%LK_2_SFEM(vel_n, vel_n1, mag_n, mag_n1)
          tploc = user_time() - tploc
          IF (it >1) tploc_max = tploc_max + tploc
       END DO
@@ -208,7 +185,7 @@ PROGRAM mhd_prog
    !===Postprocessing to check convergence=========================================
    IF (inputs%if_regression) THEN
       CALL regression(conc_mesh, vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
-            un, pn, mag_n, mag_n1, temperature, level_set, concentration, mu_H_field, &
+            vel_n, mag_n, temperature, level_set, concentration, mu_H_field, &
             time, m_max_c, comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc)
       CALL error_Petsc('End of convergence test')  
    END IF
@@ -262,7 +239,7 @@ PROGRAM mhd_prog
     !===Check divergence of fields
     IF (inputs%check_numerical_stability) THEN
        IF (inputs%type_pb=='nst' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd') THEN
-          norm = norm_SF(comm_one_d_ns, 'L2', vv_mesh, list_mode, un)
+          norm = norm_SF(comm_one_d_ns, 'L2', vv_mesh, list_mode, vel_n%u)
        ELSE
           norm = norm_SF(comm_one_d, 'L2', H_mesh, list_mode, Hn)
        END IF
@@ -282,32 +259,32 @@ PROGRAM mhd_prog
              !===Compute the term -2/pi*integral((1-chi)*(u-u_solid).e_z/dt)
              !===chi is the penalty function, u_solid the velocity of the solid, dt the time step
              !==Output written in the file fort.12
-             CALL FORCES_AND_MOMENTS(time,vv_mesh,comm_one_d_ns,list_mode,un)
+             CALL FORCES_AND_MOMENTS(time,vv_mesh,comm_one_d_ns,list_mode,vel_n%u)
           END IF
 
-          err = norm_SF(comm_one_d, 'div', vv_mesh, list_mode, un)
-          norm = norm_SF(comm_one_d, 'H1', vv_mesh, list_mode, un)
+          err = norm_SF(comm_one_d, 'div', vv_mesh, list_mode, vel_n%u)
+          norm = norm_SF(comm_one_d, 'H1', vv_mesh, list_mode, vel_n%u)
           IF (rank == 0) THEN
              !===Divergence of velocity field
              WRITE(31,*) time, err/norm
           END IF
           DO i=1,SIZE(list_mode)
-             norm = norm_S(comm_one_d, 'L2', vv_mesh, list_mode(i:i), un(:,:,i:i))
+             norm = norm_S(comm_one_d, 'L2', vv_mesh, list_mode(i:i), vel_n%u(:,:,i:i))
              IF (rank_ns_S == 0) THEN
                 !===L2 norm of Fourier mode list_mode(i) of velocity field un
                 WRITE(100+list_mode(i),*) time, norm
              END IF
           END DO
 
-          err = norm_SF(comm_one_d, 'L2', vv_mesh, list_mode, un)
-          norm = norm_SF(comm_one_d, 'sH1', vv_mesh, list_mode, un)
+          err = norm_SF(comm_one_d, 'L2', vv_mesh, list_mode, vel_n%u)
+          norm = norm_SF(comm_one_d, 'sH1', vv_mesh, list_mode, vel_n%u)
           IF (rank == 0) THEN
              WRITE(98,*) time, err
              WRITE(*,*) 'norm L2 of velocity', time, err
              WRITE(*,*) 'semi norm H1 of velocity', time, norm
           END IF
 
-          err = norm_SF(comm_one_d, 'L2', pp_mesh, list_mode, pn)
+          err = norm_SF(comm_one_d, 'L2', pp_mesh, list_mode, vel_n%p)
           IF (rank == 0) THEN
              WRITE(*,*) 'norm L2 of pressure', time, err
           END IF
@@ -378,12 +355,12 @@ PROGRAM mhd_prog
        END IF
        IF (inputs%type_pb/='mxw' .AND. inputs%type_pb/='mxx') THEN
           IF (inputs%type_fe_velocity==3) THEN
-             CALL vtu_3d(comm_one_d, un, 'vv_mesh', 'Velocity', 'vel', what, opt_it=it_plot, opt_mesh_in=vv_mesh)
+             CALL vtu_3d(comm_one_d, vel_n%u, 'vv_mesh', 'Velocity', 'vel', what, opt_it=it_plot, opt_mesh_in=vv_mesh)
           ELSE
-             CALL vtu_3d(comm_one_d, un, 'vv_mesh', 'Velocity', 'vel', what, opt_it=it_plot)
+             CALL vtu_3d(comm_one_d, vel_n%u, 'vv_mesh', 'Velocity', 'vel', what, opt_it=it_plot)
           ENDIF
-          CALL vtu_3d(comm_one_d, pn, 'pp_mesh', 'Pressure', 'pre', what, opt_it=it_plot)
-          CALL vtu_3d(comm_one_d, un, 'vv_mesh', 'Vorticity', 'vor', what, opt_it=it_plot, &
+          CALL vtu_3d(comm_one_d, vel_n%p, 'pp_mesh', 'Pressure', 'pre', what, opt_it=it_plot)
+          CALL vtu_3d(comm_one_d, vel_n%u, 'vv_mesh', 'Vorticity', 'vor', what, opt_it=it_plot, &
                opt_grad_curl='curl_u', opt_mesh_in=vv_mesh)
           !===Visualization of the penalty function
           IF (inputs%if_ns_penalty) THEN
@@ -408,11 +385,11 @@ PROGRAM mhd_prog
              WRITE(st_mode,'(I3)') list_mode(i)
              header = 'Vn_'//'mode_'//trim(adjustl(st_mode))
              name_of_field = 'Vn'
-             CALL make_vtu_file_2D(comm_one_d_ns(1), vv_mesh, header, un(:,:,i), name_of_field, what, opt_it=it_plot)
+             CALL make_vtu_file_2D(comm_one_d_ns(1), vv_mesh, header, vel_n%u(:,:,i), name_of_field, what, opt_it=it_plot)
              WRITE(st_mode,'(I3)') list_mode(i)
              header = 'Pn_'//'mode_'//trim(adjustl(st_mode))
              name_of_field = 'Pn'
-             CALL make_vtu_file_2D(comm_one_d_ns(1), pp_mesh, header, pn(:,:,i), name_of_field, what, opt_it=it_plot)
+             CALL make_vtu_file_2D(comm_one_d_ns(1), pp_mesh, header, vel_n%p(:,:,i), name_of_field, what, opt_it=it_plot)
           END DO
        END IF
        IF (inputs%if_temperature) THEN
