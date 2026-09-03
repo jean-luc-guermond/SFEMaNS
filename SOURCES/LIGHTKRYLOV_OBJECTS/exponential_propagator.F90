@@ -76,54 +76,52 @@ MODULE exponential_propagator
    
    SUBROUTINE exptA_matvec(self, vec_in, vec_out)
 
-       USE COMM_LK_SFEM
-       USE def_type_field
-       USE def_type_mesh
-       USE initialization
-       USE my_util
-       USE input_data
-       USE fourier_to_real_for_vtu
-       USE post_processing_debug
-       USE verbose
-       USE sub_plot
-       USE chaine_caractere
+      USE COMM_LK_SFEM
+      USE def_type_mesh
+      USE initialization
+      USE my_util
+      USE input_data
+      USE fourier_to_real_for_vtu
+      USE post_processing_debug
+      USE verbose
+      USE sub_plot
+      USE chaine_caractere
 #include "petsc/finclude/petsc.h"
-       USE petsc
-
+      USE petsc
      
-       CLASS(exptA_linop),              INTENT(INOUT) :: self
+      CLASS(exptA_linop),              INTENT(INOUT) :: self
 #ifdef USE_LIGHTKRYLOV
-       CLASS(abstract_vector_rdp),      INTENT(IN)    :: vec_in
-       CLASS(abstract_vector_rdp),     INTENT(OUT)    :: vec_out
+      CLASS(abstract_vector_rdp),      INTENT(IN)    :: vec_in
+      CLASS(abstract_vector_rdp),     INTENT(OUT)    :: vec_out
 #else
-       TYPE(LK_field_type),      INTENT(IN)    :: vec_in
-       TYPE(LK_field_type),     INTENT(OUT)    :: vec_out
+      TYPE(LK_field_type),      INTENT(IN)    :: vec_in
+      TYPE(LK_field_type),     INTENT(OUT)    :: vec_out
 #endif
-       !===Time iterations=============================================================
-       REAL(KIND=8)                                    :: time
-       INTEGER                                         :: it
-       INTEGER, SAVE                                   :: it_tot=0
-       !===Timing======================================================================
-       REAL(KIND=8)                                    :: tps, tploc, tploc_max=0.d0
+      !===Time iterations=============================================================
+      REAL(KIND=8)                                    :: time
+      INTEGER                                         :: it
+      INTEGER, SAVE                                   :: it_tot=0
+      !===Timing======================================================================
+      REAL(KIND=8)                                    :: tps, tploc, tploc_max=0.d0
        
-       !===Start PETSC and MPI (mandatory)=============================================
+      !===Start PETSC and MPI (mandatory)=============================================
       !  CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
-       CALL MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
+      CALL MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
      
       !===User reads his/her own data=================================================
-       !===Initialize SFEMANS (mandatory)==============================================
-       CALL build_pointers(vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, conc_mesh,&
-            interface_H_phi, interface_H_mu, list_mode, &
-            un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_n, mag_n1, vel, &
-            vol_heat_capacity_field, temperature_diffusivity_field, &
-            concentration_diffusivity_field,mu_H_field, sigma_field, time, m_max_c, &
-            comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc,temperature, &
-            concentration, level_set, density, &
-            der_un, visc_LES, visc_LES_level)
+      !===Initialize SFEMANS (mandatory)==============================================
+      CALL build_pointers(vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, conc_mesh,&
+         interface_H_phi, interface_H_mu, list_mode, &
+         un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_n, mag_n1, vel, &
+         vol_heat_capacity_field, temperature_diffusivity_field, &
+         concentration_diffusivity_field,mu_H_field, sigma_field, time, m_max_c, &
+         comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc,temperature, &
+         concentration, level_set, density, &
+         der_un, visc_LES, visc_LES_level)
 #ifdef USE_LIGHTKRYLOV
-   SELECT TYPE(vec_in)
-       TYPE is(LK_field_type)
-           SELECT TYPE(vec_out)
+         SELECT TYPE(vec_in)
+         TYPE is(LK_field_type)
+            SELECT TYPE(vec_out)
             TYPE is(LK_field_type)
 #endif
                CALL vec_in%LK_2_SFEM(un, pn, incpn, un_m1, pn_m1, incpn_m1, mag_n, mag_n1)
@@ -170,9 +168,9 @@ MODULE exponential_propagator
             CLASS DEFAULT
                CALL type_error('vec_out','mag_field_type','OUT',this_module,'exptA_matvec')
             END SELECT
-       CLASS DEFAULT
-           CALL type_error('vec_in','mag_field_type','IN',this_module,'exptA_matvec')
-       END SELECT
+      CLASS DEFAULT
+         CALL type_error('vec_in','mag_field_type','IN',this_module,'exptA_matvec')
+      END SELECT
 #endif
    END SUBROUTINE exptA_matvec
 
