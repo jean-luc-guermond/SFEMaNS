@@ -6,6 +6,7 @@
 #set(debug_bounds "$ENV(FFLAGS) -O2 -g -traceback -heap-arrays")
 #set(release_bounds "-O3")
 
+
 # Variables to set for Whistler
 set(SFEMaNS_DIR "/home/guermond/SFEMaNS/GIT_SFEMaNS/SFEMaNS")
 set(ADDITIONAL_LINKS "-lmetis -lz -L /usr/lib/x86_64-linux-gnu/hdf5/serial")
