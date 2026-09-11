@@ -4,6 +4,10 @@ MODULE mesh_interpolation
    PRIVATE
 CONTAINS
    SUBROUTINE mesh_interpol
+      !-----------
+      USE petscmpi
+      USE petscdmda, ONLY: PETSC_NULL_CHARACTER, PetscInitialize
+      !-----------
       USE def_type_field_mag
       USE chaine_caractere
       USE def_type_mesh
@@ -17,8 +21,6 @@ CONTAINS
       USE sub_plot
       USE restart
       USE gauss_points_2d
-#include "petsc/finclude/petsc.h"
-      USE petsc
 !VB
       USE tn_axi
 !VB
@@ -99,10 +101,10 @@ CONTAINS
       INTEGER :: petsc_rank
       LOGICAL :: if_read_partition
       LOGICAL :: if_level_set_P2
-      MPI_Comm                                        :: comm_cart
-      MPI_Comm, DIMENSION(:), POINTER :: comm_one_d, comm_one_d_ns, &
+      INTEGER                                        :: comm_cart
+      INTEGER, DIMENSION(:), POINTER :: comm_one_d, comm_one_d_ns, &
            comm_one_d_temp, comm_one_d_conc, coord_cart
-      PetscErrorCode                                  :: ierr
+      INTEGER                                  :: ierr
 
       CALL PetscInitialize(PETSC_NULL_CHARACTER, ierr)
       CALL MPI_COMM_RANK(PETSC_COMM_WORLD, petsc_rank, code)

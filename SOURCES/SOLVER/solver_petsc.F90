@@ -1,4 +1,9 @@
 MODULE solver_petsc
+    !------------
+    USE petscksp
+    USE petscvec
+    USE petscmat
+    !------------
   USE my_util
   TYPE solver_param
      INTEGER:: it_max
@@ -11,8 +16,6 @@ MODULE solver_petsc
 CONTAINS
   SUBROUTINE init_solver(my_par,my_ksp,matrix,communicator,solver,precond, opt_re_init)
     USE chaine_caractere
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     LOGICAL, INTENT(IN),    OPTIONAL :: opt_re_init
     TYPE(solver_param)               :: my_par
@@ -20,11 +23,10 @@ CONTAINS
     LOGICAL                          :: re_init
     INTEGER  :: deb, fin
 
-    Mat            :: matrix
-    KSP            :: my_ksp
-    PC             :: prec
-    PetscErrorCode :: ierr
-    MPI_Comm       :: communicator
+    TYPE(tMat)  :: matrix
+    TYPE(tKSP)  :: my_ksp
+    TYPE(tPC)   :: prec
+    INTEGER     :: ierr, communicator
 
     IF (.NOT.PRESENT(opt_re_init)) THEN
        re_init=.FALSE.
@@ -105,15 +107,13 @@ CONTAINS
   END SUBROUTINE init_solver
 
   SUBROUTINE solver(my_ksp,b,x,reinit,verbose)
-#include "petsc/finclude/petsc.h"
-    use petsc
     IMPLICIT NONE
     LOGICAL,  OPTIONAL :: reinit, verbose
     INTEGER            :: its
-    KSP            :: my_ksp
-    PetscErrorCode :: ierr
-    Vec            :: x, b
-    KSPConvergedReason :: reason
+    TYPE(tKSP)            :: my_ksp
+    INTEGER :: ierr
+    TYPE(tVec)           :: x, b
+    TYPE(eKSPConvergedReason) :: reason
     IF (.NOT.PRESENT(reinit)) reinit=.TRUE.
     IF (.NOT.PRESENT(verbose)) verbose=.FALSE.
 
@@ -122,7 +122,7 @@ CONTAINS
     IF (verbose) THEN
        CALL KSPGetIterationNumber(my_ksp, its, ierr)
        CALL KSPGetConvergedReason(my_ksp, reason, ierr)
-       SELECT CASE(reason)
+       SELECT CASE(reason%v)
        CASE(2)
           WRITE(*,*) "KSP_CONVERGED_RTOL, Nb of iterations", its
        CASE(3)
@@ -154,8 +154,6 @@ CONTAINS
 
   SUBROUTINE create_local_petsc_matrix(communicator, LA, matrix, clean)
     USE def_type_mesh
-#include "petsc/finclude/petsc.h"
-    use petsc
     IMPLICIT NONE
     TYPE(petsc_csr_LA)                 :: LA
     LOGICAL, OPTIONAL                  :: clean
@@ -163,9 +161,9 @@ CONTAINS
     INTEGER :: nnzm1, dom_np
     LOGICAL :: test_clean
 !!$  INTEGER, DIMENSION(:), POINTER :: ia, ja
-    MPI_Comm       :: communicator
-    Mat            :: matrix
-    PetscErrorCode :: ierr
+    INTEGER       :: communicator
+    TYPE(tMat)            :: matrix
+    INTEGER :: ierr
     !------------------------------------------------------------------------------
     dom_np = SIZE(LA%ia)-1
     nnzm1=LA%ia(dom_np)-LA%ia(0)-1
@@ -197,8 +195,6 @@ CONTAINS
 
   SUBROUTINE create_local_petsc_matrix_a_detruire(communicator, aij, i_loc, matrix)
     USE def_type_mesh
-#include "petsc/finclude/petsc.h"
-    use petsc
     IMPLICIT NONE
     TYPE(aij_type),         INTENT(IN) :: aij
     INTEGER,     DIMENSION(2)          :: i_loc
@@ -206,9 +202,9 @@ CONTAINS
     REAL(KIND=8),DIMENSION(:), POINTER :: aa
     INTEGER :: nnzm1, dom_np, p, i, n
 
-    MPI_Comm       :: communicator
-    Mat            :: matrix
-    PetscErrorCode :: ierr
+    INTEGER       :: communicator
+    TYPE(tMat)            :: matrix
+    INTEGER :: ierr
     !------------------------------------------------------------------------------
     dom_np = i_loc(2) - i_loc(1) + 1
     nnzm1 = aij%ia(i_loc(2)+1)-aij%ia(i_loc(1))-1
@@ -232,8 +228,6 @@ CONTAINS
 
   SUBROUTINE create_local_petsc_block_matrix(communicator, n_b, aij, i_loc, matrix)
     USE def_type_mesh
-#include "petsc/finclude/petsc.h"
-    use petsc
     IMPLICIT NONE
     TYPE(aij_type),           INTENT(IN) :: aij
     INTEGER,     DIMENSION(2)            :: i_loc
@@ -242,9 +236,9 @@ CONTAINS
     REAL(KIND=8),DIMENSION(:),   POINTER :: aa
     INTEGER :: nnzm1, dom_np, p, i, n, ib, k
 
-    MPI_Comm       :: communicator
-    Mat            :: matrix
-    PetscErrorCode :: ierr
+    INTEGER       :: communicator
+    TYPE(tMat)            :: matrix
+    INTEGER :: ierr
 
     dom_np = i_loc(2) - i_loc(1) + 1
     nnzm1 = n_b*(aij%ia(i_loc(2)+1)-aij%ia(i_loc(1))-1)

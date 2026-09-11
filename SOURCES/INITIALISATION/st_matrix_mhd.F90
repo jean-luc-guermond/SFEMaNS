@@ -2,7 +2,6 @@ MODULE st_matrix_mhd
    PUBLIC :: st_scr_maxwell_mu_H_p_phi
 
    PRIVATE
-#include "petsc/finclude/petsc.h"
 
 CONTAINS
 
@@ -28,7 +27,7 @@ CONTAINS
       LOGICAL :: out
       INTEGER, DIMENSION(:), ALLOCATABLE :: per_loc
       INTEGER :: njt, i1, i2
-      MPI_Comm       :: communicator
+      INTEGER :: communicator
 
       CALL MPI_COMM_RANK(communicator, rank, code)
       CALL MPI_COMM_SIZE(communicator, nb_procs, code)

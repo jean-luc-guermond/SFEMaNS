@@ -2,9 +2,13 @@
 !Authors LC 2019/11 based on sub_ns_with_vel
 !
 MODULE subroutine_ns_with_m_art_comp
+   !------------
+   USE petscvec
+   USE petscmat
+   USE petscksp
+   USE petscmpi
+   !------------
   USE my_util
-#include "petsc/finclude/petsc.h"
-  USE petsc
   USE subroutine_ns_with_m
   PUBLIC :: BDF1_art_comp_with_m, smb_compute_tensor_gauss
   PRIVATE
@@ -107,14 +111,14 @@ CONTAINS
     !===End Other variables
 
     !Communicators for Petsc, in space and Fourier------------------------------
-    PetscErrorCode                   :: ierr
-    MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
-    Mat, DIMENSION(:), POINTER, SAVE :: vel_mat
-    Mat,                        SAVE :: mass_mat, mass_mat0
-    Vec,                        SAVE :: vb_3_145, vb_3_236, vx_3, vx_3_ghost
-    Vec,                        SAVE :: pb_1,    pb_2,    px_1, px_1_ghost
-    KSP, DIMENSION(:), POINTER, SAVE :: vel_ksp
-    KSP,                        SAVE :: mass_ksp, mass_ksp0
+    INTEGER                   :: ierr
+    INTEGER, DIMENSION(:), POINTER  :: comm_one_d
+    TYPE(tMat), DIMENSION(:), POINTER, SAVE :: vel_mat
+    TYPE(tMat),                        SAVE :: mass_mat, mass_mat0
+    TYPE(tVec),                        SAVE :: vb_3_145, vb_3_236, vx_3, vx_3_ghost
+    TYPE(tVec),                        SAVE :: pb_1,    pb_2,    px_1, px_1_ghost
+    TYPE(tKSP), DIMENSION(:), POINTER, SAVE :: vel_ksp
+    TYPE(tKSP),                        SAVE :: mass_ksp, mass_ksp0
     !------------------------------END OF DECLARATION--------------------------------------
 
     IF (once) THEN
@@ -728,7 +732,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(3)                  :: temps
     !===FOR FFT_PAR_CROSS_PROD_DCL
     INTEGER       :: nb_procs, bloc_size, m_max_pad, code
-    MPI_Comm       :: communicator
+    INTEGER       :: communicator
 
     tps = user_time()
     DO i = 1, SIZE(list_mode)
@@ -825,7 +829,7 @@ CONTAINS
     REAL(KIND=8)                                :: ray
     INTEGER                                     :: m, l , i, mode, index, k
     INTEGER                                     :: m_max_pad, bloc_size
-    MPI_Comm          :: communicator
+    INTEGER          :: communicator
 
     CALL gauss(mesh)
 
@@ -997,9 +1001,9 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)                :: mom_loc
     REAL(KIND=8)                                :: ray
     INTEGER                                     :: m, l , i, mode, index, k
-    PetscErrorCode :: ierr
-    PetscMPIInt    :: rank
-    MPI_Comm       :: communicator
+    INTEGER :: ierr
+    INTEGER    :: rank
+    INTEGER       :: communicator
     CALL MPI_Comm_rank(communicator,rank,ierr)
     CALL gauss(mesh)
 
@@ -1074,9 +1078,9 @@ CONTAINS
 !!$    INTEGER                                     :: m, l , i, mode, index, k
 !!$    INTEGER                                     :: m_max_pad, bloc_size
 !!$
-!!$    PetscErrorCode :: ierr
-!!$    PetscMPIInt    :: rank
-!!$    MPI_Comm       :: communicator
+!!$    INTEGER :: ierr
+!!$    INTEGER    :: rank
+!!$    INTEGER       :: communicator
 !!$    CALL MPI_Comm_rank(communicator,rank,ierr)
 !!$    CALL gauss(mesh)
 !!$
@@ -1152,7 +1156,7 @@ CONTAINS
     INTEGER,      DIMENSION(mesh%gauss%n_w)                  :: j_loc
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)                :: tensor_loc
     INTEGER                                                  :: m, l , i, mode, index, k, n
-    MPI_Comm          :: communicator
+    INTEGER          :: communicator
 
     CALL gauss(mesh)
 
@@ -1195,7 +1199,7 @@ CONTAINS
     INTEGER ::  m, l , i , ni, code
     INTEGER,      DIMENSION(mesh%gauss%n_w)     :: j_loc
     REAL(KIND=8)   :: ray
-    MPI_Comm                                    :: communicator
+    INTEGER                                    :: communicator
     r_loc = 0.d0
     vol_loc = 0.d0
 

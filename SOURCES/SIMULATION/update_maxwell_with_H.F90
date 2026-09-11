@@ -4,7 +4,12 @@
 !Revised Jan/Feb 2009, Caroline Nore, Jean-Luc Guermond, Franky Luddens
 !
 MODULE update_maxwell_with_H
-
+   !------------
+   USE petscvec
+   USE petscmat
+   USE petscksp
+   USE petscmpi
+   !------------
   PUBLIC:: maxwell_decouple_with_H
   PRIVATE
   REAL(KIND=8), PARAMETER, PRIVATE :: alpha=0.6d0
@@ -38,11 +43,6 @@ CONTAINS
     USE prep_periodic
     USE input_data
     USE verbose
-#include "petsc/finclude/petscsys.h"
-#include "petsc/finclude/petscmat.h"
-#include "petsc/finclude/petscksp.h"
-#include "petsc/finclude/petscvec.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                INTENT(IN)     :: H_mesh, phi_mesh, pmag_mesh
     TYPE(interface_type),           INTENT(IN)     :: interface_H_phi, interface_H_mu
@@ -106,12 +106,12 @@ CONTAINS
     REAL(KIND=8) :: one_and_half
     DATA one_and_half/1.5d0/
     !April 17th, 2008, JLG
-    PetscErrorCode                   :: ierr
-    MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
-    Mat, DIMENSION(:), POINTER, SAVE :: H_p_phi_mat1, H_p_phi_mat2
-    Mat                              :: tampon1, tampon2, precond1, precond2
-    KSP, DIMENSION(:), POINTER, SAVE :: H_p_phi_ksp1, H_p_phi_ksp2
-    Vec,                        SAVE :: vx_1, vb_1, vx_1_ghost, vx_2, vb_2, vx_2_ghost
+    INTEGER                   :: ierr
+    INTEGER, DIMENSION(:), POINTER  :: comm_one_d
+    TYPE(tMat), DIMENSION(:), POINTER, SAVE :: H_p_phi_mat1, H_p_phi_mat2
+    TYPE(tMat)                              :: tampon1, tampon2, precond1, precond2
+    TYPE(tKSP), DIMENSION(:), POINTER, SAVE :: H_p_phi_ksp1, H_p_phi_ksp2
+    TYPE(tVec),                        SAVE :: vx_1, vb_1, vx_1_ghost, vx_2, vb_2, vx_2_ghost
     !------------------------------END OF DECLARATION--------------------------------------
 
     IF (once) THEN
@@ -802,8 +802,6 @@ CONTAINS
     USE associate_gauss
     USE boundary
     USE input_data ! MODIFICATION: to call sigma_min and mu_min
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),              INTENT(IN)    :: H_mesh
     TYPE(mesh_type),              INTENT(IN)    :: pmag_mesh
@@ -919,8 +917,8 @@ CONTAINS
     !LC 2016/03/25
     REAL(KIND=8) :: sigma_np_gauss
     !LC 2016/03/25
-    Mat                                         :: H_p_phi_mat1, H_p_phi_mat2
-    PetscErrorCode                              :: ierr
+    TYPE(tMat)                                         :: H_p_phi_mat1, H_p_phi_mat2
+    INTEGER                              :: ierr
 
     CALL MatZeroEntries (H_p_phi_mat1, ierr)
     CALL MatZeroEntries (H_p_phi_mat2, ierr)
@@ -2482,8 +2480,6 @@ CONTAINS
     USE boundary
     USE my_util
     USE input_data ! MODIFICATION: to call sigma_min and mu_min
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),            INTENT(IN)    :: H_mesh
     INTEGER,      DIMENSION(:), INTENT(IN)    :: jj_v_to_H
@@ -2528,8 +2524,8 @@ CONTAINS
     TYPE(petsc_csr_LA)                          :: LA_H
     INTEGER                                     :: ix, jx
     INTEGER                                     :: count
-    PetscErrorCode                              :: ierr
-    Mat                                         :: H_p_phi_mat1, H_p_phi_mat2
+    INTEGER                              :: ierr
+    TYPE(tMat)                                         :: H_p_phi_mat1, H_p_phi_mat2
 
     !June 2009, JLG, CN, Normalization
     stab_colle_H_mu = stab(3)
@@ -2870,8 +2866,6 @@ CONTAINS
     USE boundary
     USE my_util
     USE input_data
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                       INTENT(IN)   :: H_mesh, phi_mesh
     TYPE(interface_type),                  INTENT(IN)   :: interface_H_phi
@@ -2911,8 +2905,8 @@ CONTAINS
 !!$ FL + CN, 22/03/2013
     TYPE(petsc_csr_LA)                          :: LA_H, LA_phi
     REAL(KIND=8), DIMENSION(6)                  :: B_ext_l
-    PetscErrorCode          :: ierr
-    Vec                     :: vb_1, vb_2
+    INTEGER          :: ierr
+    TYPE(tVec)                    :: vb_1, vb_2
 
     !ALLOCATE(src_H(H_mesh%np,6), src_phi(phi_mesh%np,2))
 
@@ -3242,8 +3236,6 @@ CONTAINS
     USE def_type_mesh
     USE boundary
     USE input_data
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),              INTENT(IN)    :: H_mesh, phi_mesh, pmag_mesh
     TYPE(interface_type),         INTENT(IN)    :: interface_H_phi, interface_H_mu
@@ -3273,8 +3265,8 @@ CONTAINS
     INTEGER, DIMENSION(phi_mesh%np)             :: idxn_phi
     INTEGER, DIMENSION(pmag_mesh%np)            :: idxn_pmag !===JLG Jan 22 2018
     TYPE(petsc_csr_LA)                          :: LA_H, LA_phi, LA_pmag !===JLG Jan 22 2018
-    PetscErrorCode          :: ierr
-    Vec                     :: vb_1, vb_2
+    INTEGER          :: ierr
+    TYPE(tVec)                    :: vb_1, vb_2
 
     src_H = 0.d0
     src_phi = 0.d0
@@ -3584,8 +3576,6 @@ CONTAINS
     USE associate_gauss
     USE my_util
     USE input_data
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),            INTENT(IN)    :: H_mesh
     INTEGER,      DIMENSION(:), INTENT(IN)    :: jj_v_to_H
@@ -3642,8 +3632,8 @@ CONTAINS
 !!$ FL +CN 22/03/2013
     TYPE(petsc_csr_LA)                          :: LA_H
     INTEGER                                     :: ix, jx
-    Mat                                         :: H_p_phi_mat1, H_p_phi_mat2
-    PetscErrorCode                              :: ierr
+    TYPE(tMat)                                         :: H_p_phi_mat1, H_p_phi_mat2
+    INTEGER                              :: ierr
 
     ! June 2009, JLG, CN, normalization
     stab_colle_H_mu = stab(3)
@@ -4195,8 +4185,6 @@ CONTAINS
     USE associate_gauss
     USE boundary
     USE input_data
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                       INTENT(IN)   :: H_mesh
     TYPE(interface_type),                  INTENT(IN)   :: interface_H_mu
@@ -4227,8 +4215,8 @@ CONTAINS
     INTEGER, DIMENSION(H_mesh%np)               :: idxn
     !$$ FL+CN 22/03/2013
     TYPE(petsc_csr_LA)                          :: LA_H
-    PetscErrorCode          :: ierr
-    Vec                     :: vb_1, vb_2
+    INTEGER          :: ierr
+    TYPE(tVec)                    :: vb_1, vb_2
 
 
     !**********************************************************************************
@@ -4383,8 +4371,6 @@ CONTAINS
     USE def_type_mesh
     USE boundary
     USE input_data
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                       INTENT(IN)   :: H_mesh
     INTEGER,      DIMENSION(:),            INTENT(IN)   :: Dirichlet_bdy_H_sides
@@ -4417,8 +4403,8 @@ CONTAINS
     INTEGER, DIMENSION(H_mesh%np)                :: idxn
 !!$ FL+CN 22/03/2013
     TYPE(petsc_csr_LA)                           :: LA_H
-    PetscErrorCode          :: ierr
-    Vec                     :: vb_1, vb_2
+    INTEGER          :: ierr
+    TYPE(tVec)                    :: vb_1, vb_2
 
     !IF (SIZE(Dirichlet_bdy_H_sides)==0) THEN
     !   RETURN
@@ -4535,8 +4521,6 @@ CONTAINS
     USE chaine_caractere
     USE input_data
     USE my_util
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(interface_type),           INTENT(IN)    :: interface_H_phi
     TYPE(mesh_type),                INTENT(IN)    :: mesh
@@ -4546,9 +4530,9 @@ CONTAINS
     INTEGER, DIMENSION(1)                         :: loc
     INTEGER                                       :: m, ms, i, nb_dom, idx, nb_cav, ni
     LOGICAL                                       :: okay
-    MPI_Comm,                       INTENT(IN)    :: communicator
-    PetscInt                                      :: rank
-    PetscErrorCode                                :: ierr
+    INTEGER,                       INTENT(IN)    :: communicator
+    INTEGER                                      :: rank
+    INTEGER                                :: ierr
 
     IF (inputs%nb_dom_phi==0) RETURN
 
@@ -4648,8 +4632,6 @@ CONTAINS
     USE chaine_caractere
     USE input_data
     USE def_type_mesh
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                INTENT(IN)  :: mesh
     INTEGER,      DIMENSION(:)    , INTENT(IN)  :: jj_v_to_H
@@ -4669,7 +4651,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,2)                         :: one_over_sigma_in_loc
     REAL(KIND=8)   :: ray, sigma_np_gauss
     INTEGER       :: nb_procs, bloc_size, m_max_pad, code
-    MPI_Comm       :: communicator
+    INTEGER       :: communicator
 
     DO i = 1, SIZE(list_mode)
        mode = list_mode(i)
@@ -4752,8 +4734,6 @@ CONTAINS
     USE chaine_caractere
     USE input_data
     USE def_type_mesh
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                INTENT(IN)  :: mesh
     INTEGER,      DIMENSION(:)    , INTENT(IN)  :: jj_v_to_H
@@ -4774,7 +4754,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,2)                        :: one_over_sigma_in_loc
     REAL(KIND=8)   :: ray
     INTEGER       :: nb_procs, bloc_size, m_max_pad, code, count, m1
-    MPI_Comm       :: communicator
+    INTEGER       :: communicator
 
     DO i = 1, SIZE(list_mode)
        mode = list_mode(i)
@@ -4868,8 +4848,6 @@ CONTAINS
     USE chaine_caractere
     USE input_data
     USE def_type_mesh
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                INTENT(IN)  :: mesh
     INTEGER,      DIMENSION(:)    , INTENT(IN)  :: jj_v_to_H
@@ -4892,7 +4870,7 @@ CONTAINS
     REAL(KIND=8)  :: ray, diff, ref
     INTEGER       :: nb_procs, bloc_size, m_max_pad, code
     INTEGER       :: ms1, ms2, m1, m2, mesh_id1, mesh_id2
-    MPI_Comm       :: communicator
+    INTEGER       :: communicator
 
     DO ms = 1, interface_H_mu%mes
        ms1 = interface_H_mu%mesh1(ms)
@@ -5051,8 +5029,6 @@ CONTAINS
     USE input_data
     USE def_type_mesh
     USE boundary
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                INTENT(IN)  :: mesh
     INTEGER,      DIMENSION(:)    , INTENT(IN)  :: jj_v_to_H
@@ -5073,7 +5049,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(2) :: gaussp
     INTEGER               :: mode, mesh_id1, k, i, index, l, m, ni
     INTEGER               :: nb_procs, bloc_size, m_max_pad, code
-    MPI_Comm       :: communicator
+    INTEGER       :: communicator
 
     DO i = 1, SIZE(list_mode)
        mode = list_mode(i)
@@ -5142,8 +5118,6 @@ CONTAINS
     USE input_data
     USE def_type_mesh
     USE boundary
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                INTENT(IN)  :: mesh
     INTEGER,      DIMENSION(:)    , INTENT(IN)  :: jj_v_to_H
@@ -5165,7 +5139,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(2) :: gaussp
     INTEGER               :: mode, mesh_id1, k, i, count, index, ls, ms, ni
     INTEGER               :: nb_procs, bloc_size, m_max_pad, code, m1
-    MPI_Comm       :: communicator
+    INTEGER       :: communicator
 
     DO i = 1, SIZE(list_mode)
        mode = list_mode(i)
@@ -5238,8 +5212,6 @@ CONTAINS
     USE input_data
     USE def_type_mesh
     USE boundary
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                INTENT(IN)  :: mesh
     INTEGER,      DIMENSION(:)    , INTENT(IN)  :: jj_v_to_H
@@ -5263,7 +5235,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,6)      :: B_in_loc1, B_in_loc2
     REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,2)      :: one_over_sigma_in_loc1,one_over_sigma_in_loc2
     REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,mesh%gauss%l_Gs) :: w_cs
-    MPI_Comm       :: communicator
+    INTEGER       :: communicator
 
 
     DO ms = 1, interface_H_mu%mes
@@ -5394,8 +5366,6 @@ CONTAINS
     USE input_data
     USE def_type_mesh
     USE boundary
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                INTENT(IN)  :: mesh
     INTEGER,      DIMENSION(:),     INTENT(IN)  :: Neumann_bdy_H_sides
@@ -5407,7 +5377,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,2) :: one_over_sigma_in_loc
     INTEGER               :: mode, k, i, count, index, ls, ms
     INTEGER               :: nb_procs, bloc_size, m_max_pad, code
-    MPI_Comm       :: communicator
+    INTEGER       :: communicator
 
     DO i = 1, SIZE(list_mode)
        mode = list_mode(i)

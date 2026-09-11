@@ -3,15 +3,15 @@
 !Revised: Jean-Luc Guermond Jan 2011
 !
 MODULE tn_axi
-
+    !------------
+    USE petscmpi
+    !------------
 CONTAINS
 
   FUNCTION dot_product_SF(communicator, mesh, list_mode, v, w) RESULT(norm)
     USE def_type_mesh
     USE chaine_caractere
     USE fem_tn_ns_mhd
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage
     INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
@@ -19,7 +19,7 @@ CONTAINS
     REAL(KIND=8) :: norm_loc, norm_tot, norm
     INTEGER  :: code
     REAL(KIND=8) :: pi
-    MPI_Comm, DIMENSION(2)      :: communicator
+    INTEGER, DIMENSION(2)      :: communicator
 
     norm = 0.d0
     norm_tot = 0.d0
@@ -40,8 +40,6 @@ CONTAINS
     USE def_type_mesh
     USE chaine_caractere
     USE fem_tn_ns_mhd
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage
     INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
@@ -50,7 +48,7 @@ CONTAINS
     REAL(KIND=8) :: norm_loc, norm_tot, norm
     INTEGER  :: deb, fin, code
     REAL(KIND=8) :: pi
-    MPI_Comm, DIMENSION(2)      :: communicator
+    INTEGER, DIMENSION(2)      :: communicator
 
     norm = 0.d0
     norm_tot = 0.d0
@@ -88,8 +86,6 @@ CONTAINS
     USE def_type_mesh
     USE chaine_caractere
     USE fem_tn_ns_mhd
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage
     INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
@@ -98,7 +94,7 @@ CONTAINS
     REAL(KIND=8) :: norm_loc, norm_tot, norm
     INTEGER  :: deb, fin, code
     REAL(KIND=8) :: pi
-    MPI_Comm, DIMENSION(2)      :: communicator
+    INTEGER, DIMENSION(2)      :: communicator
 
     norm = 0.d0
     norm_tot = 0.d0
@@ -135,8 +131,6 @@ CONTAINS
     USE def_type_mesh
     USE chaine_caractere
     USE fem_tn_ns_mhd
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage
     INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
@@ -145,7 +139,7 @@ CONTAINS
     INTEGER  :: code
     INTEGER, DIMENSION(1) :: zero_mode
     REAL(KIND=8) :: pi
-    MPI_Comm, DIMENSION(2)      :: communicator
+    INTEGER, DIMENSION(2)      :: communicator
 
     norm = 0.d0
     norm_tot = 0.d0
@@ -165,14 +159,12 @@ CONTAINS
   END FUNCTION norm_S_L1_zero_mode
 
   SUBROUTINE integration_mode(communicator,norm_loc,norm_tot)
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     REAL(KIND=8), INTENT(IN)  :: norm_loc
     REAL(KIND=8), INTENT(OUT) :: norm_tot
     INTEGER                   :: code
     REAL(KIND=8) :: pi
-    MPI_Comm                  :: communicator
+    INTEGER      :: communicator
 
     pi = ACOS(-1.d0)
     CALL MPI_ALLREDUCE(norm_loc,norm_tot,1,MPI_DOUBLE_PRECISION, MPI_SUM, communicator, code)
@@ -184,14 +176,12 @@ CONTAINS
   FUNCTION norme_L2_champ_par(communicator, mesh, list_mode, v) RESULT(norm)
     USE def_type_mesh
     USE fem_tn_ns_mhd
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage
     INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN) :: v
     REAL(KIND=8) :: norm_loc, norm
-    MPI_Comm                  :: communicator
+    INTEGER                  :: communicator
 
     IF (mesh%me==0) THEN
        norm_loc = 0.d0
@@ -205,14 +195,12 @@ CONTAINS
   FUNCTION norme_H1_champ_par(communicator, mesh, list_mode, v) RESULT(norm)
     USE def_type_mesh
     USE fem_tn_ns_mhd
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                 INTENT(IN) :: mesh !type de maillage
     INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN) :: v
     REAL(KIND=8) :: norm_loc, norm
-    MPI_Comm                  :: communicator
+    INTEGER                  :: communicator
 
     norm_loc = norme_H1_champ(mesh, list_mode, v)
     CALL integration_mode(communicator,norm_loc**2, norm)
@@ -222,14 +210,12 @@ CONTAINS
   FUNCTION norme_div_par(communicator, H_mesh, list_mode, v) RESULT(norm)
     USE def_type_mesh
     USE fem_tn_ns_mhd
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                 INTENT(IN) :: H_mesh !type de maillage
     INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN) :: v
     REAL(KIND=8) :: norm_loc, norm
-    MPI_Comm                  :: communicator
+    INTEGER                  :: communicator
 
     norm_loc = norme_div(H_mesh, list_mode, v)
     CALL integration_mode(communicator,norm_loc**2, norm)
@@ -239,14 +225,12 @@ CONTAINS
   FUNCTION norme_curl_par(communicator, H_mesh, list_mode, v) RESULT(norm)
     USE def_type_mesh
     USE fem_tn_ns_mhd
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                 INTENT(IN) :: H_mesh !type de maillage
     INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
     REAL(KIND=8), DIMENSION(:,:,:),  INTENT(IN) :: v
     REAL(KIND=8) :: norm_loc, norm
-    MPI_Comm                  :: communicator
+    INTEGER                  :: communicator
 
     norm_loc = norme_curl(H_mesh, list_mode, v)
     CALL integration_mode(communicator,norm_loc**2, norm)
@@ -255,8 +239,6 @@ CONTAINS
 
   SUBROUTINE angular_momentum(mesh, list_mode, field, moments_out)
     USE def_type_mesh
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                 INTENT(IN)  :: mesh
     INTEGER, DIMENSION(:),           INTENT(IN)  :: list_mode
@@ -311,8 +293,6 @@ CONTAINS
 
   SUBROUTINE moments(communicator, H_mesh, list_mode, v, dipole_out, quadripole_out)
     USE def_type_mesh
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                 INTENT(IN) :: H_mesh
     INTEGER, DIMENSION(:),           INTENT(IN) :: list_mode
@@ -326,7 +306,7 @@ CONTAINS
     INTEGER              :: code
     REAL(KIND=8), DIMENSION(6) :: c
 
-    MPI_Comm                  :: communicator
+    INTEGER                  :: communicator
 
     pi = ACOS(-1.d0)
     m_max_c = SIZE(list_mode)

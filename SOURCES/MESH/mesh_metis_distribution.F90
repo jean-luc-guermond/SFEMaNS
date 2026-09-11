@@ -1,6 +1,5 @@
 MODULE mesh_metis_distribution
-#include "petsc/finclude/petsc.h"
-   USE petsc
+   USE petscmpi
    USE mesh_tools
    PUBLIC :: extract_mesh, part_mesh_M_T_H_phi
    PRIVATE
@@ -45,17 +44,17 @@ CONTAINS
       REAL(KIND = 8) :: err
       LOGICAL :: test
       !===(JLG) Feb 20, 2019. Petsc developpers decide to use REAL(KIND=4) to interface with metis
-      !REAL(KIND=8), DIMENSION(:), ALLOCATABLE  :: tpwgts
-      !REAL(KIND=8), DIMENSION(1)               :: ubvec
-      REAL(KIND = 4), DIMENSION(:), ALLOCATABLE :: tpwgts
-      REAL(KIND = 4), DIMENSION(1) :: ubvec
-      REAL(KIND = 4) :: one_K4 = 1.0
+      REAL(KIND=8), DIMENSION(:), ALLOCATABLE  :: tpwgts
+      REAL(KIND=8), DIMENSION(1) :: ubvec
+      REAL(KIND=8)               :: one_K4=1.d0
+      !REAL(KIND = 4), DIMENSION(:), ALLOCATABLE :: tpwgts
+      !REAL(KIND = 4), DIMENSION(1) :: ubvec
+      !REAL(KIND = 4) :: one_K4 = 1.0
       !===(JLG)Feb 20, 2019.
       INTEGER, DIMENSION(METIS_NOPTIONS) :: metis_opt
-      PetscMPIInt    :: nb_proc
+      INTEGER    :: nb_proc, test_int
       !!$ WARNING, FL 1/2/13 : TO BE ADDED IN NEEDED
-      PetscErrorCode :: ierr
-      PetscMPIInt    :: rank
+      INTEGER :: rank, ierr
       CALL MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
       !!$ WARNING, FL 1/2/13 : TO BE ADDED IN NEEDED
 
@@ -402,6 +401,9 @@ CONTAINS
       opts = 0
       numflag = 1
       wgtflag = 2
+      test_int = nb_proc
+
+
       ALLOCATE(tpwgts(nb_proc))
       tpwgts = one_K4 / nb_proc
       CALL METIS_SetDefaultOptions(metis_opt)
@@ -454,6 +456,7 @@ CONTAINS
          CALL METIS_PartGraphRecursive(me_phi, 1, xind_phi, xadj_phi, vwgt, vwgt, adjwgt, nb_proc, tpwgts, &
               ubvec, metis_opt, edge, part_phi)
       END IF
+WRITE(*,*) 'I end matis_part'
       !===End Create partitions
 
       !===Create global partition 'part'
@@ -643,9 +646,9 @@ CONTAINS
       INTEGER, DIMENSION(2) :: np_loc, me_loc, mes_loc
       INTEGER, DIMENSION(:), ALLOCATABLE :: list_m, tab, tabs
       INTEGER :: nb_proc, ms, i, index, m, mop, n, j
-      PetscErrorCode :: ierr
-      PetscMPIInt    :: rank
-      MPI_Comm       :: communicator
+      INTEGER :: ierr
+      INTEGER    :: rank
+      INTEGER       :: communicator
       CALL MPI_Comm_rank(communicator, rank, ierr)
 
       ALLOCATE(mesh_loc%disp(nb_proc + 1), mesh_loc%domnp(nb_proc))
@@ -912,7 +915,7 @@ CONTAINS
       LOGICAL :: test
       INTEGER :: dim, nws, nw, m, ms, mop, ns, msup, minf, dof, proc, m2, &
            dom_me, nwc, dom_mes, dom_np, n, i, ierr, dom_np_glob, nb_extra, nb_proc, e_glob, medge, medges, j
-      MPI_Comm :: communicator
+      INTEGER :: communicator
 
       dim = SIZE(mesh%rr, 1)
       nws = SIZE(mesh%jjs, 1)

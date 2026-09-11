@@ -2,8 +2,7 @@
 !Authors Jean-Luc Guermond, Raphael Laguerre, Caroline Nore, Copyrights 2005
 !
 MODULE restart
-#include "petsc/finclude/petsc.h"
-  USE petsc
+  USE petscmpi
 CONTAINS
 
   SUBROUTINE write_restart_ns(communicator, vv_mesh, pp_mesh, time, list_mode, &

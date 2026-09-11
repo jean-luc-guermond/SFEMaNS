@@ -1,17 +1,18 @@
 PROGRAM prog_write_ns
+   !----------------
+   USE petscdmda, ONLY: PETSC_NULL_CHARACTER, PetscInitialize
+   USE petscmpi
+   !----------------
   USE def_type_mesh
   USE initialization
   USE my_util
   USE input_data
-  !USE arpack_mhd
   USE fourier_to_real_for_vtu
   USE user_data
   USE post_processing_debug
   USE verbose
   USE sub_plot
   USE chaine_caractere
-#include "petsc/finclude/petsc.h"
-  USE petsc
   USE restart
   USE def_type_field_mag
   USE def_type_field_vel
@@ -57,10 +58,10 @@ PROGRAM prog_write_ns
   !===Time iterations=============================================================
   REAL(KIND=8)                                    :: time
   !===Declare PETSC===============================================================
-  PetscErrorCode :: ierr
-  PetscMPIInt    :: rank
-  MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d, comm_one_d_ns, comm_one_d_temp
-  MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d_conc
+  INTEGER :: ierr
+  INTEGER    :: rank
+  INTEGER, DIMENSION(:), POINTER  :: comm_one_d, comm_one_d_ns, comm_one_d_temp
+  INTEGER, DIMENSION(:), POINTER  :: comm_one_d_conc
 
   !===Start PETSC and MPI (mandatory)=============================================
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
@@ -156,7 +157,7 @@ PROGRAM prog_write_ns
        INTEGER                                            :: i
        REAL(KIND=8) :: ur_th_rpi_s, ut_th_rpi_s, uz_th_rpi_s, ur_th_rpi_a, ut_th_rpi_a, uz_th_rpi_a
        REAL(KIND=8) :: relat_tol = 1d-6
-       MPI_Comm     :: communicator
+       INTEGER     :: communicator
 
 !========== ANALYTICAL SOLUTIONS
       ALLOCATE(ref_rpi_sym(SIZE(list_mode)), ref_rpi_anti(SIZE(list_mode)), SOURCE=0.d0)
@@ -260,7 +261,7 @@ PROGRAM prog_write_ns
        INTEGER                                            :: i
        REAL(KIND=8) :: ur_th_rpi_s, ut_th_rpi_s, uz_th_rpi_s, ur_th_rpi_a, ut_th_rpi_a, uz_th_rpi_a
        REAL(KIND=8) :: int_z, relat_tol = 1d-6
-       MPI_Comm     :: communicator
+       INTEGER     :: communicator
 
 !========== ANALYTICAL SOLUTIONS
       ALLOCATE(ref_rpi_sym(SIZE(list_mode)), ref_rpi_anti(SIZE(list_mode)), SOURCE=0.d0)

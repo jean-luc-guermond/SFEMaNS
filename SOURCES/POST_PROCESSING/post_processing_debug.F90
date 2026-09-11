@@ -1,4 +1,7 @@
 MODULE post_processing_debug
+   !-----------
+   USE petscmpi
+   !-----------
 
   PUBLIC :: compute_error, post_proc_test, regression, regression_LK
 
@@ -16,8 +19,6 @@ CONTAINS
     USE subroutine_ns_with_u
     USE fft_parallele
     USE sub_plot
-#include "petsc/finclude/petsc.h"
-    USE petsc
     USE def_type_field_mag
     USE def_type_field_vel
     IMPLICIT NONE
@@ -35,8 +36,8 @@ CONTAINS
     INTEGER                                     :: m_max_c, ierr, nd
     REAL(KIND=8) :: error, error_ref, error_cumul, norm
     INTEGER      :: error_out
-    MPI_Comm, DIMENSION(:), POINTER         :: comm_one_d, comm_one_d_ns
-    MPI_Comm, DIMENSION(:), POINTER         :: comm_one_d_temp, comm_one_d_conc
+    INTEGER, DIMENSION(:), POINTER         :: comm_one_d, comm_one_d_ns
+    INTEGER, DIMENSION(:), POINTER         :: comm_one_d_temp, comm_one_d_conc
 
     !inputs%numero_du_test_debug = 42
     !CALL post_proc_test(conc_mesh, vv_mesh, pp_mesh, temp_mesh, H_mesh, phi_mesh, list_mode, &
@@ -133,8 +134,6 @@ CONTAINS
 
   SUBROUTINE regression_LK(lambda)
       USE input_data
-      USE petsc
-#include "petsc/finclude/petsc.h"
       IMPLICIT NONE
       COMPLEX(KIND=8) , INTENT(IN)     :: lambda(:)
       COMPLEX(KIND=8)                  :: ref_eigval
@@ -178,8 +177,6 @@ CONTAINS
     USE tn_axi
     USE subroutine_ns_with_u
     USE fft_parallele
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type), POINTER                    :: conc_mesh
     TYPE(mesh_type), POINTER                    :: pp_mesh, vv_mesh
@@ -203,7 +200,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(4) :: norm_err_loc, norm_err
     REAL(KIND=8) :: err, norm
     REAL(KIND=8) :: moyenne
-    MPI_Comm, DIMENSION(:), POINTER         :: comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc
+    INTEGER, DIMENSION(:), POINTER         :: comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc
 
     CALL MPI_COMM_RANK(MPI_COMM_WORLD,rank,code)
 
@@ -871,8 +868,6 @@ CONTAINS
     USE tn_axi
     USE subroutine_ns_with_u
     USE fft_parallele
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type), POINTER                    :: conc_mesh
     TYPE(mesh_type), POINTER                    :: pp_mesh, vv_mesh
@@ -894,7 +889,7 @@ CONTAINS
     INTEGER :: i, k, code, rank, int_nb, TYPE_VEC
     REAL(KIND=8) :: err, norm, err_H1, norm_H1
     REAL(KIND=8) :: moyenne
-    MPI_Comm, DIMENSION(:), POINTER         :: comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc
+    INTEGER, DIMENSION(:), POINTER         :: comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc
 
     CALL MPI_COMM_RANK(MPI_COMM_WORLD,rank,code)
     IF (rank==0) THEN

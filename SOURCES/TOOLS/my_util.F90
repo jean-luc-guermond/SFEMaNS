@@ -13,12 +13,10 @@ CONTAINS
   END FUNCTION user_time
 
   SUBROUTINE error_Petsc(string)
-#include "petsc/finclude/petsc.h"
-    USE petsc
+    USE petscmpi
     IMPLICIT NONE
     CHARACTER(LEN=*),       INTENT(IN) :: string
-    INTEGER                            :: rank
-    PetscErrorCode :: ierr
+    INTEGER                            :: rank, ierr
     CALL MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
     IF (rank==0) WRITE(*,*) string
     CALL PetscFinalize(ierr)

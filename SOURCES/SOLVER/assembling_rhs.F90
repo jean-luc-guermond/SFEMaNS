@@ -1,12 +1,12 @@
 MODULE assembling_rhs
-
+   !------------
+   USE petscvec
+   !------------
 CONTAINS
 
   SUBROUTINE rhs_3x3(mesh, vv_3_LA, mode, rhs_in, vb_145, vb_236, opt_tensor, opt_tensor_scaln_bdy)
     USE def_type_mesh
     USE my_util
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type)                                                     :: mesh
     TYPE(petsc_csr_LA)                                                  :: vv_3_LA
@@ -24,8 +24,8 @@ CONTAINS
     REAL(KIND=8), DIMENSION(6)                                          :: smb, f_tensor
     INTEGER      :: m, l, i, ni, index, nw, ix, ki, iglob, TYPE_VEC, k, ms, ls, indexs, nws
     REAL(KIND=8) :: ray
-    Vec            :: vb_145, vb_236
-    PetscErrorCode :: ierr
+    TYPE(tVec)           :: vb_145, vb_236
+    INTEGER :: ierr
 
     CALL VecSet(vb_145, 0.d0, ierr)
     CALL VecSet(vb_236, 0.d0, ierr)
@@ -192,8 +192,6 @@ CONTAINS
   SUBROUTINE rhs_3x3_art_comp(mesh, vv_3_LA, mode, rhs_in, vb_145, vb_236, opt_tensor, opt_grad_div)
     USE def_type_mesh
     USE my_util
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type)                                                     :: mesh
     TYPE(petsc_csr_LA)                                                  :: vv_3_LA
@@ -210,8 +208,8 @@ CONTAINS
     REAL(KIND=8), DIMENSION(6)                                          :: smb, f_tensor, f_div
     INTEGER      :: m, l, i, ni, index, nw, ix, ki, iglob, TYPE_VEC, k
     REAL(KIND=8) :: ray
-    Vec            :: vb_145, vb_236
-    PetscErrorCode :: ierr
+    TYPE(tVec)   :: vb_145, vb_236
+    INTEGER :: ierr
 
     CALL VecSet(vb_145, 0.d0, ierr)
     CALL VecSet(vb_236, 0.d0, ierr)
@@ -360,8 +358,6 @@ CONTAINS
     USE def_type_mesh
     USE my_util
     USE input_data
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type)                                                     :: mesh
     TYPE(petsc_csr_LA)                                                  :: vv_3_LA
@@ -382,8 +378,8 @@ CONTAINS
     REAL(KIND=8), DIMENSION(6)                                          :: smb_norm, smb_tang
     INTEGER      :: m, l, i, ni, index, nw, ix, ki, iglob, TYPE_VEC, k, ms, ls, indexs, nws
     REAL(KIND=8) :: ray, z, hm1, x, stab_normal_bdy, stab_tangent_bdy, n1, n2
-    Vec            :: vb_145, vb_236
-    PetscErrorCode :: ierr
+    TYPE(tVec)   :: vb_145, vb_236
+    INTEGER :: ierr
 
     CALL VecSet(vb_145, 0.d0, ierr)
     CALL VecSet(vb_236, 0.d0, ierr)
@@ -581,8 +577,6 @@ CONTAINS
     USE basis_change
     USE my_util
     USE input_data
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type)                          :: vv_mesh, pp_mesh
     TYPE(petsc_csr_LA)                       :: pp_1_LA
@@ -616,8 +610,8 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:), POINTER, SAVE :: aij_p1p2_s, aij_p2p3_s
     REAL(KIND=8), DIMENSION(:,:), POINTER :: aij_s
     LOGICAL :: once_p1p2=.TRUE., once_p2p3=.TRUE.
-    Vec            :: pb_1, pb_2
-    PetscErrorCode :: ierr
+    TYPE(tVec)           :: pb_1, pb_2
+    INTEGER :: ierr
 
     !===Construct aij_p2, aij_p3
     IF (type_fe_velocity==2) THEN

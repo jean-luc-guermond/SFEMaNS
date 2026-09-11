@@ -1,6 +1,12 @@
 MODULE entropy_viscosity
-  USE my_util
-  PUBLIC :: compute_entropy_viscosity, compute_entropy_viscosity_mom, &
+   !------------
+   USE petscvec
+   USE petscmat
+   USE petscksp
+   USE petscmpi
+   !------------
+   USE my_util
+   PUBLIC :: compute_entropy_viscosity, compute_entropy_viscosity_mom, &
        compute_entropy_viscosity_mom_no_level_set
   PRIVATE
 CONTAINS
@@ -20,8 +26,6 @@ CONTAINS
     USE my_util
     USE boundary
     USE fourier_to_real_for_vtu
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(petsc_csr_LA)                                    :: vv_3_LA
     TYPE(mesh_type),                INTENT(IN)            :: pp_mesh, vv_mesh
@@ -55,11 +59,11 @@ CONTAINS
     !INTEGER         :: rank
     INTEGER         :: i, k, nu_mat, mode, m, l, TYPE_VEC, index, n
     INTEGER         :: nb_procs, code, bloc_size, m_max_pad
-    PetscErrorCode                   :: ierr
-    MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
-    Vec,                        SAVE :: vb_3_145, vb_3_236, vx_3, vx_3_ghost
-    Mat, DIMENSION(:), POINTER, SAVE :: LES_mat
-    KSP, DIMENSION(:), POINTER, SAVE :: LES_ksp
+    INTEGER                   :: ierr
+    INTEGER, DIMENSION(:), POINTER  :: comm_one_d
+    TYPE(tVec),                        SAVE :: vb_3_145, vb_3_236, vx_3, vx_3_ghost
+    TYPE(tMat), DIMENSION(:), POINTER, SAVE :: LES_mat
+    TYPE(tKSP), DIMENSION(:), POINTER, SAVE :: LES_ksp
 
     IF (once) THEN
 
@@ -213,8 +217,6 @@ CONTAINS
     USE input_data
     USE my_util
     USE subroutine_mass
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(petsc_csr_LA)                                    :: vv_3_LA
     TYPE(mesh_type),                  INTENT(IN)          :: pp_mesh, vv_mesh
@@ -259,11 +261,11 @@ CONTAINS
     !INTEGER         :: rank
     INTEGER         :: i, k, nu_mat, mode, m, l, TYPE_VEC, index, n
     INTEGER         :: nb_procs, code, bloc_size, m_max_pad
-    PetscErrorCode                   :: ierr
-    MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
-    Vec,                        SAVE :: vb_3_145, vb_3_236, vx_3, vx_3_ghost
-    Mat, DIMENSION(:), POINTER, SAVE :: LES_mat
-    KSP, DIMENSION(:), POINTER, SAVE :: LES_ksp
+    INTEGER                   :: ierr
+    INTEGER, DIMENSION(:), POINTER  :: comm_one_d
+    TYPE(tVec),                        SAVE :: vb_3_145, vb_3_236, vx_3, vx_3_ghost
+    TYPE(tMat), DIMENSION(:), POINTER, SAVE :: LES_mat
+    TYPE(tKSP), DIMENSION(:), POINTER, SAVE :: LES_ksp
 
     IF (once) THEN
 
@@ -501,8 +503,6 @@ CONTAINS
     USE input_data
     USE my_util
     USE subroutine_mass
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(petsc_csr_LA)                                    :: vv_3_LA
     TYPE(mesh_type),                  INTENT(IN)          :: pp_mesh, vv_mesh
@@ -538,11 +538,11 @@ CONTAINS
     !INTEGER         :: rank
     INTEGER         :: i, k, nu_mat, mode, m, l, TYPE_VEC, index, n
     INTEGER         :: nb_procs, code, bloc_size, m_max_pad
-    PetscErrorCode                   :: ierr
-    MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
-    Vec,                        SAVE :: vb_3_145, vb_3_236, vx_3, vx_3_ghost
-    Mat, DIMENSION(:), POINTER, SAVE :: LES_mat
-    KSP, DIMENSION(:), POINTER, SAVE :: LES_ksp
+    INTEGER                   :: ierr
+    INTEGER, DIMENSION(:), POINTER  :: comm_one_d
+    TYPE(tVec),                        SAVE :: vb_3_145, vb_3_236, vx_3, vx_3_ghost
+    TYPE(tMat), DIMENSION(:), POINTER, SAVE :: LES_mat
+    TYPE(tKSP), DIMENSION(:), POINTER, SAVE :: LES_ksp
 
     IF (once) THEN
 
@@ -962,8 +962,6 @@ CONTAINS
     USE chaine_caractere
     USE boundary
     USE input_data
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type), TARGET                     :: mesh
     INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
@@ -983,7 +981,7 @@ CONTAINS
     REAL(KIND=8)                                :: ray
     INTEGER                                     :: m, ms, ls , i, mode, indexs, k
     INTEGER                                     :: code, bloc_size, m_max_pad, nb_procs
-    MPI_Comm          :: communicator
+    INTEGER          :: communicator
 
     DO i = 1, SIZE(list_mode)
        mode = list_mode(i)
@@ -1213,8 +1211,6 @@ CONTAINS
   SUBROUTINE twoD_volume(communicator,mesh,RESLT)
     !===========================
     USE def_type_mesh
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type)                          :: mesh
     REAL(KIND=8),                INTENT(OUT) :: RESLT
@@ -1222,7 +1218,7 @@ CONTAINS
     INTEGER,      DIMENSION(mesh%gauss%n_w)  :: j_loc
     INTEGER                                  ::  m, l , i , ni, code
     REAL(KIND=8)                             :: ray
-    MPI_Comm                                 :: communicator
+    INTEGER                                 :: communicator
     vol_loc = 0.d0
     DO m = 1, mesh%dom_me
        j_loc = mesh%jj(:,m)

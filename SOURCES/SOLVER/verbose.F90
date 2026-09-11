@@ -29,13 +29,13 @@ MODULE verbose
 
 CONTAINS
   SUBROUTINE write_verbose(rank,opt_tps,opt_tploc_max)
+    !------------
+    USE petscmpi
+    !------------
     USE input_data
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     REAL(KIND=8), OPTIONAL, INTENT(IN) :: opt_tps, opt_tploc_max
-    PetscErrorCode :: code
-    PetscMPIInt    :: rank
+    INTEGER :: code, rank
     IF (inputs%verbose_timing) THEN
        IF (present(opt_tps).AND.present(opt_tploc_max)) THEN
           CALL MPI_ALLREDUCE(opt_tps,talk_to_me%total_cpu_time,1,MPI_DOUBLE_PRECISION,&

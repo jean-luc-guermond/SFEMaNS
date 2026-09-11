@@ -2,8 +2,6 @@ MODULE def_type_field_mag
 
    USE def_type_mesh
 
-#include "petsc/finclude/petsc.h"
-   USE petsc
    USE petscmpi
    IMPLICIT NONE
    CHARACTER(len=*), PARAMETER, PRIVATE :: this_module = 'def_type_field_mag'
@@ -17,7 +15,7 @@ MODULE def_type_field_mag
 !========================================================
 
    TYPE(mesh_type), PRIVATE,               POINTER          :: H_mesh, phi_mesh, H_mesh_glob, phi_mesh_glob 
-   MPI_Comm,        PRIVATE, DIMENSION(:), POINTER          :: communicator_mxw
+   INTEGER,        PRIVATE, DIMENSION(:), POINTER          :: communicator_mxw
    INTEGER,         PRIVATE, DIMENSION(:), POINTER          :: list_mode
    LOGICAL,         PRIVATE                                 :: if_phi_glob, if_induction_glob 
    REAL(KIND=8),    PRIVATE, DIMENSION(:), POINTER          :: mu_H_field   
@@ -36,7 +34,7 @@ MODULE def_type_field_mag
         LOGICAL                                         :: initialized = .FALSE. 
         TYPE(mesh_type),        POINTER                 :: H_mesh, phi_mesh
         INTEGER, DIMENSION(:),  POINTER                 :: list_mode
-        MPI_Comm, DIMENSION(:), POINTER                 :: comm_one_d
+        INTEGER, DIMENSION(:), POINTER                 :: comm_one_d
     CONTAINS
     !=======    Procedures for SFEMaNS
         PROCEDURE, PUBLIC, PASS(self) :: init_mag_field, allocate_induction_fields
@@ -80,7 +78,7 @@ CONTAINS
 
         IMPLICIT NONE
         TYPE(mesh_type), TARGET       ,INTENT(IN)            :: H_mesh_in, phi_mesh_in
-        MPI_Comm, TARGET, DIMENSION(:),INTENT(IN)            :: communicator_in
+        INTEGER, TARGET, DIMENSION(:),INTENT(IN)            :: communicator_in
         INTEGER, TARGET, DIMENSION(:), INTENT(IN)            :: list_mode_in
         LOGICAL,                       INTENT(IN)            :: if_induction_in
 

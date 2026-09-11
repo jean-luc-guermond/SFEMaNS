@@ -1,17 +1,18 @@
 PROGRAM mhd_prog
+   !------------
+   USE petscmpi
+   USE petscdmda, ONLY: PETSC_NULL_CHARACTER, PetscInitialize
+   !------------
   USE def_type_mesh
   USE initialization
   USE my_util
   USE input_data
-  !USE arpack_mhd
   USE fourier_to_real_for_vtu
   USE user_data
   USE post_processing_debug
   USE verbose
   USE sub_plot
   USE chaine_caractere
-#include "petsc/finclude/petsc.h"
-  USE petsc
 
   USE COMM_LK_SFEM
   USE def_type_field_mag
@@ -70,19 +71,23 @@ PROGRAM mhd_prog
   !===Timing======================================================================
   REAL(KIND=8)                                    :: tps, tploc, tploc_max=0.d0
   !===Declare PETSC===============================================================
-  PetscErrorCode :: ierr
-  PetscMPIInt    :: rank
-  MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d, comm_one_d_ns, comm_one_d_temp
-  MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d_conc
+  INTEGER :: ierr
+  INTEGER    :: rank
+  INTEGER, DIMENSION(:), POINTER  :: comm_one_d, comm_one_d_ns, comm_one_d_temp
+  INTEGER, DIMENSION(:), POINTER  :: comm_one_d_conc
 
   !===Start PETSC and MPI (mandatory)=============================================
+write(*,*) 'flag 0'
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+write(*,*) 'flag 1', ierr
   CALL MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
+write(*,*) 'flag 2'
 
   !===User reads his/her own data=================================================
   CALL read_user_data('data')
 
   !===Initialize SFEMANS (mandatory)==============================================
+write(*,*) 'flag 3'
   CALL initial(vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, conc_mesh,&
        interface_H_phi, interface_H_mu, list_mode, &
        vel_n, vel_n1, mag_n, mag_n1, vel, &
@@ -91,6 +96,7 @@ PROGRAM mhd_prog
        comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc,temperature, &
        concentration, level_set, density, &
        der_un, visc_LES, visc_LES_level)
+write(*,*) 'flag 4'
 
   !===== (for now) if_induction is the only case where the exptA subroutine can be tested
   if_induction = ((inputs%type_pb == 'mxx') .OR. (inputs%type_pb == 'mhd') .OR. &
@@ -114,7 +120,7 @@ PROGRAM mhd_prog
    !=================================================
    IF (inputs%LK%eigs) THEN
 #ifdef USE_LIGHTKRYLOV      
-      CALL compute_spectrum(lambda, residuals, X, list_mode)
+      CALL compute_spectrum(lambda, residuals, X)
 
       IF (inputs%if_regression) THEN
          CALL regression_LK(lambda)
@@ -139,7 +145,9 @@ PROGRAM mhd_prog
       DO it = 1, inputs%nb_iteration
          tploc =  user_time()
          time = time + inputs%dt
+write(*,*) 'flag 5'
          CALL run_SFEMaNS(time, it)
+write(*,*) 'flag 6'
 
          !===My postprocessing
          IF (.NOT.inputs%test_de_convergence) THEN
@@ -480,8 +488,6 @@ PROGRAM mhd_prog
     USE input_data
     USE boundary
     USE fft_parallele
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                                        INTENT(IN)          :: vv_mesh
     INTEGER,      DIMENSION(:),                             INTENT(IN)          :: list_mode
@@ -492,8 +498,8 @@ PROGRAM mhd_prog
     INTEGER,      DIMENSION(vv_mesh%gauss%n_w)                                  :: j_loc
     REAL(KIND=8)                                                                :: vel_torque, vel_torque_tot
     INTEGER ::  m, l , i, mode, index, type, nb_procs, m_max_pad, bloc_size
-    PetscErrorCode                   :: ierr
-    MPI_Comm,DIMENSION(2)            :: communicator
+    INTEGER                   :: ierr
+    INTEGER,DIMENSION(2)            :: communicator
 
     index = 0
     DO m = 1, vv_mesh%dom_me
@@ -558,8 +564,6 @@ PROGRAM mhd_prog
     USE input_data
     USE boundary
     USE fft_parallele
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                                        INTENT(IN)          :: mesh
     INTEGER,      DIMENSION(:),                             INTENT(IN)          :: list_mode
@@ -575,7 +579,7 @@ PROGRAM mhd_prog
     INTEGER,      DIMENSION(mesh%gauss%n_w)                 :: j_loc
     INTEGER                                                 :: m, l , i, nb_inter
     INTEGER                                                 :: my_petscworld_rank, code
-    MPI_Comm,DIMENSION(2)            :: communicator
+    INTEGER,DIMENSION(2)            :: communicator
 
     CALL MPI_COMM_RANK(PETSC_COMM_WORLD,my_petscworld_rank,code)
 

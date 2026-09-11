@@ -3,9 +3,13 @@
 !Revised for PETSC, Jean-Luc Guermond, Franky Luddens, January 2011
 !
 MODULE subroutine_ns_with_m
+   !------------
+   USE petscvec
+   USE petscmat
+   USE petscksp
+   USE petscmpi
+   !------------
   USE my_util
-#include "petsc/finclude/petsc.h"
-  USE petsc
   PUBLIC :: three_level_ns_tensor_sym_with_m, smb_explicit_diffu_sym, smb_surface_tension, &
        smb_explicit_LES, momentum_dirichlet, smb_buoyancy
   PRIVATE
@@ -102,15 +106,15 @@ CONTAINS
     !===End Other variables
 
     !Communicators for Petsc, in space and Fourier------------------------------
-    PetscErrorCode                   :: ierr
-    MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
-    Mat, DIMENSION(:), POINTER, SAVE :: vel_mat
-    Mat, DIMENSION(:), POINTER, SAVE :: press_mat
-    Mat,                        SAVE :: mass_mat, mass_mat0
-    Vec,                        SAVE :: vb_3_145, vb_3_236, vx_3, vx_3_ghost
-    Vec,                        SAVE :: pb_1,    pb_2,    px_1, px_1_ghost
-    KSP, DIMENSION(:), POINTER, SAVE :: vel_ksp, press_ksp
-    KSP,                        SAVE :: mass_ksp, mass_ksp0
+    INTEGER                   :: ierr
+    INTEGER, DIMENSION(:), POINTER  :: comm_one_d
+    TYPE(tMat), DIMENSION(:), POINTER, SAVE :: vel_mat
+    TYPE(tMat), DIMENSION(:), POINTER, SAVE :: press_mat
+    TYPE(tMat),                        SAVE :: mass_mat, mass_mat0
+    TYPE(tVec),                        SAVE :: vb_3_145, vb_3_236, vx_3, vx_3_ghost
+    TYPE(tVec),                        SAVE :: pb_1,    pb_2,    px_1, px_1_ghost
+    TYPE(tKSP), DIMENSION(:), POINTER, SAVE :: vel_ksp, press_ksp
+    TYPE(tKSP),                        SAVE :: mass_ksp, mass_ksp0
     !------------------------------END OF DECLARATION--------------------------------------
     IF (once) THEN
        once = .FALSE.
@@ -805,7 +809,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(3)                  :: temps
     !===FOR FFT_PAR_CROSS_PROD_DCL
     INTEGER       :: nb_procs, bloc_size, m_max_pad, code
-    MPI_Comm       :: communicator
+    INTEGER       :: communicator
 
     tps = user_time()
     DO i = 1, SIZE(list_mode)
@@ -906,7 +910,7 @@ CONTAINS
     REAL(KIND=8)                                :: ray
     INTEGER                                     :: m, l , i, mode, index, k
     INTEGER                                     :: m_max_pad, bloc_size
-    MPI_Comm          :: communicator
+    INTEGER          :: communicator
 
     CALL gauss(mesh)
 
@@ -1025,7 +1029,7 @@ CONTAINS
     REAL(KIND=8)                                :: ray, hh, hm
     INTEGER                                     :: m, l , i, mode, index, k
     INTEGER                                     :: m_max_pad, bloc_size
-    MPI_Comm          :: communicator
+    INTEGER          :: communicator
 
     CALL gauss(mesh)
 
@@ -1109,7 +1113,7 @@ CONTAINS
     REAL(KIND=8)                                :: ray
     INTEGER                                     :: m, l , i, mode, index, k, n
     INTEGER                                     :: m_max_pad, bloc_size
-    MPI_Comm          :: communicator
+    INTEGER          :: communicator
 
     CALL gauss(mesh)
 
@@ -1156,8 +1160,6 @@ CONTAINS
     USE boundary
     USE subroutine_mass
     USE input_data
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type), TARGET                       :: mesh_P2, mesh_P1
     INTEGER,      DIMENSION(:),       INTENT(IN)  :: list_mode
@@ -1167,8 +1169,8 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh_P2%np,2,SIZE(list_mode)) :: grav_density
     REAL(KIND=8), DIMENSION(3)                  :: temps
     INTEGER                                     :: code, m_max_pad, bloc_size, nb_procs
-    !MPI_Comm       :: communicator
-    MPI_Comm, DIMENSION(:), POINTER  :: communicator
+    !INTEGER       :: communicator
+    INTEGER, DIMENSION(:), POINTER  :: communicator
 
     !===Set buoyancy to zero (for radial and azimuthal components)
     V_out = 0.d0
@@ -1205,7 +1207,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(SIZE(vv_js_D(3)%DIL),2,SIZE(list_mode))   :: vel_exact_z, mz
     INTEGER                                     :: i, k, kk
     INTEGER                                     :: m_max_pad, bloc_size
-    MPI_Comm          :: communicator
+    INTEGER          :: communicator
 
     IF (inputs%if_level_set) THEN
        DO i = 1, SIZE(list_mode)
@@ -1252,7 +1254,7 @@ CONTAINS
     INTEGER,      DIMENSION(mesh%gauss%n_w)  :: j_loc
     INTEGER                                  ::  m, l , i , ni, code
     REAL(KIND=8)                             :: ray
-    MPI_Comm                                 :: communicator
+    INTEGER                                 :: communicator
     vol_loc = 0.d0
     DO m = 1, mesh%dom_me
        j_loc = mesh%jj(:,m)
@@ -1280,7 +1282,7 @@ CONTAINS
     INTEGER ::  m, l , i , ni, code
     INTEGER,      DIMENSION(mesh%gauss%n_w)     :: j_loc
     REAL(KIND=8)   :: ray
-    MPI_Comm                                    :: communicator
+    INTEGER                                    :: communicator
     r_loc = 0.d0
     vol_loc = 0.d0
 

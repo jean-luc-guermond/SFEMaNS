@@ -1,6 +1,7 @@
 MODULE snapshot
-  USE petsc
-#include "petsc/finclude/petsc.h"
+  !--------------
+  USE petscmpi
+  !--------------
   USE input_data
   IMPLICIT NONE
 CONTAINS
@@ -40,7 +41,7 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !v5.0!#include "petsc/finclude/petsc.h"
-    MPI_Comm, DIMENSION(:), POINTER :: communicator
+    INTEGER, DIMENSION(:), POINTER :: communicator
 
 
     CALL MPI_COMM_RANK(communicator(1), rang_S, code)
@@ -180,7 +181,7 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm, DIMENSION(:), POINTER :: communicator
+    INTEGER, DIMENSION(:), POINTER :: communicator
 
     np = SIZE(V_out, 1)
     nb_field = SIZE(V_out, 2) ! Number of fields
@@ -302,7 +303,7 @@ CONTAINS
     CHARACTER(200) :: filename
     CHARACTER(*), INTENT(IN) :: opt_I, opt_dir
     TYPE(mesh_type), INTENT(IN) :: mesh
-    MPI_Comm, DIMENSION(:), POINTER :: communicator
+    INTEGER, DIMENSION(:), POINTER :: communicator
     INTEGER :: code, nb_angles, nb_procs_S, nb_procs_F, lblank, k, l, rang_S, rang_F, n
     INTEGER :: ntot, d
     CHARACTER(len = 4) :: tit_S
@@ -373,7 +374,7 @@ CONTAINS
     CHARACTER(200) :: filename
     CHARACTER(*), INTENT(IN) :: opt_I
     TYPE(mesh_type), INTENT(IN) :: mesh
-    MPI_Comm, DIMENSION(:), POINTER :: communicator
+    INTEGER, DIMENSION(:), POINTER :: communicator
     INTEGER :: code, nb_angles, ntot_gauss, ntot_gauss_last, nb_procs_S, nb_procs_F, lblank
     INTEGER :: k, l, rang_S, rang_F, bloc_size_gauss, n, tot
     CHARACTER(len = 4) :: tit_S
@@ -440,7 +441,7 @@ CONTAINS
     REAL(KIND = 8), DIMENSION(:), INTENT(IN) :: field
     CHARACTER(*) :: type_field
     CHARACTER(*) :: opt_I, opt_dir
-    MPI_Comm, DIMENSION(:), POINTER :: communicator
+    INTEGER, DIMENSION(:), POINTER :: communicator
     INTEGER :: code, nb_procs_S, rang_S, lblank, l
     CHARACTER(len = 4) :: tit_S
     CHARACTER(len = 250) :: out_name
@@ -473,7 +474,7 @@ CONTAINS
     USE chaine_caractere
     TYPE(mesh_type), INTENT(IN) :: mesh
     CHARACTER(*) :: opt_dir, mesh_name
-    MPI_Comm, DIMENSION(:), POINTER :: communicator
+    INTEGER, DIMENSION(:), POINTER :: communicator
     INTEGER :: code, nb_procs_S, rang_S, lblank, l
     CHARACTER(len = 4) :: tit_S
     CHARACTER(len = 250) :: out_name
@@ -607,7 +608,7 @@ CONTAINS
     CHARACTER(len = 4) :: tit_S
     CHARACTER(len = 250) :: out_name
     CHARACTER(len = 200) :: filename
-    MPI_Comm, DIMENSION(:), POINTER :: communicator
+    INTEGER, DIMENSION(:), POINTER :: communicator
     INTEGER :: filehandle , arraytype, local_size, ierr
     INTEGER (KIND=MPI_OFFSET_KIND) :: cursor_offset
 
@@ -651,7 +652,6 @@ CONTAINS
 
   SUBROUTINE WRITE_FOURIER_MODES(communicator, list_mode, field, name_field, opt_dir)
     USE chaine_caractere
-    USE petsc
     IMPLICIT NONE
     INTEGER, DIMENSION(:), INTENT(IN) :: communicator
     CHARACTER(*), INTENT(IN) :: name_field, opt_dir
@@ -921,13 +921,14 @@ CONTAINS
   END SUBROUTINE R_mrgrnk
 
   SUBROUTINE write_snapshot(communicator, mesh, list_mode, field, filename, it, freq_snapshot)
+     !----------
+     USE petscmpi
+     !----------
     USE def_type_mesh
-#include "petsc/finclude/petsc.h"
-    USE petsc
     USE chaine_caractere
     USE restart
     !INTEGER, DIMENSION(:),     INTENT(IN) :: communicator
-    MPI_Comm, DIMENSION(:), POINTER :: communicator
+    INTEGER, DIMENSION(:), POINTER :: communicator
     TYPE(mesh_type),           INTENT(IN) :: mesh
     INTEGER, DIMENSION(:),     INTENT(IN) :: list_mode
     REAL(KIND = 8), DIMENSION(:,:,:), INTENT(IN) :: field

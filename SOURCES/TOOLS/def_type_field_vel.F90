@@ -1,7 +1,5 @@
 MODULE def_type_field_vel
     USE def_type_mesh
-#include "petsc/finclude/petsc.h"
-    USE petsc
     USE petscmpi
     IMPLICIT NONE
 
@@ -14,7 +12,7 @@ MODULE def_type_field_vel
 !========================================================
 
     TYPE(mesh_type), PRIVATE,               POINTER          :: vv_mesh, pp_mesh, vv_mesh_glob, pp_mesh_glob 
-    MPI_Comm,        PRIVATE, DIMENSION(:), POINTER          :: communicator_ns
+    INTEGER,        PRIVATE, DIMENSION(:), POINTER          :: communicator_ns
     INTEGER,         PRIVATE, DIMENSION(:), POINTER          :: list_mode
    
 
@@ -31,7 +29,7 @@ MODULE def_type_field_vel
         INTEGER, DIMENSION(:), POINTER                  :: list_mode
         TYPE(mesh_type), POINTER                        :: vv_mesh, pp_mesh
         LOGICAL                                         :: initialized = .FALSE. 
-        MPI_Comm, DIMENSION(:), POINTER                 :: comm_one_d_ns
+        INTEGER, DIMENSION(:), POINTER                 :: comm_one_d_ns
     CONTAINS
    !=======    Procedures for SFEMaNS
         PROCEDURE, PUBLIC, PASS(self) :: init_vel_field, allocate_velocity_fields
@@ -79,7 +77,7 @@ CONTAINS
 
         IMPLICIT NONE
         TYPE(mesh_type), TARGET       ,INTENT(IN)            :: vv_mesh_in, pp_mesh_in
-        MPI_Comm, TARGET, DIMENSION(:),INTENT(IN)            :: communicator_in
+        INTEGER, TARGET, DIMENSION(:),INTENT(IN)            :: communicator_in
         INTEGER, TARGET, DIMENSION(:), INTENT(IN)            :: list_mode_in
         vv_mesh           => vv_mesh_in
         pp_mesh           => pp_mesh_in

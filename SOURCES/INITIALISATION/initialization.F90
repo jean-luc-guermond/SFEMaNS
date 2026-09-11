@@ -13,8 +13,7 @@ MODULE initialization
   USE symmetric_field
   USE input_data
   USE my_util
-#include "petsc/finclude/petsc.h"
-  USE petsc
+  USE petscmpi
   USE fourier_to_real_for_vtu
   IMPLICIT NONE
   PUBLIC :: initial, build_pointers, save_run, run_SFEMaNS, save_snapshot
@@ -124,10 +123,10 @@ MODULE initialization
   !---------------------------------------------------------------------------
 
   !Communicators for Petsc, in space and Fourier------------------------------
-  MPI_Comm                                        :: comm_cart
-  MPI_Comm, DIMENSION(:), POINTER                 :: comm_one_d, comm_one_d_ns
-  MPI_Comm, DIMENSION(:), POINTER                 :: comm_one_d_temp, coord_cart
-  MPI_Comm, DIMENSION(:), POINTER                 :: comm_one_d_conc
+  INTEGER                                        :: comm_cart
+  INTEGER, DIMENSION(:), POINTER                 :: comm_one_d, comm_one_d_ns
+  INTEGER, DIMENSION(:), POINTER                 :: comm_one_d_temp, coord_cart
+  INTEGER, DIMENSION(:), POINTER                 :: comm_one_d_conc
   !---------------------------------------------------------------------------
 
   !-------------END OF DECLARATIONS------------------------------------------
@@ -164,8 +163,8 @@ CONTAINS
     REAL(KIND=8), POINTER,  DIMENSION(:,:,:,:):: visc_LES_level_out
     REAL(KIND=8)                              :: time_out
     INTEGER                                   :: m_max_c_out
-    MPI_Comm, DIMENSION(:), POINTER           :: comm_one_d_out, comm_one_d_ns_out
-    MPI_Comm, DIMENSION(:), POINTER           :: comm_one_d_temp_out, comm_one_d_conc_out
+    INTEGER, DIMENSION(:), POINTER           :: comm_one_d_out, comm_one_d_ns_out
+    INTEGER, DIMENSION(:), POINTER           :: comm_one_d_temp_out, comm_one_d_conc_out
 
     vv_mesh_out => vv_mesh
     pp_mesh_out => pp_mesh
@@ -210,8 +209,7 @@ CONTAINS
        time_out, m_max_c_out, comm_one_d_out, comm_one_d_ns_out, comm_one_d_temp_out, comm_one_d_conc_out, &
        tempn_out, concn_out, level_set_out, density_out, der_un_out, visc_LES_out, visc_LES_level_out)
     USE fourier_to_real_for_vtu
-#include "petsc/finclude/petsc.h"
-    USE petsc
+    USE petscmpi
     IMPLICIT NONE
     TYPE(mesh_type), POINTER                  :: pp_mesh_out, vv_mesh_out
     TYPE(mesh_type), POINTER                  :: H_mesh_out, phi_mesh_out
@@ -232,8 +230,8 @@ CONTAINS
     REAL(KIND=8), POINTER,  DIMENSION(:,:,:,:):: visc_LES_level_out
     REAL(KIND=8)                              :: time_out
     INTEGER                                   :: m_max_c_out
-    MPI_Comm, DIMENSION(:), POINTER           :: comm_one_d_out, comm_one_d_ns_out
-    MPI_Comm, DIMENSION(:), POINTER           :: comm_one_d_temp_out, comm_one_d_conc_out
+    INTEGER, DIMENSION(:), POINTER           :: comm_one_d_out, comm_one_d_ns_out
+    INTEGER, DIMENSION(:), POINTER           :: comm_one_d_temp_out, comm_one_d_conc_out
 
     CALL INIT
     !===Initialize meshes for vtu post processing
@@ -710,6 +708,8 @@ CONTAINS
 
   SUBROUTINE INIT
     !==================
+    USE petscmpi
+    !==================
     USE my_util
     USE chaine_caractere
     USE prep_periodic
@@ -733,9 +733,7 @@ CONTAINS
     USE subroutine_mass
     USE fft_parallele
     USE update_taylor_navier_stokes
-#include "petsc/finclude/petsc.h"
-    USE petsc
-    USE COMM_LK_SFEM
+    USE COMM_LK_SFEM, ONLY: init_LK
     IMPLICIT NONE
     TYPE(mesh_type)                    :: p1_mesh_glob, p1_c0_mesh_glob, p1_c0_mesh_glob_temp
     TYPE(mesh_type)                    :: p1_c0_mesh_glob_conc, dummy_mesh_loc
@@ -760,7 +758,7 @@ CONTAINS
     LOGICAL                            :: ns_periodic, mxw_periodic, temp_periodic
     LOGICAL                            :: conc_periodic
 !!$    CHARACTER(len=2)                   :: tit
-    PetscMPIInt                        :: nb_procs_F, nb_procs_S
+    INTEGER                        :: nb_procs_F, nb_procs_S
 
     !===Get numbers of processors===================================================
     CALL MPI_COMM_SIZE(PETSC_COMM_WORLD, nb_procs, code)

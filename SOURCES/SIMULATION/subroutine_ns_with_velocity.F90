@@ -3,9 +3,13 @@
 !Revised for PETSC, Jean-Luc Guermond, Franky Luddens, January 2011
 !
 MODULE subroutine_ns_with_u
+   !------------
+   USE petscvec
+   USE petscmat
+   USE petscksp
+   USE petscmpi
+   !------------
   USE my_util
-#include "petsc/finclude/petsc.h"
-  USE petsc
   USE subroutine_ns_with_m
 !=== VB 03/09/2026 (intended for linearized Navier-Stokes)
   REAL(KIND=8), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: V_base_flow
@@ -83,7 +87,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: rotv_v, rotb_b, rotb_b_aux
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: mag_force
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: rhs_gauss
-    REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode)) :: chmp_mag_aux
+    REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode)) :: chmp_mag_aux, chmp_mag_1, chmp_mag_2
     REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode)) :: uext
     REAL(KIND=8), DIMENSION(vv_mesh%np,2,SIZE(list_mode)) :: nu_tilde
     REAL(KIND=8), DIMENSION(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: two_nu_tilde_grads_u_ext
@@ -94,15 +98,15 @@ CONTAINS
     !===End Other variables
 
     !Communicators for Petsc, in space and Fourier------------------------------
-    PetscErrorCode                   :: ierr
-    MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
-    Mat, DIMENSION(:), POINTER, SAVE :: vel_mat
-    Mat, DIMENSION(:), POINTER, SAVE :: press_mat
-    Mat,                        SAVE :: mass_mat, mass_mat0
-    Vec,                        SAVE :: vb_3_145, vb_3_236, vx_3, vx_3_ghost
-    Vec,                        SAVE :: pb_1,    pb_2,    px_1, px_1_ghost
-    KSP, DIMENSION(:), POINTER, SAVE :: vel_ksp, press_ksp
-    KSP,                        SAVE :: mass_ksp, mass_ksp0
+    INTEGER                   :: ierr
+    INTEGER, DIMENSION(:), POINTER  :: comm_one_d
+    TYPE(tMat), DIMENSION(:), POINTER, SAVE :: vel_mat
+    TYPE(tMat), DIMENSION(:), POINTER, SAVE :: press_mat
+    TYPE(tMat),                        SAVE :: mass_mat, mass_mat0
+    TYPE(tVec),                        SAVE :: vb_3_145, vb_3_236, vx_3, vx_3_ghost
+    TYPE(tVec),                        SAVE :: pb_1,    pb_2,    px_1, px_1_ghost
+    TYPE(tKSP), DIMENSION(:), POINTER, SAVE :: vel_ksp, press_ksp
+    TYPE(tKSP),                        SAVE :: mass_ksp, mass_ksp0
     !------------------------------END OF DECLARATION--------------------------------------
     IF (once) THEN
        once = .FALSE.
@@ -267,7 +271,17 @@ CONTAINS
           END DO
           CALL smb_CurlH_cross_B_gauss_sft_par(comm_one_d(2),vv_mesh,list_mode,chmp_mag,chmp_mag_aux,rotb_b)
           rotb_b = rotb_b + rotb_b_aux
-       ELSE !===Compute Lorentz force if mhd
+      !===VB 07/09/2026
+       ELSE IF (inputs%if_linear_navier_stokes_with_u) THEN
+          DO i = 1, m_max_c
+             chmp_mag_aux(:,:,i) = H_B_quasi_static('F', vv_mesh%rr, mode)
+          ENDDO
+          CALL smb_CurlH_cross_B_gauss_sft_par(comm_one_d(2),vv_mesh,list_mode,chmp_mag_aux,Bn_p2,rotb_b_aux)
+          CALL smb_CurlH_cross_B_gauss_sft_par(comm_one_d(2),vv_mesh,list_mode,chmp_mag,chmp_mag_aux,rotb_b)
+          rotb_b = rotb_b + rotb_b_aux
+      !===VB 07/09/2026
+      !===Compute Lorentz force if mhd
+       ELSE
           CALL smb_CurlH_cross_B_gauss_sft_par(comm_one_d(2),vv_mesh,list_mode,chmp_mag,Bn_p2,rotb_b)
        END IF
        rotv_v = rotv_v - inputs%coeff_lorentz*rotb_b
@@ -563,7 +577,7 @@ CONTAINS
     !===FOR FFT_PAR_CROSS_PROD_DCL
     INTEGER       :: nb_procs, bloc_size, m_max_pad, code
     INTEGER, PARAMETER :: barU_curl_barU=1, barU_curl_u=2, U_curl_barU=3
-    MPI_Comm       :: communicator
+    INTEGER       :: communicator
 
     IF (once) THEN
        once = .FALSE.
@@ -708,7 +722,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(3)                  :: temps
     !===FOR FFT_PAR_CROSS_PROD_DCL
     INTEGER       :: nb_procs, bloc_size, m_max_pad, code
-    MPI_Comm       :: communicator
+    INTEGER       :: communicator
 
     tps = user_time()
     DO i = 1, SIZE(list_mode)
@@ -803,7 +817,7 @@ CONTAINS
     REAL(KIND=8)                                                      :: rad
     !===FOR FFT
     INTEGER                                     :: nb_procs, bloc_size, m_max_pad, code
-    MPI_Comm                                    :: communicator
+    INTEGER                                    :: communicator
 
     ! We compute the Kelvin force: Kelvin force = chi_coeff(T) * grad(H**2/2)
 
@@ -879,7 +893,7 @@ CONTAINS
     REAL(KIND=8)                                                      :: rad
     !===FOR FFT
     INTEGER                                     :: nb_procs, bloc_size, m_max_pad, code
-    MPI_Comm                                    :: communicator
+    INTEGER                                    :: communicator
 
     ! We compute the Helmholtz force: Helmholtz force = - H**2/2 * grad(chi_coeff(T))
 
@@ -946,7 +960,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)  :: scal_inout
     !===FOR FFT
     INTEGER                                     :: nb_procs, bloc_size, m_max_pad, code
-    MPI_Comm                                    :: communicator
+    INTEGER                                    :: communicator
 
     !===nb_procs and m_max_pad calculus for FFT
     CALL MPI_COMM_SIZE(communicator, nb_procs, code)
@@ -969,7 +983,7 @@ CONTAINS
     INTEGER ::  m, l , i , ni, code
     INTEGER,      DIMENSION(mesh%gauss%n_w)     :: j_loc
     REAL(KIND=8)   :: ray
-    MPI_Comm                                    :: communicator
+    INTEGER                                    :: communicator
     r_loc = 0.d0
     vol_loc = 0.d0
 

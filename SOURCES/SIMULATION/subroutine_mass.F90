@@ -1,6 +1,12 @@
 MODULE subroutine_mass
-  USE my_util
-  USE boundary
+   !------------
+   USE petscvec
+   USE petscmat
+   USE petscksp
+   USE petscmpi
+   !------------
+   USE my_util
+   USE boundary
 
   PUBLIC :: three_level_mass, reconstruct_variable, total_mass, inject_P1_P2, project_P2_P1
   PRIVATE
@@ -13,8 +19,6 @@ CONTAINS
     USE input_data
     USE subroutine_level_set
     USE my_util
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     REAL(KIND=8)                                            :: time
     INTEGER,      DIMENSION(:),       INTENT(IN)            :: list_mode
@@ -32,7 +36,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:,:), INTENT(IN)            :: visc_LES_level
     REAL(KIND=8), DIMENSION(mesh_P1%np,6,SIZE(list_mode))   :: chmp_vit_P1
     INTEGER                                                 :: n, i, k
-    MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
+    INTEGER, DIMENSION(:), POINTER  :: comm_one_d
 
     IF (inputs%if_level_set) THEN
 
@@ -96,8 +100,6 @@ CONTAINS
     USE def_type_mesh
     USE fft_parallele
     USE input_data
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     INTEGER,      DIMENSION(:),                 INTENT(IN)    :: list_mode
     TYPE(mesh_type),                            INTENT(IN)    :: mesh_P1
@@ -114,7 +116,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh_P2%np,2,SIZE(list_mode))     :: rho_phi
     REAL(KIND=8), DIMENSION(inputs%nb_fluid-1,mesh_P2%np,2,SIZE(list_mode))   :: level_set_P2
     !Communicators for Petsc, in space and Fourier------------------------------
-    MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
+    INTEGER, DIMENSION(:), POINTER  :: comm_one_d
     !------------------------------END OF DECLARATION--------------------------------------
 
     IF (once) THEN
@@ -192,8 +194,6 @@ CONTAINS
     USE def_type_mesh
     USE fft_parallele
     USE input_data
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     INTEGER,      DIMENSION(:),                 INTENT(IN)    :: list_mode
     TYPE(mesh_type),                            INTENT(IN)    :: mass_mesh
@@ -208,7 +208,7 @@ CONTAINS
     INTEGER, DIMENSION(mass_mesh%gauss%n_w)                   :: j_loc
     REAL(KIND=8)                                              :: pi= 3.14159265358979323846d0
     !Communicators for Petsc, in space and Fourier------------------------------
-    MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
+    INTEGER, DIMENSION(:), POINTER  :: comm_one_d
     !------------------------------END OF DECLARATION--------------------------------------
 
     CALL MPI_COMM_RANK(PETSC_COMM_WORLD,my_petscworld_rank,code)

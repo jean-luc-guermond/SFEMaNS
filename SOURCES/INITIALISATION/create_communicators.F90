@@ -3,8 +3,7 @@ MODULE create_communicators
   PRIVATE
 CONTAINS
   SUBROUTINE create_cart_comm(ndim,comm_cart,comm_one_d,coord_cart)
-#include "petsc/finclude/petsc.h"
-    USE petsc
+    USE petscmpi
     IMPLICIT NONE
     INTEGER, DIMENSION(:), INTENT(IN)  :: ndim
     INTEGER,               INTENT(OUT) :: comm_cart

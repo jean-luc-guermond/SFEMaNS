@@ -1,6 +1,5 @@
 MODULE two_dim_metis_distribution
-  !#include "petsc/finclude/petsc.h"
-  USE petsc
+  USE petscmpi
   PUBLIC :: reorder_mesh, free_mesh_after
   PRIVATE
   REAL(KIND=8) :: epsilon = 1.d-10
@@ -31,16 +30,13 @@ CONTAINS
     INTEGER :: dim, nb_neigh, edge, m, ms, n, nb, numflag, p, wgtflag, new_dof, j, &
          news, ns, nws, msop, nsop, proc, iop, ncon
     LOGICAL               :: test=.FALSE.
-    !REAL(KIND=8), DIMENSION(:), ALLOCATABLE  :: tpwgts !Up to petsc.3.7.7
-    !REAL(KIND=8), DIMENSION(1)               :: ubvec !Up to petsc.3.7.7
-    REAL(KIND=4), DIMENSION(:), ALLOCATABLE  :: tpwgts !(JLG, Feb 20, 2019) Up from petsc.3.8.4,
-    REAL(KIND=4), DIMENSION(1)               :: ubvec  !petsc peoples changed metis types
+    REAL(KIND=8), DIMENSION(:), ALLOCATABLE  :: tpwgts !Up to petsc.3.7.7
+    REAL(KIND=8), DIMENSION(1)               :: ubvec !Up to petsc.3.7.7
+    !REAL(KIND=4), DIMENSION(:), ALLOCATABLE  :: tpwgts !(JLG, Feb 20, 2019) Up from petsc.3.8.4,
+    !REAL(KIND=4), DIMENSION(1)               :: ubvec  !petsc peoples changed metis types
     INTEGER, DIMENSION(METIS_NOPTIONS)       :: metis_opt
 
-#include "petsc/finclude/petsc.h"
-    PetscErrorCode :: ierr
-    PetscMPIInt    :: rank , nb_proc
-    MPI_Comm       :: communicator
+    INTEGER :: rank , nb_proc, ierr, communicator
     CALL MPI_Comm_rank(communicator,rank,ierr)
     !CALL MPI_Comm_size(PETSC_COMM_WORLD,nb_proc,ierr)
 

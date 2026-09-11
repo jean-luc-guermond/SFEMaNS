@@ -1,11 +1,15 @@
 MODULE fourier_to_real_for_vtu
+  !-----------
+  USE petscvec
+  USE petscmat
+  USE petscksp
+  USE petscmpi
+  !-----------
   USE my_util
   USE dyn_line
   USE def_type_mesh
   USE sub_plot
   USE input_data
-#include "petsc/finclude/petsc.h"
-  USE petsc
   PUBLIC :: sfemans_initialize_postprocessing
   PUBLIC :: transfer_fourier_to_real, make_vtu_file_2D
   PUBLIC :: vtu_3d
@@ -44,15 +48,15 @@ MODULE fourier_to_real_for_vtu
   LOGICAL,  SAVE                            :: if_first_rot_h=.TRUE.
   LOGICAL,  SAVE                            :: if_first_rot_u=.TRUE.
   INTEGER, DIMENSION(:), POINTER            :: vizu_list_mode
-  MPI_Comm                                  :: fourier_communicator
-  MPI_Comm, DIMENSION(2)                    :: vizu_grad_curl_comm
-  Mat                                       :: mat_grad_phi
-  Mat                                       :: mat_rot_h
-  Mat                                       :: mat_rot_u
-  Vec                                       :: vx_phi, vb_phi, vx_phi_ghost
-  KSP                                       :: ksp_grad_phi
-  KSP                                       :: ksp_rot_h
-  KSP                                       :: ksp_rot_u
+  INTEGER                                  :: fourier_communicator
+  INTEGER, DIMENSION(2)                    :: vizu_grad_curl_comm
+  TYPE(tMat)                                       :: mat_grad_phi
+  TYPE(tMat)                                       :: mat_rot_h
+  TYPE(tMat)                                       :: mat_rot_u
+  TYPE(tVec)                                      :: vx_phi, vb_phi, vx_phi_ghost
+  TYPE(tKSP)                                       :: ksp_grad_phi
+  TYPE(tKSP)                                       :: ksp_rot_h
+  TYPE(tKSP)                                       :: ksp_rot_u
 CONTAINS
 
   SUBROUTINE sfemans_initialize_postprocessing(comm_one_d, vv_mesh_in, pp_mesh, H_mesh, phi_mesh, temp_mesh, &
@@ -70,9 +74,9 @@ CONTAINS
     INTEGER,          DIMENSION(:), TARGET :: list_mode_in
     INTEGER, OPTIONAL,              INTENT(IN) :: opt_nb_plane
     INTEGER                                    :: code
-    PetscErrorCode                             :: ierr
-    PetscMPIInt                                :: rank, nb_procs, petsc_rank
-    MPI_Comm, DIMENSION(2)                     :: comm_one_d
+    INTEGER                             :: ierr
+    INTEGER                                :: rank, nb_procs, petsc_rank
+    INTEGER, DIMENSION(2)                     :: comm_one_d
     CALL MPI_Comm_rank(PETSC_COMM_WORLD,petsc_rank,ierr)
     CALL MPI_Comm_rank(comm_one_d(2), rank, ierr)
     CALL MPI_Comm_size(comm_one_d(2), nb_procs, ierr)
@@ -299,8 +303,8 @@ CONTAINS
     REAL(KIND=8)       :: norm
     INTEGER            :: rank_S, rank_F, nb_S
     !===Declare PETSC===============================================================
-    PetscErrorCode :: ierr
-    MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
+    INTEGER :: ierr
+    INTEGER, DIMENSION(:), POINTER  :: comm_one_d
 
 
     IF (PRESENT(opt_grad_curl)) THEN !=== compute rot_u for P3
@@ -626,9 +630,9 @@ CONTAINS
     REAL(KIND=8)                               :: pi, dtheta, theta
     INTEGER                                    :: i, k, m, n, np_b, np_e, np_loc, np_loc_max, &
          TYPE_VEC, nb_angle, count, dim, np1
-    PetscErrorCode :: ierr
-    PetscMPIInt    :: rank, nb_procs
-    MPI_Comm       :: communicator
+    INTEGER :: ierr
+    INTEGER    :: rank, nb_procs
+    INTEGER       :: communicator
     CALL MPI_Comm_rank(communicator, rank, ierr)
     CALL MPI_Comm_size(communicator, nb_procs, ierr)
 
@@ -846,9 +850,9 @@ CONTAINS
     INTEGER, POINTER, DIMENSION(:)            :: glob_to_loc
     LOGICAL, DIMENSION(mesh%np)               :: virgin
     INTEGER                                   :: count, m, m_glob, n, i, q, r, loop_rank
-    PetscErrorCode :: ierr
-    PetscMPIInt    :: rank, nb_procs
-    MPI_Comm       :: communicator
+    INTEGER :: ierr
+    INTEGER    :: rank, nb_procs
+    INTEGER       :: communicator
 
     !===Deal with empty mesh
     IF (mesh%me==0) THEN
@@ -942,7 +946,7 @@ CONTAINS
     INTEGER, DIMENSION(mesh_grad_phi%gauss%n_w) :: i_loc
     INTEGER               :: i, mode, m, l, j_loc, k, nj
     REAL(KIND=8)          :: ray, drdthetadz
-    PetscErrorCode                              :: ierr
+    INTEGER                              :: ierr
 
 
     param_grad_phi%it_max=1
@@ -1036,7 +1040,7 @@ CONTAINS
     INTEGER, DIMENSION(mesh_rot_h%gauss%n_w) :: i_loc
     INTEGER               :: i, mode, m, l, j_loc, k, nj
     REAL(KIND=8)          :: ray, drdthetadz
-    PetscErrorCode                              :: ierr
+    INTEGER                              :: ierr
 
     param_rot_h%it_max=1
     param_rot_h%rel_tol=1.d-6
@@ -1138,7 +1142,7 @@ CONTAINS
     INTEGER, DIMENSION(mesh_in%gauss%n_w) :: i_loc
     INTEGER               :: i, mode, m, l, j_loc, k, nj
     REAL(KIND=8)          :: ray, drdthetadz
-    PetscErrorCode                              :: ierr
+    INTEGER                              :: ierr
 
     param_rot_u%it_max=1
     param_rot_u%rel_tol=1.d-6
@@ -1509,9 +1513,9 @@ CONTAINS
     INTEGER                                   :: j, it
     CHARACTER(LEN=200), DIMENSION(:), POINTER :: file_list
     CHARACTER(LEN=3)                          :: st_rank, st_it
-    PetscErrorCode                            :: ierr
-    PetscMPIInt                               :: rank, nb_procs
-    MPI_Comm                                  :: communicator
+    INTEGER                            :: ierr
+    INTEGER                               :: rank, nb_procs
+    INTEGER                                  :: communicator
     CALL MPI_Comm_rank(communicator, rank, ierr)
     CALL MPI_Comm_size(communicator, nb_procs, ierr)
     ALLOCATE(file_list(nb_procs))

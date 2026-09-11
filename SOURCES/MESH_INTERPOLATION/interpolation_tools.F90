@@ -53,14 +53,12 @@ CONTAINS
    END SUBROUTINE backup_suite
 
    SUBROUTINE max_controle(cont, comm)
-#include "petsc/finclude/petsc.h"
-      USE petsc
+      USE petscmpi
       IMPLICIT NONE
       INTEGER, DIMENSION(:) :: cont
       INTEGER, DIMENSION(:), ALLOCATABLE :: tmp
       INTEGER :: np
-      MPI_Comm           :: comm
-      PetscErrorCode     :: ierr
+      INTEGER :: ierr, comm
 
       np = SIZE(cont)
       ALLOCATE(tmp(np))
@@ -72,16 +70,14 @@ CONTAINS
    END SUBROUTINE max_controle
 
    SUBROUTINE somme_spatiale(field, comm, cont)
-#include "petsc/finclude/petsc.h"
-      USE petsc
+      USE petscmpi
       IMPLICIT NONE
       REAL(KIND = 8), DIMENSION(:, :, :) :: field
       REAL(KIND = 8), DIMENSION(:, :, :), ALLOCATABLE :: tmp
       INTEGER :: np, i, j, n2, n3
       INTEGER, DIMENSION(:), OPTIONAL :: cont
 
-      MPI_Comm        :: comm
-      PetscErrorCode  :: ierr
+      INTEGER  :: comm, ierr
 
       np = SIZE(field, 1)
       n2 = SIZE(field, 2)
@@ -119,7 +115,7 @@ CONTAINS
       INTEGER, DIMENSION(:) :: l_t_g
       LOGICAL :: is_in
       INTEGER :: i2, i3, n1, n2, n3, m1, n
-      MPI_Comm                         :: comm
+      INTEGER :: comm
 
       n = mesh_out%np
       n1 = SIZE(in_field, 1)

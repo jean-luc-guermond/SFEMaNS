@@ -32,8 +32,7 @@ CONTAINS
     REAL(KIND=8),                   INTENT(IN)     :: time
     TYPE(periodic_type),            INTENT(IN)     :: temp_per
     TYPE(petsc_csr_LA)                             :: temp_1_LA
-#include "petsc/finclude/petsc.h"
-    MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d_temp
+    INTEGER, DIMENSION(:), POINTER  :: comm_one_d_temp
 
 
     IF (inputs%if_temperature_with_T) THEN

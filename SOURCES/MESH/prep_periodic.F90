@@ -375,26 +375,30 @@ CONTAINS
   END SUBROUTINE list_periodic
 
   SUBROUTINE periodic_matrix_petsc(n_bord, list, perlist, matrix, LA)
+    !----------------
+    USE petscvec
+    USE petscmat
+    !----------------
     USE dyn_line
     USE def_type_mesh
     USE my_util
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     INTEGER                         , INTENT(IN) :: n_bord
     TYPE(dyn_int_line), DIMENSION(:), INTENT(IN) :: list, perlist
     TYPE(petsc_csr_la)              , INTENT(IN) :: LA
     INTEGER, PARAMETER                           :: nmaxcols = 300
     INTEGER                                      :: ncols
-    INTEGER, DIMENSION(nmaxcols)                 :: cols
-    REAL(KIND=8), DIMENSION(nmaxcols)            :: vals
+   !  INTEGER, DIMENSION(nmaxcols)                 :: cols
+   !  REAL(KIND=8), DIMENSION(nmaxcols)            :: vals
+      INTEGER,        DIMENSION(:), POINTER :: cols
+      REAL(KIND = 8), DIMENSION(:), POINTER :: vals
     INTEGER, DIMENSION(:), ALLOCATABLE           :: n_cols_i
     INTEGER, DIMENSION(1)                        :: idxn
     INTEGER, DIMENSION(:,:), ALLOCATABLE         :: jdxn
     REAL(KIND=8), DIMENSION(:,:), ALLOCATABLE    :: vals_pi
     INTEGER                                      :: n, l, i, pi, n_D, k
-    Mat                                          :: matrix
-    PetscErrorCode                               :: ierr
+    TYPE(tMat)                                          :: matrix
+    INTEGER                               :: ierr
 
     CALL MatSetOption (matrix, MAT_ROW_ORIENTED, PETSC_FALSE, ierr)
     CALL MatSetOption (matrix, MAT_KEEP_NONZERO_PATTERN, PETSC_TRUE, ierr)
@@ -454,10 +458,11 @@ CONTAINS
   END SUBROUTINE periodic_matrix_petsc
 
   SUBROUTINE periodic_rhs_petsc(n_bord, list, perlist, v_rhs, LA)
+    !-----------
+    USE petscvec
+    !-----------
     USE dyn_line
     USE def_type_mesh
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     INTEGER                         , INTENT(IN) :: n_bord
     TYPE(dyn_int_line), DIMENSION(:), INTENT(IN) :: list, perlist
@@ -465,8 +470,8 @@ CONTAINS
     INTEGER, DIMENSION(:), ALLOCATABLE           :: idxn, jdxn
     REAL(KIND=8), DIMENSION(:), ALLOCATABLE      :: vals, bs
     INTEGER                                      :: n, k, n_D
-    Vec                                          :: v_rhs
-    PetscErrorCode                               :: ierr
+    TYPE(tVec)                                         :: v_rhs
+    INTEGER                               :: ierr
 
 
     DO k = 1, SIZE(LA%loc_to_glob,1)

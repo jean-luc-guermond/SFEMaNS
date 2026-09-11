@@ -34,8 +34,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)     :: conc_to_H
     TYPE(periodic_type),            INTENT(IN)     :: H_phi_per
     TYPE(petsc_csr_LA)                             :: LA_H, LA_pmag, LA_phi, LA_mhd
-#include "petsc/finclude/petsc.h"
-    MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
+    INTEGER, DIMENSION(:), POINTER  :: comm_one_d
 
     IF (inputs%type_pb=='mhs') THEN
        IF (inputs%if_maxwell_with_H) THEN

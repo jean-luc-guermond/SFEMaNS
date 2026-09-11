@@ -1,10 +1,14 @@
 !Authors Jean-Luc Guermond, Hugues Faller, 2019
 !cf https://doi.org/10.1137/18M1209301
 MODULE update_taylor_navier_stokes
+   !------------
+   USE petscvec
+   USE petscmat
+   USE petscksp
+   USE petscmpi
+   !------------
   USE my_util
   USE input_data
-#include "petsc/finclude/petsc.h"
-  USE petsc
   PUBLIC :: navier_stokes_taylor, init_velocity_pressure_taylor
   PRIVATE
 
@@ -30,8 +34,7 @@ CONTAINS
     TYPE(periodic_type),            INTENT(IN)     :: vvz_per, pp_per
     TYPE(petsc_csr_LA)                             :: vv_3_LA, pp_1_LA
     LOGICAL                                        :: if_navier_stokes_with_taylor = .TRUE. !HF We will nead a 'read_data'
-#include "petsc/finclude/petsc.h"
-    MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d_ns
+    INTEGER, DIMENSION(:), POINTER  :: comm_one_d_ns
 
     IF (if_navier_stokes_with_taylor) THEN
        IF (inputs%taylor_order==3) THEN
@@ -186,14 +189,14 @@ CONTAINS
     DATA my_zero, one, three/0.d0,1.d0,3.d0/
 ! VB 04/03/2026
     !===Communicators for Petsc, in space and Fourier
-    PetscErrorCode                   :: ierr
-    MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
-    Mat, DIMENSION(:), POINTER, SAVE :: vel_mat
-    Mat,                        SAVE :: mass_mat
-    Vec,                        SAVE :: vb_3_145, vb_3_236, vx_3, vx_3_ghost
-    Vec,                        SAVE :: pb_1,    pb_2,    px_1, px_1_ghost
-    KSP, DIMENSION(:), POINTER, SAVE :: vel_ksp
-    KSP,                        SAVE :: mass_ksp
+    INTEGER                   :: ierr
+    INTEGER, DIMENSION(:), POINTER  :: comm_one_d
+    TYPE(tMat), DIMENSION(:), POINTER, SAVE :: vel_mat
+    TYPE(tMat),                        SAVE :: mass_mat
+    TYPE(tVec),                        SAVE :: vb_3_145, vb_3_236, vx_3, vx_3_ghost
+    TYPE(tVec),                        SAVE :: pb_1,    pb_2,    px_1, px_1_ghost
+    TYPE(tKSP), DIMENSION(:), POINTER, SAVE :: vel_ksp
+    TYPE(tKSP),                        SAVE :: mass_ksp
     !===END OF DECLARATIONS
 
     IF (once) THEN
@@ -773,14 +776,14 @@ CONTAINS
     DATA my_zero, one, three/0.d0,1.d0,3.d0/
 ! VB 04/03/2026
     !===Communicators for Petsc, in space and Fourier
-    PetscErrorCode                   :: ierr
-    MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
-    Mat, DIMENSION(:), POINTER, SAVE :: vel_mat
-    Mat,                        SAVE :: mass_mat
-    Vec,                        SAVE :: vb_3_145, vb_3_236, vx_3, vx_3_ghost
-    Vec,                        SAVE :: pb_1,    pb_2,    px_1, px_1_ghost
-    KSP, DIMENSION(:), POINTER, SAVE :: vel_ksp
-    KSP,                        SAVE :: mass_ksp
+    INTEGER                   :: ierr
+    INTEGER, DIMENSION(:), POINTER  :: comm_one_d
+    TYPE(tMat), DIMENSION(:), POINTER, SAVE :: vel_mat
+    TYPE(tMat),                        SAVE :: mass_mat
+    TYPE(tVec),                        SAVE :: vb_3_145, vb_3_236, vx_3, vx_3_ghost
+    TYPE(tVec),                        SAVE :: pb_1,    pb_2,    px_1, px_1_ghost
+    TYPE(tKSP), DIMENSION(:), POINTER, SAVE :: vel_ksp
+    TYPE(tKSP),                        SAVE :: mass_ksp
     !===END OF DECLARATION
 
     IF (once) THEN
@@ -1516,7 +1519,7 @@ CONTAINS
     LOGICAL, SAVE :: once=.TRUE.
     !===FOR FFT_PAR_CROSS_PROD_DCL
     INTEGER       :: nb_procs, bloc_size, m_max_pad, code
-    MPI_Comm       :: communicator
+    INTEGER       :: communicator
 
     IF (once) THEN
        once = .FALSE.
@@ -1620,7 +1623,7 @@ CONTAINS
     INTEGER ::  m, l , i , ni, code
     INTEGER,      DIMENSION(mesh%gauss%n_w)     :: j_loc
     REAL(KIND=8)   :: ray
-    MPI_Comm                                    :: communicator
+    INTEGER                                    :: communicator
     r_loc = 0.d0
     vol_loc = 0.d0
 
@@ -1677,9 +1680,7 @@ CONTAINS
     REAL(KIND=8) :: ray
     INTEGER :: m, l , i, k, index, TYPE_VEC
     INTEGER :: nb_procs, m_max_pad, bloc_size
-#include "petsc/finclude/petsc.h"
-    PetscErrorCode                   :: ierr
-    MPI_Comm                         :: communicator
+    INTEGER :: ierr, communicator
 
     IF ((der_ord-0)*(der_ord-1)*(der_ord-2)*(der_ord-3)/=0)THEN
        CALL error_Petsc('BUG in rhs_ns_gauss_3x3_taylor, der_ord not correct')
@@ -1877,8 +1878,6 @@ CONTAINS
 
   SUBROUTINE qs_diff_mass_vect_3x3_taylor(type_op, LA, mesh, visco, mass, lambda, i_mode, mode, matrix)
     USE def_type_mesh
-#include "petsc/finclude/petsc.h"
-    USE petsc
     USE my_util
     USE input_data
     IMPLICIT NONE
@@ -1901,9 +1900,8 @@ CONTAINS
     INTEGER                                                      :: ix, jx, iglob, jglob
     INTEGER,      DIMENSION(mesh%gauss%n_w)                      :: jj_loc
     REAL(KIND=8) :: viscomode, hm
-    !#include "petsc/finclude/petsc.h"
-    Mat                                         :: matrix
-    PetscErrorCode                              :: ierr
+    TYPE(tMat)                                         :: matrix
+    INTEGER                              :: ierr
 
     CALL MatZeroEntries (matrix, ierr)
     CALL MatSetOption (matrix, MAT_ROW_ORIENTED, PETSC_FALSE, ierr)

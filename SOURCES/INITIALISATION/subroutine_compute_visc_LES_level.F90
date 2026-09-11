@@ -4,8 +4,6 @@
 !
 MODULE subroutine_compute_visc_LES_level
   USE my_util
-#include "petsc/finclude/petsc.h"
-  USE petsc
   PUBLIC :: compute_visc_LES_level
   PRIVATE
 
@@ -13,6 +11,10 @@ CONTAINS
 
   SUBROUTINE compute_visc_LES_level(comm_one_d,time, cc_1_LA, list_mode, cc_mesh, cn_m1, cn, &
        my_par_cc, cc_list_dirichlet_sides, cc_per, nb_inter, visc_entro_level, ff_entro)
+    !==============================
+    USE petscvec
+    USE petscmat
+    USE petscksp
     !==============================
     USE def_type_mesh
     USE fem_M_axi
@@ -61,14 +63,14 @@ CONTAINS
     REAL(KIND=8) :: tps, tps_tot, tps_cumul
     !Communicators for Petsc, in space and Fourier------------------------------
     !#include "petsc/finclude/petsc.h"
-    PetscErrorCode                   :: ierr
-    MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
-    Mat, DIMENSION(:), POINTER, SAVE :: cc_mat
-    Vec,                        SAVE :: cb_1, cb_2, cx_1, cx_1_ghost
-    KSP, DIMENSION(:), POINTER, SAVE :: cc_ksp
-    Vec,                        SAVE :: cb_reg_1, cb_reg_2 !vectors for level set regularization
-    Mat, DIMENSION(:), POINTER, SAVE :: cc_reg_mat
-    KSP, DIMENSION(:), POINTER, SAVE :: cc_reg_ksp
+    INTEGER                   :: ierr
+    INTEGER, DIMENSION(:), POINTER  :: comm_one_d
+    TYPE(tMat), DIMENSION(:), POINTER, SAVE :: cc_mat
+    TYPE(tVec),                        SAVE :: cb_1, cb_2, cx_1, cx_1_ghost
+    TYPE(tKSP), DIMENSION(:), POINTER, SAVE :: cc_ksp
+    TYPE(tVec),                        SAVE :: cb_reg_1, cb_reg_2 !vectors for level set regularization
+    TYPE(tMat), DIMENSION(:), POINTER, SAVE :: cc_reg_mat
+    TYPE(tKSP), DIMENSION(:), POINTER, SAVE :: cc_reg_ksp
     !------------------------------END OF DECLARATION--------------------------------------
 
     IF (once) THEN

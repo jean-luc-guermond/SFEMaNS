@@ -1,4 +1,7 @@
 PROGRAM prog_write_ns
+   !----------------
+   USE petscdmda, ONLY: PETSC_NULL_CHARACTER, PetscInitialize
+   !----------------
   USE def_type_mesh
   USE initialization
   USE my_util
@@ -10,8 +13,7 @@ PROGRAM prog_write_ns
   USE verbose
   USE sub_plot
   USE chaine_caractere
-#include "petsc/finclude/petsc.h"
-  USE petsc
+  USE petscmpi
   USE restart
   USE def_type_field_mag
   USE def_type_field_vel
@@ -51,10 +53,10 @@ PROGRAM prog_write_ns
   !===Timing======================================================================
 !  REAL(KIND=8)                                    :: tps, tploc, tploc_max=0.d0
   !===Declare PETSC===============================================================
-  PetscErrorCode :: ierr
-  PetscMPIInt    :: rank
-  MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d, comm_one_d_ns, comm_one_d_temp
-  MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d_conc
+  INTEGER :: ierr
+  INTEGER    :: rank
+  INTEGER, DIMENSION(:), POINTER  :: comm_one_d, comm_one_d_ns, comm_one_d_temp
+  INTEGER, DIMENSION(:), POINTER  :: comm_one_d_conc
 
   !===Start PETSC and MPI (mandatory)=============================================
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)

@@ -1,6 +1,8 @@
 MODULE symmetric_field
-#include "petsc/finclude/petsc.h"
-  USE petsc
+   !------------
+   USE petscmpi
+   USE petscvec
+   !------------
   USE def_type_mesh
   USE st_matrix
 
@@ -15,7 +17,7 @@ MODULE symmetric_field
      INTEGER, DIMENSION(:), ALLOCATABLE :: ltg_LA
      TYPE(petsc_csr_LA), ALLOCATABLE    :: LA
      TYPE(mesh_type), POINTER           :: mesh
-     Vec,                ALLOCATABLE :: vec_mz, vec_mz_ghost
+     TYPE(tVec),                ALLOCATABLE :: vec_mz, vec_mz_ghost
    CONTAINS
      PROCEDURE          :: init_symmetry_tool
      PROCEDURE          :: apply_symmetry
@@ -38,8 +40,8 @@ CONTAINS
       TYPE(mesh_type), TARGET, INTENT(IN)           :: mesh
       INTEGER,          POINTER, DIMENSION(:)     :: ifrom
       INTEGER                                     :: n
-      MPI_Comm       :: communicator
-      PetscErrorCode       :: ierr
+      INTEGER       :: communicator
+      INTEGER       :: ierr
 
 !=== initialize mapping for symmetric points
       ALLOCATE(self%ltg_LA(mesh%np))
@@ -70,8 +72,8 @@ CONTAINS
       REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT) :: vv_out
       INTEGER                                     :: i, j
       INTEGER, ALLOCATABLE, DIMENSION(:)          :: ix
-      PetscScalar, POINTER :: x_loc(:)
-      PetscErrorCode       :: ierr
+      REAL(KIND=8), POINTER :: x_loc(:)
+      INTEGER       :: ierr
 
       ALLOCATE(ix(self%mesh%np))
       ix = self%ltg_LA-1
@@ -83,9 +85,9 @@ CONTAINS
             CALL VecAssemblyEnd(self%vec_mz, ierr)
             CALL VecGhostUpdateBegin(self%vec_mz,INSERT_VALUES, SCATTER_FORWARD,ierr)
             CALL VecGhostUpdateEnd(self%vec_mz,INSERT_VALUES, SCATTER_FORWARD, ierr)
-            CALL VecGetArrayF90(self%vec_mz_ghost, x_loc, ierr)
+            CALL VecGetArray(self%vec_mz_ghost, x_loc, ierr)
             vv_out(:,i,j) = x_loc(:)
-            CALL VecRestoreArrayF90(self%vec_mz_ghost, x_loc, ierr)
+            CALL VecRestoreArray(self%vec_mz_ghost, x_loc, ierr)
          END DO
       END DO
       DEALLOCATE(ix)
@@ -107,7 +109,7 @@ CONTAINS
       REAL(KIND=8)        :: xx, zz, eps
 
       INTEGER    :: code, nb_procs, rank
-      MPI_Comm   :: communicator
+      INTEGER   :: communicator
       INTEGER, DIMENSION(:), ALLOCATABLE :: loc_to_glob, mesh_glob_i_d
       REAL(KIND=8), DIMENSION(:,:), ALLOCATABLE :: mesh_glob_rr
       INTEGER, DIMENSION(:,:), ALLOCATABLE :: mesh_glob_jj
@@ -301,7 +303,7 @@ CONTAINS
     INTEGER,                      POINTER                  :: me
     INTEGER      :: i
     INTEGER      :: m_max_c
-    MPI_Comm       :: communicator
+    INTEGER       :: communicator
 
 
     CALL gauss(mesh)
@@ -368,7 +370,7 @@ CONTAINS
     INTEGER,                      POINTER                  :: me
     INTEGER      :: i
     INTEGER      :: m_max_c
-    MPI_Comm       :: communicator
+    INTEGER       :: communicator
 
 
     CALL gauss(mesh)
@@ -427,8 +429,7 @@ CONTAINS
     INTEGER,                      POINTER                  :: me
     INTEGER      :: i, k
     INTEGER      :: m_max_c
-    !#include "petsc/finclude/petsc.h"
-    MPI_Comm       :: communicator
+    INTEGER       :: communicator
 
 
     CALL gauss(mesh)
@@ -483,8 +484,7 @@ CONTAINS
     INTEGER      :: i, k, j, l, m
     INTEGER      :: m_max_c
     INTEGER      :: code
-    !#include "petsc/finclude/petsc.h"
-    MPI_Comm       :: communicator
+    INTEGER       :: communicator
 
     m_max_c = size(list_mode)
     vv_n     = 0.d0

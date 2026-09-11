@@ -161,14 +161,13 @@ CONTAINS
    END SUBROUTINE dirichlet_nodes_local
 
    SUBROUTINE Dirichlet_M_parallel(matrix, glob_js_D)
-#include "petsc/finclude/petsc.h"
-      use petsc
+      USE petscmat
       IMPLICIT NONE
       INTEGER, DIMENSION(:), INTENT(IN) :: glob_js_D
       INTEGER :: n_D
       INTEGER, DIMENSION(:), POINTER :: bubu_test
-      Mat            :: matrix
-      PetscErrorCode :: ierr
+      TYPE(tMat)            :: matrix
+      INTEGER :: ierr
       n_D = SIZE(glob_js_D)
       ALLOCATE(bubu_test(n_D))
       IF (n_D/=0) THEN
@@ -184,15 +183,14 @@ CONTAINS
    END SUBROUTINE Dirichlet_M_parallel
 
    SUBROUTINE dirichlet_rhs(js_D, bs_D, b)
+      USE petscvec
       USE def_type_mesh
-#include "petsc/finclude/petsc.h"
-      USE petsc
       IMPLICIT NONE
       INTEGER, DIMENSION(:) :: js_D
       REAL(KIND = 8), DIMENSION(:) :: bs_D
       INTEGER :: n_D
-      Vec            :: b
-      PetscErrorCode :: ierr
+      TYPE(tVec)           :: b
+      INTEGER :: ierr
       n_D = SIZE(js_D)
       IF (n_D/=0) THEN
          CALL VecSetValues(b, n_D, js_D, bs_D, INSERT_VALUES, ierr)

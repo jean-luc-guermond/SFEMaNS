@@ -3,6 +3,12 @@
 !Revised for PETSC, Jean-Luc Guermond, Franky Luddens, January 2011
 !
 MODULE subroutine_temperature_with_T
+   !------------
+   USE petscvec
+   USE petscmat
+   USE petscksp
+   USE petscmpi
+   !------------
   USE my_util
   USE boundary
 
@@ -29,8 +35,6 @@ CONTAINS
     USE st_matrix
     USE fft_parallele
     USE input_data
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     REAL(KIND=8)                                        :: time, dt
     INTEGER,      DIMENSION(:),     INTENT(IN)          :: list_mode
@@ -67,11 +71,11 @@ CONTAINS
     REAL(KIND=8), DIMENSION(2,temp_mesh%gauss%l_G*temp_mesh%me)                  :: rr_gauss
     INTEGER,      DIMENSION(temp_mesh%gauss%n_w)                               :: j_loc
     !Communicators for Petsc, in space and Fourier----------------------------------------
-    PetscErrorCode                   :: ierr
-    MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
-    Mat, DIMENSION(:), POINTER, SAVE :: temp_mat
-    Vec,                        SAVE :: cb_1, cb_2, cx_1, cx_1_ghost
-    KSP, DIMENSION(:), POINTER, SAVE :: temp_ksp
+    INTEGER                   :: ierr
+    INTEGER, DIMENSION(:), POINTER  :: comm_one_d
+    TYPE(tMat), DIMENSION(:), POINTER, SAVE :: temp_mat
+    TYPE(tVec),                        SAVE :: cb_1, cb_2, cx_1, cx_1_ghost
+    TYPE(tKSP), DIMENSION(:), POINTER, SAVE :: temp_ksp
     !------------------------------END OF DECLARATION--------------------------------------
 
     IF (once) THEN
@@ -250,8 +254,6 @@ CONTAINS
     USE fft_parallele, ONLY: FFT_PAR_DOT_PROD_DCL, FFT_PAR_PROD_DCL
     USE chaine_caractere
     USE boundary
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type), TARGET                     :: mesh
     INTEGER,      DIMENSION(:),     INTENT(IN)  :: list_mode
@@ -270,7 +272,7 @@ CONTAINS
     REAL(KIND=8)                                :: ray, tps
     REAL(KIND=8), DIMENSION(3)                  :: temps
     INTEGER                                     :: code, m_max_pad, bloc_size, nb_procs
-    MPI_Comm       :: communicator
+    INTEGER       :: communicator
 
     CALL gauss(mesh)
     jj => mesh%jj
@@ -353,8 +355,6 @@ CONTAINS
     !===========================
     !moyenne
     USE def_type_mesh
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type)                             :: mesh
     REAL(KIND=8), DIMENSION(:)  ,   INTENT(IN)  :: tempn
@@ -363,7 +363,7 @@ CONTAINS
     INTEGER ::  m, l , i , ni, code
     INTEGER,      DIMENSION(mesh%gauss%n_w)     :: j_loc
     REAL(KIND=8)   :: ray
-    MPI_Comm                                    :: communicator
+    INTEGER                                    :: communicator
     r_loc = 0.d0
 
     DO m = 1, mesh%dom_me
@@ -389,8 +389,6 @@ CONTAINS
     USE fft_parallele
     USE def_type_mesh
     USE input_data
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                INTENT(IN) :: mesh
     INTEGER,      DIMENSION(:),     INTENT(IN) :: list_mode
@@ -405,7 +403,7 @@ CONTAINS
     REAL(KIND=8)                                                      :: rad
     !===FOR FFT
     INTEGER                                     :: nb_procs, bloc_size, m_max_pad, code
-    MPI_Comm                                    :: communicator
+    INTEGER                                    :: communicator
 
     ! We compute the pyromagnetic coefficient term: T_dchi_dT_coeff(T) * 1/2 * D(H**2)/Dt
 

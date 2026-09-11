@@ -4,9 +4,10 @@
 !Revised, Jean-Luc Guermond, Franky Luddens, January, 2011
 !
 MODULE fem_M_axi
+   !-----------
+   USE petscmat
+   !-----------
   USE def_type_mesh
-#include "petsc/finclude/petsc.h"
-  USE petsc
 CONTAINS
 
 
@@ -26,9 +27,8 @@ CONTAINS
     REAL(KIND=8)                                           :: ray, eps1, eps2
     INTEGER      :: m, l, ni, nj, i, j, iglob, jglob, k_max, n_w, ix, jx, ki, kj
     REAL(KIND=8) :: viscolm, xij
-    !#include "petsc/finclude/petsc.h"
-    Mat                                         :: matrix
-    PetscErrorCode                              :: ierr
+    TYPE(tMat)   :: matrix
+    INTEGER      :: ierr
     CALL MatZeroEntries (matrix, ierr)
     CALL MatSetOption (matrix, MAT_ROW_ORIENTED, PETSC_FALSE, ierr)
 
@@ -140,9 +140,8 @@ CONTAINS
     REAL(KIND=8)                                           :: ray
     INTEGER      :: m, l, ni, nj, i, j, iglob, jglob, n_w
     REAL(KIND=8) :: viscolm, xij
-    !#include "petsc/finclude/petsc.h"
-    Mat                                         :: matrix
-    PetscErrorCode                              :: ierr
+    TYPE(tMat)   :: matrix
+    INTEGER      :: ierr
     CALL MatZeroEntries (matrix, ierr)
     CALL MatSetOption (matrix, MAT_ROW_ORIENTED, PETSC_FALSE, ierr)
 
@@ -218,9 +217,8 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,mesh%gauss%n_ws) :: h_phii_phij ! MODIFICATION: terms for Robin
     INTEGER, DIMENSION(1:1)                                  :: coeff_index ! MODIFICATION: index of robin coefficient in the list
 
-    !#include "petsc/finclude/petsc.h"
-    Mat                                         :: matrix
-    PetscErrorCode                              :: ierr
+    TYPE(tMat)  :: matrix
+    INTEGER     :: ierr
     CALL MatZeroEntries (matrix, ierr)
     CALL MatSetOption (matrix, MAT_ROW_ORIENTED, PETSC_FALSE, ierr)
 
@@ -329,9 +327,8 @@ CONTAINS
     INTEGER,      DIMENSION(3*mesh%gauss%n_w)                    :: idxn, jdxn
     INTEGER                                                      :: ix, jx, iglob, jglob
     INTEGER,      DIMENSION(mesh%gauss%n_w)                      :: jj_loc
-    !#include "petsc/finclude/petsc.h"
-    Mat                                         :: matrix
-    PetscErrorCode                              :: ierr
+    TYPE(tMat)  :: matrix
+    INTEGER     :: ierr
 
     CALL MatZeroEntries (matrix, ierr)
     CALL MatSetOption (matrix, MAT_ROW_ORIENTED, PETSC_FALSE, ierr)
@@ -422,9 +419,8 @@ CONTAINS
     INTEGER,      DIMENSION(mesh%gauss%n_w)                      :: jj_loc
     REAL(KIND=8) ::  hm, viscomode, hh
     !=====DEUX INSERTIONS VALEURS A FAIRE....
-    !#include "petsc/finclude/petsc.h"
-    Mat                                         :: matrix
-    PetscErrorCode                              :: ierr
+    TYPE(tMat)  :: matrix
+    INTEGER     :: ierr
 
     CALL MatZeroEntries (matrix, ierr)
     CALL MatSetOption (matrix, MAT_ROW_ORIENTED, PETSC_FALSE, ierr)
@@ -746,9 +742,8 @@ CONTAINS
     INTEGER,      DIMENSION(mesh%gauss%n_w)                      :: jj_loc
     REAL(KIND=8) :: viscomode, hm
     !=====DEUX INSERTIONS VALEURS A FAIRE....
-    !#include "petsc/finclude/petsc.h"
-    Mat                                         :: matrix
-    PetscErrorCode                              :: ierr
+    TYPE(tMat)  :: matrix
+    INTEGER     :: ierr
 
     CALL MatZeroEntries (matrix, ierr)
     CALL MatSetOption (matrix, MAT_ROW_ORIENTED, PETSC_FALSE, ierr)
@@ -1228,9 +1223,8 @@ CONTAINS
     INTEGER,      DIMENSION(mesh%gauss%n_w)                      :: jj_loc
     REAL(KIND=8) :: viscomode, hh, hm
     !=====DEUX INSERTIONS VALEURS A FAIRE....
-    !#include "petsc/finclude/petsc.h"
-    Mat                                         :: matrix
-    PetscErrorCode                              :: ierr
+    TYPE(tMat) :: matrix
+    INTEGER    :: ierr
 
     CALL MatZeroEntries (matrix, ierr)
     CALL MatSetOption (matrix, MAT_ROW_ORIENTED, PETSC_FALSE, ierr)
@@ -1569,9 +1563,8 @@ CONTAINS
     REAL(KIND=8) :: viscomode, hm
   
     !=====DEUX INSERTIONS VALEURS A FAIRE....
-    !#include "petsc/finclude/petsc.h"
-    Mat                                         :: matrix
-    PetscErrorCode                              :: ierr
+    TYPE(tMat)  :: matrix
+    INTEGER     :: ierr
 
     CALL MatZeroEntries (matrix, ierr)
     CALL MatSetOption (matrix, MAT_ROW_ORIENTED, PETSC_FALSE, ierr)
@@ -2038,9 +2031,8 @@ CONTAINS
     INTEGER,      DIMENSION(mesh%gauss%n_w)                :: idxm, idxn
     INTEGER :: m, l, ni, nj, i, j, iglob, jglob
     REAL(KIND=8) :: al, x, ray
-    !#include "petsc/finclude/petsc.h"
-    Mat                                         :: matrix
-    PetscErrorCode                              :: ierr
+    TYPE(tMat)   :: matrix
+    INTEGER      :: ierr
     CALL MatZeroEntries (matrix, ierr)
 
     DO m = 1, mesh%dom_me
@@ -2085,9 +2077,8 @@ CONTAINS
     INTEGER,      DIMENSION(mesh%gauss%n_w)     :: jj_loc
     INTEGER :: m, l, ni, nj, i, j, iglob, jglob
     REAL(KIND=8) :: al, x, ray
-    !#include "petsc/finclude/petsc.h"
-    Mat            :: matrix
-    PetscErrorCode :: ierr
+    TYPE(tMat)   :: matrix
+    INTEGER      :: ierr
     CALL MatZeroEntries (matrix, ierr)
 
     DO m = 1, mesh%dom_me
@@ -2140,9 +2131,8 @@ CONTAINS
     REAL(KIND=8)                                           :: ray
     INTEGER      :: m, l, ni, nj, i, j, iglob, jglob, n_w
     REAL(KIND=8) :: viscolm, xij, hm, viscomode, hh
-    !#include "petsc/finclude/petsc.h"
-    Mat                                         :: matrix
-    PetscErrorCode                              :: ierr
+    TYPE(tMat)   :: matrix
+    INTEGER      :: ierr
     CALL MatZeroEntries (matrix, ierr)
     CALL MatSetOption (matrix, MAT_ROW_ORIENTED, PETSC_FALSE, ierr)
 
@@ -2222,9 +2212,8 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%n_ws,mesh%gauss%n_ws) :: h_phii_phij ! terms for Robin
     INTEGER, DIMENSION(1:1)                                  :: coeff_index ! index of robin coefficient in the list
 
-    !#include "petsc/finclude/petsc.h"
-    Mat                                         :: matrix
-    PetscErrorCode                              :: ierr
+    TYPE(tMat)  :: matrix
+    INTEGER     :: ierr
     CALL MatZeroEntries (matrix, ierr)
     CALL MatSetOption (matrix, MAT_ROW_ORIENTED, PETSC_FALSE, ierr)
 

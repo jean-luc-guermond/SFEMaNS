@@ -3,13 +3,17 @@
 !Revised for PETSC, Jean-Luc Guermond, Franky Luddens, January 2011
 !
 MODULE subroutine_level_set
-  USE my_util
-#include "petsc/finclude/petsc.h"
-  USE petsc
-  PUBLIC :: three_level_level_set
-  PUBLIC :: smb_compr_visc_entro_gauss_fft_par, smb_visc_entro_gauss_fft_par, qs_regul_M !for LES
-  PRIVATE
-  REAL(KIND=8)  :: max_velocity_at_tn
+   !------------
+   USE petscvec
+   USE petscmat
+   USE petscksp
+   USE petscmpi
+   !------------
+   USE my_util
+   PUBLIC :: three_level_level_set
+   PUBLIC :: smb_compr_visc_entro_gauss_fft_par, smb_visc_entro_gauss_fft_par, qs_regul_M !for LES
+   PRIVATE
+   REAL(KIND=8)  :: max_velocity_at_tn
   !===JLG Sept 27, 2016
   !  LOGICAL :: compression_mthd_JLG=.TRUE.
   !===JLG Sept 27, 2016
@@ -80,18 +84,17 @@ CONTAINS
     REAL(KIND=8) :: one, my_zero, three
     DATA my_zero, one, three/0.d0,1.d0,3.d0/
     !Communicators for Petsc, in space and Fourier------------------------------
-    !#include "petsc/finclude/petsc.h"
-    PetscErrorCode                   :: ierr
-    MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
-    Mat, DIMENSION(:), POINTER, SAVE :: cc_mat
-    Vec,                        SAVE :: cb_1, cb_2, cx_1, cx_1_ghost
-    KSP, DIMENSION(:), POINTER, SAVE :: cc_ksp
-    Vec,                        SAVE :: cb_reg_1, cb_reg_2 !vectors for level set regularization
-    Mat, DIMENSION(:), POINTER, SAVE :: cc_reg_mat
-    KSP, DIMENSION(:), POINTER, SAVE :: cc_reg_ksp
-    Vec,                        SAVE :: cb_tension_1, cb_tension_2 !vectors for level set tension
-    Mat, DIMENSION(:), POINTER, SAVE :: cc_tension_mat
-    KSP, DIMENSION(:), POINTER, SAVE :: cc_tension_ksp
+    INTEGER                   :: ierr
+    INTEGER, DIMENSION(:), POINTER  :: comm_one_d
+    TYPE(tMat), DIMENSION(:), POINTER, SAVE :: cc_mat
+    TYPE(tVec),                        SAVE :: cb_1, cb_2, cx_1, cx_1_ghost
+    TYPE(tKSP), DIMENSION(:), POINTER, SAVE :: cc_ksp
+    TYPE(tVec),                        SAVE :: cb_reg_1, cb_reg_2 !vectors for level set regularization
+    TYPE(tMat), DIMENSION(:), POINTER, SAVE :: cc_reg_mat
+    TYPE(tKSP), DIMENSION(:), POINTER, SAVE :: cc_reg_ksp
+    TYPE(tVec),                        SAVE :: cb_tension_1, cb_tension_2 !vectors for level set tension
+    TYPE(tMat), DIMENSION(:), POINTER, SAVE :: cc_tension_mat
+    TYPE(tKSP), DIMENSION(:), POINTER, SAVE :: cc_tension_ksp
     !------------------------------END OF DECLARATION--------------------------------------
 
     IF (once) THEN
@@ -456,8 +459,7 @@ CONTAINS
     REAL(KIND=8)   :: ray, tps
     REAL(KIND=8), DIMENSION(3)                  :: temps
     INTEGER                                     :: m_max_pad, bloc_size
-    !#include "petsc/finclude/petsc.h"
-    MPI_Comm       :: communicator
+    INTEGER       :: communicator
 
     CALL gauss(mesh)
     jj => mesh%jj
@@ -558,8 +560,7 @@ CONTAINS
     INTEGER,                      POINTER       :: me
     REAL(KIND=8)   :: ray, tps, norm_vel_L2, Volume_3D
     INTEGER                                     :: m_max_pad, bloc_size
-    !#include "petsc/finclude/petsc.h"
-    MPI_Comm, DIMENSION(2)       :: communicator
+    INTEGER, DIMENSION(2)       :: communicator
 
     CALL gauss(mesh)
     jj => mesh%jj
@@ -639,8 +640,7 @@ CONTAINS
     INTEGER,      DIMENSION(mesh%gauss%n_w)  :: j_loc
     INTEGER                                  :: m, l , i , ni, code
     REAL(KIND=8)                             :: ray
-    !#include "petsc/finclude/petsc.h"
-    MPI_Comm                                 :: communicator
+    INTEGER                                 :: communicator
 
     vol_loc = 0.d0
     DO m = 1, mesh%dom_me
@@ -673,9 +673,8 @@ CONTAINS
     REAL(KIND=8)                                           :: ray
     INTEGER      :: m, l, ni, nj, i, j, iglob, jglob, n_w
     REAL(KIND=8) :: viscolm, xij, viscomode, hm, hh
-    !#include "petsc/finclude/petsc.h"
-    Mat                                         :: matrix
-    PetscErrorCode                              :: ierr
+    TYPE(tMat)                                         :: matrix
+    INTEGER                              :: ierr
 
     CALL MatZeroEntries (matrix, ierr)
     CALL MatSetOption (matrix, MAT_ROW_ORIENTED, PETSC_FALSE, ierr)
@@ -765,8 +764,7 @@ CONTAINS
     REAL(KIND=8)                                :: ray, hh, hm
     INTEGER                                     :: m, l , i, mode, index, k
     INTEGER                                     :: m_max_pad, bloc_size
-    !#include "petsc/finclude/petsc.h"
-    MPI_Comm, DIMENSION(2)       :: communicator
+    INTEGER, DIMENSION(2)       :: communicator
 
     CALL gauss(mesh)
     jj => mesh%jj
@@ -857,8 +855,7 @@ CONTAINS
     REAL(KIND=8)                                :: ray, hh, hm
     INTEGER                                     :: m, l , i, mode, index, k
     INTEGER                                     :: m_max_pad, bloc_size
-    !#include "petsc/finclude/petsc.h"
-    MPI_Comm, DIMENSION(2)       :: communicator
+    INTEGER, DIMENSION(2)       :: communicator
 
     CALL gauss(mesh)
     jj => mesh%jj
@@ -926,8 +923,7 @@ CONTAINS
     REAL(KIND=8)                                :: int_c1_in, int_c1_in_loc, int_c1_in_F
     REAL(KIND=8)                                :: int_c2_in, int_c2_in_loc, int_c2_in_F
     INTEGER                                     :: m, l , i, index, code
-    !#include "petsc/finclude/petsc.h"
-    MPI_Comm, DIMENSION(2)       :: communicator
+    INTEGER, DIMENSION(2)       :: communicator
 
     int_c1_in_loc = 0.d0
     int_c2_in_loc = 0.d0
@@ -992,9 +988,8 @@ CONTAINS
     INTEGER,      DIMENSION(mesh%gauss%n_w)     :: idxm
     INTEGER                                     :: i, m, l, ni, iglob, index
     REAL(KIND=8)                                :: fl, ray
-    !#include "petsc/finclude/petsc.h"
-    Vec                                         :: vect
-    PetscErrorCode                              :: ierr
+    TYPE(tVec)                                        :: vect
+    INTEGER                              :: ierr
 
     CALL VecSet(vect, 0.d0, ierr)
 

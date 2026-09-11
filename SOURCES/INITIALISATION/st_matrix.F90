@@ -6,7 +6,6 @@ MODULE st_matrix
    PUBLIC :: st_aij_csr_glob_block, extract, create_my_ghost, st_aij_csr, tri_jlg, st_aij_csr_loc_block, &
         st_csr, st_csr_block, st_csr_bloc, st_aij_csr_glob_block_with_extra_layer
    PRIVATE
-#include "petsc/finclude/petsc.h"
 CONTAINS
 
    !=========================================================================
@@ -31,18 +30,17 @@ CONTAINS
    END SUBROUTINE create_my_ghost
 
    SUBROUTINE extract(xghost, ks, ke, LA, phi)
-#include "petsc/finclude/petscvec.h"
-      use petsc
+      use petscvec
       USE def_type_mesh
       IMPLICIT NONE
       REAL(KIND = 8), DIMENSION(:), INTENT(OUT) :: phi
       type(petsc_csr_LA) :: LA
       INTEGER :: ks, ke
       INTEGER :: k, start, fin, nbghost, s, f
-      Vec            :: xghost
-      PetscErrorCode :: ierr
-      PetscScalar, POINTER :: x_loc(:)
-      CALL VecGetArrayF90(xghost, x_loc, ierr)
+      TYPE(tVec)           :: xghost
+      INTEGER :: ierr
+      REAL(KIND=8), POINTER :: x_loc(:)
+      CALL VecGetArray(xghost, x_loc, ierr)
       DO k = ks, ke
          start = SUM(LA%dom_np(1:k - 1)) + 1
          fin = start + LA%dom_np(k) - 1
@@ -56,14 +54,13 @@ CONTAINS
          f = s + nbghost - 1
          phi(s:f) = x_loc(start:fin)
       END DO
-      CALL VecRestoreArrayF90(xghost, x_loc, ierr)
+      CALL VecRestoreArray(xghost, x_loc, ierr)
    END SUBROUTINE extract
 
    SUBROUTINE block_index(communicator, kmax, mesh, loc_to_glob_LA)
       USE def_type_mesh
       USE my_util
-#include "petsc/finclude/petsc.h"
-      use petsc
+      use petscmpi
       IMPLICIT NONE
       TYPE(mesh_type) :: mesh
       INTEGER, INTENT(IN) :: kmax
@@ -71,7 +68,7 @@ CONTAINS
       INTEGER, DIMENSION(:), POINTER :: dom_np, disp
       INTEGER :: code, nb_procs, rank
       INTEGER :: i, p, n, k, i_loc, proc, iglob
-      MPI_Comm       :: communicator
+      INTEGER       :: communicator
 
       CALL MPI_COMM_SIZE(communicator, nb_procs, code)
       CALL MPI_COMM_RANK(communicator, rank, code)
@@ -181,8 +178,7 @@ CONTAINS
       INTEGER, DIMENSION(SIZE(mesh_glob%jj, 1)) :: jj_loc
       INTEGER, DIMENSION(:), ALLOCATABLE :: per_loc
       LOGICAL :: out
-      !#include "petsc/finclude/petsc.h"
-      MPI_Comm       :: communicator
+      INTEGER :: communicator
 
       CALL block_index(communicator, kmax, mesh, LA%loc_to_glob)
       nw = SIZE(mesh%jj, 1)
@@ -317,8 +313,7 @@ CONTAINS
       INTEGER, DIMENSION(:), ALLOCATABLE :: per_loc
       LOGICAL :: out
 
-      !#include "petsc/finclude/petsc.h"
-      MPI_Comm       :: communicator
+      INTEGER :: communicator
 
       CALL block_index(communicator, kmax, mesh, LA%loc_to_glob)
       nw = SIZE(mesh%jj, 1)
@@ -596,8 +591,7 @@ CONTAINS
       INTEGER, DIMENSION(:, :), ALLOCATABLE :: ja_work
       INTEGER, DIMENSION(:), ALLOCATABLE :: nja, a_d
       INTEGER, DIMENSION(SIZE(mesh%jj, 1)) :: j_loc
-      !#include "petsc/finclude/petsc.h"
-      MPI_Comm       :: communicator
+      INTEGER       :: communicator
 
       CALL block_index(communicator, kmax, mesh, LA%loc_to_glob)
       nw = SIZE(mesh%jj, 1)

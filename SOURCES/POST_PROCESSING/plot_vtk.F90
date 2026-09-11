@@ -1,6 +1,7 @@
 MODULE plot_vtk
-#include "petsc/finclude/petsc.h"
-  USE petsc
+  !----------
+  USE petscmpi
+  !----------
   PUBLIC ::  create_pvd_file, check_list,&
        make_vtu_file_arpack
   PUBLIC :: create_vtu_file_axi3D
@@ -17,9 +18,9 @@ CONTAINS
     INTEGER, DIMENSION(SIZE(file_list)) :: check_mylist
     INTEGER                             :: check, n, count
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm                            :: communicator
-    PetscMPIInt                         :: rank, nb_procs
-    PetscErrorCode                      :: ierr
+    INTEGER                            :: communicator
+    INTEGER                         :: rank, nb_procs
+    INTEGER                      :: ierr
     CALL MPI_Comm_rank(communicator, rank, ierr)
     CALL MPI_Comm_size(communicator, nb_procs, ierr)
 
@@ -402,9 +403,9 @@ CONTAINS
     CHARACTER(LEN=200), DIMENSION(1)          :: file_list
     CHARACTER(LEN=3)                          :: st_rank
     !#include "petsc/finclude/petsc.h"
-    PetscErrorCode                            :: ierr
-    PetscMPIInt                               :: rank, nb_procs
-    MPI_Comm                                  :: communicator
+    INTEGER                            :: ierr
+    INTEGER                               :: rank, nb_procs
+    INTEGER                                  :: communicator
     CALL MPI_Comm_rank(communicator, rank, ierr)
     CALL MPI_Comm_size(communicator, nb_procs, ierr)
 
@@ -555,9 +556,7 @@ CONTAINS
     CHARACTER(LEN=200), DIMENSION(:), POINTER :: file_list
     CHARACTER(LEN=3)                          :: st_rank, st_it
     !#include "petsc/finclude/petsc.h"
-    PetscErrorCode                            :: ierr
-    PetscMPIInt                               :: rank, nb_procs
-    MPI_Comm                                  :: communicator
+    INTEGER  :: rank, nb_procs, ierr, communicator
     CALL MPI_Comm_rank(communicator, rank, ierr)
     CALL MPI_Comm_size(communicator, nb_procs, ierr)
     ALLOCATE(file_list(nb_procs))
@@ -772,9 +771,9 @@ CONTAINS
 !!$    CHARACTER(LEN=200), DIMENSION(:), POINTER :: file_list
 !!$    CHARACTER(LEN=3)                          :: st_rank, st_it
 !!$!#include "petsc/finclude/petsc.h"
-!!$    PetscErrorCode                            :: ierr
-!!$    PetscMPIInt                               :: rank, nb_procs
-!!$    MPI_Comm                                  :: comm
+!!$    INTEGER                            :: ierr
+!!$    INTEGER                               :: rank, nb_procs
+!!$    INTEGER                                  :: comm
 !!$    CALL MPI_Comm_rank(comm, rank, ierr)
 !!$    CALL MPI_Comm_size(comm, nb_procs, ierr)
 !!$    ALLOCATE(file_list(nb_procs))
@@ -816,9 +815,9 @@ CONTAINS
 !!$    CHARACTER(len=4)                       :: tit
 !!$    CHARACTER(len=3)                       :: st_it
 !!$    INTEGER                                :: unit_file, l, lblank, start, i, j, nit
-!!$    PetscErrorCode :: ierr
-!!$    PetscMPIInt    :: rank, nb_procs
-!!$    MPI_Comm       :: comm
+!!$    INTEGER :: ierr
+!!$    INTEGER    :: rank, nb_procs
+!!$    INTEGER       :: comm
 !!$
 !!$    CALL MPI_Comm_rank(comm,rank,ierr)
 !!$    CALL MPI_Comm_size(comm,nb_procs,ierr)
@@ -1044,9 +1043,9 @@ CONTAINS
 !!$    CHARACTER(LEN=200), DIMENSION(:), POINTER :: file_list
 !!$    CHARACTER(LEN=3)                          :: st_rank
 !!$!#include "petsc/finclude/petsc.h"
-!!$    PetscErrorCode                            :: ierr
-!!$    PetscMPIInt                               :: rank, nb_procs
-!!$    MPI_Comm                                  :: communicator
+!!$    INTEGER                            :: ierr
+!!$    INTEGER                               :: rank, nb_procs
+!!$    INTEGER                                  :: communicator
 !!$    CALL MPI_Comm_rank(communicator, rank, ierr)
 !!$    CALL MPI_Comm_size(communicator, nb_procs, ierr)
 !!$    ALLOCATE(file_list(nb_procs))

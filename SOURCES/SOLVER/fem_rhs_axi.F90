@@ -1,6 +1,7 @@
 MODULE fem_rhs_axi
-#include "petsc/finclude/petsc.h"
-  USE petsc
+   !---------
+   USE petscvec
+   !---------
   USE my_util
   USE input_data
 CONTAINS
@@ -54,9 +55,8 @@ CONTAINS
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,2) :: u0loci, uloci
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%l_Gs, 2) :: dwni_loc
 !!$ WARNING FL Variables removed (used for edge_stab)
-    !#include "petsc/finclude/petsc.h"
-    Vec            :: vb_2_14,vb_2_23,vb_1_5,vb_1_6
-    PetscErrorCode :: ierr
+    TYPE(tVec)           :: vb_2_14,vb_2_23,vb_1_5,vb_1_6
+    INTEGER :: ierr
 
     CALL VecSet(vb_2_14, 0.d0, ierr)
     CALL VecSet(vb_2_23, 0.d0, ierr)
@@ -410,9 +410,8 @@ CONTAINS
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,2) :: u0loci, uloci
 !!$    REAL(KIND=8), DIMENSION(mesh%gauss%n_w,mesh%gauss%l_Gs, 2) :: dwni_loc
 !!$ WARNING FL Variables removed (used for edge_stab)
-    !#include "petsc/finclude/petsc.h"
-    Vec            :: vb_145, vb_236
-    !PetscErrorCode :: ierr
+    TYPE(tVec)           :: vb_145, vb_236
+    !INTEGER :: ierr
 
     !CALL VecSet(vb_3_145, 0.d0, ierr)
     !CALL VecSet(vb_3_236, 0.d0, ierr)
@@ -656,8 +655,8 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:), POINTER, SAVE :: aij_p1p2, aij_p2p3
     REAL(KIND=8), DIMENSION(:,:), POINTER :: aij
     LOGICAL :: once_p1p2=.TRUE., once_p2p3=.TRUE.
-    Vec            :: pb_1, pb_2
-    PetscErrorCode :: ierr
+    TYPE(tVec)           :: pb_1, pb_2
+    INTEGER :: ierr
 
     !===JLG July 20th, 2019
     !===Construct aij_p2, aij_p3
@@ -806,9 +805,8 @@ CONTAINS
     REAL(KIND=8)   :: ray
     INTEGER, DIMENSION(vv_mesh%gauss%n_w) :: j_loc
     INTEGER, DIMENSION(pp_mesh%gauss%n_w) :: jc_loc
-    !#include "petsc/finclude/petsc.h"
-    Vec            :: pb_1, pb_2
-    PetscErrorCode :: ierr
+    TYPE(tVec)           :: pb_1, pb_2
+    INTEGER :: ierr
 
     !===Test for correctness
     IF (inputs%type_fe_velocity.NE.2) THEN
@@ -904,9 +902,8 @@ CONTAINS
     INTEGER,      DIMENSION(mesh%gauss%n_w)     :: idxm
     INTEGER ::  i, m, l, ni, iglob
     REAL(KIND=8) :: fl, ray
-    !#include "petsc/finclude/petsc.h"
-    Vec                                         :: vect
-    PetscErrorCode                              :: ierr
+    TYPE(tVec)   :: vect
+    INTEGER      :: ierr
 
     CALL VecSet(vect, 0.d0, ierr)
 
@@ -951,9 +948,8 @@ CONTAINS
     INTEGER,      DIMENSION(mesh%gauss%n_w)     :: idxm
     INTEGER ::  i, m, l, ni, iglob, index
     REAL(KIND=8) :: fl, ray
-    !#include "petsc/finclude/petsc.h"
-    Vec                                         :: vect
-    PetscErrorCode                              :: ierr
+    TYPE(tVec)   :: vect
+    INTEGER      :: ierr
 
     CALL VecSet(vect, 0.d0, ierr)
 
@@ -999,9 +995,8 @@ CONTAINS
     INTEGER,      DIMENSION(mesh%gauss%n_w)     :: idxm
     INTEGER ::  i, m, l, ni, iglob, index
     REAL(KIND=8) :: fl, ray
-    !#include "petsc/finclude/petsc.h"
-    Vec                                         :: vect
-    PetscErrorCode                              :: ierr
+    TYPE(tVec)   :: vect
+    INTEGER      :: ierr
 
     CALL VecSet(vect, 0.d0, ierr)
 
@@ -1073,9 +1068,8 @@ CONTAINS
     REAL(KIND=8),                            SAVE :: type_fe
     INTEGER :: m, l , i , ni , index, TYPE_VEC, k
     INTEGER :: nw, ix, ki, iglob
-    !#include "petsc/finclude/petsc.h"
-    Vec            :: vb_2_14,vb_2_23,vb_1_5,vb_1_6
-    PetscErrorCode :: ierr
+    TYPE(tVec)           :: vb_2_14,vb_2_23,vb_1_5,vb_1_6
+    INTEGER :: ierr
 
     CALL VecSet(vb_2_14, 0.d0, ierr)
     CALL VecSet(vb_2_23, 0.d0, ierr)
@@ -1319,9 +1313,8 @@ CONTAINS
     REAL(KIND=8),                            SAVE :: type_fe
     INTEGER :: m, l , i , ni , index, TYPE_VEC, k
     INTEGER :: nw, ix, ki, iglob
-    !#include "petsc/finclude/petsc.h"
-    Vec            :: vb_3_145, vb_3_236
-    PetscErrorCode :: ierr
+    TYPE(tVec)           :: vb_3_145, vb_3_236
+    INTEGER :: ierr
 
     CALL VecSet(vb_3_145, 0.d0, ierr)
     CALL VecSet(vb_3_236, 0.d0, ierr)
@@ -1560,9 +1553,8 @@ CONTAINS
     REAL(KIND=8)   :: ray
     INTEGER        :: m, l , i , ni , index, TYPE_VEC, k
     INTEGER        :: nw, ix, ki, iglob
-    !#include "petsc/finclude/petsc.h"
-    Vec            :: vb_2_14,vb_2_23,vb_1_5,vb_1_6
-    PetscErrorCode :: ierr
+    TYPE(tVec)           :: vb_2_14,vb_2_23,vb_1_5,vb_1_6
+    INTEGER :: ierr
 
     CALL VecSet(vb_2_14, 0.d0, ierr)
     CALL VecSet(vb_2_23, 0.d0, ierr)
@@ -1711,9 +1703,8 @@ CONTAINS
     REAL(KIND=8)   :: ray
     INTEGER        :: m, l , i , ni , index, TYPE_VEC, k
     INTEGER        :: nw, ix, ki, iglob
-    !#include "petsc/finclude/petsc.h"
-    Vec            :: vb_3_145,vb_3_236
-    PetscErrorCode :: ierr
+    TYPE(tVec)           :: vb_3_145,vb_3_236
+    INTEGER :: ierr
 
     CALL VecSet(vb_3_145, 0.d0, ierr)
     CALL VecSet(vb_3_236, 0.d0, ierr)
@@ -1843,9 +1834,8 @@ CONTAINS
     INTEGER                                  :: nws, ms, ls, ni, i, iglob
     REAL(KIND=8)                             :: ray, x
     INTEGER, DIMENSION(1:1)                  :: coeff_index
-    !#include "petsc/finclude/petsc.h"
-    Vec                                      :: cb
-    PetscErrorCode                           :: ierr
+    TYPE(tVec)                                     :: cb
+    INTEGER                           :: ierr
 
     nws = mesh%gauss%n_ws
 
@@ -1895,9 +1885,8 @@ CONTAINS
     INTEGER,      DIMENSION(mesh%gauss%n_ws)   :: js_loc
     INTEGER                                    :: index
 
-    !#include "petsc/finclude/petsc.h"
-    Vec                                      :: cb_1, cb_2
-    PetscErrorCode                           :: ierr
+    TYPE(tVec) :: cb_1, cb_2
+    INTEGER    :: ierr
 
     nws = mesh%gauss%n_ws
     CALL gauss(mesh)
@@ -1975,9 +1964,8 @@ CONTAINS
     REAL(KIND=8)                             :: ray, x
     INTEGER, DIMENSION(1:1)                  :: coeff_index
 
-    !#include "petsc/finclude/petsc.h"
-    Vec                                      :: cb
-    PetscErrorCode                           :: ierr
+    TYPE(tVec)  :: cb
+    INTEGER     :: ierr
 
     nws = mesh%gauss%n_ws
 
@@ -2010,8 +1998,6 @@ CONTAINS
     USE associate_gauss
     USE boundary
     USE input_data
-#include "petsc/finclude/petsc.h"
-    USE petsc
     IMPLICIT NONE
     TYPE(mesh_type),                       INTENT(IN)   :: mesh
     REAL(KIND=8), DIMENSION(:,:),          INTENT(IN)   :: j_H_to_conc
@@ -2022,8 +2008,8 @@ CONTAINS
     INTEGER      :: i, ni, ms, ls, nws, iglob
     INTEGER, DIMENSION(mesh%gauss%n_ws)    :: idxm
     TYPE(petsc_csr_LA)                     :: conc_1_LA
-    PetscErrorCode          :: ierr
-    Vec                     :: cb_1, cb_2
+    INTEGER      :: ierr
+    TYPE(tVec)   :: cb_1, cb_2
 
     CALL gauss(mesh)
     nws = mesh%gauss%n_ws

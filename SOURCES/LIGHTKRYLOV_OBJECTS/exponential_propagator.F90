@@ -5,8 +5,6 @@ MODULE exponential_propagator
    USE def_type_mesh
    USE def_type_field_mag
    USE def_type_field_vel
-#include "petsc/finclude/petsc.h"
-   USE petsc
    USE my_util
  
 IMPLICIT NONE
@@ -48,10 +46,9 @@ IMPLICIT NONE
        INTEGER                                         :: m_max_c
        INTEGER,      POINTER,      DIMENSION(:)        :: list_mode
        !===Declare PETSC===============================================================
-       PetscErrorCode :: ierr
-       PetscMPIInt    :: rank
-       MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d, comm_one_d_ns, comm_one_d_temp
-       MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d_conc
+       INTEGER :: rank, ierr
+       INTEGER, DIMENSION(:), POINTER  :: comm_one_d, comm_one_d_ns, comm_one_d_temp
+       INTEGER, DIMENSION(:), POINTER  :: comm_one_d_conc
 
 #ifdef USE_LIGHTKRYLOV
    TYPE, EXTENDS(abstract_exptA_linop_rdp), PUBLIC :: exptA_linop
@@ -75,6 +72,9 @@ IMPLICIT NONE
 !===========================
    
    SUBROUTINE exptA_matvec(self, vec_in, vec_out)
+      !-----------------
+      USE petscmpi
+      !-----------------
 
       USE COMM_LK_SFEM
       USE def_type_mesh
@@ -86,8 +86,6 @@ IMPLICIT NONE
       USE verbose
       USE sub_plot
       USE chaine_caractere
-#include "petsc/finclude/petsc.h"
-      USE petsc
      
       CLASS(exptA_linop),              INTENT(INOUT) :: self
 #ifdef USE_LIGHTKRYLOV

@@ -16,8 +16,7 @@ message (STATUS "${ROOT}")
 
 
 set(CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS_DEBUG} ${debug_bounds}")
-set(CMAKE_Fortran_FLAGS_RELEASE ${release_bounds} CACHE STRING
-	  " Flags used by the compiler during release builds. ")
+set(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE} ${release_bounds}")
 set(CMAKE_Fortran_FLAGS_NATIVE ${native_bounds} CACHE STRING
 	    " Flags used by the compiler during native builds. ")
 

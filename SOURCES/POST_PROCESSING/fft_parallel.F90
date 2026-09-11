@@ -2,8 +2,9 @@
 !Authors:  Katarzyna Boronska, Jean-Luc Guermond, Copyrights 2007
 !
 MODULE fft_parallele
-#include "petsc/finclude/petsc.h"
-  USE petsc
+  !-----------
+  USE petscmpi
+  !-----------
   IMPLICIT NONE
   PUBLIC :: FFT_PAR_REAL, FFT_PAR_CROSS_PROD_DCL, &
        FFT_PAR_DOT_PROD_DCL, FFT_PAR_PROD_DCL, FFT_PAR_DIV_DCL, FFT_HEAVISIDE_DCL, &
@@ -48,7 +49,7 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm :: communicator
+    INTEGER :: communicator
 
     CALL MPI_COMM_SIZE(communicator, nb_procs, code)
     CALL MPI_COMM_RANK(communicator, rang, code)
@@ -174,7 +175,7 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm :: communicator
+    INTEGER :: communicator
 
     IF (PRESENT(temps)) temps = 0.d0
 
@@ -357,7 +358,7 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm :: communicator
+    INTEGER :: communicator
 
     IF (PRESENT(temps)) temps = 0.d0
 
@@ -529,7 +530,7 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm :: communicator
+    INTEGER :: communicator
 
     IF (PRESENT(temps)) temps = 0.d0
 
@@ -694,7 +695,7 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm :: communicator
+    INTEGER :: communicator
 
     IF (PRESENT(temps)) temps = 0.d0
 
@@ -863,7 +864,7 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm :: communicator
+    INTEGER :: communicator
 
     IF (PRESENT(temps)) temps = 0.d0
 
@@ -1053,7 +1054,7 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm :: communicator
+    INTEGER :: communicator
 
     IF (PRESENT(temps)) temps = 0.d0
 
@@ -1255,7 +1256,7 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm :: communicator
+    INTEGER :: communicator
 
     IF (PRESENT(temps)) temps = 0.d0
 
@@ -1448,7 +1449,7 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm :: communicator
+    INTEGER :: communicator
 
     np        = SIZE(V1_in,1)
     nb_field1 = SIZE(V1_in,2) ! Number of fields
@@ -1577,7 +1578,7 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm :: communicator
+    INTEGER :: communicator
 
     IF (PRESENT(temps)) temps = 0.d0
 
@@ -1845,8 +1846,8 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    PetscErrorCode :: ierr
-    MPI_Comm :: communicator
+    INTEGER :: ierr
+    INTEGER :: communicator
 
     IF (PRESENT(temps)) temps = 0.d0
 
@@ -2063,8 +2064,8 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    PetscErrorCode :: ierr
-    MPI_Comm :: communicator
+    INTEGER :: ierr
+    INTEGER :: communicator
 
     IF (PRESENT(temps)) temps = 0.d0
 
@@ -2292,7 +2293,7 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm :: communicator
+    INTEGER :: communicator
 
     IF (PRESENT(temps)) temps = 0.d0
 
@@ -2462,8 +2463,8 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm :: communicator
-    MPI_Comm :: communicator_S
+    INTEGER :: communicator
+    INTEGER :: communicator_S
     CALL MPI_COMM_RANK(communicator, rank, code)
 
     IF (PRESENT(temps)) temps = 0.d0
@@ -2735,8 +2736,8 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm :: communicator
-    MPI_Comm :: communicator_S
+    INTEGER :: communicator
+    INTEGER :: communicator_S
 
     CALL MPI_COMM_RANK(communicator, rank, code)
 
@@ -2974,8 +2975,8 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm :: communicator
-    PetscErrorCode         :: ierr
+    INTEGER :: communicator
+    INTEGER         :: ierr
 
     IF (PRESENT(temps)) temps = 0.d0
 
@@ -3205,7 +3206,7 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm :: communicator
+    INTEGER :: communicator
 
     CALL MPI_COMM_RANK(communicator, rank, code)
 
@@ -3455,7 +3456,7 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm :: communicator
+    INTEGER :: communicator
     CALL MPI_COMM_RANK(communicator, rank, code)
 
     IF (PRESENT(temps)) temps = 0.d0
@@ -3677,7 +3678,7 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm :: communicator
+    INTEGER :: communicator
 
     CALL MPI_COMM_RANK(communicator, rank, code)
 
@@ -3859,8 +3860,8 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm :: communicator_F
-    MPI_Comm :: communicator_S
+    INTEGER :: communicator_F
+    INTEGER :: communicator_S
 
     IF (PRESENT(temps)) temps = 0.d0
 
@@ -4101,7 +4102,7 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm :: communicator
+    INTEGER :: communicator
 
     CALL MPI_COMM_RANK(communicator, rank, code)
 
@@ -4331,7 +4332,7 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm :: communicator
+    INTEGER :: communicator
 
     CALL MPI_COMM_RANK(communicator, rank, code)
 
@@ -4488,7 +4489,7 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm :: communicator
+    INTEGER :: communicator
 
     np        = SIZE(V1_in,1)
     nb_field1 = SIZE(V1_in,2) ! Number of fields
@@ -4629,7 +4630,7 @@ CONTAINS
     ! Recall complexes must be rescaled
     ! End FFTW parameters
     !#include "petsc/finclude/petsc.h"
-    MPI_Comm :: communicator
+    INTEGER :: communicator
 
     CALL MPI_COMM_RANK(communicator, rank, code)
 

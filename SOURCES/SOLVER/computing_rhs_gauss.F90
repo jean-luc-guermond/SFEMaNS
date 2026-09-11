@@ -8,6 +8,9 @@ CONTAINS
        rhs_gauss, density, tempn, concn)
     !=================================
     !RHS for Navier-Stokes
+    !--------------
+    USE petscmpi
+    !--------------
     USE def_type_mesh
     USE my_util
     USE input_data
@@ -36,9 +39,7 @@ CONTAINS
     REAL(KIND=8) :: ray
     INTEGER :: m, l , i, k, index, TYPE
     INTEGER :: nb_procs, m_max_pad, bloc_size
-#include "petsc/finclude/petsc.h"
-    PetscErrorCode                   :: ierr
-    MPI_Comm                         :: communicator
+    INTEGER  :: ierr, communicator
 
     DO i = 1, SIZE(list_mode)
        DO k= 1, 6
@@ -149,6 +150,9 @@ CONTAINS
        pn, rotv_v, rhs_gauss, density, tempn, concn)
     !=================================
     !RHS for Residual of Navier-Stokes
+    !--------------
+    USE petscmpi
+    !--------------
     USE def_type_mesh
     USE my_util
     USE input_data
@@ -176,9 +180,7 @@ CONTAINS
     REAL(KIND=8) :: ray
     INTEGER      :: m, l , i, k, index
     INTEGER      :: nb_procs, m_max_pad, bloc_size
-#include "petsc/finclude/petsc.h"
-    PetscErrorCode                   :: ierr
-    MPI_Comm                         :: communicator
+    INTEGER      :: ierr, communicator
 
     DO i = 1, SIZE(list_mode)
        DO k = 1, 6
@@ -365,11 +367,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(2,vv_mesh%gauss%l_G*vv_mesh%dom_me)  :: rr_gauss
     REAL(KIND=8) :: ray
     INTEGER :: m, l , i, k, index
-#include "petsc/finclude/petsc.h"
-    PetscErrorCode                   :: ierr
-    PetscMPIInt                      :: rank
-    MPI_Comm                         :: communicator
-    CALL MPI_Comm_rank(communicator,rank,ierr)
+    INTEGER, INTENT(IN) :: communicator
     DO i = 1, SIZE(list_mode)
        DO k = 1, 6
           ff(:,k) = source_in_NS_momentum(k, vv_mesh%rr, list_mode(i), i, time, inputs%Re, 'ns', &

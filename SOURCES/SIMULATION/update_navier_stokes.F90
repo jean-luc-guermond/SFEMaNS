@@ -34,8 +34,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:),   INTENT(OUT)    :: visc_entro_level
     TYPE(periodic_type),            INTENT(IN)     :: vvz_per, pp_per
     TYPE(petsc_csr_LA)                             :: vv_3_LA, pp_1_LA
-#include "petsc/finclude/petsc.h"
-    MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d_ns
+    INTEGER, DIMENSION(:), POINTER  :: comm_one_d_ns
 
 
     IF (inputs%if_navier_stokes_art_comp) THEN !Artificial compression for multiphase Navier-Stokes equations

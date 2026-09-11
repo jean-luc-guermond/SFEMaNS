@@ -3,9 +3,13 @@
 !Revised for PETSC, Jean-Luc Guermond, Franky Luddens, January 2011
 !
 MODULE update_ns_consistent_pressure
+   !------------
+   USE petscvec
+   USE petscmat
+   USE petscksp
+   USE petscmpi
+   !------------
   USE my_util
-#include "petsc/finclude/petsc.h"
-  USE petsc
   USE subroutine_ns_with_m
   PUBLIC :: ns_consistent_pressure_with_u
   PRIVATE
@@ -95,13 +99,13 @@ CONTAINS
     !===End Other variables
 
     !Communicators for Petsc, in space and Fourier------------------------------
-    PetscErrorCode                   :: ierr
-    MPI_Comm, DIMENSION(:), POINTER  :: comm_one_d
-    Mat, DIMENSION(:), POINTER, SAVE :: vel_mat
-    Mat, DIMENSION(:), POINTER, SAVE :: press_mat
-    Vec,                        SAVE :: vb_3_145, vb_3_236, vx_3, vx_3_ghost
-    Vec,                        SAVE :: pb_1, pb_2, px_1, px_1_ghost
-    KSP, DIMENSION(:), POINTER, SAVE :: vel_ksp, press_ksp
+    INTEGER                   :: ierr
+    INTEGER, DIMENSION(:), POINTER  :: comm_one_d
+    TYPE(tMat), DIMENSION(:), POINTER, SAVE :: vel_mat
+    TYPE(tMat), DIMENSION(:), POINTER, SAVE :: press_mat
+    TYPE(tVec),                        SAVE :: vb_3_145, vb_3_236, vx_3, vx_3_ghost
+    TYPE(tVec),                        SAVE :: pb_1, pb_2, px_1, px_1_ghost
+    TYPE(tKSP), DIMENSION(:), POINTER, SAVE :: vel_ksp, press_ksp
     !------------------------------END OF DECLARATION--------------------------------------
 
     IF (once) THEN
@@ -548,7 +552,7 @@ CONTAINS
     LOGICAL, SAVE :: once=.TRUE.
     !===FOR FFT_PAR_CROSS_PROD_DCL
     INTEGER       :: nb_procs, bloc_size, m_max_pad, code
-    MPI_Comm       :: communicator
+    INTEGER       :: communicator
 
     IF (once) THEN
        once = .FALSE.
@@ -662,7 +666,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(3)                  :: temps
     !===FOR FFT_PAR_CROSS_PROD_DCL
     INTEGER       :: nb_procs, bloc_size, m_max_pad, code
-    MPI_Comm       :: communicator
+    INTEGER       :: communicator
 
     tps = user_time()
     DO i = 1, SIZE(list_mode)
@@ -757,7 +761,7 @@ CONTAINS
     REAL(KIND=8)                                                      :: rad
     !===FOR FFT
     INTEGER                                     :: nb_procs, bloc_size, m_max_pad, code
-    MPI_Comm                                    :: communicator
+    INTEGER                                    :: communicator
 
     ! We compute the Kelvin force: Kelvin force = chi_coeff(T) * grad(H**2/2)
 
@@ -833,7 +837,7 @@ CONTAINS
     REAL(KIND=8)                                                      :: rad
     !===FOR FFT
     INTEGER                                     :: nb_procs, bloc_size, m_max_pad, code
-    MPI_Comm                                    :: communicator
+    INTEGER                                    :: communicator
 
     ! We compute the Helmholtz force: Helmholtz force = - H**2/2 * grad(chi_coeff(T))
 
@@ -900,7 +904,7 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(INOUT)  :: scal_inout
     !===FOR FFT
     INTEGER                                     :: nb_procs, bloc_size, m_max_pad, code
-    MPI_Comm                                    :: communicator
+    INTEGER                                    :: communicator
 
     !===nb_procs and m_max_pad calculus for FFT
     CALL MPI_COMM_SIZE(communicator, nb_procs, code)
@@ -959,7 +963,7 @@ CONTAINS
     INTEGER ::  m, l , i , ni, code
     INTEGER,      DIMENSION(mesh%gauss%n_w)     :: j_loc
     REAL(KIND=8)   :: ray
-    MPI_Comm                                    :: communicator
+    INTEGER                                    :: communicator
     r_loc = 0.d0
     vol_loc = 0.d0
 
