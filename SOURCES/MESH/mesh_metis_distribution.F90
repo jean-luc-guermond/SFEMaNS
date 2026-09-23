@@ -44,12 +44,16 @@ CONTAINS
       REAL(KIND = 8) :: err
       LOGICAL :: test
       !===(JLG) Feb 20, 2019. Petsc developpers decide to use REAL(KIND=4) to interface with metis
-      REAL(KIND=8), DIMENSION(:), ALLOCATABLE  :: tpwgts
-      REAL(KIND=8), DIMENSION(1) :: ubvec
-      REAL(KIND=8)               :: one_K4=1.d0
-      !REAL(KIND = 4), DIMENSION(:), ALLOCATABLE :: tpwgts
-      !REAL(KIND = 4), DIMENSION(1) :: ubvec
-      !REAL(KIND = 4) :: one_K4 = 1.0
+      REAL(KIND=METIS_REAL_KIND), DIMENSION(:), ALLOCATABLE  :: tpwgts
+      REAL(KIND=METIS_REAL_KIND), DIMENSION(1) :: ubvec
+      REAL(KIND=METIS_REAL_KIND)               :: one_K4=1.d0   
+
+      ! REAL(KIND=8), DIMENSION(:), ALLOCATABLE  :: tpwgts
+      ! REAL(KIND=8), DIMENSION(1) :: ubvec
+      ! REAL(KIND=8)               :: one_K4=1.d0
+      ! !REAL(KIND = 4), DIMENSION(:), ALLOCATABLE :: tpwgts
+      ! !REAL(KIND = 4), DIMENSION(1) :: ubvec
+      ! !REAL(KIND = 4) :: one_K4 = 1.0
       !===(JLG)Feb 20, 2019.
       INTEGER, DIMENSION(METIS_NOPTIONS) :: metis_opt
       INTEGER    :: nb_proc, test_int
@@ -456,7 +460,6 @@ CONTAINS
          CALL METIS_PartGraphRecursive(me_phi, 1, xind_phi, xadj_phi, vwgt, vwgt, adjwgt, nb_proc, tpwgts, &
               ubvec, metis_opt, edge, part_phi)
       END IF
-WRITE(*,*) 'I end matis_part'
       !===End Create partitions
 
       !===Create global partition 'part'
