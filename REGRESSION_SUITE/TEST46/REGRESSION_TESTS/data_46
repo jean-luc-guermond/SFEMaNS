@@ -21,11 +21,11 @@
 ===Compute spectrum with LightKrylov? (true/false)
 .t.
 ===How many LK eigenvalues?
-3
+1
 ===How many simultaneous vectors for Krylov-Schur?
 30
 ===Absolute tolerance for LK eigenvalues?
-4.d-9
+5.d-9
 ===Compute vtu 3D of LK eigenvectors?
 .t.
 ============================================
