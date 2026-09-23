@@ -1,0 +1,283 @@
+===Is mesh file formatted (true/false)?
+.t.
+===Directory and name of mesh file
+'../../MESHES' 'MRI_R10_H10_0p2_0p05_0p15_0p7_1.FEM'
+!==========================================================================
+!          Mesh symmetry
+!==========================================================================
+===Is the mesh symmetric (true/false)?
+.f.
+===Number of processors in meridian section
+3
+===Number of processors in Fourier space
+1
+===Number of Fourier modes
+1
+===Select Fourier modes? (true/false)
+.f.
+===List of Fourier modes (if select_mode=.TRUE.)
+0
+===Problem type: (nst, mxw, mhd, fhd)
+'mhd'
+===Solve Navier-Stokes with u (true) or m (false)?
+.t.
+===Restart on magnetic field (true/false)
+.f.
+===Restart on velocity (true/false)
+.f.	   
+===Solve Linear Navier-Stokes? (with u)
+.T.
+===Do we read base flow from suite_jacob_ns?
+.F.
+===Do we read metis partition? (true/false)
+.f.
+===Time step and number of time iterations
+0.005d0 20
+===Number of refinements
+0
+===How many pieces of periodic boundary?
+1
+===Indices of periodic boundaries and corresponding vectors
+4 2 0.d0 10.d0
+
+===Compute spectrum with LightKrylov? (true/false)
+.f.
+===How many LK eigenvalues?
+1
+===How many simultaneous vectors for Krylov-Schur?
+50
+===Absolute tolerance for LK eigenvalues?
+1.d-8
+===Compute vtu 3D of LK eigenvectors?
+.t.
+===Write restart suites of LK eigenvectors?
+.t.
+
+!=============================================================================
+!          Data for post processing
+!=============================================================================
+!===Number of planes in real space for Visualization
+!127
+===Frequency to write energies
+10
+===Should I do post proc init? (true/false)
+.f.
+===Frequency to create plots
+72000000
+1 500000  4800
+===Frequency to write restart file
+10000
+===Frequency to write time avg restart file
+5000024   !save 4 restarts every  turn
+===Just postprocessing without computing? (true/false)
+.f.
+===Read time average info? (true/false)
+.f.
+
+===Frequency to write snapshot file
+4000000
+===Name of folder to write snapshot
+'binaries_out'
+===Should we write snapshot on gauss point ? (true/false)
+.f.
+===Should we write snapshot in physical space (true/false)
+.f.
+===Should we write snapshot in fourier space (true/false)
+.f.
+===Should we write snapshot in fourier space per mode (true/false)
+.f.
+
+============================================
+              Mesh-NAVIER-STOKES
+============================================
+===Number of subdomains in Navier-Stokes mesh
+1
+===List of subdomains for Navier-Stokes mesh
+2
+
+============================================
+              Dynamics-NAVIER-STOKES
+============================================
+===Reynolds number
+1000.d0
+===Coefficient for penalty of divergence in NS?
+30.d0
+============================================
+           Parameters for MRI
+============================================
+===Inner angular velocity?
+1.d0
+===Outer angular velocity?
+0.27d0
+===Imposed axial magnetic field?
+0.1666666666666d0
+!!Lu = B_z x Rm
+============================================
+              BCs-NAVIER-STOKES
+============================================
+===How many boundary pieces for full Dirichlet BCs on velocity?
+2
+===List of boundary pieces for full Dirichlet BCs on velocity
+3 5
+===How many boundary pieces for Dirichlet BCs on pressure?
+0
+===List of boundary pieces for Dirichlet BCs on pressure
+0
+
+=============================================
+             Impose Velocity
+=============================================
+===Use penalty in NS domain (true/false)?
+.f.
+===Use nonzero velocity in solids (true/false)?
+.f.
+===Imposed Velocity
+1.d0 1.d0
+===Compute z momentum (true/false)?
+.f.	   
+
+============================================
+              Anemometers for v
+============================================
+===Anemometers (v) ? (true/false)
+.f.
+===Number of anemo_v (r,z)
+3 5
+===List of r anemo_v
+0.25d0 0.5d0 0.90d0
+===List of z anemo_v
+-0.65d0 -0.35d0 0.d0 0.35d0 0.65d0
+
+============================================
+              Solver-velocity-NAVIER-STOKES
+============================================
+===Maximum number of iterations for velocity solver
+100
+===Relative tolerance for velocity solver
+1.d-6
+===Absolute tolerance for velocity solver
+1.d-10
+===Velocity solver verbose? (true/false)
+.f.
+===Solver type for velocity (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for velocity solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Solver-pressure-NAVIER-STOKES
+============================================
+===Maximum number of iterations for pressure solver
+100
+===Relative tolerance for pressure solver
+1.d-6
+===Absolute tolerance for pressure solver
+1.d-10
+===Pressure solver verbose? (true/false)
+.f.
+===Solver type for pressure (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for pressure solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Solver-mass-NAVIER-STOKES
+============================================
+===Maximum number of iterations for mass matrix solver
+100
+===Relative tolerance for mass matrix solver
+1.d-6
+===Absolute tolerance for mass matrix solver
+1.d-10
+===Mass matrix solver verbose? (true/false)
+.f.
+===Solver type for mass matrix (FGMRES, CG, ...)
+CG
+===Preconditionner type for mass matrix solver (HYPRE, JACOBI, MUMPS...)
+MUMPS
+
+============================================
+              Verbose (diagnostics)
+============================================
+===Verbose timing? (true/false)
+.t.
+===Verbose divergence? (true/false)
+.t.
+===Verbose CFL? (true/false)
+.t.
+===Check numerical stability (true/false)
+.t.
+
+============================================
+              H-MAXWELL
+============================================
+===Solve Maxwell with H (true) or B (false)?
+.f.
+===Number of subdomains in magnetic field (H) mesh
+1
+===List of subdomains for magnetic field (H) mesh
+2
+===Number of interfaces in H mesh
+0
+===List of interfaces in H mesh
+xx
+===Number of Dirichlet sides for Hxn
+0
+===List of Dirichlet sides for Hxn
+3 5
+===Is permeability defined analytically (true/false)?
+.f.
+===Use FEM Interpolation for magnetic permeability (true/false)?
+.f.
+===Is permeability variable in theta (true/false)?
+.f.
+===Permeability in the conductive part (1:nb_dom_H)
+1.d0
+===Conductivity in the conductive part (1:nb_dom_H)
+1.d0
+===Type of finite element for magnetic field
+2
+===Magnetic Reynolds number
+30.d0
+===Stabilization coefficient (divergence)
+30.d0
+===Stabilization coefficient for Dirichlet H and/or interface H/H
+1.d0
+
+============================================
+              Phi-MAXWELL
+============================================
+===Number of subdomains in magnetic potential (phi) mesh
+2
+===List of subdomains for magnetic potential (phi) mesh
+1 3
+===How many boundary pieces for Dirichlet BCs on phi?
+1
+===List of boundary pieces for Dirichlet BCs on phi
+6 
+===Number of interfaces between H and phi
+2
+===List of interfaces between H and phi
+3 5
+===Permeability in vacuum
+1.d0
+===Type of finite element for scalar potential
+2
+===Stabilization coefficient (interface H/phi)
+0.5d0
+
+============================================
+Solver-MAXWELL
+============================================
+===Maximum number of iterations for Maxwell solver
+100
+===Relative tolerance for Maxwell solver
+1.d-6 
+===Absolute tolerance for Maxwell solver
+1.d-10
+===Maxwell solver verbose? (true/false)
+.f.
+===Solver type for Maxwell (FGMRES, CG, ...)
+GMRES
+===Preconditionner type for Maxwell solver (HYPRE, JACOBI, MUMPS...)
+MUMPS

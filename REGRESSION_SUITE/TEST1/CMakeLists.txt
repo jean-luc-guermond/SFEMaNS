@@ -54,37 +54,6 @@ set(exe "test1.exe")
 add_executable(${exe} ${local_sources})
 
 # Include and link library
-find_library(METIS_LIBRARY
-    NAMES metis
-)
-
-find_path(METIS_INCLUDE_DIR
-    NAMES metis.h
-)
-
-message(STATUS "METIS library: ${METIS_LIBRARY}")
-message(STATUS "METIS include: ${METIS_INCLUDE_DIR}")
-file(READ "${METIS_INCLUDE_DIR}/metis.h" METIS_H_CONTENT)
-string(REGEX MATCH
-    "#[ \t]*define[ \t]+REALTYPEWIDTH[ \t]+([0-9]+)"
-    METIS_REALTYPE_MATCH
-    "${METIS_H_CONTENT}"
-)
-
-set(METIS_REALTYPE_WIDTH "${CMAKE_MATCH_1}")
-
-message(STATUS "METIS REALTYPEWIDTH = ${METIS_REALTYPE_WIDTH}")
-
-if(METIS_REALTYPE_WIDTH EQUAL 32)
-    message(STATUS "METIS real_t = float")
-elseif(METIS_REALTYPE_WIDTH EQUAL 64)
-    message(STATUS "METIS real_t = double")
-else()
-    message(FATAL_ERROR
-        "Could not determine METIS real_t size from metis.h"
-    )
-endif()
-
 target_link_libraries(${exe} PUBLIC sfemans_lib_F
   ${PETSC_LINK_LIBRARIES}
   ${PETSC_PRIVATE_LIBRARIES}

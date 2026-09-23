@@ -48,3 +48,4 @@ Test 47: MHD with temperature and concentration => test symmetrization is correc
 Test 48: Navier-Stokes with temperature and consistent pressure
 Test 49: Linearized Navier-Stokes around base flow (periodic Taylor-Couette); Solved with DNS
 Test 50: Linearized Navier-Stokes around base flow (periodic Taylor-Couette); Solved with LightKrylov
+Test 51: Periodic Linear SMRI (linear Navier-Stokes & imposed B vertical)

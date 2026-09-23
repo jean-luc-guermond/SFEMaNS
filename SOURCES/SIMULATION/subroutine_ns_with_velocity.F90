@@ -12,7 +12,7 @@ MODULE subroutine_ns_with_u
   USE my_util
   USE subroutine_ns_with_m
 !=== VB 03/09/2026 (intended for linearized Navier-Stokes)
-  REAL(KIND=8), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: V_base_flow
+  REAL(KIND=8), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: U_bar
 !=== VB 03/09/2026
   PUBLIC :: moy, BDF2_ns_stress_bc_with_u
   PRIVATE
@@ -113,18 +113,18 @@ CONTAINS
        CALL MPI_COMM_RANK(PETSC_COMM_WORLD,my_petscworld_rank,code)
 !=== VB read base flow NS
        IF (inputs%if_linear_navier_stokes_with_u) THEN
-         ALLOCATE(V_base_flow(vv_mesh%np, 6, SIZE(list_mode)))
+         ALLOCATE(U_bar(vv_mesh%np, 6, SIZE(list_mode)))
          IF (inputs%if_read_start_linear_navier_stokes_with_u) THEN
             ALLOCATE(dummy_u(vv_mesh%np, 6, SIZE(list_mode)))
             ALLOCATE(dummy_p(pp_mesh%np, 6, SIZE(list_mode)))
-            CALL read_restart_ns(comm_one_d, tps, list_mode, V_base_flow, dummy_u, &
+            CALL read_restart_ns(comm_one_d, tps, list_mode, U_bar, dummy_u, &
                               dummy_p, dummy_p, dummy_p, dummy_p, inputs%file_name, opt_name="suite_jacob_ns")
             DEALLOCATE(dummy_u, dummy_p)
          ELSE
             DO k = 1, 6
                DO i=1, SIZE(list_mode)
                   m = list_mode(i)
-                  V_base_flow(:, k, i) = base_flow(k, vv_mesh%rr, m)
+                  U_bar(:, k, i) = base_flow(k, vv_mesh%rr, m)
                ENDDO
             ENDDO
          ENDIF
@@ -608,11 +608,11 @@ CONTAINS
         CASE(barU_curl_u)
            IF (.NOT. inputs%if_linear_navier_stokes_with_u) CYCLE
            V_rot => V_in
-           V_raw => V_base_flow
+           V_raw => U_bar
         CASE(U_curl_barU)
            IF (.NOT. inputs%if_linear_navier_stokes_with_u) CYCLE
            V_raw => V_in
-           V_rot => V_base_flow
+           V_rot => U_bar
       !=== One term for non-linear NS
         CASE(barU_curl_barU)
            IF (inputs%if_linear_navier_stokes_with_u) CYCLE

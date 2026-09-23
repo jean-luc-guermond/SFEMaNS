@@ -151,7 +151,7 @@ PROGRAM mhd_prog
          ENDIF
          !===Write snapshot file
          IF (MOD(it, inputs%freq_snapshot) == 0) THEN
-            CALL save_snapshot(it,inputs%freq_snapshot)
+            CALL save_snapshot(it, time, inputs%freq_snapshot)
          ENDIF
          !===Timing
          tploc = user_time() - tploc
