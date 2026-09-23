@@ -2370,13 +2370,14 @@ CONTAINS
     END IF
   END SUBROUTINE WRITE_ALL_MESHES
 
-  SUBROUTINE save_snapshot(it, freq_snapshot)
+  SUBROUTINE save_snapshot(it, time, freq_snapshot)
     USE restart
     USE subroutine_compute_visc_LES_level
     USE chaine_caractere
     USE snapshot
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: it, freq_snapshot
+    REAL(KIND=8), INTENT(IN) :: time
     INTEGER :: n, lblank, l
     INTEGER :: rang_S , rang_F, code
     CHARACTER(len = 2)  :: tit_I
@@ -2387,14 +2388,16 @@ CONTAINS
     CALL MPI_COMM_RANK(comm_one_d(2), rang_F, code)
    
     opt_dir = inputs%folder_for_snapshot
-    IF ( rang_S==0 .AND. rang_F == 0) THEN
-       IF (once_snapshot) THEN
-          once_snapshot = .FALSE.
+    IF (once_snapshot) THEN 
+       once_snapshot = .FALSE.
+       IF (rang_F == 0) THEN
           CALL WRITE_ALL_MESHES
           CALL system('touch ' // TRIM(ADJUSTL(opt_dir)) //'/times' )
-       END IF
+       ENDIF
+    ENDIF
+    IF ( rang_S==0 .AND. rang_F == 0) THEN
        OPEN(UNIT = 666, FILE = TRIM(ADJUSTL(opt_dir)) //'/times', position = 'append', action = 'write')
-       WRITE(666,*)  it, it*inputs%dt
+       WRITE(666,*)  it, time
        CLOSE(666)
     END IF
 
