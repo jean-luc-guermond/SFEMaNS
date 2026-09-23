@@ -5,6 +5,7 @@
 MODULE COMM_LK_SFEM
     USE def_type_field_vel
     USE def_type_field_mag
+    USE SFEMaNS_logicals_module
 #ifdef USE_LIGHTKRYLOV
     USE LightKrylov
     USE LightKrylov_Constants
@@ -36,7 +37,6 @@ MODULE COMM_LK_SFEM
         PROCEDURE, PUBLIC, PASS(self) :: get_size => get_size_LK 
     END TYPE LK_FIELD_TYPE
 
-    LOGICAL, PRIVATE :: if_momentum, if_induction
     PUBLIC :: init_LK, post_pro_eigs_LK
 
 CONTAINS
@@ -51,11 +51,6 @@ CONTAINS
         USE input_data
         IMPLICIT NONE
         
-        if_momentum = inputs%type_pb=='nst' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd' &
-        .OR. inputs%type_pb=='mhs'
-        if_induction = inputs%type_pb=='mxw' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='mxx' &
-        .OR. inputs%type_pb=='fhd' .OR. inputs%type_pb=='mhs'
-
     END SUBROUTINE init_LK
 
     SUBROUTINE post_pro_eigs_LK(X, lambda, residuals)

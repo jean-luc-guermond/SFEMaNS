@@ -7,7 +7,7 @@ CONTAINS
   SUBROUTINE maxwell_decouple(comm_one_d, H_mesh, pmag_mesh, phi_mesh, interface_H_phi, &
        interface_H_mu, mag_n, mag_n1, vel, stab_in, stab_jump_h, sigma_in, &
        R_fourier, index_fourier, mu_H_field, mu_phi, time, dt, Rem, list_mode, &
-       H_phi_per, LA_H, LA_pmag, LA_phi, LA_mhd, one_over_sigma_ns, jj_v_to_H, conc_to_H)
+       H_phi_per, LA_H, LA_pmag, LA_phi, LA_mhd, one_over_sigma_ns, conc_to_H)
 
     USE def_type_field_mag
     USE def_type_mesh
@@ -17,6 +17,9 @@ CONTAINS
     USE update_maxwell_with_H
     USE update_maxwell_mxs_with_H
     USE my_util
+
+    USE projection_module, ONLY: jj_v_to_H
+
     IMPLICIT NONE
     TYPE(mag_field_type),           INTENT(INOUT)  :: mag_n, mag_n1
     TYPE(mesh_type),                INTENT(IN)     :: H_mesh, phi_mesh, pmag_mesh
@@ -30,7 +33,6 @@ CONTAINS
     REAL(KIND=8),                   INTENT(IN)     :: mu_phi, time, dt, Rem
     REAL(KIND=8), DIMENSION(:),     INTENT(IN)     :: sigma_in, mu_H_field
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)     :: one_over_sigma_ns
-    INTEGER,      DIMENSION(:),     INTENT(IN)     :: jj_v_to_H
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)     :: conc_to_H
     TYPE(periodic_type),            INTENT(IN)     :: H_phi_per
     TYPE(petsc_csr_LA)                             :: LA_H, LA_pmag, LA_phi, LA_mhd

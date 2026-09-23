@@ -23,10 +23,6 @@ CONTAINS
   !------------------------------------------------------------------------------
   !------------------------------------------------------------------------------
 
-  !SUBROUTINE maxwell_decouple_with_B(comm_one_d, H_mesh, pmag_mesh, phi_mesh, interface_H_phi, &
-  !     interface_H_mu, Hn, Bn, phin, Hn1, Bn1, phin1, vel, stab_in, sigma_in, &
-  !     R_fourier, index_fourier, mu_H_field, mu_phi, time, dt_in, Rem, list_mode, &
-  !     H_phi_per, LA_H, LA_pmag, LA_phi, LA_mhd, one_over_sigma_ns_in, jj_v_to_H)
   SUBROUTINE maxwell_decouple_with_B(comm_one_d, H_mesh, pmag_mesh, phi_mesh, interface_H_phi, &
        interface_H_mu, mag_n, mag_n1, vel, stab_in, sigma_in, &
        R_fourier, index_fourier, mu_H_field, mu_phi, time, dt_in, Rem, list_mode, &
@@ -889,7 +885,8 @@ CONTAINS
           m_max_pad = 3*SIZE(list_mode)*nb_procs/2
           bloc_size = H_mesh%np/nb_procs+1
           CALL FFT_PAR_VAR_ETA_PROD_T_DCL(comm_one_d(2), one_over_mu, &
-               H_mesh, Bn, Hn, nb_procs, bloc_size, m_max_pad, time,temps_par)
+          H_mesh, Bn, Hn, nb_procs, bloc_size, m_max_pad, time,temps_par)
+          ! H_mesh, Bn, Hn, nb_procs, bloc_size, m_max_pad, time+dt_in,temps_par)
        ELSE
           DO i = 1, m_max_c
              DO k = 1, 6

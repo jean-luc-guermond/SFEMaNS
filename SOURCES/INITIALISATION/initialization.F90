@@ -15,15 +15,14 @@ MODULE initialization
   USE my_util
   USE petscmpi
   USE fourier_to_real_for_vtu
+  !=== VB 21/09/2026
+  USE projection_module, ONLY: projection_velocity, projection_concentration, projection_mag_field, projection_temperature
+  USE SFEMaNS_logicals_module
+  !=== VB 21/09/2026
   IMPLICIT NONE
   PUBLIC :: initial, build_pointers, save_run, run_SFEMaNS, save_snapshot
   PUBLIC :: prodmat_maxwell_int_by_parts
   PRIVATE
-
-  !Logicals for equations-----------------------------------------------------
-  LOGICAL                                              :: if_momentum, if_mass
-  LOGICAL                                              :: if_induction, if_energy
-  LOGICAL                                              :: if_concentration
 
   !Fields for Navier-Stokes---------------------------------------------------
   TYPE(mesh_type), TARGET                              :: pp_mesh, vv_mesh
@@ -100,15 +99,6 @@ MODULE initialization
   REAL(KIND=8), ALLOCATABLE, DIMENSION(:,:,:)         :: T_to_NS
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:) :: v_to_energy
   REAL(KIND=8), TARGET, ALLOCATABLE, DIMENSION(:,:,:) :: H_to_energy, pdt_H_to_energy
-  !---------------------------------------------------------------------------
-
-  !Connectivity structures----------------------------------------------------
-  !October 7, 2008, JLG
-  INTEGER, ALLOCATABLE, DIMENSION(:)                  :: jj_v_to_H
-  INTEGER, ALLOCATABLE, DIMENSION(:)                  :: jj_v_to_temp
-  INTEGER, ALLOCATABLE, DIMENSION(:)                  :: jj_T_to_H
-  INTEGER, ALLOCATABLE, DIMENSION(:)                  :: jj_c_to_v
-  INTEGER, ALLOCATABLE, DIMENSION(:)                  :: jj_c_to_H
   !---------------------------------------------------------------------------
 
   !Modes list-----------------------------------------------------------------
@@ -317,12 +307,12 @@ CONTAINS
 
     IF (if_concentration) THEN
        IF (if_momentum) THEN
-          CALL projection_velocity(conc_mesh, 2*un-un_m1, jj_c_to_v, .TRUE., v_to_conc)
+          CALL projection_velocity(conc_mesh, 2*un-un_m1, 'c_to_v', .TRUE., v_to_conc, list_mode, time)
        END IF
 
        IF (if_induction) THEN
           CALL compute_rot_h(2*Hn-Hn1, j_Hn)
-          CALL projection_mag_field(conc_mesh, j_Hn, jj_c_to_H, .TRUE., j_H_to_conc)
+          CALL projection_mag_field(conc_mesh, H_mesh, j_Hn, 'c_to_H', .TRUE., j_H_to_conc)
        END IF
        CALL three_level_concentration(comm_one_d_conc, time, conc_1_LA, inputs%dt, list_mode, &
             conc_mesh, concn_m1, concn, v_to_conc, &
@@ -334,32 +324,32 @@ CONTAINS
 
     IF (if_energy) THEN
        IF (if_momentum) THEN
-          CALL projection_velocity(temp_mesh, 2*un-un_m1, jj_v_to_temp, .FALSE., v_to_energy)
+          CALL projection_velocity(temp_mesh, 2*un-un_m1, 'v_to_T', .FALSE., v_to_energy, list_mode, time)
        END IF
        IF (inputs%type_pb=='fhd') THEN
-          CALL projection_mag_field(vv_mesh, 2*Hn-Hn1, jj_v_to_H, .TRUE., H_to_NS)
-          CALL projection_mag_field(temp_mesh, H_to_NS, jj_v_to_temp, .FALSE., H_to_energy)
+          CALL projection_mag_field(vv_mesh, H_mesh, 2*Hn-Hn1, 'v_to_H', .TRUE., H_to_NS)
+          CALL projection_mag_field(temp_mesh, H_mesh, H_to_NS, 'v_to_T', .FALSE., H_to_energy)
           IF (.NOT. inputs%if_steady_current_fhd) THEN
-             CALL projection_mag_field(vv_mesh, (Hn-Hn1)/inputs%dt, jj_v_to_H, .TRUE., H_to_NS)
-             CALL projection_mag_field(temp_mesh, H_to_NS, jj_v_to_temp, .FALSE., pdt_H_to_energy)
+             CALL projection_mag_field(vv_mesh, H_mesh, (Hn-Hn1)/inputs%dt, 'v_to_H', .TRUE., H_to_NS)
+             CALL projection_mag_field(temp_mesh, H_mesh, H_to_NS, 'v_to_T', .FALSE., pdt_H_to_energy)
           END IF
        END IF
        CALL temperature_decouple(comm_one_d_temp, time, temp_1_LA, list_mode, &
             temp_mesh, tempn_m1, tempn, v_to_energy, H_to_energy, pdt_H_to_energy, &
             vol_heat_capacity_field, temperature_diffusivity_field, temp_per, &
-            heat_density_ns_m1, heat_density_ns, heat_density_ns_p1, heat_diffusivity_ns, jj_v_to_temp)
+            heat_density_ns_m1, heat_density_ns, heat_density_ns_p1, heat_diffusivity_ns)
     END IF
 
     IF (if_momentum) THEN
        IF (if_energy) THEN
-          CALL projection_temperature(vv_mesh, tempn, jj_v_to_temp, .TRUE., T_to_NS)
+          CALL projection_temperature(vv_mesh, tempn, 'v_to_T', .TRUE., T_to_NS, list_mode, time)
        END IF
        IF (if_concentration) THEN
-          CALL projection_concentration(vv_mesh, concn, jj_c_to_v, conc_to_v)
+          CALL projection_concentration(vv_mesh, concn, 'c_to_v', conc_to_v, list_mode, time)
        END IF
        IF (if_induction) THEN
-          CALL projection_mag_field(vv_mesh, 2*Hn-Hn1, jj_v_to_H, .TRUE., H_to_NS)
-          CALL projection_mag_field(vv_mesh, 2*Bn-Bn1, jj_v_to_H, .TRUE., B_to_NS)
+          CALL projection_mag_field(vv_mesh, H_mesh, 2*Hn-Hn1, 'v_to_H', .TRUE., H_to_NS)
+          CALL projection_mag_field(vv_mesh, H_mesh, 2*Bn-Bn1, 'v_to_H', .TRUE., B_to_NS)
        END IF
        !===JLG July 20, 2019, p3 mesh
        !===HF April 2019
@@ -386,31 +376,31 @@ CONTAINS
        IF (inputs%type_pb == 'fhd' .AND. inputs%if_steady_current_fhd) THEN !===If steady current, computation of H only once
           IF (it == 1) THEN
              IF (if_momentum) THEN
-                CALL projection_velocity(H_mesh, un, jj_v_to_H, .FALSE., v_to_Max)
+                CALL projection_velocity(H_mesh, un, 'v_to_H', .FALSE., v_to_Max, list_mode, time, if_opt_zero_extension=inputs%if_linear_navier_stokes_with_u)
              END IF
              CALL maxwell_decouple(comm_one_d, H_mesh, pmag_mesh, phi_mesh, &
                   interface_H_phi, interface_H_mu, mag_n, mag_n1, v_to_Max, &
                   inputs%stab, inputs%stab_jump_h, sigma_field, R_fourier, index_fourier, mu_H_field, inputs%mu_phi, &
                   time, inputs%dt, inputs%Rem, list_mode, H_phi_per, LA_H, LA_pmag, LA_phi, &
-                  LA_mhd, one_over_sigma_ns_p1, jj_v_to_H, conc_to_H)
+                  LA_mhd, one_over_sigma_ns_p1, conc_to_H)
              CALL mag_n%copy_to(mag_n1)
           END IF
        ELSE
           IF (if_momentum) THEN
-             CALL projection_velocity(H_mesh, un, jj_v_to_H, .FALSE., v_to_Max)
+             CALL projection_velocity(H_mesh, un, 'v_to_H', .FALSE., v_to_Max, list_mode, time, if_opt_zero_extension=inputs%if_linear_navier_stokes_with_u)
           END IF
           IF (if_energy) THEN
-             CALL projection_temperature(H_mesh, 2*tempn-tempn_m1, jj_T_to_H, .FALSE., &
-                  T_to_H)
+             CALL projection_temperature(H_mesh, 2*tempn-tempn_m1, 'T_to_H', .FALSE., &
+                  T_to_H, list_mode, time)
           END IF
           IF (if_concentration) THEN
-             CALL projection_concentration(H_mesh, 2*concn-concn_m1, jj_c_to_H, conc_to_H)
+             CALL projection_concentration(H_mesh, 2*concn-concn_m1, 'c_to_H', conc_to_H, list_mode, time)
           END IF
           CALL maxwell_decouple(comm_one_d, H_mesh, pmag_mesh, phi_mesh, &
                interface_H_phi, interface_H_mu, mag_n, mag_n1, v_to_Max, &
                inputs%stab, inputs%stab_jump_h, sigma_field, R_fourier, index_fourier, mu_H_field, inputs%mu_phi, &
                time, inputs%dt, inputs%Rem, list_mode, H_phi_per, LA_H, LA_pmag, LA_phi, LA_mhd, one_over_sigma_ns_p1, &
-               jj_v_to_H, conc_to_H)
+               conc_to_H)
        END IF
     END IF
     END ASSOCIATE
@@ -487,143 +477,6 @@ CONTAINS
        END IF
     END DO
   END SUBROUTINE prepare_zero_out_modes
-  !---------------------------------------------------------------------------
-
-  !---------------------------------------------------------------------------
-  SUBROUTINE projection_velocity(mesh, vn, connectivity_structure, if_restriction, coupling_variable)
-    USE boundary
-    IMPLICIT NONE
-    TYPE(mesh_type), INTENT(IN)                               :: mesh
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)                :: vn
-    INTEGER, DIMENSION(:), INTENT(IN)                         :: connectivity_structure
-    LOGICAL, INTENT(IN)                                       :: if_restriction
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT)               :: coupling_variable
-    INTEGER                                                   :: i, j, k
-
-    IF (if_restriction) THEN
-       IF (mesh%me /=0) THEN !===construction of the restricted velocity field
-          DO j = 1, SIZE(connectivity_structure)
-             IF (connectivity_structure(j) == -1) CYCLE
-             coupling_variable(connectivity_structure(j),:,:) = vn(j,:,:)
-          END DO
-       END IF
-    ELSE
-       IF (mesh%np>0) THEN !===Check that ns is a subset of temp before constructing the extended vv field
-          DO i = 1, m_max_c
-             DO k = 1, 6 !===The user has to code extension_vel
-                coupling_variable(:,k,i) = extension_velocity(k, mesh, list_mode(i), time, 1)
-             END DO
-          END DO
-       END IF
-       IF (mesh%me /=0) THEN !===construction of the extended field
-          DO j = 1, SIZE(connectivity_structure)
-             IF (connectivity_structure(j) == -1) CYCLE
-             coupling_variable(j,:,:) = vn(connectivity_structure(j),:,:)
-          END DO
-       END IF
-    END IF
-  END SUBROUTINE projection_velocity
-  !---------------------------------------------------------------------------
-
-  !---------------------------------------------------------------------------
-  SUBROUTINE projection_concentration(mesh, vn, connectivity_structure, coupling_variable)
-    USE boundary
-    IMPLICIT NONE
-    TYPE(mesh_type), INTENT(IN)                               :: mesh
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)                :: vn
-    INTEGER, DIMENSION(:), INTENT(IN)                         :: connectivity_structure
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT)               :: coupling_variable
-    INTEGER                                                   :: i,j,k
-
-    !IF (mesh%me /=0 ) THEN !===construction of the restricted  concentration field
-    !   DO j = 1, SIZE(connectivity_structure)
-    !      IF (connectivity_structure(j) == -1) CYCLE
-    !      coupling_variable(connectivity_structure(j),:,:) = vn(j,:,:)
-    !  END DO
-    !END IF
-    IF (mesh%np>0) THEN !===Check that temp is a subset of H before constructing the extended vv field
-       DO i = 1, m_max_c
-          DO k = 1, 2 !===The user has to code extension_concentration
-             coupling_variable(:,k,i) = extension_concentration(k, mesh, list_mode(i),time,1)
-          END DO
-       END DO
-    END IF
-    IF (mesh%me /=0) THEN !===construction of the extended field
-       DO j = 1, SIZE(connectivity_structure)
-          IF (connectivity_structure(j) == -1) CYCLE
-          coupling_variable(j,:,:) = vn(connectivity_structure(j),:,:)
-       END DO
-    END IF
-  END SUBROUTINE projection_concentration
-  !---------------------------------------------------------------------------
-
-  SUBROUTINE projection_temperature(mesh, vn, connectivity_structure, if_restriction, coupling_variable)
-    USE boundary
-    IMPLICIT NONE
-    TYPE(mesh_type), INTENT(IN)                               :: mesh
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)                :: vn
-    INTEGER, DIMENSION(:), INTENT(IN)                         :: connectivity_structure
-    LOGICAL, INTENT(IN)                                       :: if_restriction
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT)               :: coupling_variable
-    INTEGER                                                   :: i,j,k
-
-    IF (if_restriction) THEN
-       IF (mesh%me /=0) THEN !===construction of the restricted temperature field
-          DO j = 1, SIZE(connectivity_structure)
-             IF (connectivity_structure(j) == -1) CYCLE
-             coupling_variable(connectivity_structure(j),:,:) = vn(j,:,:)
-          END DO
-       END IF
-    ELSE
-       IF (mesh%np>0) THEN !===Check that temp is a subset of H before constructing the extended vv field
-          DO i = 1, m_max_c
-             DO k = 1, 2 !===The user has to code extension_temperature
-                coupling_variable(:,k,i) = extension_temperature(k, mesh, list_mode(i),time,1)
-             END DO
-          END DO
-       END IF
-       IF (mesh%me /=0) THEN !===construction of the extended field
-          DO j = 1, SIZE(connectivity_structure)
-             IF (connectivity_structure(j) == -1) CYCLE
-             coupling_variable(j,:,:) = vn(connectivity_structure(j),:,:)
-          END DO
-       END IF
-    END IF
-
-  END SUBROUTINE projection_temperature
-  !---------------------------------------------------------------------------
-  SUBROUTINE projection_mag_field(mesh, vn, connectivity_structure, if_restriction, coupling_variable)
-    USE my_util
-    IMPLICIT NONE
-    TYPE(mesh_type), INTENT(IN)                               :: mesh
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)                :: vn
-    INTEGER, DIMENSION(:), INTENT(IN)                         :: connectivity_structure
-    LOGICAL, INTENT(IN)                                       :: if_restriction
-    REAL(KIND=8), DIMENSION(:,:,:), INTENT(OUT)               :: coupling_variable
-    INTEGER                                                   :: j, m
-
-    DO j = 1, SIZE(connectivity_structure)
-       IF (connectivity_structure(j) == -1) CYCLE
-       IF (if_restriction) THEN
-          coupling_variable(connectivity_structure(j),:,:) = vn(j,:,:)
-       ELSE
-          coupling_variable(j,:,:) = vn(connectivity_structure(j),:,:)
-       END IF
-    END DO
-    IF (if_restriction) THEN
-       IF (H_mesh%gauss%n_w/=mesh%gauss%n_w) THEN
-          DO m = 1, mesh%me
-             coupling_variable(mesh%jj(4,m),:,:) = (coupling_variable(mesh%jj(2,m),:,:) &
-                  + coupling_variable(mesh%jj(3,m),:,:)) / 2
-             coupling_variable(mesh%jj(5,m),:,:) = (coupling_variable(mesh%jj(3,m),:,:) &
-                  + coupling_variable(mesh%jj(1,m),:,:)) / 2
-             coupling_variable(mesh%jj(6,m),:,:) = (coupling_variable(mesh%jj(1,m),:,:) &
-                  + coupling_variable(mesh%jj(2,m),:,:)) / 2
-          END DO
-       END IF
-    END IF
-
-  END SUBROUTINE projection_mag_field
   !---------------------------------------------------------------------------
 
   !----------------SAVE RUN---------------------------------------------------
@@ -734,6 +587,10 @@ CONTAINS
     USE fft_parallele
     USE update_taylor_navier_stokes
     USE COMM_LK_SFEM, ONLY: init_LK
+
+    !=== VB 21/09/2026
+    USE projection_module, ONLY: init_projection_connectivity_structures
+    !=== VB 21/09/2026
     IMPLICIT NONE
     TYPE(mesh_type)                    :: p1_mesh_glob, p1_c0_mesh_glob, p1_c0_mesh_glob_temp
     TYPE(mesh_type)                    :: p1_c0_mesh_glob_conc, dummy_mesh_loc
@@ -848,27 +705,30 @@ CONTAINS
        ns_periodic = .TRUE.; mxw_periodic = .TRUE.; temp_periodic = .TRUE. ; conc_periodic = .TRUE.
     END IF
 
-    !===Creation of logicals for equations==========================================
-    if_mass = inputs%if_level_set
-    if_momentum = inputs%type_pb=='nst' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd' &
-         .OR. inputs%type_pb=='mhs'
-    if_induction = inputs%type_pb=='mxw' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='mxx' &
-         .OR. inputs%type_pb=='fhd' .OR. inputs%type_pb=='mhs'
-    if_energy = inputs%if_temperature
-    if_concentration = inputs%if_concentration
+    !=== VB 21/09/2026
+    CALL init_problem_logicals
+
+   !  !===Creation of logicals for equations==========================================
+   !  if_mass = inputs%if_level_set
+   !  if_momentum = inputs%type_pb=='nst' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd' &
+   !       .OR. inputs%type_pb=='mhs'
+   !  if_induction = inputs%type_pb=='mxw' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='mxx' &
+   !       .OR. inputs%type_pb=='fhd' .OR. inputs%type_pb=='mhs'
+   !  if_energy = inputs%if_temperature
+   !  if_concentration = inputs%if_concentration
+
+   !  !===JLG july 20, 2019, p3 mesh
+   !  IF (inputs%if_navier_stokes_with_taylor) THEN
+   !     IF (petsc_rank==0) WRITE(*,*) 'INIT: Everything that is not Navier-Stokes is disabled, for Taylor Method'
+   !     if_mass = .FALSE. !===Disable everything that is not NS, for the time being
+   !     if_momentum = inputs%type_pb=='nst'
+   !     if_induction = .FALSE.
+   !     if_energy = .FALSE.
+   !     if_concentration = .FALSE.
+   !  END IF
 
     !===VB 01/09/2026
     CALL init_LK
-
-    !===JLG july 20, 2019, p3 mesh
-    IF (inputs%if_navier_stokes_with_taylor) THEN
-       IF (petsc_rank==0) WRITE(*,*) 'INIT: Everything that is not Navier-Stokes is disabled, for Taylor Method'
-       if_mass = .FALSE. !===Disable everything that is not NS, for the time being
-       if_momentum = inputs%type_pb=='nst'
-       if_induction = .FALSE.
-       if_energy = .FALSE.
-       if_concentration = .FALSE.
-    END IF
 
     !===Check mesh that conc_mesh is a subset of H_mesh===============================
     IF (if_induction) THEN
@@ -1925,20 +1785,12 @@ CONTAINS
        ALLOCATE(concn      (conc_mesh%np, 2, m_max_c))
     END IF
 
+    !===VB 21/09/2026 ==> create connectivity arrays
+    CALL init_projection_connectivity_structures(H_mesh, vv_mesh, temp_mesh, conc_mesh)
 
     !===Create data structure jj_v_to_H=============================================
     IF (if_induction) THEN
        ALLOCATE(v_to_Max(H_mesh%np, 6, m_max_c))
-       IF (if_momentum .OR. inputs%type_pb=='mxx') THEN
-          ALLOCATE(jj_v_to_H(H_mesh%np))
-          jj_v_to_H = -1
-          DO m = 1, vv_mesh%me
-             jj_v_to_H(H_mesh%jj(:, m)) = vv_mesh%jj(1:H_mesh%gauss%n_w, m)
-          END DO
-       ELSE
-          ALLOCATE(jj_v_to_H(H_mesh%np))
-          jj_v_to_H = -1
-       END IF
     END IF
     IF (if_momentum) THEN
        ALLOCATE(H_to_NS(vv_mesh%np, 6, m_max_c))
@@ -1951,12 +1803,7 @@ CONTAINS
     !===Create data structure jj_v_to_temp==========================================
     IF (if_energy) THEN
        ALLOCATE(v_to_energy(temp_mesh%np, 6, m_max_c))
-       ALLOCATE(jj_v_to_temp(temp_mesh%np))
-       jj_v_to_temp = -1
        IF (vv_mesh%me/=0) THEN
-          DO m = 1, vv_mesh%me
-             jj_v_to_temp(temp_mesh%jj(:, m)) = vv_mesh%jj(1:temp_mesh%gauss%n_w, m)
-          END DO
           ALLOCATE(T_to_NS(vv_mesh%np, 2, m_max_c))
        ELSE
           ALLOCATE(T_to_NS(1, 1, 1))
@@ -1966,12 +1813,7 @@ CONTAINS
     !===Create data structure jj_c_to_v==========================================
     IF (if_concentration) THEN
        ALLOCATE(conc_to_v(vv_mesh%np, 2, m_max_c))
-       ALLOCATE(jj_c_to_v(vv_mesh%np))
-       jj_c_to_v = -1
        IF (conc_mesh%me/=0) THEN
-          DO m = 1, conc_mesh%me
-             jj_c_to_v(vv_mesh%jj(:, m)) = conc_mesh%jj(1:vv_mesh%gauss%n_w, m)
-          END DO
           ALLOCATE(v_to_conc(conc_mesh%np, 6, m_max_c))
        ELSE
           ALLOCATE(v_to_conc(1, 1, 1))
@@ -1982,15 +1824,8 @@ CONTAINS
     IF (if_induction) THEN
        ALLOCATE(T_to_H(H_mesh%np, 2, m_max_c))
        IF (if_energy) THEN
-          ALLOCATE(jj_T_to_H(H_mesh%np))
-          jj_T_to_H = -1
-          DO m = 1, temp_mesh%me
-             jj_T_to_H(H_mesh%jj(:, m)) = temp_mesh%jj(1:H_mesh%gauss%n_w, m)
-          END DO
           ALLOCATE(j_H_to_T(temp_mesh%np, 6, m_max_c))
        ELSE
-          ALLOCATE(jj_T_to_H(H_mesh%np))
-          jj_T_to_H = -1
           ALLOCATE(j_H_to_T(1, 1, 1))
        END IF
     END IF
@@ -1999,15 +1834,8 @@ CONTAINS
     IF (if_induction) THEN
        ALLOCATE(conc_to_H(H_mesh%np, 2, m_max_c))
        IF (if_concentration) THEN
-          ALLOCATE(jj_c_to_H(H_mesh%np))
-          jj_c_to_H = -1
-          DO m = 1, conc_mesh%me
-             jj_c_to_H(H_mesh%jj(:, m)) = conc_mesh%jj(1:H_mesh%gauss%n_w, m)
-          END DO
           ALLOCATE(j_H_to_conc(conc_mesh%np, 6, m_max_c))
        ELSE
-          ALLOCATE(jj_c_to_H(H_mesh%np))
-          jj_c_to_H = -1
           ALLOCATE(j_H_to_conc(1, 1, 1))
        END IF
     END IF
@@ -2144,22 +1972,23 @@ CONTAINS
 
     !===Initialize velocity using un (time-independent) if mxx======================
     IF (inputs%type_pb=='mxx') THEN
-       !===Use extension_velocity===================================================
-       IF (H_mesh%np>0) THEN !We extend v_to_Max
-          DO i = 1, m_max_c
-             DO k = 1, 6 !===The user has to code extension_vel
-                v_to_Max(:, k, i) = extension_velocity(k, H_mesh, list_mode(i), time_u, 1)
-             END DO
-          END DO
-       END IF
+       CALL projection_velocity(H_mesh, vel_n%u, 'v_to_H', .FALSE., v_to_Max, list_mode, time)
+      !  !===Use extension_velocity===================================================
+      !  IF (H_mesh%np>0) THEN !We extend v_to_Max
+      !     DO i = 1, m_max_c
+      !        DO k = 1, 6 !===The user has to code extension_vel
+      !           v_to_Max(:, k, i) = extension_velocity(k, H_mesh, list_mode(i), time_u, 1)
+      !        END DO
+      !     END DO
+      !  END IF
 
-       !===Use extension_velocity===================================================
-       IF (vv_mesh%me /=0) THEN
-          DO j = 1, SIZE(jj_v_to_H)
-             IF (jj_v_to_H(j) == -1) CYCLE
-             v_to_Max(j,:,:) = vel_n%u(jj_v_to_H(j), :,:)
-          END DO
-       END IF
+      !  !===Use extension_velocity===================================================
+      !  IF (vv_mesh%me /=0) THEN
+      !     DO j = 1, SIZE(jj_v_to_H)
+      !        IF (jj_v_to_H(j) == -1) CYCLE
+      !        v_to_Max(j,:,:) = vel_n%u(jj_v_to_H(j), :,:)
+      !     END DO
+      !  END IF
 
        !===Cleanup==================================================================
        IF(inputs%if_navier_stokes_with_taylor) THEN
@@ -2193,30 +2022,23 @@ CONTAINS
     time_h = 0.d0
     IF (if_induction) THEN
        CALL build_pointers_mag_field(H_mesh, phi_mesh, list_mode, comm_one_d, if_induction)
-       CALL build_mag_field_params(mu_H_field)
+       CALL build_mag_field_params(mu_H_field, mu_in_real_space)
        IF (inputs%irestart_h) THEN
           CALL read_restart_maxwell(comm_one_d, H_mesh, phi_mesh, time_h, list_mode, mag_n, mag_n1, inputs%file_name)
        ELSE
           CALL init_maxwell(H_mesh, phi_mesh, time_h, inputs%dt, mu_H_field, inputs%mu_phi, list_mode, mag_n, mag_n1)
           !===Initialize Bn and Bn1
           IF (H_mesh%me/=0) THEN
-             IF (inputs%if_permeability_variable_in_theta) THEN
-                CALL MPI_COMM_SIZE(comm_one_d(2), nb_procs, code)
-                m_max_pad = 3 * SIZE(list_mode) * nb_procs / 2
-                bloc_size = H_mesh%np / nb_procs + 1
-                CALL FFT_PAR_VAR_ETA_PROD_T_DCL(comm_one_d(2), mu_in_real_space, &
-                     H_mesh, mag_n%H, mag_n%B, nb_procs, bloc_size, m_max_pad, time)
-                CALL FFT_PAR_VAR_ETA_PROD_T_DCL(comm_one_d(2), mu_in_real_space, &
-                     H_mesh, mag_n1%H, mag_n1%B, nb_procs, bloc_size, m_max_pad, time)
-             ELSE
-                DO i = 1, m_max_c
-                   DO k = 1, 6
-                      mag_n%B(:, k, i) = mu_H_field * mag_n%H(:, k, i)
-                      mag_n1%B(:, k, i) = mu_H_field * mag_n1%H(:, k, i)
-                   END DO
-                END DO
-             END IF
-          END IF
+            IF (inputs%if_maxwell_with_H) THEN
+               CALL mag_n%H2B(mag_n%H, mag_n%B, time_h)
+               CALL mag_n1%H2B(mag_n1%H, mag_n1%B, time_h - inputs%dt)
+            ELSE
+               mag_n%B = mag_n%H
+               CALL mag_n%B2H(mag_n%B, mag_n%H, time_h)
+               mag_n1%B = mag_n1%H
+               CALL mag_n1%B2H(mag_n1%B, mag_n1%H, time_h - inputs%dt)
+            ENDIF
+          ENDIF
        END IF
        !===Force sine coefficients of zero mode to zero=============================
        DO i = 1, m_max_c
@@ -2344,7 +2166,7 @@ CONTAINS
     CALL maxwell_decouple(comm_one_d, H_mesh, pmag_mesh, phi_mesh, interface_H_phi, interface_H_mu, &
          mag_n, mag_n1, v_to_Max, inputs%stab, inputs%stab_jump_h, sigma_field, R_fourier, index_fourier, &
          mu_H_field, inputs%mu_phi, time, inputs%dt, inputs%Rem, list_mode, H_phi_per, LA_H, LA_pmag, &
-         LA_phi, LA_mhd, sigma_ns, jj_v_to_H, conc_to_H)
+         LA_phi, LA_mhd, sigma_ns, conc_to_H)
 
     DO TYPE_VEC = 1, 6
        i_deb = (TYPE_VEC - 1) * H_mesh%np + 1

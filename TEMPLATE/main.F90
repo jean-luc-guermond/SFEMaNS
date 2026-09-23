@@ -19,6 +19,7 @@ PROGRAM mhd_prog
   USE def_type_field_vel
   USE exponential_propagator
   USE eigenvalue_problem, ONLY: compute_spectrum
+  USE SFEMaNS_logicals_module
 #ifdef USE_LIGHTKRYLOV 
   USE LightKrylov
   USE LightKrylov_Constants
@@ -35,7 +36,7 @@ PROGRAM mhd_prog
   TYPE(LK_field_type), DIMENSION(:), ALLOCATABLE :: X
   COMPLEX(KIND=8), DIMENSION(:), ALLOCATABLE      :: lambda
   REAL(KIND=8), DIMENSION(:), ALLOCATABLE         :: residuals
-  LOGICAL                                         :: if_induction, test_induction
+  LOGICAL                                         :: test_induction
   !===Navier-Stokes fields========================================================
   TYPE(mesh_type), POINTER                        :: pp_mesh, vv_mesh
   TYPE(vel_field_type), POINTER                   :: vel_n, vel_n1
@@ -77,17 +78,13 @@ PROGRAM mhd_prog
   INTEGER, DIMENSION(:), POINTER  :: comm_one_d_conc
 
   !===Start PETSC and MPI (mandatory)=============================================
-write(*,*) 'flag 0'
   CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
-write(*,*) 'flag 1', ierr
   CALL MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
-write(*,*) 'flag 2'
 
   !===User reads his/her own data=================================================
   CALL read_user_data('data')
 
   !===Initialize SFEMANS (mandatory)==============================================
-write(*,*) 'flag 3'
   CALL initial(vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, conc_mesh,&
        interface_H_phi, interface_H_mu, list_mode, &
        vel_n, vel_n1, mag_n, mag_n1, vel, &
@@ -96,11 +93,8 @@ write(*,*) 'flag 3'
        comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc,temperature, &
        concentration, level_set, density, &
        der_un, visc_LES, visc_LES_level)
-write(*,*) 'flag 4'
 
   !===== (for now) if_induction is the only case where the exptA subroutine can be tested
-  if_induction = ((inputs%type_pb == 'mxx') .OR. (inputs%type_pb == 'mhd') .OR. &
-          (inputs%type_pb == 'mxw') .OR. (inputs%type_pb == 'mhs') .OR. (inputs%type_pb == 'fhd'))
   test_induction = if_induction .AND. inputs%if_regression
   !===== if_induction is the only case where the exptA subroutine can be tested
 
@@ -145,9 +139,7 @@ write(*,*) 'flag 4'
       DO it = 1, inputs%nb_iteration
          tploc =  user_time()
          time = time + inputs%dt
-write(*,*) 'flag 5'
          CALL run_SFEMaNS(time, it)
-write(*,*) 'flag 6'
 
          !===My postprocessing
          IF (.NOT.inputs%test_de_convergence) THEN

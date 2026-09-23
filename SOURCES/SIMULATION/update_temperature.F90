@@ -8,14 +8,15 @@ CONTAINS
        list_mode, temp_mesh, tempn_m1, tempn, &
        v_to_energy, H_to_energy, pdt_H_to_energy, &
        vol_heat_capacity_field, temperature_diffusivity_field, temp_per, &
-       heat_density_ns_m1, heat_density_ns, heat_density_ns_p1, heat_diffusivity_ns, &
-       jj_v_to_temp)
+       heat_density_ns_m1, heat_density_ns, heat_density_ns_p1, heat_diffusivity_ns)
     USE def_type_mesh
     USE prep_periodic
     USE input_data
     USE subroutine_temperature_with_T
     USE subroutine_temperature_with_e
     USE my_util
+
+    USE projection_module, ONLY: jj_v_to_T
 
     IMPLICIT NONE
     TYPE(mesh_type),                INTENT(IN)     :: temp_mesh
@@ -28,7 +29,6 @@ CONTAINS
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)     :: heat_density_ns
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)     :: heat_density_ns_p1
     REAL(KIND=8), DIMENSION(:,:,:), INTENT(IN)     :: heat_diffusivity_ns
-    INTEGER,      DIMENSION(:),     INTENT(IN)     :: jj_v_to_temp
     REAL(KIND=8),                   INTENT(IN)     :: time
     TYPE(periodic_type),            INTENT(IN)     :: temp_per
     TYPE(petsc_csr_LA)                             :: temp_1_LA
@@ -49,7 +49,7 @@ CONTAINS
             inputs%my_par_temperature, inputs%temperature_list_dirichlet_sides, &
             inputs%temperature_list_robin_sides, inputs%convection_coeff, &
             inputs%exterior_temperature, temp_per, heat_density_ns_m1, heat_density_ns, &
-            heat_density_ns_p1, heat_diffusivity_ns, jj_v_to_temp)
+            heat_density_ns_p1, heat_diffusivity_ns, jj_v_to_T)
     END IF
 
   END SUBROUTINE temperature_decouple

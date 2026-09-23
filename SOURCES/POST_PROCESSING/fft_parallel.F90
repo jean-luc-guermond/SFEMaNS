@@ -4297,7 +4297,7 @@ CONTAINS
     ! uses an user defined function of the condlim
     USE my_util
     USE input_data
-    USE boundary
+   !  USE boundary
     IMPLICIT NONE
     INCLUDE 'fftw3.f'
     ! Format: V_1in(1:np,1:6,1:m_max_c)

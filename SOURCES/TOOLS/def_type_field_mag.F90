@@ -1,11 +1,10 @@
 MODULE def_type_field_mag
 
+   USE petscmpi
    USE def_type_mesh
 
-   USE petscmpi
    IMPLICIT NONE
    CHARACTER(len=*), PARAMETER, PRIVATE :: this_module = 'def_type_field_mag'
-    
    PUBLIC             :: build_mag_field_params, build_pointers_mag_field, build_global_pointers_mag_field
    
 !========================================================
@@ -15,10 +14,11 @@ MODULE def_type_field_mag
 !========================================================
 
    TYPE(mesh_type), PRIVATE,               POINTER          :: H_mesh, phi_mesh, H_mesh_glob, phi_mesh_glob 
-   INTEGER,        PRIVATE, DIMENSION(:), POINTER          :: communicator_mxw
+   INTEGER,         PRIVATE, DIMENSION(:), POINTER          :: communicator_mxw
    INTEGER,         PRIVATE, DIMENSION(:), POINTER          :: list_mode
-   LOGICAL,         PRIVATE                                 :: if_phi_glob, if_induction_glob 
+   LOGICAL,         PRIVATE                                 :: if_phi_glob
    REAL(KIND=8),    PRIVATE, DIMENSION(:), POINTER          :: mu_H_field   
+   PROCEDURE(mu_in_real_space_interface),   PRIVATE, POINTER :: mu_in_real_space_glob   
    LOGICAL, PRIVATE :: if_init_pointers=.FALSE.
    
 !========================================================
@@ -34,12 +34,16 @@ MODULE def_type_field_mag
         LOGICAL                                         :: initialized = .FALSE. 
         TYPE(mesh_type),        POINTER                 :: H_mesh, phi_mesh
         INTEGER, DIMENSION(:),  POINTER                 :: list_mode
-        INTEGER, DIMENSION(:), POINTER                 :: comm_one_d
+        INTEGER, DIMENSION(:),  POINTER                 :: comm_one_d
+        REAL(KIND=8), DIMENSION(:),    POINTER          :: mu_H_field   
+        PROCEDURE(mu_in_real_space_interface), NOPASS, POINTER :: mu_in_real_space   
+        PROCEDURE(mu_in_real_space_interface), NOPASS, POINTER :: one_over_mu => one_over_mu_mag   
     CONTAINS
     !=======    Procedures for SFEMaNS
         PROCEDURE, PUBLIC, PASS(self) :: init_mag_field, allocate_induction_fields
         PROCEDURE, PUBLIC, PASS(self) :: set_time => set_time_mag
         PROCEDURE, PUBLIC, PASS(self) :: copy_to  => copy_to_mag
+        PROCEDURE, PUBLIC, PASS(self) :: B2H, H2B
     !======     Procedures for LightKrylov
         PROCEDURE, PUBLIC, PASS(self) :: zero     => zero_mag
         PROCEDURE, PUBLIC, PASS(self) :: dot      => dot_mag 
@@ -48,6 +52,19 @@ MODULE def_type_field_mag
         PROCEDURE, PUBLIC, PASS(self) :: scal     => scal_mag 
         PROCEDURE, PUBLIC, PASS(self) :: get_size => get_size_mag 
     END TYPE mag_field_type
+
+    INTERFACE
+        FUNCTION mu_in_real_space_interface(H_mesh,angles,nb_angles,nb,ne,time) RESULT(vv)
+            USE def_type_mesh, ONLY: mesh_type
+            IMPLICIT NONE
+            TYPE(mesh_type), INTENT(IN)                :: H_mesh
+            REAL(KIND=8), DIMENSION(:), INTENT(IN)     :: angles
+            INTEGER, INTENT(IN)                        :: nb_angles
+            INTEGER, INTENT(IN)                        :: nb, ne
+            REAL(KIND=8), INTENT(IN)                   :: time
+            REAL(KIND=8), DIMENSION(nb_angles,ne-nb+1) :: vv
+        END FUNCTION mu_in_real_space_interface
+    END INTERFACE
 
 CONTAINS
 !========================================================
@@ -67,9 +84,13 @@ CONTAINS
 
     END SUBROUTINE build_global_pointers_mag_field
 
-    SUBROUTINE build_mag_field_params(mu_H_field_in)
+    SUBROUTINE build_mag_field_params(mu_H_field_in, pointed_mu_in_real_space)
+        IMPLICIT NONE
         REAL(KIND=8), TARGET, DIMENSION(:), INTENT(IN)       :: mu_H_field_in
+        PROCEDURE(mu_in_real_space_interface),        POINTER :: pointed_mu_in_real_space   
+
         mu_H_field => mu_H_field_in
+        mu_in_real_space_glob => pointed_mu_in_real_space
 
     END SUBROUTINE build_mag_field_params
         
@@ -88,7 +109,6 @@ CONTAINS
         list_mode        => list_mode_in
         
         if_phi_glob       = (phi_mesh%me /= 0)
-        if_induction_glob = if_induction_in
 
     END SUBROUTINE build_pointers_mag_field
 
@@ -137,12 +157,11 @@ CONTAINS
         LOGICAL, OPTIONAL,           INTENT(IN)              :: if_glob
         LOGICAL                                              :: if_glob_local, test
 
-!          IF (.NOT. if_induction_glob)  RETURN
-
         if_glob_local = .FALSE.
         IF (PRESENT(if_glob)) if_glob_local = if_glob
         test = (ALLOCATED(self%H) .AND. ALLOCATED(self%B))
         IF (.NOT. test) THEN
+            !=== Mesh pointers
             IF (if_glob_local) THEN
                 self%H_mesh   => H_mesh_glob
                 self%phi_mesh => phi_mesh_glob
@@ -150,8 +169,13 @@ CONTAINS
                 self%H_mesh   => H_mesh
                 self%phi_mesh => phi_mesh
             END IF
+            !=== material properties
+            self%mu_H_field       => mu_H_field
+            self%mu_in_real_space => mu_in_real_space_glob
+            !=== everything else
             self%list_mode        => list_mode
             self%comm_one_d => communicator_mxw
+            !=== Allocate dimensions
             ALLOCATE(self%H   (self%H_mesh%np, 6, size(self%list_mode))) 
             ALLOCATE(self%B   (self%H_mesh%np, 6, size(self%list_mode)))
             ALLOCATE(self%phi (self%phi_mesh%np, 2, size(self%list_mode)))
@@ -174,6 +198,68 @@ CONTAINS
         vec%initialized = .TRUE.
 
     END SUBROUTINE copy_to_mag
+
+    FUNCTION one_over_mu_mag(H_mesh,angles,nb_angles,nb,ne,time) RESULT(vv)
+        USE def_type_mesh
+        IMPLICIT NONE
+        TYPE(mesh_type), INTENT(IN)                :: H_mesh
+        REAL(KIND=8), DIMENSION(:), INTENT(IN)     :: angles
+        INTEGER, INTENT(IN)                        :: nb_angles
+        INTEGER, INTENT(IN)                        :: nb, ne
+        REAL(KIND=8), INTENT(IN)                   :: time
+        REAL(KIND=8), DIMENSION(nb_angles,ne-nb+1) :: vv
+
+        vv = 1.d0 / mu_in_real_space_glob(H_mesh,angles,nb_angles,nb,ne,time)
+        RETURN
+    END FUNCTION one_over_mu_mag
+
+    SUBROUTINE B2H(self, B_in, H_out, time)
+        USE input_data
+        USE fft_parallele, ONLY: FFT_PAR_VAR_ETA_PROD_T_DCL
+        IMPLICIT NONE
+        CLASS(mag_field_type),       INTENT(INOUT) :: self
+        REAL(KIND=8), DIMENSION(:,:,:),                                  INTENT(IN)  :: B_in
+        REAL(KIND=8), DIMENSION(SIZE(B_in,1),SIZE(B_in,2),SIZE(B_in,3)), INTENT(OUT) :: H_out
+        REAL(KIND=8), INTENT(IN) :: time
+        INTEGER :: k, i, nb_procs, m_max_pad, bloc_size, ierr
+        IF (inputs%if_permeability_variable_in_theta) THEN
+            CALL MPI_COMM_SIZE(self%comm_one_d(2), nb_procs, ierr)
+            m_max_pad = 3 * SIZE(list_mode) * nb_procs / 2
+            bloc_size = self%H_mesh%np / nb_procs + 1
+            CALL FFT_PAR_VAR_ETA_PROD_T_DCL(self%comm_one_d(2), self%one_over_mu, &
+                    self%H_mesh, B_in, H_out, nb_procs, bloc_size, m_max_pad, time)
+        ELSE
+            DO i = 1, SIZE(self%list_mode)
+                DO k = 1, 6
+                    H_out(:, k, i) = B_in(:, k, i) / self%mu_H_field
+                END DO
+            END DO
+        END IF
+    END SUBROUTINE B2H
+
+    SUBROUTINE H2B(self, H_in, B_out, time)
+        USE input_data
+        USE fft_parallele, ONLY: FFT_PAR_VAR_ETA_PROD_T_DCL
+        IMPLICIT NONE
+        CLASS(mag_field_type),       INTENT(INOUT) :: self
+        REAL(KIND=8), DIMENSION(:,:,:),                                  INTENT(INOUT)  :: H_in
+        REAL(KIND=8), DIMENSION(SIZE(H_in,1),SIZE(H_in,2),SIZE(H_in,3)), INTENT(INOUT)  :: B_out
+        REAL(KIND=8), INTENT(IN) :: time
+        INTEGER :: k, i, nb_procs, m_max_pad, bloc_size, ierr
+        IF (inputs%if_permeability_variable_in_theta) THEN
+            CALL MPI_COMM_SIZE(self%comm_one_d(2), nb_procs, ierr)
+            m_max_pad = 3 * SIZE(list_mode) * nb_procs / 2
+            bloc_size = self%H_mesh%np / nb_procs + 1
+            CALL FFT_PAR_VAR_ETA_PROD_T_DCL(self%comm_one_d(2), self%mu_in_real_space, &
+                    self%H_mesh, H_in, B_out, nb_procs, bloc_size, m_max_pad, time)
+        ELSE
+            DO i = 1, SIZE(self%list_mode)
+                DO k = 1, 6
+                    B_out(:, k, i) = self%mu_H_field * H_in(:, k, i)
+                END DO
+            END DO
+        END IF
+    END SUBROUTINE H2B
 
 !==========================================
 !==========================================

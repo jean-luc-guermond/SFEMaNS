@@ -2343,3 +2343,92 @@ CONTAINS
   END FUNCTION check_coherence_with_periodic_bcs
 
 END MODULE input_data
+
+MODULE SFEMaNS_logicals_module
+   USE input_data
+   IMPLICIT NONE
+   LOGICAL, PUBLIC :: if_mass, if_momentum, if_induction, if_energy, if_concentration
+   PUBLIC :: init_problem_logicals
+
+CONTAINS
+
+   SUBROUTINE init_problem_logicals
+      USE petscmpi
+      USE my_util
+      IMPLICIT NONE
+      INTEGER :: petsc_rank, ierr
+
+      CALL MPI_COMM_RANK(PETSC_COMM_WORLD, petsc_rank, ierr)
+
+      !===Creation of logicals for equations==========================================
+      if_mass = inputs%if_level_set
+      if_momentum = inputs%type_pb=='nst' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='fhd' &
+            .OR. inputs%type_pb=='mhs'
+      if_induction = inputs%type_pb=='mxw' .OR. inputs%type_pb=='mhd' .OR. inputs%type_pb=='mxx' &
+            .OR. inputs%type_pb=='fhd' .OR. inputs%type_pb=='mhs'
+      if_energy = inputs%if_temperature
+      if_concentration = inputs%if_concentration
+
+      !===JLG july 20, 2019, p3 mesh
+      IF (inputs%if_navier_stokes_with_taylor) THEN
+         IF (petsc_rank==0) WRITE(*,*) 'INIT: Everything that is not Navier-Stokes is disabled, for Taylor Method'
+         if_mass = .FALSE. !===Disable everything that is not NS, for the time being
+         if_momentum = inputs%type_pb=='nst'
+         if_induction = .FALSE.
+         if_energy = .FALSE.
+         if_concentration = .FALSE.
+      END IF
+
+      ! !===Checks (VB 11/09/2026)
+      ! IF (inputs%if_linear_navier_stokes_with_u) THEN
+      !    IF (if_concentration) THEN
+      !       CALL error_petsc("BUG in init_problem_logicals => linear navier stokes with concentration not coded yet")
+      !    ELSE IF (if_energy) THEN
+      !       CALL error_petsc("BUG in init_problem_logicals => linear navier stokes with temperature not coded yet")
+      !    ELSE IF (if_mass) THEN         
+      !       CALL error_petsc("BUG in init_problem_logicals => linear navier stokes with level set not coded yet")
+      !    ELSE IF (if_induction) THEN
+      !       IF (inputs%type_pb=='fhd' .OR. inputs%type_pb=='mhs') THEN
+      !          CALL error_petsc("BUG in init_problem_logicals => linear navier stokes with pb type mhs and fhd not coded yet")
+      !       ELSE
+      !          IF (inputs%if_maxwell_with_H) THEN
+      !             CALL error_petsc("BUG in init_problem_logicals => linear navier stokes with induction only coded for update with B")
+      !          ENDIF
+      !       END IF
+      !    ENDIF
+
+      !    IF (if_momentum) THEN
+      !       IF (.NOT. inputs%if_navier_stokes_with_u) THEN
+      !          CALL error_petsc("BUG in init_problem_logicals => linear navier stokes with momentum only coded for BDF2 pressure correction with u")
+      !       ENDIF
+      !    ENDIF
+      ! ENDIF
+
+      ! !===Checks (VB 11/09/2026)
+      ! IF (inputs%if_imposed_B) THEN
+      !    IF (if_concentration) THEN
+      !       CALL error_petsc("BUG in init_problem_logicals => imposed background B with concentration not coded yet")
+      !    ELSE IF (if_energy) THEN
+      !       CALL error_petsc("BUG in init_problem_logicals => imposed background B with temperature not coded yet")
+      !    ELSE IF (if_mass) THEN         
+      !       CALL error_petsc("BUG in init_problem_logicals => imposed background B with level set not coded yet")
+      !    ELSE IF (if_induction) THEN
+      !       IF (inputs%type_pb=='fhd' .OR. inputs%type_pb=='mhs') THEN
+      !          CALL error_petsc("BUG in init_problem_logicals => imposed background B with pb type mhs and fhd not coded yet")
+      !       ELSE
+      !          IF (inputs%if_maxwell_with_H) THEN
+      !             CALL error_petsc("BUG in init_problem_logicals => imposed background B with induction only coded for update with B")
+      !          ENDIF
+      !       END IF
+      !    ENDIF
+
+      !    IF (if_momentum) THEN
+      !       IF (.NOT. inputs%if_navier_stokes_with_u) THEN
+      !          CALL error_petsc("BUG in init_problem_logicals => imposed background B with momentum only coded for BDF2 pressure correction with u")
+      !       ENDIF
+      !    ENDIF
+      ! ENDIF
+
+   END SUBROUTINE init_problem_logicals
+
+END MODULE SFEMaNS_logicals_module
