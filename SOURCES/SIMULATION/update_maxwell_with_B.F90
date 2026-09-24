@@ -17,7 +17,6 @@ MODULE update_maxwell_with_B
   INTEGER,  DIMENSION(:),  ALLOCATABLE :: Neumann_bdy_pmag_sides
   INTEGER,  DIMENSION(:),  ALLOCATABLE :: Neumann_bdy_phi_sides
   INTEGER,  DIMENSION(:),  ALLOCATABLE :: Dirichlet_bdy_H_sides
-  REAL(KIND=8), DIMENSION(:,:,:), ALLOCATABLE :: U_bar, B_bar
 CONTAINS
 
   !------------------------------------------------------------------------------
@@ -29,7 +28,6 @@ CONTAINS
        H_phi_per, LA_H, LA_pmag, LA_phi, LA_mhd, one_over_sigma_ns_in, jj_v_to_H)
 
     USE def_type_field_mag
-
     USE def_type_mesh
     USE chaine_caractere
     USE solver_petsc
@@ -44,6 +42,9 @@ CONTAINS
     USE prep_periodic
     USE input_data
     USE verbose
+    !=== VB 24/09/2026
+    USE base_field_module, ONLY: get_project_base_flow, get_imposed_mag_field
+    !=== VB 24/09/2026
     IMPLICIT NONE
     TYPE(mesh_type),                INTENT(IN)     :: H_mesh, phi_mesh, pmag_mesh
     TYPE(interface_type),           INTENT(IN)     :: interface_H_phi, interface_H_mu
@@ -97,6 +98,9 @@ CONTAINS
     REAL(KIND=8), DIMENSION(phi_mesh%np,2)               :: rhs_phi
     !FAKE FAKE FAKE
     !DCQ H_pert = (- 1/mu)B*
+    !=== VB 24/09/2026
+    REAL(KIND=8), DIMENSION(:,:,:), ALLOCATABLE, SAVE :: U_bar, B_bar
+    !=== VB 24/09/2026
     REAL(KIND=8), DIMENSION(H_mesh%np,6,SIZE(list_mode))     :: H_pert
     !FAKE FAKE FAKE
     REAL(KIND=8), DIMENSION(H_mesh%np,6,SIZE(list_mode))     :: NL, B_ext
@@ -496,17 +500,9 @@ CONTAINS
 
        !------------------------------------------------------------------------------
 
-   !======= VB 07/09/2026
-       IF (inputs%if_linear_navier_stokes_with_u) THEN
-          ALLOCATE(U_bar(H_mesh%np, 6, m_max_c), B_bar(H_mesh%np, 6, m_max_c))
-          DO i=1, m_max_c
-             mode = list_mode(i)
-             B_bar(:,:,i) = H_B_quasi_static('F', H_mesh%rr, mode)
-             DO k=1, 6
-                U_bar(:,k,i) = base_flow(k, H_mesh%rr, mode)
-             ENDDO
-          ENDDO
-       ENDIF
+   !======= VB 07/09/2026 & 24/09/2026
+       IF (inputs%if_linear_navier_stokes_with_u) ALLOCATE(U_bar(H_mesh%np, 6, m_max_c))
+       IF (inputs%if_imposed_B) ALLOCATE(B_bar(H_mesh%np, 6, m_max_c))
    !======= VB 07/09/2026
 
     ENDIF ! End of once
@@ -552,30 +548,6 @@ CONTAINS
        END DO
     ELSE !===Real nonlinear MHD
        B_ext = 2*Bn - Bn1
-      !  !=== VB imposed magnetic field
-      !  DO i = 1, m_max_c
-      !     B_ext(:,:,i) = B_ext(:,:,i) + H_B_quasi_static('F', H_mesh%rr, mode)
-      !  ENDDO
-      !  !=== VB imposed magnetic field
-      !  !=== Add base flow
-      !  IF (inputs%if_linear_navier_stokes_with_u) THEN
-      !    ! ALLOCATE(V_base_flow(vv_mesh%np, 6, SIZE(list_mode)))
-      !    ! IF (inputs%if_read_start_linear_navier_stokes_with_u) THEN
-      !       ! ALLOCATE(dummy_u(vv_mesh%np, 6, SIZE(list_mode)))
-      !       ! ALLOCATE(dummy_p(pp_mesh%np, 6, SIZE(list_mode)))
-      !       ! CALL read_restart_ns(comm_one_d, tps, list_mode, V_base_flow, dummy_u, &
-      !                         ! dummy_p, dummy_p, dummy_p, dummy_p, inputs%file_name, opt_name="suite_jacob_ns")
-      !       ! DEALLOCATE(dummy_u, dummy_p)
-      !    ! ELSE
-      !       DO k = 1, 6
-      !          DO i=1, SIZE(list_mode)
-      !             mode = list_mode(i)
-      !             vel(:, k, i) = vel(:, k, i) + base_flow(k, H_mesh%rr, mode)
-      !          ENDDO
-      !       ENDDO
-      !    ! ENDIF
-      !  ENDIF
-      !  !=== Add base flow
     END IF
 
     IF (nr_vel .LE. 1.d-10) THEN
@@ -587,9 +559,16 @@ CONTAINS
        bloc_size = SIZE(vel,1)/nb_procs+1
        m_max_pad = 3*SIZE(list_mode)*nb_procs/2
 
-       !====================
-       !====== VB 07/09/2026
+       !==================================
+       !========= WARNING ==> THIS DOES NOT WORK FOR TIME-DEPENDANT BASE_FLOW
+       !====== VB 07/09/2026 & 24/09/2026
        IF (inputs%if_linear_navier_stokes_with_u) THEN
+          CALL get_project_base_flow(H_mesh, "v_to_H", .FALSE., list_mode, time, U_bar)
+       ENDIF
+       IF (inputs%if_imposed_B) THEN
+          CALL get_imposed_mag_field(B_bar)
+       ENDIF
+       IF (inputs%if_linear_navier_stokes_with_u .AND. inputs%if_imposed_B) THEN
           NL = 0.d0
           CALL FFT_PAR_CROSS_PROD_DCL(comm_one_d(2), U_bar, B_ext, H_pert, nb_procs, bloc_size, &
              m_max_pad,temps_par)
@@ -598,9 +577,11 @@ CONTAINS
              m_max_pad,temps_par)
           NL = NL + H_pert
           H_pert = 0.d0
-       !====== VB 07/09/2026
-       !====================
+       !====== VB 07/09/2026 & 24/09/2026
+       !==================================
        ELSE
+          IF (inputs%if_linear_navier_stokes_with_u) vel = vel + U_bar
+          IF (inputs%if_imposed_B) B_ext = B_ext + B_bar
           CALL FFT_PAR_CROSS_PROD_DCL(comm_one_d(2), vel, B_ext, NL, nb_procs, bloc_size, &
              m_max_pad,temps_par)
        ENDIF

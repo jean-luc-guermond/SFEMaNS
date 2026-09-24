@@ -588,6 +588,10 @@ CONTAINS
     USE update_taylor_navier_stokes
     USE COMM_LK_SFEM, ONLY: init_LK
 
+    !=== VB 24/09/2026
+    USE base_field_module, ONLY: init_base_flow, init_imposed_mag_field
+    !=== VB 24/09/2026
+
     !=== VB 21/09/2026
     USE projection_module, ONLY: init_projection_connectivity_structures
     !=== VB 21/09/2026
@@ -2018,6 +2022,11 @@ CONTAINS
        END IF
     ENDIF
 
+    !=== VB 24/09/2026 initialize base flow for linear Navier-Stokes
+    IF (if_momentum .AND. .NOT. inputs%type_pb=="mxx" .AND. inputs%if_linear_navier_stokes_with_u) THEN
+       CALL init_base_flow(vv_mesh, pp_mesh, comm_one_d_ns, list_mode)
+    ENDIF
+
     !===Initialize Maxwell==========================================================
     time_h = 0.d0
     IF (if_induction) THEN
@@ -2055,6 +2064,11 @@ CONTAINS
              END IF
           END IF
        END DO
+       !=== Vb 24/09/2026
+       !=== Background magnetic field
+       IF (inputs%if_imposed_B) THEN
+          CALL init_imposed_mag_field(H_mesh, list_mode)
+       ENDIF
     END IF
 
     !===Initialize temperature======================================================

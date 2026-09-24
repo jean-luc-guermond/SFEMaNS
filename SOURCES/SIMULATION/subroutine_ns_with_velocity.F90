@@ -11,9 +11,6 @@ MODULE subroutine_ns_with_u
    !------------
   USE my_util
   USE subroutine_ns_with_m
-!=== VB 03/09/2026 (intended for linearized Navier-Stokes)
-  REAL(KIND=8), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: U_bar
-!=== VB 03/09/2026
   PUBLIC :: moy, BDF2_ns_stress_bc_with_u
   PRIVATE
 CONTAINS
@@ -43,6 +40,9 @@ CONTAINS
     USE entropy_viscosity
     USE my_util
     USE restart
+    !=== VB 24/09/2026
+    USE base_field_module, ONLY: get_project_imposed_mag_field
+    !=== VB 24/09/2026
     IMPLICIT NONE
     REAL(KIND=8)                                   :: time, dt, Re
     INTEGER,      DIMENSION(:),     INTENT(IN)     :: list_mode
@@ -81,13 +81,10 @@ CONTAINS
     REAL(KIND=8), DIMENSION(pp_mesh%np, 2)   :: pn_p1, phi
     REAL(KIND=8), DIMENSION(vv_mesh%np, 6)   :: un_p1
     REAL(KIND=8), DIMENSION(vv_mesh%np, 6, SIZE(list_mode))   :: un_m2
-!=== VB 03/09/2026: conveniance vectors
-    REAL(KIND=8), DIMENSION(:,:,:), ALLOCATABLE :: dummy_u, dummy_p
-!=== VB 03/09/2026: conveniance vectors
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: rotv_v, rotb_b, rotb_b_aux
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: mag_force
     REAL(KIND=8), DIMENSION(vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: rhs_gauss
-    REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode)) :: chmp_mag_aux, chmp_mag_1, chmp_mag_2
+    REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode)) :: chmp_mag_aux
     REAL(KIND=8), DIMENSION(vv_mesh%np,6,SIZE(list_mode)) :: uext
     REAL(KIND=8), DIMENSION(vv_mesh%np,2,SIZE(list_mode)) :: nu_tilde
     REAL(KIND=8), DIMENSION(3,vv_mesh%gauss%l_G*vv_mesh%dom_me,6,SIZE(list_mode)) :: two_nu_tilde_grads_u_ext
@@ -111,25 +108,6 @@ CONTAINS
     IF (once) THEN
        once = .FALSE.
        CALL MPI_COMM_RANK(PETSC_COMM_WORLD,my_petscworld_rank,code)
-!=== VB read base flow NS
-       IF (inputs%if_linear_navier_stokes_with_u) THEN
-         ALLOCATE(U_bar(vv_mesh%np, 6, SIZE(list_mode)))
-         IF (inputs%if_read_start_linear_navier_stokes_with_u) THEN
-            ALLOCATE(dummy_u(vv_mesh%np, 6, SIZE(list_mode)))
-            ALLOCATE(dummy_p(pp_mesh%np, 6, SIZE(list_mode)))
-            CALL read_restart_ns(comm_one_d, tps, list_mode, U_bar, dummy_u, &
-                              dummy_p, dummy_p, dummy_p, dummy_p, inputs%file_name, opt_name="suite_jacob_ns")
-            DEALLOCATE(dummy_u, dummy_p)
-         ELSE
-            DO k = 1, 6
-               DO i=1, SIZE(list_mode)
-                  m = list_mode(i)
-                  U_bar(:, k, i) = base_flow(k, vv_mesh%rr, m)
-               ENDDO
-            ENDDO
-         ENDIF
-       ENDIF
-!=== VB read base flow NS
 
        !===CREATE PETSC VECTORS AND GHOSTS
        CALL create_my_ghost(vv_mesh,vv_3_LA,vv_3_ifrom)
@@ -271,15 +249,13 @@ CONTAINS
           END DO
           CALL smb_CurlH_cross_B_gauss_sft_par(comm_one_d(2),vv_mesh,list_mode,chmp_mag,chmp_mag_aux,rotb_b)
           rotb_b = rotb_b + rotb_b_aux
-      !===VB 07/09/2026
+      !===VB 07/09/2026 & 24/09/2026
        ELSE IF (inputs%if_linear_navier_stokes_with_u) THEN
-          DO i = 1, m_max_c
-             chmp_mag_aux(:,:,i) = H_B_quasi_static('F', vv_mesh%rr, mode)
-          ENDDO
+          CALL get_project_imposed_mag_field(vv_mesh,  "v_to_H", .TRUE., chmp_mag_aux) !== restrict from H_mesh to vv_mesh
           CALL smb_CurlH_cross_B_gauss_sft_par(comm_one_d(2),vv_mesh,list_mode,chmp_mag_aux,Bn_p2,rotb_b_aux)
           CALL smb_CurlH_cross_B_gauss_sft_par(comm_one_d(2),vv_mesh,list_mode,chmp_mag,chmp_mag_aux,rotb_b)
           rotb_b = rotb_b + rotb_b_aux
-      !===VB 07/09/2026
+      !===VB 07/09/2026 & 24/09/2026
       !===Compute Lorentz force if mhd
        ELSE
           CALL smb_CurlH_cross_B_gauss_sft_par(comm_one_d(2),vv_mesh,list_mode,chmp_mag,Bn_p2,rotb_b)
@@ -556,6 +532,7 @@ CONTAINS
     USE chaine_caractere
     USE input_data
     USE def_type_mesh
+    USE base_field_module, ONLY: get_base_flow
     IMPLICIT NONE
 
     TYPE(mesh_type),                INTENT(IN)  :: mesh
@@ -569,6 +546,10 @@ CONTAINS
     REAL(KIND=8), DIMENSION(mesh%gauss%k_d,mesh%gauss%n_w)   :: dw_loc
     INTEGER                                                  ::  m, l , i, mode, index, k, a
     REAL(KIND=8), DIMENSION(mesh%gauss%n_w,6)   :: Vs_raw, Vs_rot, Omega_s
+    !== VB 24/09/2026
+    REAL(KIND=8), DIMENSION(:,:,:), ALLOCATABLE, TARGET :: U_bar
+    !== VB 24/09/2026
+
     REAL(KIND=8)   :: ray
     REAL(KIND=8)   :: tps, PI
     REAL(KIND=8), DIMENSION(3)                        :: temps
@@ -598,6 +579,12 @@ CONTAINS
 
     tps = user_time()
     V_out = 0.d0
+    !=== VB 24/09/2026
+    IF (inputs%if_linear_navier_stokes_with_u) THEN
+       ALLOCATE(U_bar(mesh%np,6,SIZE(list_mode)))
+       CALL get_base_flow(U_bar)
+    ENDIF
+    !=== VB 24/09/2026
     DO a= 1, 3
       !==============================================
       !=== VB 03/09/2026: Three case accounting  ====
@@ -693,6 +680,9 @@ CONTAINS
         CALL FFT_PAR_CROSS_PROD_DCL(communicator, RotV, W, V_temp, nb_procs, bloc_size, m_max_pad, temps)
         V_out = V_out + V_temp
     END DO
+    !=== VB 24/09/2026 Cleanup ===!
+    IF (inputs%if_linear_navier_stokes_with_u) DEALLOCATE(U_bar)
+    !=== VB 24/09/2026 Cleanup ===!
     tps = user_time() - tps
 
   END SUBROUTINE smb_cross_prod_gauss_sft_par

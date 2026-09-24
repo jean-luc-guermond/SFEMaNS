@@ -29,6 +29,8 @@
 .T.
 ===Do we read base flow from suite_jacob_ns?
 .F.
+===Is there a background magnetic field? (t/f)
+.t.
 ===Do we read metis partition? (true/false)
 .f.
 ===Time step and number of time iterations

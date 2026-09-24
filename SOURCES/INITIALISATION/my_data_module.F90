@@ -90,6 +90,9 @@ MODULE my_data_module
      TYPE(solver_param) :: my_par_H_p_phi
      INTEGER :: phi_nb_dirichlet_sides
      INTEGER, DIMENSION(:), POINTER :: phi_list_dirichlet_sides
+     !=VB 24/09/2026
+     LOGICAL :: if_imposed_B
+     !=VB 24/09/2026
      LOGICAL :: if_quasi_static_approx
      LOGICAL :: if_steady_current_fhd
      REAL(KIND = 8) :: stab_jump_h
@@ -272,6 +275,9 @@ CONTAINS
     a%analytical_permeability = .FALSE.
     a%if_use_fem_integration_for_mu_bar = .FALSE.
     a%if_permeability_variable_in_theta = .FALSE.
+    !=VB 24/09/2026
+    a%if_imposed_B = .FALSE.
+    !=VB 24/09/2026
     a%if_quasi_static_approx = .FALSE.
     a%if_steady_current_fhd = .FALSE.
     a%if_temperature = .FALSE.
@@ -1073,6 +1079,14 @@ CONTAINS
           READ(21, *) inputs%if_quasi_static_approx
        ELSE
           inputs%if_quasi_static_approx = .FALSE.
+       END IF
+
+       !==========Background magnetic field (VB 24/09/2026) ==============!
+       CALL find_string(21, '===Is there a background magnetic field? (t/f)', test)
+       IF (test) THEN
+          READ(21, *) inputs%if_imposed_B
+       ELSE
+          inputs%if_imposed_B = .FALSE.
        END IF
 
        !==========Steady current in fhd===================!
@@ -2379,55 +2393,59 @@ CONTAINS
          if_concentration = .FALSE.
       END IF
 
+      !===Checks (VB 11/09/2026)
+      IF (inputs%if_linear_navier_stokes_with_u) THEN
+         IF (if_concentration) THEN
+            CALL error_petsc("BUG in init_problem_logicals => linear navier stokes with concentration not coded yet")
+         ELSE IF (if_energy) THEN
+            CALL error_petsc("BUG in init_problem_logicals => linear navier stokes with temperature not coded yet")
+         ELSE IF (if_mass) THEN         
+            CALL error_petsc("BUG in init_problem_logicals => linear navier stokes with level set not coded yet")
+         ELSE IF (if_induction) THEN
+            IF (inputs%type_pb=='fhd' .OR. inputs%type_pb=='mhs') THEN
+               CALL error_petsc("BUG in init_problem_logicals => linear navier stokes with pb type mhs and fhd not coded yet")
+            ELSE
+               IF (inputs%if_maxwell_with_H) THEN
+                  CALL error_petsc("BUG in init_problem_logicals => linear navier stokes with induction only coded for update with B")
+               ENDIF
+            END IF
+         ENDIF
+
+         IF (if_momentum) THEN
+            IF (.NOT. inputs%if_navier_stokes_with_u) THEN
+               CALL error_petsc("BUG in init_problem_logicals => linear navier stokes with momentum only coded for BDF2 pressure correction with u")
+            ENDIF
+         ENDIF
+      ENDIF
+
       ! !===Checks (VB 11/09/2026)
-      ! IF (inputs%if_linear_navier_stokes_with_u) THEN
-      !    IF (if_concentration) THEN
-      !       CALL error_petsc("BUG in init_problem_logicals => linear navier stokes with concentration not coded yet")
-      !    ELSE IF (if_energy) THEN
-      !       CALL error_petsc("BUG in init_problem_logicals => linear navier stokes with temperature not coded yet")
-      !    ELSE IF (if_mass) THEN         
-      !       CALL error_petsc("BUG in init_problem_logicals => linear navier stokes with level set not coded yet")
-      !    ELSE IF (if_induction) THEN
-      !       IF (inputs%type_pb=='fhd' .OR. inputs%type_pb=='mhs') THEN
-      !          CALL error_petsc("BUG in init_problem_logicals => linear navier stokes with pb type mhs and fhd not coded yet")
-      !       ELSE
-      !          IF (inputs%if_maxwell_with_H) THEN
-      !             CALL error_petsc("BUG in init_problem_logicals => linear navier stokes with induction only coded for update with B")
-      !          ENDIF
-      !       END IF
-      !    ENDIF
+      IF (inputs%if_imposed_B) THEN
+         IF (.NOT. if_induction) THEN
+            CALL error_Petsc("BUG in init_problem_logicals => imposed background B only coded when solving Maxwell equations")
+         ELSE
+            IF (inputs%type_pb=='fhd' .OR. inputs%type_pb=='mhs') THEN
+               CALL error_petsc("BUG in init_problem_logicals => imposed background B with pb type mhs and fhd not coded yet")
+            ELSE
+               IF (inputs%if_maxwell_with_H) THEN
+                  CALL error_petsc("BUG in init_problem_logicals => imposed background B with induction only coded for update with B")
+               ENDIF
+            END IF
+         ENDIF
 
-      !    IF (if_momentum) THEN
-      !       IF (.NOT. inputs%if_navier_stokes_with_u) THEN
-      !          CALL error_petsc("BUG in init_problem_logicals => linear navier stokes with momentum only coded for BDF2 pressure correction with u")
-      !       ENDIF
-      !    ENDIF
-      ! ENDIF
-
-      ! !===Checks (VB 11/09/2026)
-      ! IF (inputs%if_imposed_B) THEN
-      !    IF (if_concentration) THEN
-      !       CALL error_petsc("BUG in init_problem_logicals => imposed background B with concentration not coded yet")
-      !    ELSE IF (if_energy) THEN
-      !       CALL error_petsc("BUG in init_problem_logicals => imposed background B with temperature not coded yet")
-      !    ELSE IF (if_mass) THEN         
-      !       CALL error_petsc("BUG in init_problem_logicals => imposed background B with level set not coded yet")
-      !    ELSE IF (if_induction) THEN
-      !       IF (inputs%type_pb=='fhd' .OR. inputs%type_pb=='mhs') THEN
-      !          CALL error_petsc("BUG in init_problem_logicals => imposed background B with pb type mhs and fhd not coded yet")
-      !       ELSE
-      !          IF (inputs%if_maxwell_with_H) THEN
-      !             CALL error_petsc("BUG in init_problem_logicals => imposed background B with induction only coded for update with B")
-      !          ENDIF
-      !       END IF
-      !    ENDIF
-
-      !    IF (if_momentum) THEN
-      !       IF (.NOT. inputs%if_navier_stokes_with_u) THEN
-      !          CALL error_petsc("BUG in init_problem_logicals => imposed background B with momentum only coded for BDF2 pressure correction with u")
-      !       ENDIF
-      !    ENDIF
-      ! ENDIF
+         IF (if_concentration) THEN
+            CALL error_petsc("BUG in init_problem_logicals => imposed background B with concentration not coded yet")
+         ELSE IF (if_energy) THEN
+            CALL error_petsc("BUG in init_problem_logicals => imposed background B with temperature not coded yet")
+         ELSE IF (if_mass) THEN         
+            CALL error_petsc("BUG in init_problem_logicals => imposed background B with level set not coded yet")
+         ENDIF
+         
+         IF (if_momentum) THEN
+            IF (.NOT. inputs%if_navier_stokes_with_u) THEN
+               CALL error_petsc("BUG in init_problem_logicals => imposed background B with momentum only coded for BDF2 pressure correction with u")
+            ENDIF
+         ENDIF
+      ENDIF
 
    END SUBROUTINE init_problem_logicals
 
