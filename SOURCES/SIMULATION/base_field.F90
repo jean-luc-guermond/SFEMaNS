@@ -5,6 +5,7 @@ MODULE base_field_module
     TYPE(mesh_type), POINTER :: H_mesh
     PUBLIC :: init_base_flow, init_imposed_mag_field
     PUBLIC :: get_base_flow, get_project_base_flow, get_imposed_mag_field, get_project_imposed_mag_field
+    PUBLIC :: reset_base_flow
 CONTAINS
 
 !===============================================
@@ -103,6 +104,11 @@ CONTAINS
 !======= Update subroutines (mandatory for Newton or time-dependant base field) ============
 !===========================================================================================
 
-!!! TODO !!!
+    SUBROUTINE reset_base_flow(new_U_bar)
+        IMPLICIT NONE
+        REAL(KIND=8), DIMENSION(size(U_bar,1), 6, size(U_bar,3)), INTENT(IN) :: new_U_bar
 
+        U_bar = new_U_bar
+    END SUBROUTINE reset_base_flow
+    
 END MODULE base_field_module

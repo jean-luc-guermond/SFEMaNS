@@ -1,6 +1,6 @@
 MODULE exponential_propagator
 #ifdef USE_LIGHTKRYLOV
-   USE LightKrylov, only: abstract_exptA_linop_rdp, abstract_vector_rdp
+   USE LightKrylov, ONLY: abstract_exptA_linop_rdp, abstract_vector_rdp
 #endif
    USE def_type_mesh
    USE def_type_field_mag
@@ -62,6 +62,7 @@ IMPLICIT NONE
        PROCEDURE, PASS(self),                   PUBLIC :: rmatvec => exptA_matvec
    END TYPE exptA_linop
 
+   PUBLIC :: SFEMaNS_advance
 
    CONTAINS
 
@@ -71,7 +72,7 @@ IMPLICIT NONE
 !===========================
 !===========================
    
-   SUBROUTINE exptA_matvec(self, vec_in, vec_out)
+   SUBROUTINE SFEMaNS_advance(vec_in, vec_out)
       !-----------------
       USE petscmpi
       !-----------------
@@ -86,8 +87,7 @@ IMPLICIT NONE
       USE verbose
       USE sub_plot
       USE chaine_caractere
-     
-      CLASS(exptA_linop),              INTENT(INOUT) :: self
+      IMPLICIT NONE      
 #ifdef USE_LIGHTKRYLOV
       CLASS(abstract_vector_rdp),      INTENT(IN)    :: vec_in
       CLASS(abstract_vector_rdp),     INTENT(OUT)    :: vec_out
@@ -169,6 +169,120 @@ IMPLICIT NONE
          CALL type_error('vec_in','mag_field_type','IN',this_module,'exptA_matvec')
       END SELECT
 #endif
+   END SUBROUTINE SFEMaNS_advance
+
+   SUBROUTINE exptA_matvec(self, vec_in, vec_out)
+      USE COMM_LK_SFEM
+      IMPLICIT NONE
+      CLASS(exptA_linop),              INTENT(INOUT) :: self
+#ifdef USE_LIGHTKRYLOV
+      CLASS(abstract_vector_rdp),      INTENT(IN)    :: vec_in
+      CLASS(abstract_vector_rdp),     INTENT(OUT)    :: vec_out
+#else
+      TYPE(LK_field_type),      INTENT(IN)    :: vec_in
+      TYPE(LK_field_type),     INTENT(OUT)    :: vec_out
+#endif
+      CALL SFEMaNS_advance(vec_in, vec_out)
    END SUBROUTINE exptA_matvec
+
+   ! SUBROUTINE exptA_matvec(self, vec_in, vec_out)
+!       !-----------------
+!       USE petscmpi
+!       !-----------------
+
+!       USE COMM_LK_SFEM
+!       USE def_type_mesh
+!       USE initialization
+!       USE my_util
+!       USE input_data
+!       USE fourier_to_real_for_vtu
+!       USE post_processing_debug
+!       USE verbose
+!       USE sub_plot
+!       USE chaine_caractere
+     
+!       CLASS(exptA_linop),              INTENT(INOUT) :: self
+! #ifdef USE_LIGHTKRYLOV
+!       CLASS(abstract_vector_rdp),      INTENT(IN)    :: vec_in
+!       CLASS(abstract_vector_rdp),     INTENT(OUT)    :: vec_out
+! #else
+!       TYPE(LK_field_type),      INTENT(IN)    :: vec_in
+!       TYPE(LK_field_type),     INTENT(OUT)    :: vec_out
+! #endif
+!       !===Time iterations=============================================================
+!       REAL(KIND=8)                                    :: time
+!       INTEGER                                         :: it
+!       INTEGER, SAVE                                   :: it_tot=0
+!       !===Timing======================================================================
+!       REAL(KIND=8)                                    :: tps, tploc, tploc_max=0.d0
+       
+!       !===Start PETSC and MPI (mandatory)=============================================
+!       CALL MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
+     
+!       !===User reads his/her own data=================================================
+!       !===Initialize SFEMANS (mandatory)==============================================
+!       CALL build_pointers(vv_mesh, pp_mesh, H_mesh, phi_mesh, temp_mesh, conc_mesh,&
+!          interface_H_phi, interface_H_mu, list_mode, &
+!          vel_n, vel_n1, mag_n, mag_n1, vel, &
+!          vol_heat_capacity_field, temperature_diffusivity_field, &
+!          concentration_diffusivity_field,mu_H_field, sigma_field, time, m_max_c, &
+!          comm_one_d, comm_one_d_ns, comm_one_d_temp, comm_one_d_conc,temperature, &
+!          concentration, level_set, density, &
+!          der_un, visc_LES, visc_LES_level)
+! #ifdef USE_LIGHTKRYLOV
+!          SELECT TYPE(vec_in)
+!          TYPE is(LK_field_type)
+!             SELECT TYPE(vec_out)
+!             TYPE is(LK_field_type)
+! #endif
+!                CALL vec_in%LK_2_SFEM(vel_n, vel_n1, mag_n, mag_n1)
+              
+!                !===============================================================================
+!                !                        TIME INTEGRATION                                      !
+!                !===============================================================================
+!                !===Start time loop
+!                tps = user_time()
+!                tploc_max = 0.d0
+
+!                DO it = 1, inputs%nb_iteration
+!                   it_tot = it_tot + 1
+!                   tploc =  user_time()
+!                   time = time + inputs%dt
+!                   CALL run_SFEMaNS(time, it)
+!                   ! !===My postprocessing
+!                   ! IF (.NOT.inputs%test_de_convergence) THEN
+!                   !    CALL my_post_processing(it)
+!                   ! END IF
+!                   !===Write restart file
+!                   IF ((MOD(it_tot, inputs%freq_restart) == 0) .AND. (.NOT. inputs%LK%eigs)) THEN
+!                      CALL save_run(it_tot,inputs%freq_restart)
+!                   ENDIF
+!                   ! !===Write snapshot file
+!                   ! IF (MOD(it_tot, inputs%freq_snapshot) == 0) THEN
+!                   !    CALL save_snapshot(it_tot,inputs%freq_snapshot)
+!                   ! ENDIF
+!                   !===Timing
+!                   tploc = user_time() - tploc
+!                   IF (it>1) tploc_max = tploc_max + tploc
+!                ENDDO
+
+!                mag_n1%time = time - inputs%dt 
+!                mag_n%time = time 
+!                CALL vec_out%SFEM_2_LK(vel_n, vel_n1, mag_n, mag_n1)
+             
+!                !===Timing======================================================================
+!                tps = user_time() - tps
+!                CALL write_verbose(rank,opt_tps=tps,opt_tploc_max=tploc_max)
+
+!                !===End of code=================================================================
+! #ifdef USE_LIGHTKRYLOV
+!             CLASS DEFAULT
+!                CALL type_error('vec_out','mag_field_type','OUT',this_module,'exptA_matvec')
+!             END SELECT
+!       CLASS DEFAULT
+!          CALL type_error('vec_in','mag_field_type','IN',this_module,'exptA_matvec')
+!       END SELECT
+! #endif
+   ! END SUBROUTINE exptA_matvec
 
 END MODULE exponential_propagator

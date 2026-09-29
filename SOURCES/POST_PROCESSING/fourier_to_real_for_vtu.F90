@@ -1560,7 +1560,11 @@ CONTAINS
     ELSE IF (SIZE(field,2) == 1) THEN
        CALL create_xml_vtu_scal_file(field(:,1), mesh, TRIM(ADJUSTL(file_list(rank+1))), field_name)
     ELSE IF (SIZE(field,2) .GT. 0) THEN
+      !=== FIXME ===!
        CALL create_xml_vtu_scal_file(field(:,1), mesh, TRIM(ADJUSTL(file_list(rank+1))), field_name)
+      !  CALL create_xml_vtu_scal_file(field(:,1), mesh, TRIM(ADJUSTL(file_list(rank+1))), field_name//"_cos")
+      !  CALL create_xml_vtu_scal_file(field(:,2), mesh, TRIM(ADJUSTL(file_list(rank+1))), field_name//"_sin")
+      !=== FIXME ===!
     ELSE
        CALL error_Petsc('Bug in make_vtu_file_2D: field needs at least one component')
     END IF

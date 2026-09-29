@@ -486,7 +486,7 @@ CONTAINS
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: it, freq_restart
     INTEGER :: n
-
+write(*,*) "INSIDE save_run"
     IF (if_momentum) THEN
        IF (pp_mesh%me /= 0) THEN
           ASSOCIATE(un    => vel_n%u,  pn     => vel_n%p, incpn    => vel_n%incp, &

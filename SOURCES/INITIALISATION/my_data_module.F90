@@ -7,10 +7,15 @@ MODULE my_data_module
      INTEGER     :: nb_exptA = 1
      LOGICAL     :: ctest_exptA = .FALSE.
      !=== nb_exptA is only used for ctests
+     !=== Data for linear problem
      LOGICAL     :: eigs     = .FALSE.
      INTEGER     :: nev      = 1
      INTEGER     :: kdim     = 4
      REAL(KIND=8)::abs_tol   = 1.d-7
+     !=== Data for Newton method
+     LOGICAL     :: newton   = .FALSE.
+     REAL(KIND=8):: atol_newton, rtol_newton
+     !=== Data for post-processing LK
      LOGICAL     :: if_vtu_3d     = .FALSE.
      LOGICAL     :: if_write_eigs = .TRUE.
    CONTAINS
@@ -440,6 +445,26 @@ CONTAINS
        self%abs_tol = 1.d-7
     END IF
     
+    !===Data for LightKrylov (Newton method problems)==========!
+    CALL find_string(in_unit, "===Compute base flow with Newton method (LightKrylov)? (true/false)", test)
+    IF (test) THEN
+       READ (in_unit, *) self%newton
+    END IF
+
+    CALL find_string(in_unit, "===Absolute tolerance for base flow with Newton method (LightKrylov)?", test)
+    IF (test) THEN
+       READ (in_unit, *) self%atol_newton
+    ELSE
+       self%atol_newton = 1.d-6
+    END IF
+
+    CALL find_string(in_unit, "===Relative tolerance for base flow with Newton method (LightKrylov)?", test)
+    IF (test) THEN
+       READ (in_unit, *) self%rtol_newton
+    ELSE
+       self%rtol_newton = 1.d-4
+    END IF
+
     CALL find_string(in_unit, "===Compute vtu 3D of LK eigenvectors?", test)
     IF (test) THEN
        READ (in_unit, *) self%if_vtu_3d
@@ -453,6 +478,11 @@ CONTAINS
     ELSE
        self%if_write_eigs = .FALSE.
     END IF
+
+    !===Check Data consistency for LightKrylov ==========!
+    IF (self%newton .AND. self%eigs) THEN
+       CALL error_petsc("BUG in data file for LightKrylob => either select Newton method, or eigenvalue pb resolution, not both.")
+    ENDIF
 
   END SUBROUTINE read_LK_data 
 
