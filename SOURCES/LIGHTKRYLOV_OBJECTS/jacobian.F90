@@ -98,7 +98,7 @@ CONTAINS
     !====== Post processing for Newton method  ===============
     !=========================================================
 
-    SUBROUTINE post_pro_newton_LK(bf, residual)
+    SUBROUTINE post_pro_newton_LK(bf_initial_guess, bf_output)
         USE input_data
         USE restart
         USE fourier_to_real_for_vtu
@@ -111,17 +111,25 @@ CONTAINS
         USE stdlib_io_npy, only: save_npy
 
         IMPLICIT NONE
-        TYPE(LK_FIELD_TYPE), INTENT(IN) :: bf, residual
-        INTEGER          :: it
-        CHARACTER(LEN=3) :: what
+        TYPE(LK_FIELD_TYPE), INTENT(IN) :: bf_initial_guess, bf_output
+        INTEGER            :: it, i
+        CHARACTER(LEN=3)   :: what
+        CHARACTER(LEN=3)   :: st_mode
+        CHARACTER(LEN=200) :: header
 
         it = 0
 
         IF (if_momentum) THEN
-            ASSOCIATE(vn => bf%vel_n, vn1 => bf%vel_n1)
+            ASSOCIATE(vn => bf_initial_guess%vel_n, vn1 => bf_initial_guess%vel_n1)
             CALL write_restart_ns(vn%comm_one_d_ns, vn%vv_mesh, vn%pp_mesh, 0.d0, &
                 vn%list_mode, vn%u, vn1%u, vn%p, vn1%p, &
-                vn%incp, vn1%incp, inputs%file_name, it, 1, opt_name="suite_bf_ns")
+                vn%incp, vn1%incp, inputs%file_name, 0, 1, opt_name="suite_bf_ns")
+            END ASSOCIATE
+
+            ASSOCIATE(vn => bf_output%vel_n, vn1 => bf_output%vel_n1)
+            CALL write_restart_ns(vn%comm_one_d_ns, vn%vv_mesh, vn%pp_mesh, 0.d0, &
+                vn%list_mode, vn%u, vn1%u, vn%p, vn1%p, &
+                vn%incp, vn1%incp, inputs%file_name, 1, 1, opt_name="suite_bf_ns")
             END ASSOCIATE
             ! ASSOCIATE(vn => X(it)%vel)
             ! CALL write_restart_ns(vn%comm_one_d_ns, vn%vv_mesh, vn%pp_mesh, 0.d0, &
@@ -131,7 +139,7 @@ CONTAINS
         ENDIF
 
         IF (if_induction) THEN
-            ASSOCIATE(mag_n => bf%mag_n, mag_n1 => bf%mag_n)
+            ASSOCIATE(mag_n => bf_output%mag_n, mag_n1 => bf_output%mag_n)
             CALL write_restart_maxwell(mag_n%comm_one_d, mag_n%H_mesh, mag_n%phi_mesh, &
                     0.d0, mag_n%list_mode, mag_n, mag_n1, inputs%file_name, it, 1, opt_name="suite_bf_maxwell")
             END ASSOCIATE
@@ -144,9 +152,8 @@ CONTAINS
         IF (inputs%LK%if_vtu_3d) THEN
             what = 'new'
             IF (if_induction) THEN
-                ASSOCIATE(mag_n => bf%mag_n)
+                ASSOCIATE(mag_n => bf_output%mag_n)
                 CALL vtu_3d(mag_n%comm_one_d, mag_n%H, 'H_mesh', 'Hn_bf', 'Hn_bf', what, opt_it=it)
-                what = 'old'
                 END ASSOCIATE
                 ! ASSOCIATE(mag => X(it)%mag)
                 ! CALL vtu_3d(mag%comm_one_d, mag%H, 'H_mesh', 'Hn_eig', 'Hn_eig', what, opt_it=it)
@@ -156,22 +163,35 @@ CONTAINS
 
             what = 'new'
             IF (if_momentum) THEN
-                ASSOCIATE(vn => bf%vel_n, vn1 => bf%vel_n1)
+                ASSOCIATE(vn => bf_output%vel_n, vn1 => bf_output%vel_n1)
                 ! ASSOCIATE(vn => X(it)%vel)
-                CALL vtu_3d(vn%comm_one_d_ns, vn%u, 'vv_mesh', 'vn_bf', 'vn_bf', what, opt_it=it)
-                what = 'old'
+                    CALL vtu_3d(vn%comm_one_d_ns, vn%u, 'vv_mesh', 'vn_bf', 'vn_bf', what, opt_it=it)
+                    CALL vtu_3d(vn%comm_one_d_ns, vn%p, 'pp_mesh', 'pn_bf', 'pn_bf', what, opt_it=it)
+                    IF (inputs%if_plot_2D) THEN
+                        DO i=1, SIZE(vn%list_mode)
+                            WRITE(st_mode, '(I3)') vn%list_mode(i)
+                            header = 'vn_bf_mode_' // TRIM(ADJUSTL(st_mode))
+                            CALL make_vtu_file_2D(vn%comm_one_d_ns(1), vn%vv_mesh, header, vn%u(:, :, i), &
+                                            'vn_bf', what, opt_it = it)
+
+                            WRITE(st_mode, '(I3)') vn%list_mode(i)
+                            header = 'pn_bf_mode_' // TRIM(ADJUSTL(st_mode))
+                            CALL make_vtu_file_2D(vn%comm_one_d_ns(1), vn%pp_mesh, header, vn%p(:, :, i), &
+                                            'pn_bf', what, opt_it = it)
+                        END DO
+                    ENDIF
                 END ASSOCIATE
             ENDIF
         ENDIF
 #else
         USE my_util
         IMPLICIT NONE
-        TYPE(LK_FIELD_TYPE), INTENT(IN) :: bf, residual
+        TYPE(LK_FIELD_TYPE), INTENT(IN) :: bf_initial_guess, bf_output
         CALL error_petsc("BUG in post_pro_newton_LK: SFEMaNS compiled without LightKrylov => this subroutine should not be called!!!")
         !== Dummy to avoid warnings
         RETURN
-        CALL bf%zero()
-        CALL residual%zero()
+        CALL bf_initial_guess%zero()
+        CALL bf_output%zero()
         !== Dummy to avoid warnings
 #endif            
 

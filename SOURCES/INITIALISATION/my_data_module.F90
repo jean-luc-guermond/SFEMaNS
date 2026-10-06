@@ -14,6 +14,8 @@ MODULE my_data_module
      REAL(KIND=8)::abs_tol   = 1.d-7
      !=== Data for Newton method
      LOGICAL     :: newton   = .FALSE.
+     LOGICAL     :: read_suite_initial_guess = .FALSE.
+     INTEGER     :: maxiter_newton = 30
      REAL(KIND=8):: atol_newton, rtol_newton
      !=== Data for post-processing LK
      LOGICAL     :: if_vtu_3d     = .FALSE.
@@ -451,6 +453,18 @@ CONTAINS
        READ (in_unit, *) self%newton
     END IF
 
+    CALL find_string(in_unit, "===Read Newton-Krylov initial guess from suite_bf_ns? (t/f)", test)
+    IF (test) THEN
+       READ (in_unit, *) self%read_suite_initial_guess
+    END IF
+
+    CALL find_string(in_unit, "===Maximum number of iterations for Newton method?", test)
+    IF (test) THEN
+       READ (in_unit, *) self%maxiter_newton
+    ELSE
+       self%maxiter_newton = 30
+    END IF
+
     CALL find_string(in_unit, "===Absolute tolerance for base flow with Newton method (LightKrylov)?", test)
     IF (test) THEN
        READ (in_unit, *) self%atol_newton
@@ -672,7 +686,7 @@ CONTAINS
              CALL error_petsc("BUG in my_data_module: '===Solve Linear Navier-Stokes? (with u)' set to .T., &
              &make sure to set '===Solve Navier-Stokes with u (true) or m (false)?' to .T. as well")
           END IF
-          CALL find_string(21, '===Do we read base flow from suite_jacob_ns?', test)
+          CALL find_string(21, '===Do we read base flow from suite_bf_ns?', test)
           IF (test) THEN
             READ(21, *) inputs%if_read_start_linear_navier_stokes_with_u
           ELSE

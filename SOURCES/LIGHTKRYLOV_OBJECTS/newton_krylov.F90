@@ -37,6 +37,8 @@ CONTAINS
         ! TYPE(jacobian_type)                             :: jacobian
         TYPE(LK_field_type)     :: bf, residual, some_vec
         TYPE(newton_dp_opts)    :: opts
+        INTEGER, SAVE           :: it=0
+        REAL(KIND=8) :: t_dummy
 #endif
 
 #ifdef USE_LIGHTKRYLOV
@@ -46,26 +48,29 @@ CONTAINS
         ! Set Jacobian and initial guess for baseflow
         CALL bf%zero(); CALL residual%zero(); CALL some_vec%zero()
         sys_jac%jacobian = jacobian_type()!jacobian
-        CALL initial_guess(bf)
+        IF (inputs%LK%read_suite_initial_guess) THEN
+                CALL read_restart_ns(bf%vel_n%comm_one_d_ns, t_dummy, bf%vel_n%list_mode, bf%vel_n%u, bf%vel_n1%u, bf%vel_n%p, bf%vel_n1%p, &
+                        bf%vel_n%incp, bf%vel_n1%incp, inputs%file_name, opt_name="suite_bf_ns")
+        ELSE
+                CALL initial_guess(bf)
+        ! CALL initial_guess(some_vec)
+        ENDIF
+        CALL some_vec%axpby(1.d0, bf, 0.d0)
+
         sys_jac%jacobian%X = bf
         CALL sys_jac%eval(bf, residual, inputs%LK%rtol_newton)
 
-write(*,*) "norm ini = ", residual%norm(), bf%norm(), residual%norm()/bf%norm()
-CALL residual%rand()
-CALL sys_jac%jacobian%matvec(residual, some_vec)
-write(*,*) "norm some vec = ", residual%norm(), some_vec%norm(), sys_jac%jacobian%X%norm()
-! call error_petsc("end code")
-
-        opts = newton_dp_opts(maxiter=30, ifbisect=.false.)
+        opts = newton_dp_opts(maxiter=inputs%LK%maxiter_newton, ifbisect=.false.)
         CALL newton(sys_jac, bf, gmres_rdp, info, rtol=inputs%LK%rtol_newton, atol=inputs%LK%atol_newton, options=opts, scheduler=constant_tol_dp)
         CALL sys_jac%eval(bf, residual, inputs%LK%rtol_newton)
         CALL timer%stop('Newton iteration (const. tol)')
 write(*,*) "Final residual norm = ", residual%norm(), bf%norm(), residual%norm() / bf%norm()
 
-        CALL post_pro_newton_LK(bf, residual)
+        CALL post_pro_newton_LK(some_vec, bf)
+        ! CALL post_pro_newton_LK(bf, residual)
 #else
         !2026/06/05: LC added dummy variables to avoid warning
-        info = 0
+        info = it
         !2026/06/05: LC added dummy variables to avoid warning
         CALL error_petsc("LightKrylov not compiled with SFEMaNS, check CMakeLists.txt/variable.cmake")
 #endif

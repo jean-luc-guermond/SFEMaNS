@@ -140,7 +140,7 @@ IMPLICIT NONE
                   !    CALL my_post_processing(it)
                   ! END IF
                   !===Write restart file
-                  IF ((MOD(it_tot, inputs%freq_restart) == 0) .AND. (.NOT. inputs%LK%eigs)) THEN
+                  IF ((MOD(it_tot, inputs%freq_restart) == 0) .AND. (.NOT. (inputs%LK%eigs .OR. inputs%LK%newton))) THEN
                      CALL save_run(it_tot,inputs%freq_restart)
                   ENDIF
                   ! !===Write snapshot file
@@ -185,7 +185,7 @@ IMPLICIT NONE
       CALL SFEMaNS_advance(vec_in, vec_out)
    END SUBROUTINE exptA_matvec
 
-   ! SUBROUTINE exptA_matvec(self, vec_in, vec_out)
+!    SUBROUTINE exptA_matvec(self, vec_in, vec_out)
 !       !-----------------
 !       USE petscmpi
 !       !-----------------
@@ -215,7 +215,6 @@ IMPLICIT NONE
 !       INTEGER, SAVE                                   :: it_tot=0
 !       !===Timing======================================================================
 !       REAL(KIND=8)                                    :: tps, tploc, tploc_max=0.d0
-       
 !       !===Start PETSC and MPI (mandatory)=============================================
 !       CALL MPI_Comm_rank(PETSC_COMM_WORLD,rank,ierr)
      
@@ -283,6 +282,6 @@ IMPLICIT NONE
 !          CALL type_error('vec_in','mag_field_type','IN',this_module,'exptA_matvec')
 !       END SELECT
 ! #endif
-   ! END SUBROUTINE exptA_matvec
+!    END SUBROUTINE exptA_matvec
 
 END MODULE exponential_propagator
