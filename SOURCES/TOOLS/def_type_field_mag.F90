@@ -123,19 +123,34 @@ CONTAINS
         CLASS(mag_field_type),       intent(inout) :: self
         LOGICAL                                    :: test
         test = (ALLOCATED(self%H)) .AND. ALLOCATED(self%B)
-        IF ((.NOT. self%initialized) .OR. (.NOT. test)) THEN
+        IF ((.NOT. test)) THEN
             !====== WARNING MESSAGE, could get rid of?
-            IF ((.NOT. test) .AND. (self%initialized)) THEN
+            IF ((self%initialized)) THEN
                 WRITE(*,*) "WARNING: somehow mag_field is initialized but with non-allocated stuff"
                 WRITE(*,*) 'B', ALLOCATED(self%B) 
                 WRITE(*,*) 'H', ALLOCATED(self%H) 
             END IF
-            !======= Building useful pointers
-
             !======= Zeroeing magnetic fields
             CALL self%zero()
-            self%initialized = .TRUE.
+        ELSE IF (.NOT. self%initialized) THEN
+            WRITE(*,*) "WARNING IN def_type_field_mag.F90 => test is True, but somehow vector labeled as not initialized???"
         END IF
+        self%initialized = .TRUE.
+
+        ! test = (ALLOCATED(self%H)) .AND. ALLOCATED(self%B)
+        ! IF ((.NOT. self%initialized) .OR. (.NOT. test)) THEN
+        !     !====== WARNING MESSAGE, could get rid of?
+        !     IF ((.NOT. test) .AND. (self%initialized)) THEN
+        !         WRITE(*,*) "WARNING: somehow mag_field is initialized but with non-allocated stuff"
+        !         WRITE(*,*) 'B', ALLOCATED(self%B) 
+        !         WRITE(*,*) 'H', ALLOCATED(self%H) 
+        !     END IF
+        !     !======= Building useful pointers
+
+        !     !======= Zeroeing magnetic fields
+        !     CALL self%zero()
+        !     self%initialized = .TRUE.
+        ! END IF
     END SUBROUTINE init_mag_field
 
     SUBROUTINE set_time_mag(self, time)
@@ -180,6 +195,8 @@ CONTAINS
             ALLOCATE(self%B   (self%H_mesh%np, 6, size(self%list_mode)))
             ALLOCATE(self%phi (self%phi_mesh%np, 2, size(self%list_mode)))
         END IF
+        self%initialized = .TRUE.
+
     END SUBROUTINE allocate_induction_fields
 
 

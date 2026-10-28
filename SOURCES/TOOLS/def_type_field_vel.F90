@@ -111,6 +111,7 @@ CONTAINS
             ALLOCATE(self%p    (self%pp_mesh%np, 2, SIZE(self%list_mode)))
             ALLOCATE(self%incp (self%pp_mesh%np, 2, SIZE(self%list_mode)))
         END IF
+        self%initialized = .TRUE.
     END SUBROUTINE allocate_velocity_fields
 
 
@@ -144,17 +145,30 @@ CONTAINS
         IMPLICIT NONE
         CLASS(vel_field_type),       intent(inout) :: self
         LOGICAL                                    :: test
+        ! test = (ALLOCATED(self%u) .AND. ALLOCATED(self%p) .AND. ALLOCATED(self%incp))
+        ! IF ((.NOT. self%initialized) .OR. (.NOT. test)) THEN
+        !     IF ((.NOT. test) .AND. (self%initialized)) THEN
+        !         WRITE(*,*) "WARNING: somehow vel_field is initialized but with non-allocated stuff"
+        !         WRITE(*,*) 'u', ALLOCATED(self%u) 
+        !         WRITE(*,*) 'p', ALLOCATED(self%p) 
+        !         WRITE(*,*) 'incp', ALLOCATED(self%incp) 
+        !     END IF
+        !     CALL self%zero()
+        !     self%initialized = .TRUE.
+        ! END IF
         test = (ALLOCATED(self%u) .AND. ALLOCATED(self%p) .AND. ALLOCATED(self%incp))
-        IF ((.NOT. self%initialized) .OR. (.NOT. test)) THEN
-            IF ((.NOT. test) .AND. (self%initialized)) THEN
+        IF ((.NOT. test)) THEN
+            IF ((self%initialized)) THEN
                 WRITE(*,*) "WARNING: somehow vel_field is initialized but with non-allocated stuff"
                 WRITE(*,*) 'u', ALLOCATED(self%u) 
                 WRITE(*,*) 'p', ALLOCATED(self%p) 
                 WRITE(*,*) 'incp', ALLOCATED(self%incp) 
             END IF
             CALL self%zero()
-            self%initialized = .TRUE.
+        ELSE IF (.NOT. self%initialized) THEN
+            WRITE(*,*) "WARNING IN def_type_field_vel.F90 => test is True, but somehow vector labeled as not initialized???"
         END IF
+        self%initialized = .TRUE.
     END SUBROUTINE init_vel_field
 
     SUBROUTINE zero_vel(self)

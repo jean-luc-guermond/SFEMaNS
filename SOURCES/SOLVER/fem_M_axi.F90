@@ -6,6 +6,7 @@
 MODULE fem_M_axi
    !-----------
    USE petscmat
+   !USE petscmat, ONLY: MatSetValues
    !-----------
   USE def_type_mesh
 CONTAINS

@@ -4,9 +4,14 @@ MODULE newton_krylov_module
     ABSTRACT INTERFACE
         SUBROUTINE template_newton_initial_guess(bf)
             USE COMM_LK_SFEM, ONLY: LK_field_type
+#ifdef USE_LIGHTKRYLOV
             USE LightKrylov
             IMPLICIT NONE
             CLASS(abstract_vector_rdp), INTENT(INOUT) :: bf
+#else
+            IMPLICIT NONE
+            TYPE(LK_FIELD_TYPE), INTENT(INOUT) :: bf
+#endif
         END SUBROUTINE template_newton_initial_guess
     END INTERFACE
 
@@ -35,44 +40,43 @@ CONTAINS
 #ifdef USE_LIGHTKRYLOV
         TYPE(sys_SFEMaNS_jacobian)                      :: sys_jac
         ! TYPE(jacobian_type)                             :: jacobian
-        TYPE(LK_field_type)     :: bf, residual, some_vec
+        TYPE(LK_field_type)     :: bf_in, bf_out, residual
         TYPE(newton_dp_opts)    :: opts
         INTEGER, SAVE           :: it=0
         REAL(KIND=8) :: t_dummy
 #endif
 
 #ifdef USE_LIGHTKRYLOV
+        CALL logger_setup(nio=0, log_level=information_level, log_stdout=.TRUE., log_timestamp=.false.)
         CALL timer%initialize()
         CALL timer%add_timer('Newton iteration (const. tol)', start=.true.)
 
         ! Set Jacobian and initial guess for baseflow
-        CALL bf%zero(); CALL residual%zero(); CALL some_vec%zero()
+        CALL bf_in%zero(); CALL bf_out%zero(); CALL residual%zero()
         sys_jac%jacobian = jacobian_type()!jacobian
         IF (inputs%LK%read_suite_initial_guess) THEN
-                CALL read_restart_ns(bf%vel_n%comm_one_d_ns, t_dummy, bf%vel_n%list_mode, bf%vel_n%u, bf%vel_n1%u, bf%vel_n%p, bf%vel_n1%p, &
-                        bf%vel_n%incp, bf%vel_n1%incp, inputs%file_name, opt_name="suite_bf_ns")
+                CALL read_restart_ns(bf_in%vel_n%comm_one_d_ns, t_dummy, bf_in%vel_n%list_mode, bf_in%vel_n%u, bf_in%vel_n1%u, bf_in%vel_n%p, bf_in%vel_n1%p, &
+                        bf_in%vel_n%incp, bf_in%vel_n1%incp, inputs%file_name, opt_name="suite_bf_ns")
         ELSE
-                CALL initial_guess(bf)
-        ! CALL initial_guess(some_vec)
+                CALL initial_guess(bf_in)
         ENDIF
-        CALL some_vec%axpby(1.d0, bf, 0.d0)
-
-        sys_jac%jacobian%X = bf
-        CALL sys_jac%eval(bf, residual, inputs%LK%rtol_newton)
+        CALL bf_out%axpby(1.d0, bf_in, 0.d0)
+write(*,*) "Initial norm = ", bf_out%norm()
+        sys_jac%jacobian%X = bf_out
+        CALL sys_jac%eval(bf_out, residual, inputs%LK%rtol_newton)
 
         opts = newton_dp_opts(maxiter=inputs%LK%maxiter_newton, ifbisect=.false.)
-        CALL newton(sys_jac, bf, gmres_rdp, info, rtol=inputs%LK%rtol_newton, atol=inputs%LK%atol_newton, options=opts, scheduler=constant_tol_dp)
-        CALL sys_jac%eval(bf, residual, inputs%LK%rtol_newton)
+        CALL newton(sys_jac, bf_out, gmres_rdp, info, rtol=inputs%LK%rtol_newton, atol=inputs%LK%atol_newton, options=opts, scheduler=constant_tol_dp)
+        CALL sys_jac%eval(bf_out, residual, inputs%LK%rtol_newton)
         CALL timer%stop('Newton iteration (const. tol)')
-write(*,*) "Final residual norm = ", residual%norm(), bf%norm(), residual%norm() / bf%norm()
+write(*,*) "Final residual norm = ", residual%norm(), bf_out%norm(), residual%norm() / bf_out%norm()
 
-        CALL post_pro_newton_LK(some_vec, bf)
-        ! CALL post_pro_newton_LK(bf, residual)
+        CALL post_pro_newton_LK(bf_in, bf_out)
 #else
+        CALL error_petsc("LightKrylov not compiled with SFEMaNS, check CMakeLists.txt and/or variable.cmake")
         !2026/06/05: LC added dummy variables to avoid warning
-        info = it
+        write(*,*) info
         !2026/06/05: LC added dummy variables to avoid warning
-        CALL error_petsc("LightKrylov not compiled with SFEMaNS, check CMakeLists.txt/variable.cmake")
 #endif
 
       END SUBROUTINE compute_base_flow

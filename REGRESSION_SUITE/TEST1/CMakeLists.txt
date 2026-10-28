@@ -62,8 +62,8 @@ target_link_libraries(${exe} PUBLIC sfemans_lib_F
   ${MPI_Fortran_LIBRARIES}
   ${ADDITIONAL_LINKS}
   )
-message(${ZLIB_LIBRARIES})
 target_include_directories(${exe} PUBLIC ${SFEMaNS_DIR}/LIBS)
+message(${ZLIB_LIBRARIES})
 
 set(passRegex "1234567891")
 

@@ -13,7 +13,7 @@ CONTAINS
   END FUNCTION user_time
 
   SUBROUTINE error_Petsc(string)
-    USE petscmpi
+    USE petscmpi, ONLY: PETSC_COMM_WORLD
     IMPLICIT NONE
     CHARACTER(LEN=*),       INTENT(IN) :: string
     INTEGER                            :: rank, ierr

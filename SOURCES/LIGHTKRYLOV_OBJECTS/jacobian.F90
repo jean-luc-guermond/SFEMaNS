@@ -1,16 +1,27 @@
 MODULE jacobian_type_module
+#ifdef USE_LIGHTKRYLOV
     USE LightKrylov
     USE LightKrylov_Logger
     USE LightKrylov_Constants
+#endif
     USE COMM_LK_SFEM
 
+#ifdef USE_LIGHTKRYLOV
     TYPE, EXTENDS(abstract_system_rdp), PUBLIC :: sys_SFEMaNS_jacobian
+#else
+    TYPE, PUBLIC :: sys_SFEMaNS_jacobian
+#endif
     CONTAINS
         PRIVATE
         PROCEDURE, PASS(self), PUBLIC :: response => nonlinear_SFEMaNS_solver
     END TYPE sys_SFEMaNS_jacobian
 
+#ifdef USE_LIGHTKRYLOV
     TYPE, EXTENDS(abstract_jacobian_linop_rdp), PUBLIC :: jacobian_type
+#else
+    TYPE, PUBLIC :: jacobian_type
+        CLASS(LK_FIELD_TYPE), ALLOCATABLE :: X
+#endif
     CONTAINS
         PRIVATE
         PROCEDURE, PASS(self), PUBLIC :: matvec  => linear_SFEMaNS_solver
@@ -25,30 +36,38 @@ CONTAINS
         USE input_data, ONLY: inputs
         USE exponential_propagator
         IMPLICIT NONE
+        REAL(KIND=8), INTENT(IN)  :: atol
         CLASS(sys_SFEMaNS_jacobian),     INTENT(INOUT)  :: self
+#ifdef USE_LIGHTKRYLOV
         CLASS(abstract_vector_rdp), INTENT(IN)  :: vec_in
         CLASS(abstract_vector_rdp), INTENT(OUT) :: vec_out
         ! Solver tolerances if needed (forced by LightKrylov, unnecessary inside SFEMaNS)
-        REAL(KIND=8), INTENT(IN)  :: atol
 
         SELECT TYPE (vec_in)
         TYPE is (LK_field_type)
             SELECT TYPE (vec_out)
             TYPE is (LK_field_type)
+#else
+        TYPE(LK_FIELD_TYPE), INTENT(IN)  :: vec_in
+        TYPE(LK_FIELD_TYPE), INTENT(OUT) :: vec_out
+#endif
 
                 !=== Switch SFEMaNS to nonlinear mode
                 inputs%if_linear_navier_stokes_with_u = .FALSE.
                 !=== SFEMaNS integration
                 CALL SFEMaNS_advance(vec_in, vec_out)
                 !=== Evaluate residual
-                CALL vec_out%sub(vec_in)
+                CALL vec_out%axpby(-1.d0, vec_in, 1.d0)
+                !CALL vec_out%sub(vec_in)
 
+#ifdef USE_LIGHTKRYLOV
             CLASS DEFAULT
                 CALL TYPE_error('vec_out','LK_field_type','OUT',this_module,'nonlinear_map')
             END SELECT
         CLASS DEFAULT
             CALL TYPE_error('vec_in','LK_field_type','IN',this_module,'nonlinear_map')
         END SELECT
+#endif
 
         RETURN
         !=== dummy to avoid warning
@@ -62,6 +81,7 @@ CONTAINS
         USE exponential_propagator
         IMPLICIT NONE
         CLASS(jacobian_type),     INTENT(INOUT)  :: self
+#ifdef USE_LIGHTKRYLOV
         CLASS(abstract_vector_rdp), INTENT(IN)  :: vec_in
         CLASS(abstract_vector_rdp), INTENT(OUT) :: vec_out
         ! Solver tolerances if needed (forced by LightKrylov, unnecessary inside SFEMaNS)
@@ -70,7 +90,11 @@ CONTAINS
         TYPE is (LK_field_type)
             SELECT TYPE (vec_out)
             TYPE is (LK_field_type)
-
+#else
+        TYPE(LK_field_type), INTENT(IN)  :: vec_in
+        TYPE(LK_field_type), INTENT(OUT) :: vec_out
+#endif
+#ifdef USE_LIGHTKRYLOV
                 !=== Switch SFEMaNS to linear mode
                 inputs%if_linear_navier_stokes_with_u = .TRUE.
                 SELECT TYPE (bf => self%X)
@@ -82,7 +106,8 @@ CONTAINS
                 !=== SFEMaNS integration
                 CALL SFEMaNS_advance(vec_in, vec_out)
                 !=== Evaluate residual
-                CALL vec_out%sub(vec_in)
+                !CALL vec_out%sub(vec_in)
+                CALL vec_out%axpby(-1.d0, vec_in, 1.d0)
 
             CLASS DEFAULT
                 CALL TYPE_error('vec_out','LK_field_type','OUT',this_module,'linear_map')
@@ -90,7 +115,17 @@ CONTAINS
         CLASS DEFAULT
             CALL TYPE_error('vec_in','LK_field_type','IN',this_module,'linear_map')
         END SELECT
+#else
+                !=== Switch SFEMaNS to linear mode
+                inputs%if_linear_navier_stokes_with_u = .TRUE.
+                CALL reset_base_flow(self%X%vel_n%u)
+                !=== SFEMaNS integration
+                CALL SFEMaNS_advance(vec_in, vec_out)
+                !=== Evaluate residual
+                !CALL vec_out%sub(vec_in)
+                CALL vec_out%axpby(-1.d0, vec_in, 1.d0)
 
+#endif
         RETURN
     END SUBROUTINE linear_SFEMaNS_solver
 
@@ -186,7 +221,7 @@ CONTAINS
 #else
         USE my_util
         IMPLICIT NONE
-        TYPE(LK_FIELD_TYPE), INTENT(IN) :: bf_initial_guess, bf_output
+        TYPE(LK_FIELD_TYPE), INTENT(INOUT) :: bf_initial_guess, bf_output
         CALL error_petsc("BUG in post_pro_newton_LK: SFEMaNS compiled without LightKrylov => this subroutine should not be called!!!")
         !== Dummy to avoid warnings
         RETURN

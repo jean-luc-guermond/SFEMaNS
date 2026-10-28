@@ -21,14 +21,12 @@ enable_language(Fortran)
 # Getting useful libraries
 find_package(PkgConfig)
 
-pkg_check_modules(PETSC PETSc)
-pkg_check_modules(FFTW fftw3)
+pkg_check_modules(PETSC REQUIRED IMPORTED_TARGET PETSc)
+pkg_check_modules(FFTW REQUIRED IMPORTED_TARGET fftw3)
 
 # Build library sfemans_lib_F
 file(GLOB_RECURSE sfemans_sources_F ../SOURCES/*/*.F90)
 list(REMOVE_ITEM sfemans_sources_F ${SFEMaNS_DIR}/SOURCES/MESH_INTERPOLATION/main_mesh_interpol.F90)
-
-
 add_library(sfemans_lib_F SHARED ${sfemans_sources_F})
 
 if (USE_LIGHTKRYLOV_MODULE)
@@ -37,19 +35,25 @@ if (USE_LIGHTKRYLOV_MODULE)
    IF(NOT DEFINED LIGHTKRYLOV_ROOT)
       set(LIGHTKRYLOV_ROOT $ENV{LIGHTKRYLOV_ROOT})
    endif()
+   MESSAGE(STATUS "LightKrylovRoot is ${LIGHTKRYLOV_ROOT}")
    target_include_directories(sfemans_lib_F PUBLIC
-	${FFTW_INCLUDEDIR} ${FFTW_INCLUDE_DIRS}
-        ${PETSC_INCLUDEDIR} ${PETSC_INCLUDE_DIRS}
-	# ${LIGHTKRYLOV_ROOT})
-        ${LIGHTKRYLOV_ROOT}/include)
-#   target_link_libraries(sfemans_lib_F sfemans_lib_C ${LIGHTKRYLOV_ROOT}/libLightKrylov.a)
-    target_link_libraries(sfemans_lib_F sfemans_lib_C ${LIGHTKRYLOV_ROOT}/lib/libLightKrylov.a)
+	${LIGHTKRYLOV_ROOT}/include
+	${ADDITIONAL_LINKS}
+)
+    target_link_libraries(sfemans_lib_F sfemans_lib_C 
+	    PkgConfig::PETSC
+            PkgConfig::FFTW
+	    ${LIGHTKRYLOV_ROOT}/libLightKrylov.a
+    )
 else()
    message("LightKrylov module set to OFF, not linking LightKrylov library")
    target_include_directories(sfemans_lib_F PUBLIC
-	${FFTW_INCLUDEDIR} ${FFTW_INCLUDE_DIRS}
-        ${PETSC_INCLUDEDIR} ${PETSC_INCLUDE_DIRS})
-   target_link_libraries(sfemans_lib_F sfemans_lib_C)
+	   ${ADDITIONAL_LINKS}
+   )
+   target_link_libraries(sfemans_lib_F sfemans_lib_C
+   PkgConfig::PETSC
+   PkgConfig::FFTW
+)
 endif()
 
 if (DEFINED METIS_REAL_KIND)

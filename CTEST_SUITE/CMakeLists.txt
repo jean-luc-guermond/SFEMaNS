@@ -1,13 +1,9 @@
 # Cmake minimum version
 cmake_minimum_required(VERSION 3.27)
 
-# Project name and version
-project(regression_test)
-
 include(variables.cmake)
-
-# Enable Fortran
-enable_language(Fortran)
+# Project name and version
+project(regression_test LANGUAGES Fortran C)
 
 include(CTest) # We include CTest which is part of CMake
 
