@@ -20,8 +20,8 @@ enable_language(Fortran)
 
 # Getting useful libraries
 find_package(PkgConfig)
-
-pkg_check_modules(PETSC REQUIRED IMPORTED_TARGET PETSc)
+set(PETSC_MIN_VERSION "3.25")
+pkg_check_modules(PETSC REQUIRED IMPORTED_TARGET PETSc>=${PETSC_MIN_VERSION})
 pkg_check_modules(FFTW REQUIRED IMPORTED_TARGET fftw3)
 
 # Build library sfemans_lib_F
